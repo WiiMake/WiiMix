@@ -388,6 +388,10 @@ add_executable(dolphin-emu
   WiiUpdate.h
 )
 
+set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
+# Ensure the resource path doesn't get overridden
+# set(DOLPHIN_RESOURCE_PATH "${PROJECT_SOURCE_DIR}/Data/Sys/Resources")
+
 if (WIN32)
   target_sources(dolphin-emu PRIVATE
     Styles/Dark/dark.qrc

@@ -88,6 +88,7 @@ signals:
   void RecordingStatusChanged(bool recording);
 
 private:
+  void WiiMix();
   void Open();
   void RefreshGameList();
   void Play(const std::optional<std::string>& savestate_path = {});
@@ -103,8 +104,12 @@ private:
   void StateSave();
   void StateLoadSlot();
   void StateSaveSlot();
+  void StateSendSlot();
+  void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
+  void StateSendSlotAt(int slot);
+  void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();
   void StateSaveUndo();

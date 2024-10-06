@@ -517,6 +517,7 @@ void MainWindow::ConnectMenuBar()
 {
   setMenuBar(m_menu_bar);
   // File
+  connect(m_menu_bar, &MenuBar::WiiMix, this, &MainWindow::WiiMix);
   connect(m_menu_bar, &MenuBar::Open, this, &MainWindow::Open);
   connect(m_menu_bar, &MenuBar::Exit, this, &MainWindow::close);
   connect(m_menu_bar, &MenuBar::EjectDisc, this, &MainWindow::EjectDisc);
@@ -535,8 +536,12 @@ void MainWindow::ConnectMenuBar()
   connect(m_menu_bar, &MenuBar::StateSave, this, &MainWindow::StateSave);
   connect(m_menu_bar, &MenuBar::StateLoadSlot, this, &MainWindow::StateLoadSlot);
   connect(m_menu_bar, &MenuBar::StateSaveSlot, this, &MainWindow::StateSaveSlot);
+  connect(m_menu_bar, &MenuBar::StateSendSlot, this, &MainWindow::StateSendSlot);
+  connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
   connect(m_menu_bar, &MenuBar::StateLoadSlotAt, this, &MainWindow::StateLoadSlotAt);
   connect(m_menu_bar, &MenuBar::StateSaveSlotAt, this, &MainWindow::StateSaveSlotAt);
+  connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::StateSendSlotAt);
+  connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
   connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
   connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
   connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
@@ -600,6 +605,7 @@ void MainWindow::ConnectMenuBar()
 
 void MainWindow::ConnectHotkeys()
 {
+  connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::WiiMix);
   connect(m_hotkey_scheduler, &HotkeyScheduler::Open, this, &MainWindow::Open);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ChangeDisc, this, &MainWindow::ChangeDisc);
   connect(m_hotkey_scheduler, &HotkeyScheduler::EjectDisc, this, &MainWindow::EjectDisc);
@@ -678,7 +684,7 @@ void MainWindow::ConnectToolBar()
 {
   addToolBar(m_tool_bar);
 
-  connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
+  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::Open);
   connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
 
   connect(m_tool_bar, &ToolBar::PlayPressed, this, [this]() { Play(); });
@@ -816,6 +822,11 @@ void MainWindow::OpenUserFolder()
 
   QUrl url = QUrl::fromLocalFile(QString::fromStdString(path));
   QDesktopServices::openUrl(url);
+}
+
+// TODO: Implement WiiMix
+void MainWindow::WiiMix() {
+  return;
 }
 
 void MainWindow::Open()
@@ -1443,6 +1454,18 @@ void MainWindow::StateSaveSlot()
   State::Save(Core::System::GetInstance(), m_state_slot);
 }
 
+// TODO: StateSendSlot
+void MainWindow::StateSendSlot()
+{
+  return;
+}
+
+// TODO: GameSwapSlot
+void MainWindow::GameSwapSlot()
+{
+  return;
+}
+
 void MainWindow::StateLoadSlotAt(int slot)
 {
   State::Load(Core::System::GetInstance(), slot);
@@ -1456,6 +1479,18 @@ void MainWindow::StateLoadLastSavedAt(int slot)
 void MainWindow::StateSaveSlotAt(int slot)
 {
   State::Save(Core::System::GetInstance(), slot);
+}
+
+// TODO: StateSendSlotAt
+void MainWindow::StateSendSlotAt(int slot)
+{
+  return;
+}
+
+// TODO: GameSwapSlotAt
+void MainWindow::GameSwapSlotAt(int slot)
+{
+  return;
 }
 
 void MainWindow::StateLoadUndo()

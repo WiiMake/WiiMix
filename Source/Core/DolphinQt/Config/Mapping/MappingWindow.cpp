@@ -453,7 +453,7 @@ void MappingWindow::SetMappingType(MappingWindow::Type type)
     AddWidget(tr("USB Emulation"), new HotkeyUSBEmu(this));
     // i18n: Stereoscopic 3D
     AddWidget(tr("3D"), new Hotkey3D(this));
-    AddWidget(tr("Save and Load State"), new HotkeyStates(this));
+    AddWidget(tr("Save and Load"), new HotkeyStates(this));
     AddWidget(tr("Other State Management"), new HotkeyStatesOther(this));
     AddWidget(tr("Game Boy Advance"), new HotkeyGBA(this));
     setWindowTitle(tr("Hotkey Settings"));

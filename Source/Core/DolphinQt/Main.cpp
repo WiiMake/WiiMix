@@ -13,8 +13,8 @@
 #include <cstdlib>
 #endif
 
-#include <OptionParser.h>
 #include <QAbstractEventDispatcher>
+#include <OptionParser.h>
 #include <QApplication>
 #include <QObject>
 #include <QPushButton>
@@ -150,9 +150,9 @@ int main(int argc, char* argv[])
 #endif
 #endif
 
-  QCoreApplication::setOrganizationName(QStringLiteral("Dolphin Emulator"));
-  QCoreApplication::setOrganizationDomain(QStringLiteral("dolphin-emu.org"));
-  QCoreApplication::setApplicationName(QStringLiteral("dolphin-emu"));
+  QCoreApplication::setOrganizationName(QStringLiteral("WiiMake"));
+  QCoreApplication::setOrganizationDomain(QStringLiteral("https://github.com/xanmankey/WiiMix"));
+  QCoreApplication::setApplicationName(QStringLiteral("WiiMake"));
 
   // QApplication will parse arguments and remove any it recognizes as targeting Qt
   QApplication app(argc, argv);
@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    DolphinAnalytics::Instance().ReportDolphinStart("qt");
+    // DolphinAnalytics::Instance().ReportDolphinStart("qt");
 
     Settings::Instance().InitDefaultPalette();
     Settings::Instance().UpdateSystemDark();
@@ -252,36 +252,36 @@ int main(int argc, char* argv[])
 
     MainWindow win{std::move(boot), static_cast<const char*>(options.get("movie"))};
 
-#if defined(USE_ANALYTICS) && USE_ANALYTICS
-    if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
-    {
-      ModalMessageBox analytics_prompt(&win);
+// #if defined(USE_ANALYTICS) && USE_ANALYTICS
+//     if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))
+//     {
+//       ModalMessageBox analytics_prompt(&win);
 
-      analytics_prompt.setIcon(QMessageBox::Question);
-      analytics_prompt.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-      analytics_prompt.setWindowTitle(QObject::tr("Allow Usage Statistics Reporting"));
-      analytics_prompt.setText(
-          QObject::tr("Do you authorize Dolphin to report information to Dolphin's developers?"));
-      analytics_prompt.setInformativeText(
-          QObject::tr("If authorized, Dolphin can collect data on its performance, "
-                      "feature usage, and configuration, as well as data on your system's "
-                      "hardware and operating system.\n\n"
-                      "No private data is ever collected. This data helps us understand "
-                      "how people and emulated games use Dolphin and prioritize our "
-                      "efforts. It also helps us identify rare configurations that are "
-                      "causing bugs, performance and stability issues.\n"
-                      "This authorization can be revoked at any time through Dolphin's "
-                      "settings."));
+//       analytics_prompt.setIcon(QMessageBox::Question);
+//       analytics_prompt.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+//       analytics_prompt.setWindowTitle(QObject::tr("Allow Usage Statistics Reporting"));
+//       analytics_prompt.setText(
+//           QObject::tr("Do you authorize Dolphin to report information to Dolphin's developers?"));
+//       analytics_prompt.setInformativeText(
+//           QObject::tr("If authorized, Dolphin can collect data on its performance, "
+//                       "feature usage, and configuration, as well as data on your system's "
+//                       "hardware and operating system.\n\n"
+//                       "No private data is ever collected. This data helps us understand "
+//                       "how people and emulated games use Dolphin and prioritize our "
+//                       "efforts. It also helps us identify rare configurations that are "
+//                       "causing bugs, performance and stability issues.\n"
+//                       "This authorization can be revoked at any time through Dolphin's "
+//                       "settings."));
 
-      SetQWidgetWindowDecorations(&analytics_prompt);
-      const int answer = analytics_prompt.exec();
+//       SetQWidgetWindowDecorations(&analytics_prompt);
+//       const int answer = analytics_prompt.exec();
 
-      Config::SetBase(Config::MAIN_ANALYTICS_PERMISSION_ASKED, true);
-      Settings::Instance().SetAnalyticsEnabled(answer == QMessageBox::Yes);
+//       Config::SetBase(Config::MAIN_ANALYTICS_PERMISSION_ASKED, true);
+//       Settings::Instance().SetAnalyticsEnabled(answer == QMessageBox::Yes);
 
-      DolphinAnalytics::Instance().ReloadConfig();
-    }
-#endif
+//       DolphinAnalytics::Instance().ReloadConfig();
+//     }
+// #endif
 
     if (!Settings::Instance().IsBatchModeEnabled())
     {

@@ -22,6 +22,7 @@ public:
   void closeEvent(QCloseEvent*) override;
 signals:
   void OpenPressed();
+  void WiiMixPressed();
   void RefreshPressed();
   void PlayPressed();
   void PausePressed();
@@ -49,6 +50,7 @@ private:
   void UpdatePausePlayButtonState(bool playing_state);
 
   QAction* m_open_action;
+  QAction* m_wiimix_action;
   QAction* m_refresh_action;
   QAction* m_pause_play_action;
   QAction* m_stop_action;

@@ -126,6 +126,8 @@ void MenuBar::OnEmulationStateChanged(Core::State state)
   m_fullscreen_action->setEnabled(running);
   m_screenshot_action->setEnabled(running);
   m_state_save_menu->setEnabled(running);
+  m_state_send_menu->setEnabled(running);
+  m_game_swap_menu->setEnabled(running);
 
   const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
   m_state_load_menu->setEnabled(running && !hardcore);
@@ -222,9 +224,9 @@ void MenuBar::AddFileMenu()
 {
   QMenu* file_menu = addMenu(tr("&File"));
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-  m_open_action = file_menu->addAction(tr("&Open..."), QKeySequence::Open, this, &MenuBar::Open);
+  m_open_action = file_menu->addAction(tr("&WiiMix"), QKeySequence::Open, this, &MenuBar::Open);
 #else
-  m_open_action = file_menu->addAction(tr("&Open..."), this, &MenuBar::Open, QKeySequence::Open);
+  m_open_action = file_menu->addAction(tr("&WiiMix"), this, &MenuBar::Open, QKeySequence::Open);
 #endif
 
   file_menu->addSeparator();
@@ -354,6 +356,8 @@ void MenuBar::AddEmulationMenu()
 
   AddStateLoadMenu(emu_menu);
   AddStateSaveMenu(emu_menu);
+  AddStateSendMenu(emu_menu);
+  AddGameSwapMenu(emu_menu);
   AddStateSlotMenu(emu_menu);
   UpdateStateSlotMenu();
 
@@ -394,6 +398,30 @@ void MenuBar::AddStateSaveMenu(QMenu* emu_menu)
   }
 }
 
+void MenuBar::AddStateSendMenu(QMenu* emu_menu)
+{
+  m_state_send_menu = emu_menu->addMenu(tr("&Send State"));
+
+  for (int i = 1; i <= 10; i++)
+  {
+    QAction* action = m_state_send_menu->addAction(QString{});
+
+    connect(action, &QAction::triggered, this, [=, this]() { emit StateSendSlotAt(i); });
+  }
+}
+
+void MenuBar::AddGameSwapMenu(QMenu* emu_menu)
+{
+  m_game_swap_menu = emu_menu->addMenu(tr("&Game Swap"));
+
+  for (int i = 1; i <= 10; i++)
+  {
+    QAction* action = m_game_swap_menu->addAction(QString{});
+
+    connect(action, &QAction::triggered, this, [=, this]() { emit GameSwapSlotAt(i); });
+  }
+}
+
 void MenuBar::AddStateSlotMenu(QMenu* emu_menu)
 {
   m_state_slot_menu = emu_menu->addMenu(tr("Select State Slot"));
@@ -420,12 +448,18 @@ void MenuBar::UpdateStateSlotMenu()
   QList<QAction*> actions_slot = m_state_slots->actions();
   QList<QAction*> actions_load = m_state_load_slots_menu->actions();
   QList<QAction*> actions_save = m_state_save_slots_menu->actions();
+  QList<QAction*> actions_send = m_state_send_menu->actions();
+  QList<QAction*> actions_swap = m_game_swap_menu->actions();
   for (int i = 0; i < actions_slot.length(); i++)
   {
     int slot = i + 1;
     QString info = QString::fromStdString(State::GetInfoStringOfSlot(slot));
     actions_load.at(i)->setText(tr("Load from Slot %1 - %2").arg(slot).arg(info));
     actions_save.at(i)->setText(tr("Save to Slot %1 - %2").arg(slot).arg(info));
+    actions_send.at(i)->setText(tr("Send Slot %1").arg(slot));
+    actions_send.at(i)->setEnabled(info != QStringLiteral("Empty"));
+    // TODO: need to set enabled based on if game at slot exists or not
+    actions_swap.at(i)->setText(tr("Swap to Game %1").arg(slot));
     actions_slot.at(i)->setText(tr("Select Slot %1 - %2").arg(slot).arg(info));
   }
 }
@@ -625,12 +659,12 @@ void MenuBar::AddHelpMenu()
   });
   QAction* github = help_menu->addAction(tr("&GitHub Repository"));
   connect(github, &QAction::triggered, this, []() {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/dolphin-emu/dolphin")));
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/xanmankey/WiiMix.git")));
   });
   QAction* bugtracker = help_menu->addAction(tr("&Bug Tracker"));
   connect(bugtracker, &QAction::triggered, this, []() {
     QDesktopServices::openUrl(
-        QUrl(QStringLiteral("https://bugs.dolphin-emu.org/projects/emulator")));
+        QUrl(QStringLiteral("https://github.com/xanmankey/WiiMix/issues")));
   });
 
   if (AutoUpdateChecker::SystemSupportsAutoUpdates())

@@ -145,6 +145,7 @@ static void HandleFrameStepHotkeys()
   }
 }
 
+// TODO: need to update hotkey implementation
 void HotkeyScheduler::Run()
 {
   Common::SetCurrentThreadName("HotkeyScheduler");

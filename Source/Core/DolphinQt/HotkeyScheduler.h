@@ -21,6 +21,7 @@ public:
   void Start();
   void Stop();
 signals:
+  void WiiMix();
   void Open();
   void EjectDisc();
   void ChangeDisc();

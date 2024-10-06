@@ -1,20 +1,19 @@
 .Dd July 17, 2016
-.Dt DOLPHIN-EMU-NOGUI 6
+.Dt WIIMIX-NOGUI 6
 .Os
 .Sh NAME
-.Nm dolphin-emu-nogui
+.Nm wiimix-nogui
 .Nd Nintendo GameCube and Wii emulator
 .Sh SYNOPSIS
-.Nm dolphin-emu-nogui
+.Nm wiimix-nogui
 .Op Fl hv
 .Op Fl e Ar file
 .Sh DESCRIPTION
-Dolphin is an emulator for two recent Nintendo video game consoles:
-the GameCube and the Wii.
-It allows PC gamers to enjoy games for these two consoles
-in full HD (1080p) with several enhancements:
-compatibility with all PC controllers, turbo speed, networked multiplayer,
-and even more!
+Wiimix is a fork of the Dolphin emulator designed for shuffling games.
+It is currently under development, but intends to extend dolphin to cache multiple games at a time
+and switch between them and certain save states for each game. This core functionality will be combined 
+with functionality such as game specific objectives and a save state database to implement systems such as 
+objective-based randomizers and bingo boards/lockouts, as well as to allow for customizing your own personal wiimix!
 .Pp
 .Nm
 does not have a graphical user interface.
@@ -33,5 +32,5 @@ Print version and exit
 Default user configuration directory.
 .El
 .Sh AUTHORS
-This manual page was written by Jeremy Newton, but may be distributed freely
+This manual page was originally written by Jeremy Newton and adapted by Xander Kutulas, but may be distributed freely
 using the CC BY license.

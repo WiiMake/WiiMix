@@ -1,11 +1,11 @@
-.Dd July 17, 2016
-.Dt DOLPHIN-EMU 6
+.Dd Oct 5, 2024
+.Dt WIIMIX 6
 .Os
 .Sh NAME
-.Nm dolphin-emu
-.Nd Nintendo GameCube and Wii emulator
+.Nm wiimix
+.Nd A fork of the Dolphin emulator designed for shuffling games
 .Sh SYNOPSIS
-.Nm dolphin-emu
+.Nm wiimix
 .Op Fl bdhl
 .Op Fl a Ar audio
 .Op Fl c Ar str
@@ -14,12 +14,11 @@
 .Op Fl u Ar path
 .Op Fl v Ar video
 .Sh DESCRIPTION
-Dolphin is an emulator for two recent Nintendo video game consoles:
-the GameCube and the Wii.
-It allows PC gamers to enjoy games for these two consoles
-in full HD (1080p) with several enhancements:
-compatibility with all PC controllers, turbo speed, networked multiplayer,
-and even more!
+Wiimix is a fork of the Dolphin emulator designed for shuffling games.
+It is currently under development, but intends to extend dolphin to cache multiple games at a time
+and switch between them and certain save states for each game. This core functionality will be combined 
+with functionality such as game specific objectives and a save state database to implement systems such as 
+objective-based randomizers and bingo boards/lockouts, as well as to allow for customizing your own personal wiimix!
 .Pp
 .Nm
 features a graphical user interface made using Qt 5.
@@ -32,7 +31,7 @@ or high level
 .Pq Sy HLE
 audio
 .It Fl b , Fl Fl batch
-Exit Dolphin with emulator
+Exit wiimix with emulator
 .It Fl c Ar text , Fl Fl confirm= Ns Ar text
 Set Confirm on Stop
 .It Fl d , Fl Fl debugger
@@ -63,5 +62,5 @@ video backend
 Default user configuration directory.
 .El
 .Sh AUTHOR
-This manual page was written by Jeremy Newton, but may be distributed freely
+This manual page was originally written by Jeremy Newton and adapted by Xander Kutulas, but may be distributed freely
 using the CC BY license.

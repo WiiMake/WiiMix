@@ -15,6 +15,8 @@
 
 #include "DolphinQt/Settings.h"
 
+#include <filesystem>
+
 bool Resources::m_svg_supported;
 QList<QIcon> Resources::m_platforms;
 QList<QIcon> Resources::m_countries;
@@ -22,6 +24,7 @@ QList<QIcon> Resources::m_misc;
 
 QIcon Resources::LoadNamedIcon(std::string_view name, const QString& dir)
 {
+  qDebug() << "Loading icon:" << QString::fromStdString(std::string(name)) << "from directory:" << dir;
   const QString base_path = dir + QLatin1Char{'/'} + QString::fromLatin1(name);
   const QString svg_path = base_path + QStringLiteral(".svg");
 
@@ -50,6 +53,13 @@ QIcon Resources::LoadNamedIcon(std::string_view name, const QString& dir)
   for (auto scale : {1, 2, 4})
     load_png(scale);
 
+  // TODO: added debugging, remove
+  // for (const QSize& size : icon.availableSizes())
+  // {
+  //   qDebug() << "Loaded icon size:" << size;
+  // }
+  // qDebug() << "Icon name:" << QString::fromStdString(std::string(name));
+
   ASSERT(icon.availableSizes().size() > 0);
 
   return icon;
@@ -62,6 +72,7 @@ static QString GetCurrentThemeDir()
 
 static QString GetResourcesDir()
 {
+  // If you are doing local development, remember to ln -s ../../Data/Sys Binaries/
   return QString::fromStdString(File::GetSysDirectory() + "Resources");
 }
 

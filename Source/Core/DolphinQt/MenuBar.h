@@ -51,6 +51,7 @@ public:
 
 signals:
   // File
+  void WiiMix();
   void Open();
   void Exit();
   void ChangeDisc();
@@ -71,8 +72,12 @@ signals:
   void StateSave();
   void StateLoadSlot();
   void StateSaveSlot();
+  void StateSendSlot();
+  void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
+  void StateSendSlotAt(int slot);
+  void GameSwapSlotAt(int slot);
   void StateLoadUndo();
   void StateSaveUndo();
   void StateSaveOldest();
@@ -133,6 +138,8 @@ private:
   void AddEmulationMenu();
   void AddStateLoadMenu(QMenu* emu_menu);
   void AddStateSaveMenu(QMenu* emu_menu);
+  void AddStateSendMenu(QMenu* emu_menu);
+  void AddGameSwapMenu(QMenu* emu_menu);
   void AddStateSlotMenu(QMenu* emu_menu);
 
   void AddViewMenu();
@@ -225,10 +232,13 @@ private:
   QAction* m_boot_sysmenu;
   QMenu* m_state_load_menu;
   QMenu* m_state_save_menu;
+  QMenu* m_state_send_menu;
+  QMenu* m_game_swap_menu;
   QMenu* m_state_slot_menu;
   QActionGroup* m_state_slots;
   QMenu* m_state_load_slots_menu;
   QMenu* m_state_save_slots_menu;
+  // QMenu* m_state_send_slots_menu;
 
   // Movie
   QAction* m_recording_export;
