@@ -149,7 +149,7 @@ bool Platform::VersionCheck(const std::vector<TodoList::UpdateOp>& to_update,
                             const std::string& install_base_path, const std::string& temp_dir)
 {
   const auto op_it = std::find_if(to_update.cbegin(), to_update.cend(), [&](const auto& op) {
-    return op.filename == "Dolphin.app/Contents/Info.plist";
+    return op.filename == "WiiMix.app/Contents/Info.plist";
   });
   if (op_it == to_update.cend())
     return true;
