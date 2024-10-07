@@ -721,8 +721,8 @@ void MainWindow::ConnectRenderWidget()
   m_render_widget->hide();
   connect(m_render_widget, &RenderWidget::Closed, this, &MainWindow::ForceStop);
   connect(m_render_widget, &RenderWidget::FocusChanged, this, [this](bool focus) {
-    if (m_render_widget->isFullScreen())
-      SetFullScreenResolution(focus);
+    //if (m_render_widget->isFullScreen())
+    //  SetFullScreenResolution(focus);
   });
 }
 
@@ -891,13 +891,13 @@ void MainWindow::TogglePause()
 void MainWindow::OnStopComplete()
 {
   m_stop_requested = false;
-  HideRenderWidget(!m_exit_requested, m_exit_requested);
+  //HideRenderWidget(!m_exit_requested, m_exit_requested);
 #ifdef USE_DISCORD_PRESENCE
   if (!m_netplay_dialog->isVisible())
     Discord::UpdateDiscordPresence();
 #endif
 
-  SetFullScreenResolution(false);
+  //SetFullScreenResolution(false);
 
   if (m_exit_requested || Settings::Instance().IsBatchModeEnabled())
   {
@@ -937,10 +937,10 @@ bool MainWindow::RequestStop()
 
   if (!m_render_widget->isFullScreen())
     m_render_widget_geometry = m_render_widget->saveGeometry();
-  else
-    FullScreen();
+  //else
+    //FullScreen();
 
-  if (Config::Get(Config::MAIN_CONFIRM_ON_STOP))
+  if (false && Config::Get(Config::MAIN_CONFIRM_ON_STOP))
   {
     if (std::exchange(m_stop_confirm_showing, true))
       return true;
@@ -1051,8 +1051,8 @@ void MainWindow::FullScreen()
   if (!was_fullscreen)
     m_render_widget_geometry = m_render_widget->saveGeometry();
 
-  HideRenderWidget(false);
-  SetFullScreenResolution(!was_fullscreen);
+  //HideRenderWidget(false);
+  //SetFullScreenResolution(!was_fullscreen);
 
   if (was_fullscreen)
   {
@@ -1190,10 +1190,12 @@ void MainWindow::SetFullScreenResolution(bool fullscreen)
 
 void MainWindow::ShowRenderWidget()
 {
-  SetFullScreenResolution(false);
-  Host::GetInstance()->SetRenderFullscreen(false);
+  SetFullScreenResolution(true);
+  Host::GetInstance()->SetRenderFullscreen(true);
 
-  if (Config::Get(Config::MAIN_RENDER_TO_MAIN))
+  return;
+
+  if (true || Config::Get(Config::MAIN_RENDER_TO_MAIN))
   {
     // If we're rendering to main, add it to the stack and update our title when necessary.
     m_rendering_to_main = true;
@@ -1245,8 +1247,8 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
     m_render_widget->installEventFilter(this);
     connect(m_render_widget, &RenderWidget::Closed, this, &MainWindow::ForceStop);
     connect(m_render_widget, &RenderWidget::FocusChanged, this, [this](bool focus) {
-      if (m_render_widget->isFullScreen())
-        SetFullScreenResolution(focus);
+      //if (m_render_widget->isFullScreen())
+        //SetFullScreenResolution(focus);
     });
 
     // The controller interface will still be registered to the old render widget, if the core
