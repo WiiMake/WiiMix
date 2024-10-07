@@ -237,7 +237,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   ConnectMenuBar();
 
 
-  State::EnableCompression(false);
+  State::EnableCompression(false); // hopefully speed things up
 
   QSettings& settings = Settings::GetQSettings();
   restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
