@@ -238,6 +238,7 @@ private:
   bool m_stop_requested = false;
   bool m_exit_requested = false;
   bool m_fullscreen_requested = false;
+  bool m_load_slot_on_start = 0;
   bool m_is_screensaver_inhibited = false;
   u32 m_state_slot = 1;
   std::unique_ptr<BootParameters> m_pending_boot;

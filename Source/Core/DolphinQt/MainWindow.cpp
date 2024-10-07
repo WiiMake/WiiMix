@@ -236,6 +236,9 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   ConnectStack();
   ConnectMenuBar();
 
+
+  State::EnableCompression(false);
+
   QSettings& settings = Settings::GetQSettings();
   restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
   restoreGeometry(settings.value(QStringLiteral("mainwindow/geometry")).toByteArray());
@@ -420,6 +423,11 @@ void MainWindow::InitCoreCallbacks()
     {
       FullScreen();
       m_fullscreen_requested = false;
+    }
+    if (state == Core::State::Running && m_load_slot_on_start != 0)
+    {
+      StateLoadSlotAt(m_load_slot_on_start);
+      m_load_slot_on_start = 0;
     }
   });
   installEventFilter(this);
@@ -1131,8 +1139,16 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
   // If we're running, only start a new game once we've stopped the last.
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
-    if (!RequestStop())
-      return;
+    
+
+    
+    StateSaveSlotAt(1);
+    
+    
+    if(!RequestStop())
+      return; 
+
+
 
     // As long as the shutdown isn't complete, we can't boot, so let's boot later
     m_pending_boot = std::move(parameters);
@@ -1158,6 +1174,15 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   if (Config::Get(Config::MAIN_FULLSCREEN))
     m_fullscreen_requested = true;
+
+  
+  
+  //StateLoadSlotAt(1);
+
+  m_load_slot_on_start = 1;
+
+
+
 }
 
 void MainWindow::SetFullScreenResolution(bool fullscreen)
