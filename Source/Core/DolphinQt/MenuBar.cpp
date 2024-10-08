@@ -704,6 +704,8 @@ void MenuBar::AddGameListTypeSection(QMenu* view_menu)
 void MenuBar::AddListColumnsMenu(QMenu* view_menu)
 {
   static const QMap<QString, const Config::Info<bool>*> columns{
+      {tr("WiiMix"), &Config::MAIN_GAMELIST_COLUMN_WIIMIX},
+      {tr("Objectives"), &Config::MAIN_GAMELIST_COLUMN_OBJECTIVES},
       {tr("Platform"), &Config::MAIN_GAMELIST_COLUMN_PLATFORM},
       {tr("Banner"), &Config::MAIN_GAMELIST_COLUMN_BANNER},
       {tr("Title"), &Config::MAIN_GAMELIST_COLUMN_TITLE},
@@ -717,7 +719,8 @@ void MenuBar::AddListColumnsMenu(QMenu* view_menu)
       {tr("File Format"), &Config::MAIN_GAMELIST_COLUMN_FILE_FORMAT},
       {tr("Block Size"), &Config::MAIN_GAMELIST_COLUMN_BLOCK_SIZE},
       {tr("Compression"), &Config::MAIN_GAMELIST_COLUMN_COMPRESSION},
-      {tr("Tags"), &Config::MAIN_GAMELIST_COLUMN_TAGS}};
+      {tr("Tags"), &Config::MAIN_GAMELIST_COLUMN_TAGS},
+      };
 
   QActionGroup* column_group = new QActionGroup(this);
   m_cols_menu = view_menu->addMenu(tr("List Columns"));

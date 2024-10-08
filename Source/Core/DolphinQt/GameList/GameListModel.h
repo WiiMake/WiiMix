@@ -30,6 +30,8 @@ public:
 
   // Qt's Model/View stuff uses these overrides.
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+  bool setData(const QModelIndex& index, const QVariant& value, int role) override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;
   int rowCount(const QModelIndex& parent) const override;
@@ -45,7 +47,9 @@ public:
 
   enum class Column
   {
-    Platform = 0,
+    WiiMix=0,
+    Objectives,
+    Platform,
     Banner,
     Title,
     Description,

@@ -281,6 +281,8 @@ extern const Info<bool> MAIN_GAMELIST_LIST_UNKNOWN;
 extern const Info<int> MAIN_GAMELIST_LIST_SORT;
 extern const Info<int> MAIN_GAMELIST_LIST_SORT_SECONDARY;
 
+extern const Info<bool> MAIN_GAMELIST_COLUMN_WIIMIX;
+extern const Info<bool> MAIN_GAMELIST_COLUMN_OBJECTIVES;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_PLATFORM;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_DESCRIPTION;
 extern const Info<bool> MAIN_GAMELIST_COLUMN_BANNER;

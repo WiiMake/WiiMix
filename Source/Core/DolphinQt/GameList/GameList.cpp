@@ -47,6 +47,7 @@
 
 #include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
+#include "Core/ConfigManager.h"
 #include "Core/HW/DVD/DVDInterface.h"
 #include "Core/HW/EXI/EXI.h"
 #include "Core/HW/EXI/EXI_Device.h"
@@ -113,6 +114,8 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
 
   connect(m_list, &QTableView::doubleClicked, this, &GameList::GameSelected);
   connect(m_grid, &QListView::doubleClicked, this, &GameList::GameSelected);
+  // Check if over the checkbox; if so, toggle a game in or out of the WiiMix
+  // connect(m_list->find("WiiMix"), &QCheckBox::clicked, this, &GameList::WiiMixCheckboxClicked);
   connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
   connect(&m_model, &QAbstractItemModel::rowsRemoved, this, &GameList::ConsiderViewChange);
 
@@ -194,6 +197,8 @@ void GameList::MakeListView()
   {
     using Column = GameListModel::Column;
     using Mode = QHeaderView::ResizeMode;
+    SetResizeMode(Column::WiiMix, Mode::Fixed);
+    SetResizeMode(Column::Objectives, Mode::Fixed);
     SetResizeMode(Column::Platform, Mode::Fixed);
     SetResizeMode(Column::Banner, Mode::Fixed);
     SetResizeMode(Column::Title, Mode::Interactive);
@@ -211,6 +216,8 @@ void GameList::MakeListView()
 
     // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
     // are 96 pixels wide, platform and country icons are 32 pixels wide.
+    // m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 32);
+    m_list->setColumnWidth(static_cast<int>(Column::Objectives), 80);
     m_list->setColumnWidth(static_cast<int>(Column::Banner), 102);
     m_list->setColumnWidth(static_cast<int>(Column::Platform), 38);
     m_list->setColumnWidth(static_cast<int>(Column::Country), 38);
@@ -259,6 +266,8 @@ void GameList::UpdateColumnVisibility()
   };
 
   using Column = GameListModel::Column;
+  SetVisiblity(Column::WiiMix, Config::Get(Config::MAIN_GAMELIST_COLUMN_WIIMIX));
+  SetVisiblity(Column::Objectives, Config::Get(Config::MAIN_GAMELIST_COLUMN_OBJECTIVES));
   SetVisiblity(Column::Platform, Config::Get(Config::MAIN_GAMELIST_COLUMN_PLATFORM));
   SetVisiblity(Column::Banner, Config::Get(Config::MAIN_GAMELIST_COLUMN_BANNER));
   SetVisiblity(Column::Title, Config::Get(Config::MAIN_GAMELIST_COLUMN_TITLE));
@@ -973,6 +982,7 @@ void GameList::ConsiderViewChange()
     setCurrentWidget(m_empty);
   }
 }
+
 void GameList::keyPressEvent(QKeyEvent* event)
 {
   if (event->key() == Qt::Key_Return && GetSelectedGame() != nullptr)
@@ -992,6 +1002,8 @@ void GameList::OnColumnVisibilityToggled(const QString& row, bool visible)
 {
   using Column = GameListModel::Column;
   static const QMap<QString, Column> rowname_to_column = {
+      {tr("Mix"), Column::WiiMix},
+      {tr("Objectives"), Column::Objectives},
       {tr("Platform"), Column::Platform},
       {tr("Banner"), Column::Banner},
       {tr("Title"), Column::Title},

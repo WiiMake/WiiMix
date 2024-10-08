@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QCheckBox>
 
 #include "Core/ConfigManager.h"
 
@@ -122,6 +123,8 @@ QGroupBox* InfoWidget::CreateGameDetails()
   layout->addRow(tr("Game ID:"), game_id);
   layout->addRow(tr("Country:"), country);
   layout->addRow(tr("Maker:"), maker);
+  // TODO: how to determine wiimix? I need to make this a checkbox...
+  // layout->addRow(tr("WiiMix:"), new QCheckBox());
 
   if (!m_game.GetApploaderDate().empty())
     layout->addRow(tr("Apploader Date:"), CreateValueDisplay(m_game.GetApploaderDate()));

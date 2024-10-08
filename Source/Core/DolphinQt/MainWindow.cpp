@@ -42,6 +42,7 @@
 #include "Core/Boot/Boot.h"
 #include "Core/BootManager.h"
 #include "Core/CommonTitles.h"
+#include "Core/ConfigManager.h"
 #include "Core/Config/AchievementSettings.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/NetplaySettings.h"
@@ -96,6 +97,7 @@
 #include "DolphinQt/FIFO/FIFOPlayerWindow.h"
 #include "DolphinQt/GCMemcardManager.h"
 #include "DolphinQt/GameList/GameList.h"
+#include "DolphinQt/GameList/GameListModel.h"
 #include "DolphinQt/Host.h"
 #include "DolphinQt/HotkeyScheduler.h"
 #include "DolphinQt/InfinityBase/InfinityBaseWindow.h"
@@ -684,7 +686,8 @@ void MainWindow::ConnectToolBar()
 {
   addToolBar(m_tool_bar);
 
-  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::Open);
+  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::WiiMix);
+  connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
   connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
 
   connect(m_tool_bar, &ToolBar::PlayPressed, this, [this]() { Play(); });
@@ -843,13 +846,14 @@ void MainWindow::Play(const std::optional<std::string>& savestate_path)
   // Otherwise, play the default game.
   // Otherwise, play the last played game, if there is one.
   // Otherwise, prompt for a new game.
-  if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused)
+  std::shared_ptr<const UICommon::GameFile> selection = m_game_list->GetSelectedGame();
+  if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused && 
+    selection->GetGameID() == SConfig::GetInstance().GetGameID())
   {
     Core::SetState(Core::System::GetInstance(), Core::State::Running);
   }
   else
   {
-    std::shared_ptr<const UICommon::GameFile> selection = m_game_list->GetSelectedGame();
     if (selection)
     {
       StartGame(selection->GetFilePath(), ScanForSecondDisc::Yes,

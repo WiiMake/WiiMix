@@ -438,6 +438,8 @@ const Info<bool> MAIN_GAMELIST_LIST_UNKNOWN{{System::Main, "GameList", "ListUnkn
 const Info<int> MAIN_GAMELIST_LIST_SORT{{System::Main, "GameList", "ListSort"}, 3};
 const Info<int> MAIN_GAMELIST_LIST_SORT_SECONDARY{{System::Main, "GameList", "ListSortSecondary"},
                                                   0};
+const Info<bool> MAIN_GAMELIST_COLUMN_WIIMIX{{System::Main, "GameList", "ColumnWiiMix"}, true};
+const Info<bool> MAIN_GAMELIST_COLUMN_OBJECTIVES{{System::Main, "GameList", "ColumnObjectives"}, true};
 const Info<bool> MAIN_GAMELIST_COLUMN_PLATFORM{{System::Main, "GameList", "ColumnPlatform"}, true};
 const Info<bool> MAIN_GAMELIST_COLUMN_DESCRIPTION{{System::Main, "GameList", "ColumnDescription"},
                                                   false};

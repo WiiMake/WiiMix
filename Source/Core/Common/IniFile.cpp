@@ -11,6 +11,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "Common/FileUtil.h"
 #include "Common/StringUtil.h"
@@ -347,6 +348,8 @@ bool IniFile::Save(const std::string& filename)
   }
 
   out.close();
+  
+  std::cout << "IniFile::Save: " << temp << " -> " << filename << std::endl;  
 
   return File::RenameSync(temp, filename);
 }

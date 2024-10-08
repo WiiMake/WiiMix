@@ -27,6 +27,7 @@ class GameConfigWidget : public QWidget
   Q_OBJECT
 public:
   explicit GameConfigWidget(const UICommon::GameFile& game);
+  static bool GetWiiMix(const UICommon::GameFile& game);
 
 private:
   void CreateWidgets();
@@ -46,6 +47,7 @@ private:
   QTabWidget* m_default_tab;
   QTabWidget* m_local_tab;
 
+  QCheckBox* m_wiimix;
   QCheckBox* m_enable_dual_core;
   QCheckBox* m_enable_mmu;
   QCheckBox* m_enable_fprf;

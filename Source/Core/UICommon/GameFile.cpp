@@ -185,6 +185,17 @@ GameFile::GameFile(std::string path) : m_file_path(std::move(path))
   }
 }
 
+bool GameFile::GetWiiMix() const
+{
+  return m_wii_mix;
+}
+
+void GameFile::SetWiiMix(bool value)
+{
+  m_wii_mix = value;
+  return;
+}
+
 GameFile::~GameFile() = default;
 
 bool GameFile::IsValid() const

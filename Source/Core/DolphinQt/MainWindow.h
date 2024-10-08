@@ -90,6 +90,7 @@ signals:
 private:
   void WiiMix();
   void Open();
+  void ToggleWiiMix(const QModelIndex &index);
   void RefreshGameList();
   void Play(const std::optional<std::string>& savestate_path = {});
   void Pause();

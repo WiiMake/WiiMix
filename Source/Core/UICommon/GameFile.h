@@ -57,6 +57,9 @@ public:
   ~GameFile();
 
   bool IsValid() const;
+  bool GetWiiMix() const;
+  void SetWiiMix(bool value);
+  int GetObjectives() const { return m_objectives; }
   const std::string& GetFilePath() const { return m_file_path; }
   const std::string& GetFileName() const { return m_file_name; }
   const std::string& GetName(const Core::TitleDatabase& title_database) const;
@@ -142,6 +145,8 @@ private:
   // CACHE_REVISION in GameFileCache.cpp is incremented.
 
   bool m_valid{};
+  bool m_wii_mix;
+  int m_objectives;
   std::string m_file_path;
   std::string m_file_name;
 

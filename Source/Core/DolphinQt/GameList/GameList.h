@@ -48,8 +48,10 @@ public:
   void PurgeCache();
 
   const GameListModel& GetGameListModel() const { return m_model; }
+  GameListModel *GetGameListModelPtr() { return &m_model; }
 
 signals:
+  void WiiMixCheckboxClicked(const QModelIndex &index);
   void GameSelected();
   void OnStartWithRiivolution(const UICommon::GameFile& game);
   void NetPlayHost(const UICommon::GameFile& game);

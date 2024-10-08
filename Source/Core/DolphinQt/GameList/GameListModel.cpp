@@ -7,11 +7,16 @@
 #include <QFileInfo>
 #include <QPixmap>
 #include <QRegularExpression>
+#include <QCheckBox>
+
+#include "Common/FileUtil.h"
 
 #include "Core/Config/MainSettings.h"
+#include "Core/ConfigManager.h"
 
 #include "DiscIO/Enums.h"
 
+#include <DolphinQt/Config/GameConfigWidget.h>
 #include "DolphinQt/QtUtils/ImageConverter.h"
 #include "DolphinQt/Resources.h"
 #include "DolphinQt/Settings.h"
@@ -38,6 +43,45 @@ GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
 
   m_tracker.Start();
 
+  // TODO: once I figure out the startup process better, load settings more effectively
+  // For now, I'm just loading each game config to get the WiiMix state
+  for (int i = 0; i < m_games.length(); i++)
+  {
+      const auto& game = m_games[i];
+      
+      // Load the ini file
+      Common::IniFile ini;
+      if (!File::Exists(File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini")) {
+        // Create a new ini file and set the WiiMix state
+        ini = SConfig::LoadDefaultGameIni(game->GetGameID(), game->GetRevision());
+        ini.GetOrCreateSection("WiiMix")->Set("WiiMix", true);
+        ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini");
+      }
+      else {
+        ini = SConfig::LoadLocalGameIni(game->GetGameID(), game->GetRevision());
+      }
+      std::string stateStr;
+      Common::IniFile::Section *section = ini.GetSection("WiiMix");
+      if (section == nullptr) {
+        qDebug() << "WiiMix section nullptr";
+        // Create a new section and set the WiiMix state
+        ini.GetOrCreateSection("WiiMix")->Set("WiiMix", true);
+        ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini");
+      }
+      ini.GetSection("WiiMix")->Get("WiiMix", &stateStr);
+
+      bool state_bool = stateStr == "True" ? true : false;
+
+      // Create a mutable copy of the game object
+      auto updated_game = std::make_shared<UICommon::GameFile>(*game); // Dereference to create a copy
+
+      // Modify the mutable copy
+      updated_game->SetWiiMix(state_bool);
+
+      // Update the m_games list with the updated game
+      m_games[i] = updated_game;
+  }
+
   connect(&Settings::Instance(), &Settings::ThemeChanged, [this] {
     // Tell the view to repaint. The signal 'dataChanged' also seems like it would work here, but
     // unfortunately it won't cause a repaint until the view is focused.
@@ -60,6 +104,24 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
 
   switch (static_cast<Column>(index.column()))
   {
+  case Column::WiiMix:
+    if (role == Qt::CheckStateRole)
+    {
+      bool state = game.GetWiiMix();
+      return state ? Qt::Checked : Qt::Unchecked;
+    }
+    if (role == Qt::DisplayRole)
+      return QVariant();
+    if (role == SORT_ROLE)
+      // return static_cast<int>(config_widget.GetWiiMix());
+      return static_cast<int>(true);
+    break;
+  case Column::Objectives:
+    if (role == Qt::DisplayRole)
+      return game.GetObjectives();
+    if (role == SORT_ROLE)
+      return game.GetObjectives();
+    break;
   case Column::Platform:
     if (role == Qt::DecorationRole)
       return Resources::GetPlatform(game.GetPlatform()).pixmap(32, 32);
@@ -203,6 +265,57 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
   return QVariant();
 }
 
+Qt::ItemFlags GameListModel::flags(const QModelIndex& index) const
+{
+  if (!index.isValid())
+    return Qt::NoItemFlags;
+
+  Qt::ItemFlags flag = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+
+  if (index.column() == static_cast<int>(Column::WiiMix))
+    flag |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
+
+  return flag;
+}
+
+// Checkbox clicks automatically routed to SetData
+// NOTE: was going to use value toBool, but couldn't seem to get it to work
+bool GameListModel::setData(const QModelIndex& index, const QVariant& value, int role) 
+{
+  if (role == Qt::CheckStateRole && index.isValid()) {
+      const UICommon::GameFile& game = *m_games[index.row()];
+
+      bool state = game.GetWiiMix();
+
+      auto updated_game = std::make_shared<UICommon::GameFile>(game);
+
+      // Modify the mutable copy
+      updated_game->SetWiiMix(!state);
+
+      // Replace the old game with the new updated const game in m_games
+      m_games[index.row()] = updated_game;
+
+      // Update the config file
+      if (!File::Exists(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini")) {
+        // Create a new ini file and set the WiiMix state
+        Common::IniFile ini = SConfig::LoadDefaultGameIni(game.GetGameID(), game.GetRevision());;
+        ini.GetOrCreateSection("WiiMix")->Set("WiiMix", !state);
+        ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini");
+      }
+      else {
+        Common::IniFile ini = SConfig::LoadLocalGameIni(game.GetGameID(), game.GetRevision());
+        ini.GetOrCreateSection("WiiMix")->Set("WiiMix", !state);
+        ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini");
+      }
+      // qDebug() << QString::fromStdString(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini");
+
+      // Update the view
+      emit dataChanged(index, index, {Qt::CheckStateRole});
+      return true;
+  }
+  return false;
+}
+
 QVariant GameListModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
   if (orientation == Qt::Vertical || role != Qt::DisplayRole)
@@ -210,6 +323,12 @@ QVariant GameListModel::headerData(int section, Qt::Orientation orientation, int
 
   switch (static_cast<Column>(section))
   {
+  case Column::WiiMix:
+    return tr("Mix");
+  case Column::Objectives:
+    return tr("Objectives");
+  // case Column::Platform:
+  //   return tr("Platform");
   case Column::Title:
     return tr("Title");
   case Column::ID:

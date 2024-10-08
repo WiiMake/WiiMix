@@ -79,6 +79,14 @@ void GameConfigWidget::CreateWidgets()
   // General
   m_refresh_config = new QPushButton(tr("Refresh"));
 
+  // WiiMix
+  auto* wii_mix_box = new QGroupBox(tr("WiiMix"));
+  auto* wii_mix_layout = new QGridLayout;
+  wii_mix_box->setLayout(wii_mix_layout);
+
+  m_wiimix = new QCheckBox(tr("Include in WiiMix"));
+  wii_mix_layout->addWidget(m_wiimix, 0, 0);
+
   // Core
   auto* core_box = new QGroupBox(tr("Core"));
   auto* core_layout = new QGridLayout;
@@ -103,6 +111,7 @@ void GameConfigWidget::CreateWidgets()
                                "games. (ON = Compatible, OFF = Fast)"));
   m_sync_gpu->setToolTip(tr("Synchronizes the GPU and CPU threads to help prevent random freezes "
                             "in Dual core mode. (ON = Compatible, OFF = Fast)"));
+
   m_emulate_disc_speed->setToolTip(
       tr("Enable emulated disc speed. Disabling this can cause crashes "
          "and other problems in some games. "
@@ -150,6 +159,7 @@ void GameConfigWidget::CreateWidgets()
   auto* settings_layout = new QVBoxLayout;
   settings_box->setLayout(settings_layout);
 
+  settings_layout->addWidget(wii_mix_box);
   settings_layout->addWidget(
       new QLabel(tr("These settings override core Dolphin settings.\nUndetermined means the game "
                     "uses Dolphin's setting.")));
@@ -211,7 +221,7 @@ void GameConfigWidget::ConnectWidgets()
   connect(m_refresh_config, &QPushButton::clicked, this, &GameConfigWidget::LoadSettings);
 
   for (QCheckBox* box :
-       {m_enable_dual_core, m_enable_mmu, m_enable_fprf, m_sync_gpu, m_emulate_disc_speed,
+       {m_wiimix, m_enable_dual_core, m_enable_mmu, m_enable_fprf, m_sync_gpu, m_emulate_disc_speed,
         m_use_dsp_hle, m_manual_texture_sampling, m_use_monoscopic_shadows})
     connect(box, &QCheckBox::stateChanged, this, &GameConfigWidget::SaveSettings);
 
@@ -274,6 +284,9 @@ void GameConfigWidget::LoadSettings()
 
   // Load game-specific settings
 
+  // WiiMix
+  LoadCheckBox(m_wiimix, "WiiMix", "WiiMix");
+
   // Core
   LoadCheckBox(m_enable_dual_core, "Core", "CPUThread");
   LoadCheckBox(m_enable_mmu, "Core", "MMU");
@@ -325,6 +338,9 @@ void GameConfigWidget::LoadSettings()
 
 void GameConfigWidget::SaveSettings()
 {
+  // WiiMix
+  SaveCheckBox(m_wiimix, "WiiMix", "WiiMix");
+
   // Core
   SaveCheckBox(m_enable_dual_core, "Core", "CPUThread");
   SaveCheckBox(m_enable_mmu, "Core", "MMU");
