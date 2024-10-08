@@ -854,14 +854,13 @@ void MainWindow::Play(const std::optional<std::string>& savestate_path)
   // Otherwise, play the default game.
   // Otherwise, play the last played game, if there is one.
   // Otherwise, prompt for a new game.
-  std::shared_ptr<const UICommon::GameFile> selection = m_game_list->GetSelectedGame();
-  if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused && 
-    selection->GetGameID() == SConfig::GetInstance().GetGameID())
+  if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused)
   {
     Core::SetState(Core::System::GetInstance(), Core::State::Running);
   }
   else
   {
+    std::shared_ptr<const UICommon::GameFile> selection = m_game_list->GetSelectedGame();
     if (selection)
     {
       StartGame(selection->GetFilePath(), ScanForSecondDisc::Yes,
