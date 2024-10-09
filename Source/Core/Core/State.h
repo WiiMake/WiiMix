@@ -118,3 +118,6 @@ void UndoLoadState(Core::System& system);
 using AfterLoadCallbackFunc = std::function<void()>;
 void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback);
 }  // namespace State
+
+
+static bool safe_to_quit = true;

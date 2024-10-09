@@ -158,6 +158,12 @@ private:
   void StartGame(const std::vector<std::string>& paths,
                  std::unique_ptr<BootSessionData> boot_session_data = nullptr);
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
+  void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
+  void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
+  void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);
+  void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
+  void StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path);
+  void StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
 
