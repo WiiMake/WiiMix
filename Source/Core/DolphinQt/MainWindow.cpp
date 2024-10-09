@@ -1142,12 +1142,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   // If we're running, only start a new game once we've stopped the last.
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
-  {
-    
-
-    
-    StateSaveSlotAt(1);
-    
+  {    
     
     if(!RequestStop())
       return; 
@@ -1183,7 +1178,111 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
   
   //StateLoadSlotAt(1);
 
-  m_load_slot_on_start = 1;
+
+
+
+}
+
+
+
+void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path)
+{
+  StartWiiMixGame(BootParameters::GenerateFromFile(path.toStdString(), BootSessionData()), boot_path);
+}
+
+void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path)
+{
+  StartWiiMixGame(BootParameters::GenerateFromFile(path.toStdString(), BootSessionData()), boot_path, save_path);
+}
+
+void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path)
+{
+  StartWiiMixGame(BootParameters::GenerateFromFile(path, BootSessionData()), boot_path);
+}
+
+void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path, std::optional<std::string> save_path)
+{
+  StartWiiMixGame(BootParameters::GenerateFromFile(path, BootSessionData()), boot_path, save_path);
+}
+
+void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path)
+{
+  StartWiiMixGame(std::move(parameters), boot_path, std::string{});
+}
+
+
+void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path, std::optional<std::string> save_path)
+{
+  if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
+  {
+    if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
+    {
+      if (!NKitWarningDialog::ShowUnlessDisabled())
+        return;
+    }
+  }
+
+  parameters->boot_session_data.SetSavestateData(boot_path, DeleteSavestateAfterBoot::No);
+{
+  if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
+  {
+    if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
+    {
+      if (!NKitWarningDialog::ShowUnlessDisabled())
+        return;
+    }
+  }
+
+  parameters->boot_session_data.SetSavestateData(boot_path, DeleteSavestateAfterBoot::No);
+
+
+  // If we're running, only start a new game once we've stopped the last.
+  if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
+  {
+    
+
+    State::SaveAs(Core::System::GetInstance(), save_path.value()); // TODO add backup path if save_path is empty
+
+    while (safe_to_quit == false)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    
+    
+    ForceStop();
+
+
+
+    // As long as the shutdown isn't complete, we can't boot, so let's boot later
+    m_pending_boot = std::move(parameters);
+    return;
+  }
+
+  // We need the render widget before booting.
+  ShowRenderWidget();
+
+
+
+  // Boot up, show an error if it fails to load the game.
+  if (!BootManager::BootCore(Core::System::GetInstance(), std::move(parameters),
+                             ::GetWindowSystemInfo(m_render_widget->windowHandle())))
+  {
+    ModalMessageBox::critical(this, tr("Error"), tr("Failed to init core"), QMessageBox::Ok);
+    HideRenderWidget();
+    return;
+  }
+
+#ifdef USE_DISCORD_PRESENCE
+  if (!NetPlay::IsNetPlayRunning())
+    Discord::UpdateDiscordPresence();
+#endif
+
+  if (Config::Get(Config::MAIN_FULLSCREEN))
+    m_fullscreen_requested = true;
+
+  
+  
+  //StateLoadSlotAt(1);
+
+  //m_load_slot_on_start = 1;
 
 
 
