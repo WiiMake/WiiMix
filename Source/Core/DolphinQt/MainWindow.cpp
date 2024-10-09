@@ -615,7 +615,7 @@ void MainWindow::ConnectMenuBar()
 
 void MainWindow::ConnectHotkeys()
 {
-  connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::ShowWiiMixWindow);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::WiiMix);
   connect(m_hotkey_scheduler, &HotkeyScheduler::Open, this, &MainWindow::Open);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ChangeDisc, this, &MainWindow::ChangeDisc);
   connect(m_hotkey_scheduler, &HotkeyScheduler::EjectDisc, this, &MainWindow::EjectDisc);
@@ -694,7 +694,7 @@ void MainWindow::ConnectToolBar()
 {
   addToolBar(m_tool_bar);
 
-  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::ShowWiiMixWindow);
+  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::WiiMix);
   connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
   connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
 
@@ -835,9 +835,9 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
-// Displays a selection window
+// TODO: Implement ShowWiiMixWindow
 void MainWindow::ShowWiiMixWindow() {
-  m_wiimix_window = NULL; // TODO
+  m_wiimix_window = nullptr; // TODO
   return;
 }
 
