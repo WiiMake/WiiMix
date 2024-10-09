@@ -51,6 +51,7 @@ class SkylanderPortalWindow;
 class ThreadWidget;
 class ToolBar;
 class WatchWidget;
+class WiiMixWindow;
 class WiiTASInputWindow;
 struct WindowSystemInfo;
 
@@ -88,9 +89,8 @@ signals:
   void RecordingStatusChanged(bool recording);
 
 private:
-  void WiiMix();
+  void ShowWiiMixWindow();
   void Open();
-  void ToggleWiiMix(const QModelIndex &index);
   void RefreshGameList();
   void Play(const std::optional<std::string>& savestate_path = {});
   void Pause();
@@ -244,6 +244,7 @@ private:
   u32 m_state_slot = 1;
   std::unique_ptr<BootParameters> m_pending_boot;
 
+  WiiMixWindow* m_wiimix_window = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;
