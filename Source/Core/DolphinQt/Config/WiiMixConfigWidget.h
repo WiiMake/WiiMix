@@ -15,11 +15,6 @@ class QComboBox;
 class QHBoxLayout;
 class QGroupBox;
 
-namespace Core
-{
-enum class State;
-}
-
 class WiiMixConfigWidget final : public QWidget
 {
   Q_OBJECT

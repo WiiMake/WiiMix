@@ -615,7 +615,7 @@ void MainWindow::ConnectMenuBar()
 
 void MainWindow::ConnectHotkeys()
 {
-  connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::WiiMix);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::ShowWiiMixWindow);
   connect(m_hotkey_scheduler, &HotkeyScheduler::Open, this, &MainWindow::Open);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ChangeDisc, this, &MainWindow::ChangeDisc);
   connect(m_hotkey_scheduler, &HotkeyScheduler::EjectDisc, this, &MainWindow::EjectDisc);
@@ -694,7 +694,7 @@ void MainWindow::ConnectToolBar()
 {
   addToolBar(m_tool_bar);
 
-  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::WiiMix);
+  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::ShowWiiMixWindow);
   connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
   connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
 
@@ -837,6 +837,11 @@ void MainWindow::OpenUserFolder()
 
 // TODO: Implement ShowWiiMixWindow
 void MainWindow::ShowWiiMixWindow() {
+  // Pause the current wiimix if the wiimix button is pressed
+  if (Core::GetState(Core::System::GetInstance()) == Core::State::Running)
+  {
+    Core::SetState(Core::System::GetInstance(), Core::State::Paused);
+  }
   m_wiimix_window = nullptr; // TODO
   return;
 }
@@ -1223,7 +1228,6 @@ void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, s
   }
 
   parameters->boot_session_data.SetSavestateData(boot_path, DeleteSavestateAfterBoot::No);
-{
   if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
   {
     if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
