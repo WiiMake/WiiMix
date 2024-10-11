@@ -7,7 +7,7 @@
 #include <QSlider>
 #include <QCheckBox>
 #include <QLabel>
-#include <Core/DolphinQt/Config/WiiMixModesWidget.h>
+#include "DolphinQt/WiiMix/Settings.h"
 
 #include <array>
 
@@ -20,14 +20,8 @@ class WiiMixConfigWidget final : public QWidget
   Q_OBJECT
 public:
   explicit WiiMixConfigWidget(QWidget* parent);
-  enum Difficulty {
-    EASY,
-    NORMAL,
-    HARD,
-    WIISANITY
-  };
 
-  void CreateLayout(WiiMixModesWidget::Mode mode);
+  void CreateLayout(WiiMixSettings::Mode mode = WiiMixSettings::Mode::END);
   void ConnectWidgets();
 
   QGroupBox* m_config_box;

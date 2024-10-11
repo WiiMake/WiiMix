@@ -51,7 +51,7 @@ class SkylanderPortalWindow;
 class ThreadWidget;
 class ToolBar;
 class WatchWidget;
-class WiiMixWindow;
+class WiiMixSettingsWindow;
 class WiiTASInputWindow;
 struct WindowSystemInfo;
 
@@ -133,6 +133,7 @@ private:
   void ConnectGameList();
   void ConnectHost();
   void ConnectHotkeys();
+  void ConnectWiiMix();
   void ConnectMenuBar();
   void ConnectRenderWidget();
   void ConnectStack();
@@ -158,10 +159,11 @@ private:
   void StartGame(const std::vector<std::string>& paths,
                  std::unique_ptr<BootSessionData> boot_session_data = nullptr);
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
-  void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
-  void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
-  void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);
-  void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
+  void StartWiiMix(); // TODO
+  void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
+  void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
+  void StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);
+  void StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path);
   void StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void ShowRenderWidget();
@@ -250,7 +252,7 @@ private:
   u32 m_state_slot = 1;
   std::unique_ptr<BootParameters> m_pending_boot;
 
-  WiiMixWindow* m_wiimix_window = nullptr;
+  WiiMixSettingsWindow* m_wiimix_window = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;

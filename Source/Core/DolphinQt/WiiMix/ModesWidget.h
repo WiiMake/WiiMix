@@ -4,10 +4,13 @@
 #pragma once
 
 #include <QWidget>
+#include <QIcon>
+#include <QString>
 
 #include <array>
 
-class QComboBox;
+class QIcon;
+class QString;
 class QHBoxLayout;
 class QGroupBox;
 
@@ -16,11 +19,6 @@ class WiiMixModesWidget final : public QWidget
   Q_OBJECT
 public:
   explicit WiiMixModesWidget(QWidget* parent);
-  enum Mode {
-    BINGO, // Sub-modes: lockout, capture the flag
-    SHUFFLE, // Sub-modes: race
-    ROGUE
-  };
 
 private:
   void CreateLayout();

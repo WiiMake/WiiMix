@@ -224,9 +224,9 @@ void MenuBar::AddFileMenu()
 {
   QMenu* file_menu = addMenu(tr("&File"));
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-  m_open_action = file_menu->addAction(tr("&WiiMix"), QKeySequence::Open, this, &MenuBar::Open);
+  m_open_action = file_menu->addAction(tr("&WiiMix"), QKeySequence::Open, this, &MenuBar::WiiMix);
 #else
-  m_open_action = file_menu->addAction(tr("&WiiMix"), this, &MenuBar::Open, QKeySequence::Open);
+  m_open_action = file_menu->addAction(tr("&WiiMix"), this, &MenuBar::WiiMix, QKeySequence::Open);
 #endif
 
   file_menu->addSeparator();

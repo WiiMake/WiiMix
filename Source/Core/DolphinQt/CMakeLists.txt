@@ -324,6 +324,26 @@ add_executable(dolphin-emu
   QtUtils/WindowActivationEventFilter.h
   QtUtils/WrapInScrollArea.cpp
   QtUtils/WrapInScrollArea.h
+  WiiMix/BingoLobbyWidget.cpp
+  WiiMix/BingoLobbyWidget.h
+  WiiMix/BingoNetplay.cpp
+  WiiMix/BingoNetplay.h
+  WiiMix/BingoSettings.cpp
+  WiiMix/BingoSettings.h
+  WiiMix/ConfigWidget.cpp
+  WiiMix/ConfigWidget.h
+  WiiMix/ModesWidget.cpp
+  WiiMix/ModesWidget.h
+  WiiMix/Objective.cpp
+  WiiMix/Objective.h
+  WiiMix/RogueSettings.cpp
+  WiiMix/RogueSettings.h
+  WiiMix/Settings.cpp
+  WiiMix/Settings.h
+  WiiMix/SettingsWindow.cpp
+  WiiMix/SettingsWindow.h
+  WiiMix/ShuffleSettings.cpp
+  WiiMix/ShuffleSettings.h
   RenderWidget.cpp
   RenderWidget.h
   ResourcePackManager.cpp

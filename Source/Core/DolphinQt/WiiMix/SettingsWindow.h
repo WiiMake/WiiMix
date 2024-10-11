@@ -4,30 +4,37 @@
 #pragma once
 
 #include <QDialog>
+#include "DolphinQt/WiiMix/Settings.h"
 
 class WiiMixModesWidget;
 class WiiMixConfigWidget;
 class QDialogButtonBox;
 class QShowEvent;
 
-class WiiMixWindow final : public QDialog
+class WiiMixSettingsWindow final : public QDialog
 {
   Q_OBJECT
 public:
-  explicit WiiMixWindow(QWidget* parent);
+  explicit WiiMixSettingsWindow(QWidget* parent);
+
+signals:
+  void StartWiiMix(); // TODO: maybe add a settings parameter? I'll come back to that as well
 
 protected:
   void showEvent(QShowEvent* event) override;
 
 private:
-  void LoadSettings(Core::State state);
+  void LoadSettings();
   void SaveSettings();
 
   void CreateMainLayout();
   void ConnectWidgets();
 
-  QDialogButtonBox* m_load_button_box;
-  QDialogButtonBox* m_save_button_box;
+  // QDialogButtonBox* m_load_button_box;
+  // QDialogButtonBox* m_save_button_box;
+  WiiMixSettings m_settings;
+  QPushButton* m_load_button_box;
+  QPushButton* m_save_button_box;
   QPushButton* m_wii_mix_button;
 
   WiiMixModesWidget *m_modes;

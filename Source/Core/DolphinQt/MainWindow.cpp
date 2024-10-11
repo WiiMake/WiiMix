@@ -126,6 +126,8 @@
 #include "DolphinQt/TAS/WiiTASInputWindow.h"
 #include "DolphinQt/ToolBar.h"
 #include "DolphinQt/WiiUpdate.h"
+#include "DolphinQt/WiiMix/SettingsWindow.h"
+
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -523,6 +525,11 @@ void MainWindow::CreateComponents()
   connect(m_cheats_manager, &CheatsManager::RequestWatch, request_watch);
 }
 
+void MainWindow::ConnectWiiMix() {
+  // Starts the wiimix
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMix, this, &MainWindow::StartWiiMix);
+}
+
 void MainWindow::ConnectMenuBar()
 {
   setMenuBar(m_menu_bar);
@@ -835,6 +842,11 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
+// TODO: implement StartWiiMix
+void MainWindow::StartWiiMix() {
+  // Not sure what exactly to pass as parameters yet
+}
+
 // TODO: Implement ShowWiiMixWindow
 void MainWindow::ShowWiiMixWindow() {
   // Pause the current wiimix if the wiimix button is pressed
@@ -842,7 +854,14 @@ void MainWindow::ShowWiiMixWindow() {
   {
     Core::SetState(Core::System::GetInstance(), Core::State::Paused);
   }
-  m_wiimix_window = nullptr; // TODO
+  // Create the window if it doesn't exist
+  if (!m_wiimix_window) {
+    m_wiimix_window = new WiiMixSettingsWindow(this);
+  }
+  SetQWidgetWindowDecorations(m_settings_window);
+  m_wiimix_window->show();
+  m_wiimix_window->raise();
+  m_wiimix_window->activateWindow();
   return;
 }
 
@@ -1178,17 +1197,9 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   if (Config::Get(Config::MAIN_FULLSCREEN))
     m_fullscreen_requested = true;
-
-  
-  
+    
   //StateLoadSlotAt(1);
-
-
-
-
 }
-
-
 
 void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path)
 {
