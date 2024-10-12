@@ -19,7 +19,12 @@ void WiiMixModesWidget::CreateLayout() {
     m_mode_box->setLayout(m_mode_layout);
     m_mode_selectors = {};
     for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
-        m_mode_selectors[i] = new QVBoxLayout();
+        QFrame* frame = new QFrame();
+        frame->setFrameShape(QFrame::StyledPanel);
+        frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
+        frame->setCursor(Qt::PointingHandCursor);
+        frame->installEventFilter(this); // To capture mouse events
+        m_mode_selectors[i] = frame;
     }
 
     // Create selectors
@@ -61,20 +66,14 @@ void WiiMixModesWidget::CreateLayout() {
         description->setAlignment(Qt::AlignHCenter);
 
         // Create a QFrame for the selector
-        QFrame* mode_selector_frame = new QFrame();
-        mode_selector_frame->setFrameShape(QFrame::StyledPanel);
-        mode_selector_frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
-        mode_selector_frame->setCursor(Qt::PointingHandCursor);
-        mode_selector_frame->installEventFilter(this); // To capture mouse events
-
         QVBoxLayout* layout = new QVBoxLayout();
         layout->addWidget(title);
         layout->addWidget(iconLabel, 0);
         layout->addWidget(description, 1);
 
-        mode_selector_frame->setLayout(layout);
+        m_mode_selectors[i]->setLayout(layout);
 
-        m_mode_layout->addWidget(mode_selector_frame);
+        m_mode_layout->addWidget(m_mode_selectors[i]);
     }
 
     setLayout(m_mode_layout);
@@ -148,6 +147,11 @@ void WiiMixModesWidget::CreateLayout() {
 // }
 
 void WiiMixModesWidget::ConnectWidgets() {
-    // TODO: connect widgets here
+    // // Bingo
+    // connect(m_mode_selectors[0], &QFrame::, this, [this] { emit ModeChanged(); });
+    // // Shuffle
+    // connect(m_mode_selectors[1], &QFrame::clicked, this, [this] { emit ModeChanged(); });
+    // // Rogue
+    // connect(m_mode_selectors[2], &QFrame::clicked, this, [this] { emit ModeChanged(); });
     return;
 }

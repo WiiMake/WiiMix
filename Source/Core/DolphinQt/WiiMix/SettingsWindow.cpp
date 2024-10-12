@@ -66,7 +66,10 @@ void WiiMixSettingsWindow::CreateMainLayout()
 
 void WiiMixSettingsWindow::ConnectWidgets()
 {
-    connect(m_wii_mix_button, &QPushButton::clicked, this, [=, this]() { emit StartWiiMix(); }); // Start WiiMix
+    connect(m_modes, &WiiMixModesWidget::ModeSelected, m_config, &WiiMixConfigWidget::CreateLayout);
+    connect(m_wii_mix_button, &QPushButton::clicked, this, [this] { 
+      emit StartWiiMix(m_settings);
+    }); // Start WiiMix
     connect(m_load_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::LoadSettings);
     connect(m_save_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::SaveSettings);
     return;

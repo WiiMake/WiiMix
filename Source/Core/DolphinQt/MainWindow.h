@@ -159,7 +159,7 @@ private:
   void StartGame(const std::vector<std::string>& paths,
                  std::unique_ptr<BootSessionData> boot_session_data = nullptr);
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
-  void StartWiiMix(); // TODO
+  void StartWiiMix(WiiMixSettings settings);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);

@@ -20,11 +20,14 @@ class WiiMixModesWidget final : public QWidget
 public:
   explicit WiiMixModesWidget(QWidget* parent);
 
+signals:
+  void ModeChanged(WiiMixSettings::Mode mode);
+
 private:
   void CreateLayout();
   void ConnectWidgets();
 
   QGroupBox* m_mode_box;
   QHBoxLayout* m_mode_layout;
-  std::array<QLayout*, 3> m_mode_selectors;
+  std::array<QFrame*, 3> m_mode_selectors;
 };

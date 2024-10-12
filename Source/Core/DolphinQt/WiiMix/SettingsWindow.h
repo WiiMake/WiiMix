@@ -18,7 +18,7 @@ public:
   explicit WiiMixSettingsWindow(QWidget* parent);
 
 signals:
-  void StartWiiMix(); // TODO: maybe add a settings parameter? I'll come back to that as well
+  void StartWiiMix(WiiMixSettings settings);
 
 protected:
   void showEvent(QShowEvent* event) override;

@@ -842,12 +842,10 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
-// TODO: implement StartWiiMix
-void MainWindow::StartWiiMix() {
-  // Not sure what exactly to pass as parameters yet
+void MainWindow::StartWiiMix(WiiMixSettings settings) {
+  // Start the wiimix
 }
 
-// TODO: Implement ShowWiiMixWindow
 void MainWindow::ShowWiiMixWindow() {
   // Pause the current wiimix if the wiimix button is pressed
   if (Core::GetState(Core::System::GetInstance()) == Core::State::Running)
@@ -862,6 +860,7 @@ void MainWindow::ShowWiiMixWindow() {
   m_wiimix_window->show();
   m_wiimix_window->raise();
   m_wiimix_window->activateWindow();
+  ConnectWiiMix();
   return;
 }
 

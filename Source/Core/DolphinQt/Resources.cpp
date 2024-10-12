@@ -88,6 +88,10 @@ QIcon Resources::GetThemeIcon(std::string_view name)
 
 void Resources::Init()
 {
+  // for (int i = 0; i < static_cast<int>(QImageReader::supportedImageFormats().size()); i++)
+  // {
+  //   qDebug() << "Supported image format:" << QImageReader::supportedImageFormats()[i];
+  // }
   m_svg_supported = QImageReader::supportedImageFormats().contains("svg");
 
   for (std::string_view platform :
