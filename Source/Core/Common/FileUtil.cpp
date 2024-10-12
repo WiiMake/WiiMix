@@ -860,6 +860,7 @@ static void RebuildUserDirectories(unsigned int dir_index)
         s_user_paths[D_CACHE_IDX] + RETROACHIEVEMENTSCACHE_DIR DIR_SEP;
     s_user_paths[D_SHADERS_IDX] = s_user_paths[D_USER_IDX] + SHADERS_DIR DIR_SEP;
     s_user_paths[D_STATESAVES_IDX] = s_user_paths[D_USER_IDX] + STATESAVES_DIR DIR_SEP;
+    s_user_paths[D_WIIMIX_STATESAVES_IDX] = s_user_paths[D_USER_IDX] + WIIMIX_STATESAVES_DIR DIR_SEP;
     s_user_paths[D_SCREENSHOTS_IDX] = s_user_paths[D_USER_IDX] + SCREENSHOTS_DIR DIR_SEP;
     s_user_paths[D_LOAD_IDX] = s_user_paths[D_USER_IDX] + LOAD_DIR DIR_SEP;
     s_user_paths[D_HIRESTEXTURES_IDX] = s_user_paths[D_LOAD_IDX] + HIRES_TEXTURES_DIR DIR_SEP;

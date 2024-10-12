@@ -527,7 +527,9 @@ void MainWindow::CreateComponents()
 
 void MainWindow::ConnectWiiMix() {
   // Starts the wiimix
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMix, this, &MainWindow::StartWiiMix);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::StartWiiMixBingo);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::StartWiiMixRogue);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::StartWiiMixShuffle);
 }
 
 void MainWindow::ConnectMenuBar()
@@ -842,8 +844,19 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
-void MainWindow::StartWiiMix(WiiMixSettings settings) {
+void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings) {
   // Start the wiimix
+  qDebug() << "Bingo calls";
+}
+
+void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
+  // Start the wiimix
+  qDebug() << "Rogue calls";
+}
+
+void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
+  // Start the wiimix
+  qDebug() << "Shuffle calls";
 }
 
 void MainWindow::ShowWiiMixWindow() {

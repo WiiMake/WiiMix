@@ -5,6 +5,10 @@
 
 #include <QDialog>
 #include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/RogueSettings.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
+
 
 class WiiMixModesWidget;
 class WiiMixConfigWidget;
@@ -16,9 +20,13 @@ class WiiMixSettingsWindow final : public QDialog
   Q_OBJECT
 public:
   explicit WiiMixSettingsWindow(QWidget* parent);
+  void CreateLayout(WiiMixSettings::Mode mode);
+  void ClearLayout(QLayout *layout);
 
 signals:
-  void StartWiiMix(WiiMixSettings settings);
+  void StartWiiMixBingo(WiiMixBingoSettings settings);
+  void StartWiiMixRogue(WiiMixRogueSettings settings);
+  void StartWiiMixShuffle(WiiMixShuffleSettings settings);
 
 protected:
   void showEvent(QShowEvent* event) override;

@@ -12,6 +12,9 @@
 #include <string>
 
 #include "Core/Boot/Boot.h"
+#include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/RogueSettings.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
 
 class QMenu;
 class QStackedWidget;
@@ -159,7 +162,9 @@ private:
   void StartGame(const std::vector<std::string>& paths,
                  std::unique_ptr<BootSessionData> boot_session_data = nullptr);
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
-  void StartWiiMix(WiiMixSettings settings);
+  void StartWiiMixBingo(WiiMixBingoSettings settings);
+  void StartWiiMixRogue(WiiMixRogueSettings settings);
+  void StartWiiMixShuffle(WiiMixShuffleSettings settings);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);

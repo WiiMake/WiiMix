@@ -8,8 +8,8 @@
 class WiiMixRogueSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixRogueSettings();
-  enum Items {
+  explicit WiiMixRogueSettings(const WiiMixSettings& settings);
+  enum class Items {
     CANCEL_EFFECT, // Can be used before the final challenge; MUST be used BEFORE starting a round
     SWAP_OBJECTIVE, // Used to replace an objective with a different one
     EXTRA_TIME, // Used automatically if you run out of time; gives you 15 extra seconds
@@ -24,7 +24,7 @@ public:
   // The final challenge is a survival shuffle round between 10 states marked as survival with save state manipulation,
   // pausing and playing, and speedup and slowdown
   // but if you survive for 100 seconds the next load will fail and you'll win
-  enum Events {
+  enum class Events {
     GET_ITEM,
     LIMITED_A_BUTTON,
     LIMITED_B_BUTTON,

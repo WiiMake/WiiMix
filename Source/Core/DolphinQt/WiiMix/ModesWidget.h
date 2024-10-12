@@ -6,8 +6,11 @@
 #include <QWidget>
 #include <QIcon>
 #include <QString>
+#include <QFrame>
 
 #include <array>
+#include "DolphinQt/WiiMix/Settings.h"
+
 
 class QIcon;
 class QString;
@@ -24,6 +27,7 @@ signals:
   void ModeChanged(WiiMixSettings::Mode mode);
 
 private:
+  bool eventFilter(QObject* obj, QEvent* event) override;
   void CreateLayout();
   void ConnectWidgets();
 

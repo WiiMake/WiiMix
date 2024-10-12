@@ -8,11 +8,11 @@
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixBingoSettings();
-  bool GetLockout();
+  explicit WiiMixBingoSettings(const WiiMixSettings& settings, bool is_lockout = false, int card_size = 25);
+  bool GetLockout() const;
   void SetLockout(bool value);
   // Options are 3x3, 5x5, 7x7, but they correspond to 9, 25, 49
-  int GetCardSize();
+  int GetCardSize() const;
   void SetCardSize(int value);
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions

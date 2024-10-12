@@ -7,6 +7,9 @@
 #include <QSlider>
 #include <QCheckBox>
 #include <QLabel>
+#include <QString>
+#include <QLineEdit>
+#include <QRadioButton>
 #include "DolphinQt/WiiMix/Settings.h"
 
 #include <array>
@@ -15,7 +18,7 @@ class QComboBox;
 class QHBoxLayout;
 class QGroupBox;
 
-class WiiMixConfigWidget final : public QWidget
+class WiiMixConfigWidget final : public QDialog
 {
   Q_OBJECT
 public:
@@ -24,15 +27,30 @@ public:
   void CreateLayout(WiiMixSettings::Mode mode = WiiMixSettings::Mode::END);
   void ConnectWidgets();
 
+  int GetMinTimeBetweenSwitch() const;
+  int GetMaxTimeBetweenSwitch() const;
+  QString GetDifficulty() const;
+  QString GetSaveStateBank() const;
+  int GetNumSwitches() const;
+  bool GetEndless() const;
+  bool GetIsLockout() const;
+  QString GetCardSize() const;
+
+private:
   QGroupBox* m_config_box;
   // num objectives (shuffle) - size of bingo card (bingo) - num stages in rogue (rogue)
-  QComboBox* m_objectives;
-  // shuffle time TODO: need a custom slider to show values
-  QSlider* m_shuffle_time;
+  // QComboBox* m_objectives;
+  // shuffle time
+  QSlider* m_min_time_between_switch;
+  QSlider* m_max_time_between_switch;
   // Difficulty
-  QLabel* m_difficulty;
+  QComboBox* m_difficulty;
   // Time (maybe I make this an estimate at the bottom rather than a parameter)
-  QLabel* m_time;
-  // unverified save states (checkbox for all rounds)
-  QCheckBox* m_unverified;
+  // QLabel* m_time;
+  QComboBox* m_save_state_bank;
+  QLineEdit* m_num_switches;
+  QCheckBox* m_endless_mode;
+  QRadioButton* m_bingo_button;
+  QRadioButton* m_lockout_button;
+  QComboBox* m_card_size;
 };

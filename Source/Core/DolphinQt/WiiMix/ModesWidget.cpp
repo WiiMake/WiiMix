@@ -121,37 +121,31 @@ void WiiMixModesWidget::CreateLayout() {
     // setLayout(m_mode_layout);
 }
 
-// bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
-//     if (event->type() == QEvent::MouseButtonPress) {
-//         QFrame* frame = qobject_cast<QFrame*>(obj);
-//         if (frame) {
-//             // Deselect all other frames
-//             for (int i = 0; i < WiiMixSettings::Mode::END; i++) {
-//                 QFrame* other_frame = qobject_cast<QFrame*>(m_mode_layout->itemAt(i)->widget());
-//                 if (other_frame) {
-//                     other_frame->setStyleSheet("QFrame { border: 2px solid transparent; }");
-//                 }
-//             }
+bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
+    if (event->type() == QEvent::MouseButtonPress) {
+        QFrame* frame = qobject_cast<QFrame*>(obj);
+        if (frame) {
+            // Deselect all other frames
+            for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
+                QFrame* other_frame = qobject_cast<QFrame*>(m_mode_layout->itemAt(i)->widget());
+                if (other_frame) {
+                    other_frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
+                }
+            }
 
-//             // Highlight the selected frame
-//             frame->setStyleSheet("QFrame { border: 2px solid blue; }");
+            // Highlight the selected frame
+            frame->setStyleSheet(QStringLiteral("QFrame { background-color: #E0E0E0; }"));
 
-//             // Trigger configuration update for this mode
-//             Mode selected_mode = static_cast<Mode>(m_mode_layout->indexOf(frame));
-//             emit ModeSelected(selected_mode);  // You would need to define this signal
+            // Trigger configuration update for this mode
+            WiiMixSettings::Mode selected_mode = static_cast<WiiMixSettings::Mode>(m_mode_layout->indexOf(frame));
+            emit WiiMixModesWidget::ModeChanged(selected_mode);
 
-//             return true;
-//         }
-//     }
-//     return QWidget::eventFilter(obj, event);
-// }
+            return true;
+        }
+    }
+    return QWidget::eventFilter(obj, event);
+}
 
 void WiiMixModesWidget::ConnectWidgets() {
-    // // Bingo
-    // connect(m_mode_selectors[0], &QFrame::, this, [this] { emit ModeChanged(); });
-    // // Shuffle
-    // connect(m_mode_selectors[1], &QFrame::clicked, this, [this] { emit ModeChanged(); });
-    // // Rogue
-    // connect(m_mode_selectors[2], &QFrame::clicked, this, [this] { emit ModeChanged(); });
     return;
 }
