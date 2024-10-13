@@ -13,6 +13,8 @@
 #include "Common/Config/Config.h"
 #include "DiscIO/Enums.h"
 
+#include "DolphinQt/WiiMix/Enums.h"
+
 // DSP Backend Types
 #define BACKEND_NULLSOUND _trans("No Audio Output")
 #define BACKEND_ALSA "ALSA"
@@ -356,6 +358,25 @@ void SetUSBDeviceWhitelist(const std::set<std::pair<u16, u16>>& devices);
 
 extern const Info<bool> MAIN_EMULATE_SKYLANDER_PORTAL;
 extern const Info<bool> MAIN_EMULATE_INFINITY_BASE;
+
+// WiiMix
+extern const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY;
+extern const Info<WiiMixEnums::Mode> WIIMIX_MODE;
+extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_SAVE_STATE_BANK;
+extern const Info<std::string> WIIMIX_OBJECTIVE_IDS;
+extern const Info<std::string> WIIMIX_GAME_IDS;
+
+// WiiMix (bingo)
+extern const Info<bool> WIIMIX_IS_LOCKOUT;
+extern const Info<int> WIIMIX_CARD_SIZE;
+
+// WiiMix (rogue)
+
+// WiiMix (shuffle)
+extern const Info<int> WIIMIX_NUMBER_OF_SWITCHES;
+extern const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH;
+extern const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH;
+extern const Info<bool> WIIMIX_IS_ENDLESS;
 
 // GameCube path utility functions
 

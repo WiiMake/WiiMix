@@ -7,13 +7,18 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include "Common/IniFile.h"
+
+#include "DolphinQt/QtUtils/WrapInScrollArea.h"
+#include "DolphinQt/QtUtils/DolphinFileDialog.h"
+#include "DolphinQt/Resources.h"
+#include "DolphinQt/Settings.h"
+#include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
-#include "DolphinQt/QtUtils/WrapInScrollArea.h"
-#include "DolphinQt/Resources.h"
 
 WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 {
@@ -60,7 +65,8 @@ void WiiMixSettingsWindow::CreateMainLayout()
 
   layout->addLayout(bottom_buttons);
 
-  WrapInScrollArea(this, layout);
+  // WrapInScrollArea(this, layout);
+  setLayout(layout);
   return;
 }
 
@@ -73,13 +79,13 @@ void WiiMixSettingsWindow::ConnectWidgets()
       if (m_config) {
         m_settings.SetDifficulty(WiiMixSettings::StringToDifficulty(m_config->GetDifficulty()));
         m_settings.SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
-        if (m_settings.GetMode() == WiiMixSettings::Mode::BINGO) {
+        if (m_settings.GetMode() == WiiMixEnums::Mode::BINGO) {
           WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(m_settings);
           bingo_settings.SetCardSize(WiiMixSettings::StringToCardSize(m_config->GetCardSize()));
           bingo_settings.SetLockout(m_config->GetIsLockout());
           emit StartWiiMixBingo(bingo_settings);
         }
-        else if (m_settings.GetMode() == WiiMixSettings::Mode::SHUFFLE) {
+        else if (m_settings.GetMode() == WiiMixEnums::Mode::SHUFFLE) {
           WiiMixShuffleSettings shuffle_settings = WiiMixShuffleSettings(m_settings);
           shuffle_settings.SetNumberOfSwitches(m_config->GetNumSwitches());
           shuffle_settings.SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
@@ -87,7 +93,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
           shuffle_settings.SetEndless(m_config->GetEndless());
           emit StartWiiMixShuffle(shuffle_settings);
         }
-        else if (m_settings.GetMode() == WiiMixSettings::Mode::ROGUE) {
+        else if (m_settings.GetMode() == WiiMixEnums::Mode::ROGUE) {
           WiiMixRogueSettings rogue_settings = WiiMixRogueSettings(m_settings);
           emit StartWiiMixRogue(rogue_settings);
         }
@@ -96,7 +102,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
     return;
 }
 
-void WiiMixSettingsWindow::CreateLayout(WiiMixSettings::Mode mode)
+void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
 {
   m_config = new WiiMixConfigWidget(this);
   m_settings.SetMode(mode);
@@ -114,9 +120,28 @@ void WiiMixSettingsWindow::CreateLayout(WiiMixSettings::Mode mode)
 
 // TODO
 void WiiMixSettingsWindow::LoadSettings() {
-  
+  // auto& settings = Settings::Instance().GetQSettings();
+  // QString path = DolphinFileDialog::getOpenFileName(
+  //     this, tr("Select a File"),
+  //     settings.value(QStringLiteral("mainwindow/lastdir"), QString{}).toString(),
+  //     QStringLiteral("%1 (*.ini)")
+  //         .arg(tr("Configuration file")));
+
+  // if (!path.isEmpty())
+  //   // Load the settings from the file
+  //   Settings::Instance().
+  //   return;
 }
 
+// TODO
 void WiiMixSettingsWindow::SaveSettings() {
+  // if (m_settings.GetObjectives().size() == 0) {
+    
+  // }
+  // // Creates games if it is currently empty
+  // if (m_settings.GetGamesList().size() == 0) {
+  //   for () {
 
+  //   }
+  // }
 }

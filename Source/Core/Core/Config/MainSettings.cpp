@@ -30,6 +30,8 @@
 #include "DiscIO/Enums.h"
 #include "VideoCommon/VideoBackendBase.h"
 
+#include "DolphinQt/WiiMix/Enums.h"
+
 namespace Config
 {
 // Main.Core
@@ -527,6 +529,26 @@ const Info<std::string> MAIN_BLUETOOTH_PASSTHROUGH_LINK_KEYS{
 
 const Info<std::string> MAIN_USB_PASSTHROUGH_DEVICES{{System::Main, "USBPassthrough", "Devices"},
                                                      ""};
+
+// WiiMix (base)
+const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY{{System::Main, "WiiMix", "Difficulty"}, DEFAULT_DIFFICULTY};
+const Info<WiiMixEnums::Mode> WIIMIX_MODE{{System::Main, "WiiMix", "Mode"}, DEFAULT_MODE};
+const Info<WiiMixEnums::SaveStateBank> WIIMIX_SAVE_STATE_BANK{{System::Main, "WiiMix", "SaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
+// Comma separated list of objective ids and game ids respectively that can be parsed into the desired information
+const Info<std::string> WIIMIX_OBJECTIVE_IDS{{System::Main, "WiiMix", "Objectives"}, ""};
+const Info<std::string> WIIMIX_GAME_IDS{{System::Main, "WiiMix", "Games"}, ""};
+
+// WiiMix (bingo)
+const Info<bool> WIIMIX_IS_LOCKOUT{{System::Main, "WiiMix", "IsLockout"}, DEFAULT_IS_LOCKOUT};
+const Info<int> WIIMIX_CARD_SIZE{{System::Main, "WiiMix", "CardSize"}, DEFAULT_CARD_SIZE};
+
+// WiiMix (rogue)
+
+// WiiMix (shuffle)
+const Info<int> WIIMIX_NUMBER_OF_SWITCHES{{System::Main, "WiiMix", "NumSwitches"}, DEFAULT_NUMBER_OF_SWITCHES};
+const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MinTimeBetweenSwitch"}, DEFAULT_MIN_SWITCH_TIME};
+const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MaxTimeBetweenSwitch"}, DEFAULT_MAX_SWITCH_TIME};
+const Info<bool> WIIMIX_IS_ENDLESS{{System::Main, "WiiMix", "IsEndless"}, DEFAULT_IS_ENDLESS};
 
 static std::set<std::pair<u16, u16>> LoadUSBWhitelistFromString(const std::string& devices_string)
 {

@@ -8,6 +8,7 @@ class WiiMixObjective
 public:
   explicit WiiMixObjective();
 
+  int GetObjectiveID();
   
 private:
 

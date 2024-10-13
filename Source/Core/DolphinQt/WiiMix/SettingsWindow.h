@@ -20,7 +20,7 @@ class WiiMixSettingsWindow final : public QDialog
   Q_OBJECT
 public:
   explicit WiiMixSettingsWindow(QWidget* parent);
-  void CreateLayout(WiiMixSettings::Mode mode);
+  void CreateLayout(WiiMixEnums::Mode mode);
   void ClearLayout(QLayout *layout);
 
 signals:

@@ -1,6 +1,7 @@
 // Copyright 2017 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Settings.h"
 
 #pragma once
@@ -8,7 +9,7 @@
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixBingoSettings(const WiiMixSettings& settings, bool is_lockout = false, int card_size = 25);
+  explicit WiiMixBingoSettings(const WiiMixSettings& settings, bool is_lockout = DEFAULT_IS_LOCKOUT, int card_size = DEFAULT_CARD_SIZE);
   bool GetLockout() const;
   void SetLockout(bool value);
   // Options are 3x3, 5x5, 7x7, but they correspond to 9, 25, 49

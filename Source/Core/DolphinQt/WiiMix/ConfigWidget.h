@@ -24,7 +24,7 @@ class WiiMixConfigWidget final : public QDialog
 public:
   explicit WiiMixConfigWidget(QWidget* parent);
 
-  void CreateLayout(WiiMixSettings::Mode mode = WiiMixSettings::Mode::END);
+  void CreateLayout(WiiMixEnums::Mode mode = WiiMixEnums::Mode::END);
   void ConnectWidgets();
 
   int GetMinTimeBetweenSwitch() const;
@@ -43,7 +43,7 @@ private:
   // shuffle time
   QSlider* m_min_time_between_switch;
   QSlider* m_max_time_between_switch;
-  // Difficulty
+  // WiiMixEnums::Difficulty
   QComboBox* m_difficulty;
   // Time (maybe I make this an estimate at the bottom rather than a parameter)
   // QLabel* m_time;

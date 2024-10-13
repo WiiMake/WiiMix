@@ -24,7 +24,7 @@ public:
   explicit WiiMixModesWidget(QWidget* parent);
 
 signals:
-  void ModeChanged(WiiMixSettings::Mode mode);
+  void ModeChanged(WiiMixEnums::Mode mode);
 
 private:
   bool eventFilter(QObject* obj, QEvent* event) override;

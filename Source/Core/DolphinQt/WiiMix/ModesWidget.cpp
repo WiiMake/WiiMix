@@ -18,7 +18,7 @@ void WiiMixModesWidget::CreateLayout() {
     m_mode_layout = new QHBoxLayout();
     m_mode_box->setLayout(m_mode_layout);
     m_mode_selectors = {};
-    for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
         QFrame* frame = new QFrame();
         frame->setFrameShape(QFrame::StyledPanel);
         frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
@@ -35,8 +35,8 @@ void WiiMixModesWidget::CreateLayout() {
     QFont descriptionFont = QFont();
     descriptionFont.setPointSize(16);
 
-    for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
-        QString titleText = WiiMixSettings::ModeToTitle(WiiMixSettings::Mode(i));
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
+        QString titleText = WiiMixSettings::ModeToTitle(WiiMixEnums::Mode(i));
         if (titleText == QStringLiteral("")) {
             continue;
         }
@@ -47,7 +47,7 @@ void WiiMixModesWidget::CreateLayout() {
         title->setAlignment(Qt::AlignHCenter);
 
         // Icon
-        QIcon icon = WiiMixSettings::ModeToIcon(WiiMixSettings::Mode(i));
+        QIcon icon = WiiMixSettings::ModeToIcon(WiiMixEnums::Mode(i));
         if (icon.isNull()) {
             continue;
         }
@@ -56,7 +56,7 @@ void WiiMixModesWidget::CreateLayout() {
         iconLabel->setAlignment(Qt::AlignHCenter);
 
         // Description
-        QString descriptionText = WiiMixSettings::ModeToDescription(WiiMixSettings::Mode(i));
+        QString descriptionText = WiiMixSettings::ModeToDescription(WiiMixEnums::Mode(i));
         if (descriptionText == QStringLiteral("")) {
             continue;
         }
@@ -78,9 +78,9 @@ void WiiMixModesWidget::CreateLayout() {
 
     setLayout(m_mode_layout);
 
-    // for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
-    //     qDebug() << "Creating layout for mode " << Mode(i);
-    //     QString titleText = WiiMixSettings::ModeToTitle(Mode(i));
+    // for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
+    //     qDebug() << "Creating layout for WiiMixEnums::Mode " << WiiMixEnums::Mode(i);
+    //     QString titleText = WiiMixSettings::ModeToTitle(WiiMixEnums::Mode(i));
     //     qDebug() << "TitleText: " << titleText;
     //     if (titleText == QStringLiteral("")) {
     //         continue;
@@ -89,7 +89,7 @@ void WiiMixModesWidget::CreateLayout() {
     //     title->setFont(titleFont);
     //     title->setAlignment(Qt::AlignHCenter);
 
-    //     QIcon icon = WiiMixSettings::ModeToIcon(Mode(i));
+    //     QIcon icon = WiiMixSettings::ModeToIcon(WiiMixEnums::Mode(i));
     //     if (icon.isNull()) {
     //         continue;
     //     }
@@ -97,7 +97,7 @@ void WiiMixModesWidget::CreateLayout() {
     //     iconLabel->setPixmap(icon.pixmap(32, 32)); // Adjust the size as needed
     //     iconLabel->setAlignment(Qt::AlignHCenter);
 
-    //     QString descriptionText = WiiMixSettings::ModeToDescription(Mode(i));
+    //     QString descriptionText = WiiMixSettings::ModeToDescription(WiiMixEnums::Mode(i));
     //     if (descriptionText == QStringLiteral("")) {
     //         continue;
     //     }
@@ -126,7 +126,7 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
         QFrame* frame = qobject_cast<QFrame*>(obj);
         if (frame) {
             // Deselect all other frames
-            for (int i = 0; i < static_cast<int>(WiiMixSettings::Mode::END); i++) {
+            for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
                 QFrame* other_frame = qobject_cast<QFrame*>(m_mode_layout->itemAt(i)->widget());
                 if (other_frame) {
                     other_frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
@@ -136,8 +136,8 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
             // Highlight the selected frame
             frame->setStyleSheet(QStringLiteral("QFrame { background-color: #E0E0E0; }"));
 
-            // Trigger configuration update for this mode
-            WiiMixSettings::Mode selected_mode = static_cast<WiiMixSettings::Mode>(m_mode_layout->indexOf(frame));
+            // Trigger configuration update for this WiiMixEnums::Mode
+            WiiMixEnums::Mode selected_mode = static_cast<WiiMixEnums::Mode>(m_mode_layout->indexOf(frame));
             emit WiiMixModesWidget::ModeChanged(selected_mode);
 
             return true;

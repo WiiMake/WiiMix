@@ -6,57 +6,19 @@
 #include <QString>
 #include <QIcon>
 
+#include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "UICommon/GameFile.h"
-
-#define MIN_SWITCH_TIME 15
-#define MAX_SWITCH_TIME 60
-#define MIN_NUM_OBJECTIVES 1
-#define MAX_NUM_OBJECTIVES 1000
 
 class WiiMixSettings 
 {
 public:
+  // cut int time = DEFAULT_TIME
+  explicit WiiMixSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::Mode mode = DEFAULT_MODE, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK, 
+    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<UICommon::GameFile> games = DEFAULT_GAMES);
 
-  enum class Difficulty {
-    NORMAL,
-    HARD,
-    WIISANITY,
-    END // Default/size value
-  };
-
-  static QString DifficultyToString(Difficulty difficulty);
-  static Difficulty StringToDifficulty(QString difficulty);
-
-  enum class Mode {
-    BINGO, // Sub-modes: lockout, capture the flag
-    SHUFFLE, // Sub-modes: race
-    ROGUE,
-    END, // Default/size value
-  };
-
-  static QString ModeToTitle(Mode mode);
-  static QIcon ModeToIcon(Mode mode);
-  static QString ModeToDescription(Mode mode);
-  static Mode StringToMode(QString mode);
-
-  enum class SaveStateBank {
-    USER,
-    VERIFIED,
-    UNVERIFIED,
-    END, // Default/size value
-  };
-
-  static QString SaveStateBankToString(SaveStateBank bank);
-  static SaveStateBank StringToSaveStateBank(QString bank);
-  
-  static int StringToCardSize(QString size);
-
-  explicit WiiMixSettings(Difficulty difficulty = Difficulty::NORMAL, Mode mode = Mode::BINGO, int time = 0, 
-    std::vector<WiiMixObjective> objectives = {}, std::vector<UICommon::GameFile> games = {});
-
-  void SetSaveStateBank(SaveStateBank bank);
-  void SetDifficulty(Difficulty difficulty);
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
+  void SetDifficulty(WiiMixEnums::Difficulty difficulty);
   // Time will be an optional parameter that the user can set in case they only have a certain amount of time
   // It will be taken into account when populating objectives
   // void SetTime(int time);
@@ -65,17 +27,33 @@ public:
   // then achievements for the game will not be used for the sake of stability.
   //   void SetVersion();
   //   void SetRegion();
-  void SetMode(Mode mode);
+  void SetMode(WiiMixEnums::Mode mode);
   void SetGamesList(std::vector<UICommon::GameFile> game_list);
   void AddGame(UICommon::GameFile game);
   void SetObjectives(std::vector<WiiMixObjective> objectives); // A list of objectives; bingo objectives are read from left to right on the bingo board
   void AddObjective(WiiMixObjective objective);
-  Mode GetMode();
-  Difficulty GetDifficulty();
+  WiiMixEnums::Mode GetMode();
+  WiiMixEnums::Difficulty GetDifficulty();
   // int GetTime();
-  SaveStateBank GetSaveStateBank();
+  WiiMixEnums::SaveStateBank GetSaveStateBank();
   std::vector<WiiMixObjective> GetObjectives();
   std::vector<UICommon::GameFile> GetGamesList();
+
+  static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
+  static WiiMixEnums::Difficulty StringToDifficulty(QString difficulty);
+
+  static QString ModeToTitle(WiiMixEnums::Mode mode);
+  static QIcon ModeToIcon(WiiMixEnums::Mode mode);
+  static QString ModeToDescription(WiiMixEnums::Mode mode);
+  static WiiMixEnums::Mode StringToMode(QString mode);
+
+  static QString SaveStateBankToString(WiiMixEnums::SaveStateBank bank);
+  static WiiMixEnums::SaveStateBank StringToSaveStateBank(QString bank);
+  
+  static int StringToCardSize(QString size);
+
+  static std::vector<UICommon::GameFile> GameIdsToGameFiles(std::string game_ids_list);
+  static std::vector<WiiMixObjective> ObjectiveIdsToObjectives(std::string objective_ids_list);
 
 private:
   // A NSMBW save state is 28.4MB; that's too big to use GitHub as a storage solution
@@ -85,9 +63,9 @@ private:
   // We'll probably upload two files; the save state, and associated json with each save state that stores parsable info
   // This info includes control scheme, so you don't have to swap between vertical and horizontal wii remotes or 
   // plug in a nunchuck during the middle of the match
-  SaveStateBank m_save_state_bank;
-  Difficulty m_difficulty;
-  Mode m_mode;
+  WiiMixEnums::SaveStateBank m_save_state_bank;
+  WiiMixEnums::Difficulty m_difficulty;
+  WiiMixEnums::Mode m_mode;
   std::vector<WiiMixObjective> m_objectives;
   std::vector<UICommon::GameFile> m_games;
   int m_time; // unused for now

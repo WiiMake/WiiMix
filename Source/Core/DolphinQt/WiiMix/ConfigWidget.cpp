@@ -10,8 +10,10 @@
 #include <QLineEdit>
 #include <QDialog>
 
+#include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/Settings.h"
 #include "DolphinQt/Resources.h"
 
@@ -19,11 +21,11 @@ WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
     ConnectWidgets();
 }
 
-void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
+void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
     // m_config_box = new QGroupBox(tr("Configuration"));
     QVBoxLayout* config_layout = new QVBoxLayout();
 
-    if (mode == WiiMixSettings::Mode::BINGO) {
+    if (mode == WiiMixEnums::Mode::BINGO) {
         m_bingo_button = new QRadioButton(tr("Bingo"));
         m_bingo_button->setEnabled(true);
         m_lockout_button = new QRadioButton(tr("Lockout"));
@@ -40,7 +42,7 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
         config_layout->addWidget(card_size_label);
         config_layout->addWidget(m_card_size);
     }
-    else if (mode == WiiMixSettings::Mode::SHUFFLE) {
+    else if (mode == WiiMixEnums::Mode::SHUFFLE) {
         QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
         QLabel* num_switches_label = new QLabel(tr("Number of Switches:"));
@@ -48,7 +50,7 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
         QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
         m_num_switches->setValidator(int_validator);
 
-        m_endless_mode = new QCheckBox(tr("Endless Mode"));
+        m_endless_mode = new QCheckBox(tr("Endless WiiMixEnums::Mode"));
 
         num_switches_layout->addWidget(m_num_switches);
         num_switches_layout->addWidget(m_endless_mode);
@@ -58,11 +60,11 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
 
         QLabel* min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
         m_min_time_between_switch = new QSlider(Qt::Horizontal);
-        m_min_time_between_switch->setRange(MIN_SWITCH_TIME, MAX_SWITCH_TIME);
+        m_min_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
         QLabel* max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
         m_max_time_between_switch = new QSlider(Qt::Horizontal);
-        m_max_time_between_switch->setRange(MIN_SWITCH_TIME, MAX_SWITCH_TIME);
-        m_max_time_between_switch->setValue(MAX_SWITCH_TIME);
+        m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
+        m_max_time_between_switch->setValue(DEFAULT_MAX_SWITCH_TIME);
         config_layout->addWidget(min_switch_time_label);
         config_layout->addWidget(m_min_time_between_switch);
         config_layout->addWidget(max_switch_time_label);
@@ -81,7 +83,7 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
             max_switch_time_label->setText(QStringLiteral("Max Time Between Switches: ") + QString::number(value));
         });
     }
-    else if (mode == WiiMixSettings::Mode::ROGUE) {
+    else if (mode == WiiMixEnums::Mode::ROGUE) {
         // QLabel* num_stages_label = new QLabel(tr("Number of Stages:"));
         // QLineEdit* m_num_stages = new QLineEdit();
         // QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
@@ -90,11 +92,11 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
         // config_layout->addWidget(m_num_stages);
     }
 
-    // Difficulty
-    QLabel* difficulty_label = new QLabel(tr("Objective Difficulty:"));
+    // WiiMixEnums::Difficulty
+    QLabel* difficulty_label = new QLabel(tr("Objective WiiMixEnums::Difficulty:"));
     m_difficulty = new QComboBox();
-    for (int i = 0; i < static_cast<int>(WiiMixSettings::Difficulty::END); i++) {
-        m_difficulty->addItem(WiiMixSettings::DifficultyToString(static_cast<WiiMixSettings::Difficulty>(i)));
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::Difficulty::END); i++) {
+        m_difficulty->addItem(WiiMixSettings::DifficultyToString(static_cast<WiiMixEnums::Difficulty>(i)));
     }
     config_layout->addWidget(difficulty_label);
     config_layout->addWidget(m_difficulty);
@@ -107,8 +109,8 @@ void WiiMixConfigWidget::CreateLayout(WiiMixSettings::Mode mode) {
 
     QLabel* save_state_label = new QLabel(tr("Save State Bank:"));
     m_save_state_bank = new QComboBox();
-    for (int i = 0; i < static_cast<int>(WiiMixSettings::SaveStateBank::END); i++) {
-        m_save_state_bank->addItem(WiiMixSettings::SaveStateBankToString(static_cast<WiiMixSettings::SaveStateBank>(i)));
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::SaveStateBank::END); i++) {
+        m_save_state_bank->addItem(WiiMixSettings::SaveStateBankToString(static_cast<WiiMixEnums::SaveStateBank>(i)));
     }
     config_layout->addWidget(save_state_label);
     config_layout->addWidget(m_save_state_bank);
