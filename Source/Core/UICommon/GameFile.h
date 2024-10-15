@@ -59,6 +59,7 @@ public:
   bool IsValid() const;
   bool GetWiiMix() const;
   void SetWiiMix(bool value);
+  static void GetGameFileById(std::string game_id, GameFile* gameRef);
   int GetObjectives() const { return m_objectives; }
   const std::string& GetFilePath() const { return m_file_path; }
   const std::string& GetFileName() const { return m_file_name; }

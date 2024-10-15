@@ -19,6 +19,9 @@ namespace UICommon
 {
 class GameFile;
 
+static const std::vector<std::string> search_extensions = {
+      ".gcm", ".tgc", ".iso", ".ciso", ".gcz", ".wbfs", ".wia",
+      ".rvz", ".nfs", ".wad", ".dol",  ".elf", ".json"};
 std::vector<std::string> FindAllGamePaths(const std::vector<std::string>& directories_to_scan,
                                           bool recursive_scan);
 

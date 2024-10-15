@@ -27,6 +27,7 @@ signals:
   void StartWiiMixBingo(WiiMixBingoSettings settings);
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
+  void ErrorLoadingSettings(QString error_message);
 
 protected:
   void showEvent(QShowEvent* event) override;

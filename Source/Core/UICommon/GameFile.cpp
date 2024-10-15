@@ -35,10 +35,13 @@
 #include "Common/StringUtil.h"
 #include "Common/Swap.h"
 
+#include "Core/Config/MainSettings.h"
 #include "Core/Config/UISettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/IOS/ES/Formats.h"
 #include "Core/TitleDatabase.h"
+
+#include "UICommon/GameFileCache.h"
 
 #include "DiscIO/Blob.h"
 #include "DiscIO/DiscExtractor.h"
@@ -46,6 +49,7 @@
 #include "DiscIO/GameModDescriptor.h"
 #include "DiscIO/Volume.h"
 #include "DiscIO/WiiSaveBanner.h"
+#include <iostream>
 
 namespace UICommon
 {
@@ -100,6 +104,25 @@ GameFile::LookupUsingConfigLanguage(const std::map<DiscIO::Language, std::string
 }
 
 GameFile::GameFile() = default;
+
+void GameFile::GetGameFileById(std::string id, GameFile* gameRef) {
+  // Search all the paths, checking each GameFile for an id until we find the matching Game
+  // If the matching game isn't found, an error is thrown
+  std::vector<std::string> paths = Config::GetIsoPaths();
+  for (const auto& path : paths) {
+    File::FSTEntry entries = File::ScanDirectoryTree(path, false);
+    for (const auto& entry : entries.children) {
+      // Check if a file has a valid file extension
+      // The file is a game, check if it has the same id as the one we're looking for
+      // TODO: this could be optimized by only checking the games id and avoiding loading the gamefile
+      GameFile game = GameFile(entry.physicalName);
+      if (game.GetGameID() == id) {
+        *gameRef = game;
+        return;
+      }
+    }
+  }
+}
 
 GameFile::GameFile(std::string path) : m_file_path(std::move(path))
 {

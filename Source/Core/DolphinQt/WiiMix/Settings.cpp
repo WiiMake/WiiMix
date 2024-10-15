@@ -117,19 +117,24 @@ int WiiMixSettings::StringToCardSize(QString size) {
     return num * num;
 }
 
-// TODO
 std::vector<UICommon::GameFile> WiiMixSettings::GameIdsToGameFiles(std::string game_ids_list) {
-    // std::vector<UICommon::GameFile> game_files;
-    // std::istringstream stream(game_ids_list);
-    // std::string game_id;
-    // while (std::getline(stream, game_id, ',')) {
-    //     UICommon::GameFile game_file = UICommon::GetGameFileById(game_id);
-    //     if (game_file.IsValid()) {
-    //         game_files.push_back(game_file);
-    //     }
-    // }
-    // return game_files;
-    return {};
+    std::vector<UICommon::GameFile> game_files;
+    std::istringstream stream(game_ids_list);
+    std::string game_id;
+    while (std::getline(stream, game_id, ',')) {
+        // TODOx: might be able to rework this by checking the game_id against the game config files
+        // It's unlikely that anyone would manually edit their config files to include a game that they don't have
+        UICommon::GameFile *game = new UICommon::GameFile();
+        UICommon::GameFile::GetGameFileById(game_id, game);
+        if (game->IsValid()) {
+            game_files.push_back(*game);
+        }
+        else {
+            // Error out if the game is not found
+            return {};
+        }
+    }
+    return game_files;
 }
 
 // TODO
@@ -145,6 +150,28 @@ std::vector<WiiMixObjective> WiiMixSettings::ObjectiveIdsToObjectives(std::strin
     // }
     // return objectives;
     return {};
+}
+
+std::string WiiMixSettings::GameFilesToGameIds(std::vector<UICommon::GameFile> games) {
+    std::string game_ids_list = "";
+    for (size_t i = 0; i < games.size(); ++i) {
+        game_ids_list += games[i].GetGameID();
+        if (i + 1 != games.size()) {
+            game_ids_list += ",";
+        }
+    }
+    return game_ids_list;
+}
+
+std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives) {
+    std::string objective_ids_list = "";
+    for (size_t i = 0; i < objectives.size(); ++i) {
+        objective_ids_list += objectives[i].GetObjectiveID();
+        if (i + 1 != objectives.size()) {
+            objective_ids_list += ",";
+        }
+    }
+    return objective_ids_list;
 }
 
 WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank, 
@@ -235,38 +262,28 @@ void WiiMixSettings::SetMode(WiiMixEnums::Mode mode) {
 
 void WiiMixSettings::SetGamesList(std::vector<UICommon::GameFile> game_list) {
     m_games = game_list;
-    std::string game_ids_list = "";
-    for (int i = 0; i < m_games.size(); i++) {
-        game_ids_list += m_games[i].GetGameID();
-        if (i + 1 != m_games.size()) {
-            game_ids_list += ",";
-        }
-    }
-    Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
+    Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(GameFilesToGameIds(m_games)));
 }
 
 void WiiMixSettings::AddGame(UICommon::GameFile game) {
     m_games.push_back(game);
     std::string game_ids_list = Config::Get(Config::WIIMIX_GAME_IDS);
+    if (!game_ids_list.empty())
+        game_ids_list += ", ";
     game_ids_list += game.GetGameID();
     Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
 }
 
 void WiiMixSettings::SetObjectives(std::vector<WiiMixObjective> objectives) {
     m_objectives = objectives;
-    std::string objective_ids_list = "";
-    for (int i = 0; i < m_objectives.size(); i++) {
-        objective_ids_list += m_objectives[i].GetObjectiveID();
-        if (i + 1 != m_objectives.size()) {
-            objective_ids_list += ",";
-        }
-    }
-    Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(objective_ids_list));
+    Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(ObjectivesToObjectiveIds(m_objectives)));
 }
 
 void WiiMixSettings::AddObjective(WiiMixObjective objective) {
     m_objectives.push_back(objective);
     std::string objective_ids_list = Config::Get(Config::WIIMIX_OBJECTIVE_IDS);
+    if (!objective_ids_list.empty())
+        objective_ids_list += ", ";
     objective_ids_list += objective.GetObjectiveID();
     Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(objective_ids_list));
 }

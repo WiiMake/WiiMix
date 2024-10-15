@@ -54,6 +54,8 @@ public:
 
   static std::vector<UICommon::GameFile> GameIdsToGameFiles(std::string game_ids_list);
   static std::vector<WiiMixObjective> ObjectiveIdsToObjectives(std::string objective_ids_list);
+  static std::string GameFilesToGameIds(std::vector<UICommon::GameFile> games);
+  static std::string ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives);
 
 private:
   // A NSMBW save state is 28.4MB; that's too big to use GitHub as a storage solution
