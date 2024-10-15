@@ -4,5 +4,9 @@
 
 - [x] Settings.cpp GameIdsToGameFiles and ObjectiveIdsToObjectives
 - [x] SettingsWindow.cpp LoadSettings()
-- [] SettingsWindow.cpp SaveSettings()
+- [x] SettingsWindow.cpp SaveSettings()
 - [x] Get it to compile (QDir include issue...)
+
+- [] Test some save and load configurations
+- [] Finish implementing shuffle (by Friday? Objectives...?)
+- [] Figure out how to run dolphins test cases/CI CD?
