@@ -31,8 +31,20 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         bool is_lockout = Config::Get(Config::WIIMIX_IS_LOCKOUT);
         m_bingo_button = new QRadioButton(tr("Bingo"));
         m_bingo_button->setChecked(!is_lockout);
+
+        connect(m_bingo_button, &QRadioButton::toggled, this, [this](bool checked) {
+            m_lockout_button->setChecked(!checked);
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, !checked);
+        });
+
         m_lockout_button = new QRadioButton(tr("Lockout"));
         m_lockout_button->setChecked(is_lockout);
+
+        connect(m_lockout_button, &QRadioButton::toggled, this, [this](bool checked) {
+            m_bingo_button->setChecked(!checked);
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, checked);
+        });
+
         QHBoxLayout* mode_layout = new QHBoxLayout();
         config_layout->addWidget(m_bingo_button);
         config_layout->addWidget(m_lockout_button);
@@ -54,6 +66,21 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         else if (card_size == 49) {
             m_card_size->setCurrentIndex(2);
         }
+
+        connect(m_card_size, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+            int card_size = 0;
+            if (index == 0) {
+                card_size = 9;
+            }
+            else if (index == 1) {
+                card_size = 25;
+            }
+            else if (index == 2) {
+                card_size = 49;
+            }
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, card_size);
+        });
+
         config_layout->addWidget(card_size_label);
         config_layout->addWidget(m_card_size);
     }
@@ -89,7 +116,13 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         config_layout->addWidget(max_switch_time_label);
         config_layout->addWidget(m_max_time_between_switch);
         
-        // TODOx: add connect statements for the rest of these to update the config accordingly for persistence
+        connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, text.toInt());
+        });
+
+        connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, checked);
+        });
 
         // Connect endless_mode to disable/enable number of switches
         connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
@@ -99,9 +132,11 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         // Connect slider value change to update the label
         connect(m_min_time_between_switch, &QSlider::valueChanged, this, [min_switch_time_label](int value) {
             min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(value));
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, value);
         });
         connect(m_max_time_between_switch, &QSlider::valueChanged, this, [max_switch_time_label](int value) {
             max_switch_time_label->setText(QStringLiteral("Max Time Between Switches: ") + QString::number(value));
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, value);
         });
     }
     else if (mode == WiiMixEnums::Mode::ROGUE) {
