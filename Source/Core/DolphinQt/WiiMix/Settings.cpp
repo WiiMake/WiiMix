@@ -5,6 +5,7 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/Settings.h"
 #include "DolphinQt/Resources.h"
+#include "Settings.h"
 
 QString WiiMixSettings::DifficultyToString(WiiMixEnums::Difficulty difficulty) {
     switch (difficulty)
@@ -64,7 +65,7 @@ QString WiiMixSettings::ModeToTitle(WiiMixEnums::Mode mode) {
         case WiiMixEnums::Mode::SHUFFLE:
             return QStringLiteral("Shuffle");
         case WiiMixEnums::Mode::ROGUE:
-            return QStringLiteral("Rogue");    
+            return QStringLiteral("Rogue");
         default:
             return QStringLiteral("");
     }
@@ -174,7 +175,7 @@ std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective
     return objective_ids_list;
 }
 
-WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank, 
+WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank,
     std::vector<WiiMixObjective> objectives, std::vector<UICommon::GameFile> games) {
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
     if (difficulty != DEFAULT_DIFFICULTY) {

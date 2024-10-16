@@ -162,6 +162,8 @@ private:
   void StartGame(const std::vector<std::string>& paths,
                  std::unique_ptr<BootSessionData> boot_session_data = nullptr);
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
+  void StartGame(std::unique_ptr<BootParameters>&& parameters,
+                 std::string save_path);
   void StartWiiMixBingo(WiiMixBingoSettings settings);
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);

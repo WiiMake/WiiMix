@@ -1165,7 +1165,11 @@ void MainWindow::StartGame(const std::vector<std::string>& paths,
       paths, boot_session_data ? std::move(*boot_session_data) : BootSessionData()));
 }
 
-void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
+void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters) {
+  StartGame(std::move(parameters), "");
+}
+
+void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::string save_path)
 {
   if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
   {
@@ -1178,10 +1182,14 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   // If we're running, only start a new game once we've stopped the last.
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
-  {    
-    
-    if(!RequestStop())
-      return; 
+  {
+
+    if (!save_path.empty())
+      State::SaveAs(Core::System::GetInstance(), save_path);
+
+    while (safe_to_quit == false)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    ForceStop();
 
 
 
@@ -1209,7 +1217,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   if (Config::Get(Config::MAIN_FULLSCREEN))
     m_fullscreen_requested = true;
-    
+
   //StateLoadSlotAt(1);
 }
 
@@ -1266,14 +1274,14 @@ void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, s
   // If we're running, only start a new game once we've stopped the last.
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
-    
+
 
     State::SaveAs(Core::System::GetInstance(), save_path.value()); // TODO add backup path if save_path is empty
 
     while (safe_to_quit == false)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-    
-    
+
+
     ForceStop();
 
 
@@ -1305,8 +1313,8 @@ void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, s
   if (Config::Get(Config::MAIN_FULLSCREEN))
     m_fullscreen_requested = true;
 
-  
-  
+
+
   //StateLoadSlotAt(1);
 
   //m_load_slot_on_start = 1;

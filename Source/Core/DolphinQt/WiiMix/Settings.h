@@ -10,11 +10,11 @@
 #include "DolphinQt/WiiMix/Objective.h"
 #include "UICommon/GameFile.h"
 
-class WiiMixSettings 
+class WiiMixSettings
 {
 public:
   // cut int time = DEFAULT_TIME
-  explicit WiiMixSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::Mode mode = DEFAULT_MODE, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK, 
+  explicit WiiMixSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::Mode mode = DEFAULT_MODE, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK,
     std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<UICommon::GameFile> games = DEFAULT_GAMES);
 
   void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
@@ -49,13 +49,14 @@ public:
 
   static QString SaveStateBankToString(WiiMixEnums::SaveStateBank bank);
   static WiiMixEnums::SaveStateBank StringToSaveStateBank(QString bank);
-  
+
   static int StringToCardSize(QString size);
 
   static std::vector<UICommon::GameFile> GameIdsToGameFiles(std::string game_ids_list);
   static std::vector<WiiMixObjective> ObjectiveIdsToObjectives(std::string objective_ids_list);
   static std::string GameFilesToGameIds(std::vector<UICommon::GameFile> games);
   static std::string ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives);
+  std::vector<UICommon::GameFile> GetGamesList();
 
 private:
   // A NSMBW save state is 28.4MB; that's too big to use GitHub as a storage solution
@@ -63,7 +64,7 @@ private:
   // will be used as a Save State Storage Solution (15GB free)
   // but if it ever needs to be scaled up, we can look into self-hosting or alternatives.
   // We'll probably upload two files; the save state, and associated json with each save state that stores parsable info
-  // This info includes control scheme, so you don't have to swap between vertical and horizontal wii remotes or 
+  // This info includes control scheme, so you don't have to swap between vertical and horizontal wii remotes or
   // plug in a nunchuck during the middle of the match
   WiiMixEnums::SaveStateBank m_save_state_bank;
   WiiMixEnums::Difficulty m_difficulty;
