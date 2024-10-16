@@ -167,6 +167,7 @@ private:
   void StartWiiMixBingo(WiiMixBingoSettings settings);
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
+  void WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path);
   void StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path);
   void StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path);

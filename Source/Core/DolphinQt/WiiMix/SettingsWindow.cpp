@@ -117,6 +117,13 @@ void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
   m_settings.SetMode(mode);
   m_config->CreateLayout(mode);
 
+  // TODOx REMOVE THIS ITS ONLY FOR TESTING
+  m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/NewSuperMarioBrosWii.wbfs"));
+  m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/Wii Sports (USA) (Rev 1).wbfs"));
+
+
+
+
   // Create a new window with the configuration options
   auto* config_window = new QDialog(this);
   config_window->setWindowTitle(tr("Configuration Options"));
@@ -258,7 +265,7 @@ void WiiMixSettingsWindow::LoadSettings() {
       Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, shuffle_settings.GetEndless());
     }
     // else if (m_settings.GetMode() == WiiMixEnums::Mode::ROGUE) {
-      
+
     // }
   }
 }
@@ -284,7 +291,7 @@ void WiiMixSettingsWindow::SaveSettings() {
         bool enabled = false;
         game_ini.GetSection("WiiMix")->Get("WiiMix", &enabled);
         if (enabled == true) {
-          UICommon::GameFile game; 
+          UICommon::GameFile game;
           // TODOx: GameFile::GetGameFileById(game_id, game) doesn't work
           UICommon::GameFile::GetGameFileById(game_id, &game);
           if (game.IsValid()) {
@@ -328,12 +335,12 @@ void WiiMixSettingsWindow::SaveSettings() {
 
     section->Set("SaveStateBank", WiiMixSettings::SaveStateBankToString(m_settings.GetSaveStateBank()).toStdString());
     Config::Set(Config::LayerType::Base, Config::WIIMIX_SAVE_STATE_BANK, m_settings.GetSaveStateBank());
-    
+
     if (m_settings.GetMode() == WiiMixEnums::Mode::BINGO) {
       WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(m_settings);
       section->Set("Lockout", bingo_settings.GetLockout());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, bingo_settings.GetLockout());
-      
+
       section->Set("CardSize", bingo_settings.GetCardSize());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, bingo_settings.GetCardSize());
     }
@@ -369,7 +376,7 @@ void WiiMixSettingsWindow::SaveSettings() {
   // Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH);
   // Config::Get(Config::WIIMIX_IS_ENDLESS);
   // if (m_settings.GetObjectives().size() == 0) {
-    
+
   // }
   // // Creates games if it is currently empty
   // if (m_settings.GetGamesList().size() == 0) {
@@ -379,4 +386,8 @@ void WiiMixSettingsWindow::SaveSettings() {
   // }
 
   // Save to ini file with the settings
+}
+
+std::vector<UICommon::GameFile> WiiMixSettingsWindow::GetGamesList() {
+  return m_settings.GetGamesList();
 }

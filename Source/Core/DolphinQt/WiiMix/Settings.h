@@ -37,7 +37,6 @@ public:
   // int GetTime();
   WiiMixEnums::SaveStateBank GetSaveStateBank();
   std::vector<WiiMixObjective> GetObjectives();
-  std::vector<UICommon::GameFile> GetGamesList();
 
   static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
   static WiiMixEnums::Difficulty StringToDifficulty(QString difficulty);

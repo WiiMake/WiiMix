@@ -857,6 +857,74 @@ void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
   // Start the wiimix
   qDebug() << "Shuffle calls";
+
+  // get the game list from wiimixsettings
+  std::vector<UICommon::GameFile> m_game_list = m_wiimix_window->GetGamesList();
+
+  // if game is running safely shut it down
+  if (Core::GetState(Core::System::GetInstance()) == Core::State::Running)
+  {
+    RequestStop();
+  }
+
+  if (m_game_list.empty()) {
+    // if no games are selected, show a message box
+    ModalMessageBox::critical(this, tr("Error"), tr("No games selected"));
+    return;
+  }
+
+  // get a random game from the list
+  UICommon::GameFile selection = m_game_list[rand() % m_game_list.size()];
+  UICommon::GameFile prev = selection;
+
+  qDebug() << "Starting game: " << selection.GetGameID().c_str();
+
+  //StartGame(selection.GetFilePath(), ScanForSecondDisc::No, std::make_unique<BootSessionData>());
+  StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
+                std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
+  qDebug() << "Started: " << selection.GetGameID().c_str();
+  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000) + settings.GetMinTimeBetweenSwitch() * 1000;
+  QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, m_game_list]() {
+    WiiMixShuffleUpdate(settings, selection, m_game_list);
+  });
+
+  // while (true) { // TODOx: need something to terminate
+  //   // sleep for a random time between min and max
+  //   QTime dieTime= QTime::currentTime().addMSecs(sleep_time);
+  //   while (QTime::currentTime() < dieTime)
+  //       QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+  //   prev = selection;
+  //   selection = m_game_list[rand() % m_game_list.size()];
+  //   // get savestate path D_WIIMIX_STATESAVES_IDX from get user path
+  //   std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+  //   BootSessionData boot_data;
+  //   if (File::Exists(savestate_path + prev.GetGameID() + ".sav")) {
+  //     boot_data = BootSessionData(savestate_path + prev.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+  //   } else {
+  //     boot_data = BootSessionData();
+  //   }
+  //   //StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
+  // }
+
+}
+
+void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
+  UICommon::GameFile prev = selection;
+  selection = gameList[rand() % gameList.size()];
+  // get savestate path D_WIIMIX_STATESAVES_IDX from get user path
+  std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+  BootSessionData boot_data;
+  if (File::Exists(savestate_path + prev.GetGameID() + ".sav")) {
+    boot_data = BootSessionData(savestate_path + prev.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+  } else {
+    boot_data = BootSessionData();
+  }
+  StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
+  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000) + settings.GetMinTimeBetweenSwitch() * 1000;
+  QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, gameList]() {
+    WiiMixShuffleUpdate(settings, selection, gameList);
+  });
+
 }
 
 void MainWindow::ShowWiiMixWindow() {
@@ -1184,11 +1252,11 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
 
-    if (!save_path.empty())
-      State::SaveAs(Core::System::GetInstance(), save_path);
+    if (!save_path.empty() && safe_to_quit == true)
+     State::SaveAs(Core::System::GetInstance(), save_path);
 
     while (safe_to_quit == false)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     ForceStop();
 
 

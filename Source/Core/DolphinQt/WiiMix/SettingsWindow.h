@@ -23,6 +23,8 @@ public:
   void CreateLayout(WiiMixEnums::Mode mode);
   void ClearLayout(QLayout *layout);
 
+  std::vector<UICommon::GameFile> GetGamesList();
+
 signals:
   void StartWiiMixBingo(WiiMixBingoSettings settings);
   void StartWiiMixRogue(WiiMixRogueSettings settings);
