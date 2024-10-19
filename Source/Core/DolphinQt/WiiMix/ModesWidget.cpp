@@ -4,9 +4,15 @@
 #include <QWidget>
 #include <QIcon>
 #include <QResizeEvent>
+#include <QGraphicsDropShadowEffect>
 
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/Settings.h"
+#include "Common/Config/Config.h"
+#include "Core/Config/MainSettings.h"
+#include "VideoCommon/OnScreenDisplay.h"
+#include "Core/Core.h"
+
 
 WiiMixModesWidget::WiiMixModesWidget(QWidget* parent) : QWidget(parent) {
     CreateLayout();
@@ -21,7 +27,7 @@ void WiiMixModesWidget::CreateLayout() {
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
         QFrame* frame = new QFrame();
         frame->setFrameShape(QFrame::StyledPanel);
-        frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
+        frame->setStyleSheet(QStringLiteral(".QFrame {border: 2px solid transparent; border-radius: 5px; }"));
         frame->setCursor(Qt::PointingHandCursor);
         frame->installEventFilter(this); // To capture mouse events
         m_mode_selectors[i] = frame;
@@ -70,7 +76,6 @@ void WiiMixModesWidget::CreateLayout() {
         layout->addWidget(title);
         layout->addWidget(iconLabel, 0);
         layout->addWidget(description, 1);
-
         m_mode_selectors[i]->setLayout(layout);
 
         m_mode_layout->addWidget(m_mode_selectors[i]);
@@ -120,7 +125,6 @@ void WiiMixModesWidget::CreateLayout() {
 
     // setLayout(m_mode_layout);
 }
-
 bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
     if (event->type() == QEvent::MouseButtonPress) {
         QFrame* frame = qobject_cast<QFrame*>(obj);
@@ -129,13 +133,72 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
             for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
                 QFrame* other_frame = qobject_cast<QFrame*>(m_mode_layout->itemAt(i)->widget());
                 if (other_frame) {
-                    other_frame->setStyleSheet(QStringLiteral("QFrame { border: 2px solid transparent; }"));
+                    other_frame->setGraphicsEffect(nullptr);
+                    other_frame->setStyleSheet(QStringLiteral(".QFrame { border: 2px solid transparent; border-radius: 5px; }"));
                 }
             }
 
             // Highlight the selected frame
-            frame->setStyleSheet(QStringLiteral("QFrame { background-color: #E0E0E0; }"));
+            std::string theme = Config::Get(Config::MAIN_THEME_NAME);
+            //TODOx: use some better colors, these are just awful
+            auto *shadow = new QGraphicsDropShadowEffect;
 
+            shadow->setBlurRadius(25);
+            shadow->setXOffset(0);
+            shadow->setYOffset(0);
+
+            if (theme == "Clean") {
+                shadow->setColor(Qt::black);
+                //frame->setStyleSheet(QStringLiteral("QFrame {color: pink; }"));
+                //frame->setGraphicsEffect(shadow);
+                auto *colorizeEffect = new QGraphicsColorizeEffect;
+                colorizeEffect->setColor(Qt::black);
+                frame->setGraphicsEffect(colorizeEffect);
+                frame->setStyleSheet(QStringLiteral(".QFrame {border: 2px solid black; border-radius: 5px; }"));
+            }
+            else if (theme == "Clean Blue") {
+                shadow->setColor(Qt::blue);
+                //frame->setStyleSheet(QStringLiteral("QFrame {color: pink; }"));
+                //frame->setGraphicsEffect(shadow);
+                auto *colorizeEffect = new QGraphicsColorizeEffect;
+                colorizeEffect->setColor(Qt::blue);
+                frame->setGraphicsEffect(colorizeEffect);
+                frame->setStyleSheet(QStringLiteral(".QFrame {border: 2px solid blue; border-radius: 5px; }"));
+            }
+            else if (theme == "Clean Emerald"){
+                shadow->setColor(Qt::green);
+                //frame->setStyleSheet(QStringLiteral("QFrame {color: pink; }"));
+                //frame->setGraphicsEffect(shadow);
+                auto *colorizeEffect = new QGraphicsColorizeEffect;
+                colorizeEffect->setColor(Qt::green);
+                frame->setGraphicsEffect(colorizeEffect);
+                frame->setStyleSheet(QStringLiteral(".QFrame {border: 2px solid green; border-radius: 5px; }"));
+            }
+            else if (theme == "Clean Lite"){
+                shadow->setColor(Qt::white);
+                //frame->setStyleSheet(QStringLiteral("QFrame {color: pink; }"));
+                //frame->setGraphicsEffect(shadow);
+                auto *colorizeEffect = new QGraphicsColorizeEffect;
+                colorizeEffect->setColor(Qt::white);
+                frame->setGraphicsEffect(colorizeEffect);
+                frame->setStyleSheet(QStringLiteral(".QFrame { border: 2px solid white; border-radius: 5px; }"));
+            }
+            else if (theme == "Clean Pink"){
+                shadow->setColor(QColor(255, 192, 203));
+                //frame->setStyleSheet(QStringLiteral("QFrame {color: pink; }"));
+                //frame->setGraphicsEffect(shadow);
+                auto *colorizeEffect = new QGraphicsColorizeEffect;
+                colorizeEffect->setColor(QColor(255, 192, 203));
+                frame->setGraphicsEffect(colorizeEffect);
+                frame->setStyleSheet(QStringLiteral(".QFrame { border: 2px solid pink; border-radius: 5px; }"));
+                Core::DisplayMessage("amogus", 10000);
+                OSD::DrawMessages();
+
+            }
+            else {
+                qDebug("invalid theme name, applying default theme instead");
+                frame->setStyleSheet(QStringLiteral("QFrame { border: 5px solid black; }"));
+            }
             // Trigger configuration update for this WiiMixEnums::Mode
             WiiMixEnums::Mode selected_mode = static_cast<WiiMixEnums::Mode>(m_mode_layout->indexOf(frame));
             emit WiiMixModesWidget::ModeChanged(selected_mode);
