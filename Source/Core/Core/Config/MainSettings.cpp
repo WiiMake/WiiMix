@@ -541,6 +541,7 @@ const Info<std::string> WIIMIX_GAME_IDS{{System::Main, "WiiMix", "Games"}, ""};
 // WiiMix (bingo)
 const Info<bool> WIIMIX_IS_LOCKOUT{{System::Main, "WiiMix", "IsLockout"}, DEFAULT_IS_LOCKOUT};
 const Info<int> WIIMIX_CARD_SIZE{{System::Main, "WiiMix", "CardSize"}, DEFAULT_CARD_SIZE};
+const Info<bool> WIIMIX_TEAMS{{System::Main, "WiiMix", "Teams"}, DEFAULT_TEAMS};
 
 // WiiMix (rogue)
 

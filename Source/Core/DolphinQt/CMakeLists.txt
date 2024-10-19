@@ -332,6 +332,7 @@ add_executable(dolphin-emu
   WiiMix/BingoSettings.h
   WiiMix/ConfigWidget.cpp
   WiiMix/ConfigWidget.h
+  WiiMix/Enums.cpp
   WiiMix/Enums.h
   WiiMix/ModesWidget.cpp
   WiiMix/ModesWidget.h

@@ -25,7 +25,24 @@ namespace WiiMixEnums {
         UNVERIFIED,
         END, // Default/size value
     };
+
+    enum class Color {
+        RED,
+        BLUE,
+        PURPLE,
+        GREEN,
+        END, // Default/size value
+    };
+
+    Color StringToColor(const std::string& color);
+    std::string ColorToHex(Color color);
 }
+
+// THEME
+#define WII_MIX_RED "#da5133"
+#define WII_MIX_BLUE "#61bbe8"
+#define WII_MIX_PURPLE "#a961e8"
+#define WII_MIX_GREEN "#61e873"
 
 #define MIN_NUM_OBJECTIVES 1
 #define MAX_NUM_OBJECTIVES 1000
@@ -39,6 +56,8 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 // BINGO
 #define DEFAULT_IS_LOCKOUT false
 #define DEFAULT_CARD_SIZE 25
+#define DEFAULT_TEAMS false
+#define MAX_PLAYERS 4
 
 // ROGUE
 

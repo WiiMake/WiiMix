@@ -29,3 +29,13 @@ void WiiMixBingoSettings::SetCardSize(int value)
         m_card_size = value;
     }
 }
+
+bool WiiMixBingoSettings::GetTeams()
+{
+    return m_teams;
+}
+
+void WiiMixBingoSettings::SetTeams(bool value)
+{
+    m_teams = value;
+}

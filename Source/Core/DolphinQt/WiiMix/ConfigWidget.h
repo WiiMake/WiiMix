@@ -38,6 +38,7 @@ public:
 
 private:
   QGroupBox* m_config_box;
+  QGroupBox* m_bingo_lobby;
   // num objectives (shuffle) - size of bingo card (bingo) - num stages in rogue (rogue)
   // QComboBox* m_objectives;
   // shuffle time
@@ -52,5 +53,8 @@ private:
   QCheckBox* m_endless_mode;
   QRadioButton* m_bingo_button;
   QRadioButton* m_lockout_button;
+  QCheckBox* m_teams_enabled;
+  QList<QCheckBox*> m_team_selectors;
+  QList<std::string> m_team_selector_states;  
   QComboBox* m_card_size;
 };

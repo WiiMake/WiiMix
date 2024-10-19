@@ -8,10 +8,12 @@
 #include <QSlider>
 #include <QCheckBox>
 #include <QLineEdit>
+#include <QList>
 #include <QDialog>
 
 #include "Core/Config/MainSettings.h"
 
+#include "DolphinQt/WiiMix/BingoLobbyWidget.h"
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
@@ -50,7 +52,6 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         config_layout->addWidget(m_lockout_button);
         // config_layout->addLayout(mode_layout);
         
-        // TODOx: make this more dynamic
         QLabel* card_size_label = new QLabel(tr("Card Size:"));
         int card_size = Config::Get(Config::WIIMIX_CARD_SIZE);
         m_card_size = new QComboBox();
@@ -81,8 +82,103 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
             Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, card_size);
         });
 
+        // Add bingo lobby widget
+        // WiiMixBingoLobbyWidget* bingo_lobby = new WiiMixBingoLobbyWidget(this);
+
+        m_bingo_lobby = new QGroupBox(tr("Bingo Lobby"));
+        QHBoxLayout* teams_enabled_layout = new QHBoxLayout();
+        m_teams_enabled = new QCheckBox();
+        m_team_selectors = QList<QCheckBox*>();
+        m_team_selector_states = QList<std::string>();
+
+        connect(m_teams_enabled, &QCheckBox::clicked, this, [this](bool checked) {
+            Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, checked);
+            if (checked) {
+                // If teams is toggled, sets the players to be on teams
+                int mid = m_team_selectors.size() / 2;
+                for (int i = 0; i < mid; i++) {
+                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_RED)));
+                    m_team_selector_states[i] = WII_MIX_RED;
+                }
+                for (int i = mid; i < m_team_selectors.size(); i++) {
+                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_BLUE)));
+                    m_team_selector_states[i] = WII_MIX_BLUE;
+                }
+            }
+            else {
+                // If teams is not toggled, give each player it's individual color again
+                for (int i = 0; i < MAX_PLAYERS; i++) {
+                    // Enable or disable team indicators based on the checkbox state
+                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(i)))));
+                    m_team_selector_states[i] = ColorToHex(static_cast<WiiMixEnums::Color>(i));
+                }
+            }
+        });
+
+        QVBoxLayout* lobby_layout = new QVBoxLayout();
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            QHBoxLayout* player_layout = new QHBoxLayout();
+            player_layout->setAlignment(Qt::AlignLeft);
+            QCheckBox* team_selector = new QCheckBox();
+            team_selector->setStyleSheet(QStringLiteral(".QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(i)))));
+            connect(team_selector, &QCheckBox::clicked, this, [this, team_selector](bool checked) {
+                int index = m_team_selectors.indexOf(team_selector);
+                qDebug() << "Index: " << index;
+                team_selector->setChecked(false);
+                // Change the color to indicate team selection
+                // If teams, select the next color regardless of whether someone has it selected or not
+                if (m_teams_enabled->isChecked()) {
+                    int color_index = static_cast<int>(WiiMixEnums::StringToColor(m_team_selector_states[index]));
+                    qDebug() << "color_index: " << color_index;
+                    color_index += 1;
+                    qDebug() << "end: " << static_cast<int>(WiiMixEnums::Color::END);
+                    color_index %= static_cast<int>(WiiMixEnums::Color::END); 
+                    m_team_selector_states[index] = ColorToHex(static_cast<WiiMixEnums::Color>(color_index));
+                    m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
+                }
+                    // else {
+                    //     // If not teams, select the next available color
+                    //     int color_index = static_cast<int>(WiiMixEnums::StringToColor(m_team_selector_states[index]));
+                    //     for (int i = 0; i < 4; i++) {
+                    //         color_index += 1;
+                    //         if (color_index > static_cast<int>(WiiMixEnums::Color::END)) {
+                    //             color_index = 0;
+                    //         }
+                    //         if (color_index ) {
+
+                    //         }   
+                    //     }
+                    //     m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WiiMixEnums::ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
+                    // }
+                }
+                // } else {
+                //     // Reset the color to the individual player's color
+                //     int index = m_team_selectors.indexOf(team_selector);
+                //     team_selector->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WiiMixEnums::ColorToHex(static_cast<WiiMixEnums::Color>(index)))));
+                // }
+            );
+            QLabel* player_widget = new QLabel(tr("Player ") + QString::number(i + 1) + tr(":"));
+            // TODOx: fix this event with player joined
+            // connect(player_widget, &QLabel::linkActivated, this, [this, i]() {
+            //     // Open a dialog to select a player
+            // });
+            m_team_selectors.append(team_selector);
+            m_team_selector_states.append(ColorToHex(static_cast<WiiMixEnums::Color>(i)));
+            player_layout->addWidget(m_team_selectors.at(i));
+            player_layout->addWidget(player_widget);
+            lobby_layout->addLayout(player_layout);
+        }
+        m_bingo_lobby->setLayout(lobby_layout);
+        // Each layout contains # of connected players and some unique identifier for each player
+
         config_layout->addWidget(card_size_label);
         config_layout->addWidget(m_card_size);
+        QLabel* teams_enabled_label = new QLabel(tr("Teams Enabled:"));
+        teams_enabled_layout->addWidget(teams_enabled_label);
+        teams_enabled_layout->addWidget(m_teams_enabled);
+        config_layout->addLayout(teams_enabled_layout);
+        // config_layout->addWidget(m_teams_enabled);
+        config_layout->addWidget(m_bingo_lobby);
     }
     else if (mode == WiiMixEnums::Mode::SHUFFLE) {
         int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);

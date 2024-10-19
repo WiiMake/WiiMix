@@ -121,9 +121,6 @@ void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
   m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/NewSuperMarioBrosWii.wbfs"));
   m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/Wii Sports (USA) (Rev 1).wbfs"));
 
-
-
-
   // Create a new window with the configuration options
   auto* config_window = new QDialog(this);
   config_window->setWindowTitle(tr("Configuration Options"));
@@ -230,6 +227,14 @@ void WiiMixSettingsWindow::LoadSettings() {
       }
       bingo_settings.SetCardSize(WiiMixSettings::StringToCardSize(QString::fromStdString(val->c_str())));
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, bingo_settings.GetCardSize());
+
+      section->Get("Teams", val, "");
+      if (val->empty()) {
+        emit ErrorLoadingSettings(QStringLiteral("Teams not found in WiiMix settings file"));
+        return;
+      }
+      bingo_settings.SetTeams(val->c_str() == std::string("true"));
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, bingo_settings.GetTeams());
     }
     else if (m_settings.GetMode() == WiiMixEnums::Mode::SHUFFLE) {
       section->Get("NumberOfSwitches", val, "");
@@ -343,6 +348,9 @@ void WiiMixSettingsWindow::SaveSettings() {
 
       section->Set("CardSize", bingo_settings.GetCardSize());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, bingo_settings.GetCardSize());
+  
+      section->Set("Teams", bingo_settings.GetTeams());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, bingo_settings.GetTeams());
     }
     else if (m_settings.GetMode() == WiiMixEnums::Mode::SHUFFLE) {
       WiiMixShuffleSettings shuffle_settings = WiiMixShuffleSettings(m_settings);
