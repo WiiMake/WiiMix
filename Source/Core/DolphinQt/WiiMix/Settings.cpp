@@ -57,6 +57,31 @@ WiiMixEnums::SaveStateBank WiiMixSettings::StringToSaveStateBank(QString bank) {
         return WiiMixEnums::SaveStateBank::USER; // Default case
 }
 
+QString WiiMixSettings::BingoTypeToString(WiiMixEnums::BingoType type) {
+    switch (type)
+    {
+        case WiiMixEnums::BingoType::BINGO:
+            return QStringLiteral("Bingo");
+        case WiiMixEnums::BingoType::LOCKOUT:
+            return QStringLiteral("Lockout");
+        case WiiMixEnums::BingoType::TIME_ATTACK:
+            return QStringLiteral("Time Attack");
+        default:
+            return QStringLiteral("");
+    }
+}
+
+WiiMixEnums::BingoType WiiMixSettings::StringToBingoType(QString type) {
+    if (type == QStringLiteral("Bingo"))
+        return WiiMixEnums::BingoType::BINGO;
+    else if (type == QStringLiteral("Lockout"))
+        return WiiMixEnums::BingoType::LOCKOUT;
+    else if (type == QStringLiteral("Time Attack"))
+        return WiiMixEnums::BingoType::TIME_ATTACK;
+    else
+        return WiiMixEnums::BingoType::END; // Default case
+}
+
 QString WiiMixSettings::ModeToTitle(WiiMixEnums::Mode mode) {
     switch (mode)
     {

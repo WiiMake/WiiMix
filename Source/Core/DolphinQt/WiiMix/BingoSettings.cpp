@@ -1,17 +1,19 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(const WiiMixSettings& settings, bool is_lockout, int card_size)
-    : WiiMixSettings(settings), m_is_lockout(is_lockout), m_card_size(card_size) 
+#include "DolphinQt/WiiMix/Enums.h"
+
+WiiMixBingoSettings::WiiMixBingoSettings(const WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type, int card_size)
+    : WiiMixSettings(settings), m_bingo_type(bingo_type), m_card_size(card_size) 
 {}
 
-bool WiiMixBingoSettings::GetLockout() const
+WiiMixEnums::BingoType WiiMixBingoSettings::GetBingoType() const
 {
-    return m_is_lockout;
+    return m_bingo_type;
 }
 
-void WiiMixBingoSettings::SetLockout(bool value)
+void WiiMixBingoSettings::SetBingoType(WiiMixEnums::BingoType value)
 {
-    m_is_lockout = value;
+    m_bingo_type = value;
 }
 
 int WiiMixBingoSettings::GetCardSize() const

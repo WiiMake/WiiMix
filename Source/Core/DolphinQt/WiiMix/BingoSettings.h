@@ -9,9 +9,9 @@
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixBingoSettings(const WiiMixSettings& settings, bool is_lockout = DEFAULT_IS_LOCKOUT, int card_size = DEFAULT_CARD_SIZE);
-  bool GetLockout() const;
-  void SetLockout(bool value);
+  explicit WiiMixBingoSettings(const WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
+  WiiMixEnums::BingoType GetBingoType() const;
+  void SetBingoType(WiiMixEnums::BingoType value);
   // Options are 3x3, 5x5, 7x7, but they correspond to 9, 25, 49
   int GetCardSize() const;
   void SetCardSize(int value);
@@ -24,7 +24,7 @@ public:
   // This info is not stored in bingo settings, but rather managed via BingoNetplay
 
 private:
-  bool m_is_lockout;
+  WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
   bool m_teams;
 };

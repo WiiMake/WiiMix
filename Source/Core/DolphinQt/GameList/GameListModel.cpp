@@ -271,9 +271,16 @@ Qt::ItemFlags GameListModel::flags(const QModelIndex& index) const
     return Qt::NoItemFlags;
 
   Qt::ItemFlags flag = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-
-  if (index.column() == static_cast<int>(Column::WiiMix))
+  if (index.column() == static_cast<int>(Column::WiiMix)) {
     flag |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
+    flag &= ~Qt::ItemIsSelectable;
+    #ifndef DEBUG
+      if (m_games.at(index.row())->GetObjectives() == 0) {
+        flag &= ~Qt::ItemIsUserCheckable;
+        flag &= ~Qt::ItemIsEditable;
+      }
+    #endif
+  }
 
   return flag;
 }

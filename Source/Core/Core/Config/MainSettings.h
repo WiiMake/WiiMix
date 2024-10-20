@@ -367,7 +367,7 @@ extern const Info<std::string> WIIMIX_OBJECTIVE_IDS;
 extern const Info<std::string> WIIMIX_GAME_IDS;
 
 // WiiMix (bingo)
-extern const Info<bool> WIIMIX_IS_LOCKOUT;
+extern const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE;
 extern const Info<int> WIIMIX_CARD_SIZE;
 extern const Info<bool> WIIMIX_TEAMS;
 

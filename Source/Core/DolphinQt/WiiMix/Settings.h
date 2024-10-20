@@ -49,6 +49,9 @@ public:
   static QString SaveStateBankToString(WiiMixEnums::SaveStateBank bank);
   static WiiMixEnums::SaveStateBank StringToSaveStateBank(QString bank);
 
+  static QString BingoTypeToString(WiiMixEnums::BingoType type);
+  static WiiMixEnums::BingoType StringToBingoType(QString type);
+
   static int StringToCardSize(QString size);
 
   static std::vector<UICommon::GameFile> GameIdsToGameFiles(std::string game_ids_list);

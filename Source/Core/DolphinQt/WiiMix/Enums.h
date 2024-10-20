@@ -34,6 +34,13 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    enum class BingoType {
+        BINGO,
+        LOCKOUT,
+        TIME_ATTACK,
+        END, // Default/size value
+    };
+
     Color StringToColor(const std::string& color);
     std::string ColorToHex(Color color);
 }
@@ -54,7 +61,7 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_OBJECTIVES {}
 
 // BINGO
-#define DEFAULT_IS_LOCKOUT false
+#define DEFAULT_BINGO_TYPE WiiMixEnums::BingoType::BINGO
 #define DEFAULT_CARD_SIZE 25
 #define DEFAULT_TEAMS false
 #define MAX_PLAYERS 4

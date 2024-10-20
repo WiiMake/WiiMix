@@ -88,7 +88,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
         if (m_settings.GetMode() == WiiMixEnums::Mode::BINGO) {
           WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(m_settings);
           bingo_settings.SetCardSize(WiiMixSettings::StringToCardSize(m_config->GetCardSize()));
-          bingo_settings.SetLockout(m_config->GetIsLockout());
+          bingo_settings.SetBingoType(m_config->GetBingoType());
           emit StartWiiMixBingo(bingo_settings);
         }
         else if (m_settings.GetMode() == WiiMixEnums::Mode::SHUFFLE) {
@@ -212,13 +212,13 @@ void WiiMixSettingsWindow::LoadSettings() {
     WiiMixRogueSettings rogue_settings = WiiMixRogueSettings(m_settings);
     WiiMixShuffleSettings shuffle_settings = WiiMixShuffleSettings(m_settings);
     if (m_settings.GetMode() == WiiMixEnums::Mode::BINGO) {
-      section->Get("Lockout", val, "");
+      section->Get("BingoType", val, "");
       if (val->empty()) {
-        emit ErrorLoadingSettings(QStringLiteral("Lockout not found in WiiMix settings file"));
+        emit ErrorLoadingSettings(QStringLiteral("BingoType not found in WiiMix settings file"));
         return;
       }
-      bingo_settings.SetLockout(val->c_str() == std::string("true"));
-      Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, bingo_settings.GetLockout());
+      bingo_settings.SetBingoType(WiiMixSettings::StringToBingoType(QString::fromStdString(val->c_str())));
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, bingo_settings.GetBingoType());
 
       section->Get("CardSize", val, "");
       if (val->empty()) {
@@ -343,8 +343,8 @@ void WiiMixSettingsWindow::SaveSettings() {
 
     if (m_settings.GetMode() == WiiMixEnums::Mode::BINGO) {
       WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(m_settings);
-      section->Set("Lockout", bingo_settings.GetLockout());
-      Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, bingo_settings.GetLockout());
+      section->Set("BingoType", bingo_settings.GetBingoType());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, bingo_settings.GetBingoType());
 
       section->Set("CardSize", bingo_settings.GetCardSize());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, bingo_settings.GetCardSize());
@@ -377,7 +377,7 @@ void WiiMixSettingsWindow::SaveSettings() {
   // Config::Get(Config::WIIMIX_DIFFICULTY);
   // Config::Get(Config::WIIMIX_MODE);
   // Config::Get(Config::WIIMIX_SAVE_STATE_BANK);
-  // Config::Get(Config::WIIMIX_IS_LOCKOUT);
+  // Config::Get(Config::WIIMIX_BINGO_TYPE);
   // Config::Get(Config::WIIMIX_CARD_SIZE);
   // Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
   // Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);

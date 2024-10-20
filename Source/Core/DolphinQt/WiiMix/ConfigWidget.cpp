@@ -13,7 +13,6 @@
 
 #include "Core/Config/MainSettings.h"
 
-#include "DolphinQt/WiiMix/BingoLobbyWidget.h"
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
@@ -30,26 +29,56 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
     QVBoxLayout* config_layout = new QVBoxLayout();
 
     if (mode == WiiMixEnums::Mode::BINGO) {
-        bool is_lockout = Config::Get(Config::WIIMIX_IS_LOCKOUT);
+        WiiMixEnums::BingoType bingo_type = Config::Get(Config::WIIMIX_BINGO_TYPE);
         m_bingo_button = new QRadioButton(tr("Bingo"));
-        m_bingo_button->setChecked(!is_lockout);
+        if (bingo_type == WiiMixEnums::BingoType::BINGO) {
+            m_bingo_button->setChecked(true);
+        }
+        else {
+            m_bingo_button->setChecked(false);
+        }
 
         connect(m_bingo_button, &QRadioButton::toggled, this, [this](bool checked) {
             m_lockout_button->setChecked(!checked);
-            Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, !checked);
+            if (checked) {
+                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::BINGO);
+            }
         });
 
         m_lockout_button = new QRadioButton(tr("Lockout"));
-        m_lockout_button->setChecked(is_lockout);
+        if (bingo_type == WiiMixEnums::BingoType::LOCKOUT) {
+            m_lockout_button->setChecked(true);
+        }
+        else {
+            m_lockout_button->setChecked(false);
+        }
 
         connect(m_lockout_button, &QRadioButton::toggled, this, [this](bool checked) {
             m_bingo_button->setChecked(!checked);
-            Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_LOCKOUT, checked);
+            if (checked) {
+                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::LOCKOUT);
+            }
+        });
+
+        m_time_attack_button = new QRadioButton(tr("Time Attack"));
+        if (bingo_type == WiiMixEnums::BingoType::TIME_ATTACK) {
+            m_time_attack_button->setChecked(true);
+        }
+        else {
+            m_time_attack_button->setChecked(false);
+        }
+
+        connect(m_time_attack_button, &QRadioButton::toggled, this, [this](bool checked) {
+            m_bingo_button->setChecked(!checked);
+            if (checked) {
+                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::TIME_ATTACK);
+            }
         });
 
         QHBoxLayout* mode_layout = new QHBoxLayout();
         config_layout->addWidget(m_bingo_button);
         config_layout->addWidget(m_lockout_button);
+        config_layout->addWidget(m_time_attack_button);
         // config_layout->addLayout(mode_layout);
         
         QLabel* card_size_label = new QLabel(tr("Card Size:"));
@@ -83,7 +112,6 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
         });
 
         // Add bingo lobby widget
-        // WiiMixBingoLobbyWidget* bingo_lobby = new WiiMixBingoLobbyWidget(this);
 
         m_bingo_lobby = new QGroupBox(tr("Bingo Lobby"));
         QHBoxLayout* teams_enabled_layout = new QHBoxLayout();
@@ -291,8 +319,16 @@ bool WiiMixConfigWidget::GetEndless() const {
     return m_endless_mode->isChecked();
 }
 
-bool WiiMixConfigWidget::GetIsLockout() const {
-    return m_lockout_button->isChecked();
+WiiMixEnums::BingoType WiiMixConfigWidget::GetBingoType() const {
+    if (m_bingo_button->isChecked()) {
+        return WiiMixEnums::BingoType::BINGO;
+    }
+    else if (m_lockout_button->isChecked()) {
+        return WiiMixEnums::BingoType::LOCKOUT;
+    }
+    else if (m_time_attack_button->isChecked()) {
+        return WiiMixEnums::BingoType::TIME_ATTACK;
+    }
 }
 
 QString WiiMixConfigWidget::GetCardSize() const {

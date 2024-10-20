@@ -33,7 +33,7 @@ public:
   QString GetSaveStateBank() const;
   int GetNumSwitches() const;
   bool GetEndless() const;
-  bool GetIsLockout() const;
+  WiiMixEnums::BingoType GetBingoType() const;
   QString GetCardSize() const;
 
 private:
@@ -53,6 +53,7 @@ private:
   QCheckBox* m_endless_mode;
   QRadioButton* m_bingo_button;
   QRadioButton* m_lockout_button;
+  QRadioButton* m_time_attack_button;
   QCheckBox* m_teams_enabled;
   QList<QCheckBox*> m_team_selectors;
   QList<std::string> m_team_selector_states;  

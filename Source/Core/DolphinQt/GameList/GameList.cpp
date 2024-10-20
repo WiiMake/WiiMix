@@ -98,6 +98,7 @@ protected:
 
 GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
 {
+  // this->setMinimumSize(20, 20);
   m_list_proxy = new ListProxyModel(this);
   m_list_proxy->setSortCaseSensitivity(Qt::CaseInsensitive);
   m_list_proxy->setSortRole(GameListModel::SORT_ROLE);
@@ -161,8 +162,8 @@ void GameList::MakeListView()
 {
   m_list = new GameListTableView(this);
   m_list->setModel(m_list_proxy);
-
   m_list->setTabKeyNavigation(false);
+  // m_list->setMinimumWidth(20);
   m_list->setSelectionMode(QAbstractItemView::ExtendedSelection);
   m_list->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_list->setAlternatingRowColors(true);
@@ -216,7 +217,8 @@ void GameList::MakeListView()
 
     // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
     // are 96 pixels wide, platform and country icons are 32 pixels wide.
-    // m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 32);
+    // m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 20);
+    m_list->horizontalHeader()->setSectionResizeMode(static_cast<int>(GameListModel::Column::WiiMix), QHeaderView::Fixed);
     m_list->setColumnWidth(static_cast<int>(Column::Objectives), 80);
     m_list->setColumnWidth(static_cast<int>(Column::Banner), 102);
     m_list->setColumnWidth(static_cast<int>(Column::Platform), 38);
