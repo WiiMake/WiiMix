@@ -887,25 +887,6 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
   QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, m_game_list]() {
     WiiMixShuffleUpdate(settings, selection, m_game_list);
   });
-
-  // while (true) { // TODOx: need something to terminate
-  //   // sleep for a random time between min and max
-  //   QTime dieTime= QTime::currentTime().addMSecs(sleep_time);
-  //   while (QTime::currentTime() < dieTime)
-  //       QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-  //   prev = selection;
-  //   selection = m_game_list[rand() % m_game_list.size()];
-  //   // get savestate path D_WIIMIX_STATESAVES_IDX from get user path
-  //   std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
-  //   BootSessionData boot_data;
-  //   if (File::Exists(savestate_path + prev.GetGameID() + ".sav")) {
-  //     boot_data = BootSessionData(savestate_path + prev.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
-  //   } else {
-  //     boot_data = BootSessionData();
-  //   }
-  //   //StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
-  // }
-
 }
 
 void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
@@ -914,8 +895,8 @@ void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::G
   // get savestate path D_WIIMIX_STATESAVES_IDX from get user path
   std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
   BootSessionData boot_data;
-  if (File::Exists(savestate_path + prev.GetGameID() + ".sav")) {
-    boot_data = BootSessionData(savestate_path + prev.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+  if (File::Exists(savestate_path + selection.GetGameID() + ".sav")) {
+    boot_data = BootSessionData(savestate_path + selection.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
   } else {
     boot_data = BootSessionData();
   }
@@ -1287,108 +1268,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     m_fullscreen_requested = true;
 
   //StateLoadSlotAt(1);
-}
-
-void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path)
-{
-  StartWiiMixGame(BootParameters::GenerateFromFile(path.toStdString(), BootSessionData()), boot_path);
-}
-
-void MainWindow::StartWiiMixGame(const QString& path, std::optional<std::string> boot_path, std::optional<std::string> save_path)
-{
-  StartWiiMixGame(BootParameters::GenerateFromFile(path.toStdString(), BootSessionData()), boot_path, save_path);
-}
-
-void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path)
-{
-  StartWiiMixGame(BootParameters::GenerateFromFile(path, BootSessionData()), boot_path);
-}
-
-void MainWindow::StartWiiMixGame(const std::string& path, std::optional<std::string> boot_path, std::optional<std::string> save_path)
-{
-  StartWiiMixGame(BootParameters::GenerateFromFile(path, BootSessionData()), boot_path, save_path);
-}
-
-void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path)
-{
-  StartWiiMixGame(std::move(parameters), boot_path, std::string{});
-}
-
-
-void MainWindow::StartWiiMixGame(std::unique_ptr<BootParameters>&& parameters, std::optional<std::string> boot_path, std::optional<std::string> save_path)
-{
-  if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
-  {
-    if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
-    {
-      if (!NKitWarningDialog::ShowUnlessDisabled())
-        return;
-    }
-  }
-
-  parameters->boot_session_data.SetSavestateData(boot_path, DeleteSavestateAfterBoot::No);
-  if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
-  {
-    if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
-    {
-      if (!NKitWarningDialog::ShowUnlessDisabled())
-        return;
-    }
-  }
-
-  parameters->boot_session_data.SetSavestateData(boot_path, DeleteSavestateAfterBoot::No);
-
-
-  // If we're running, only start a new game once we've stopped the last.
-  if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
-  {
-
-
-    State::SaveAs(Core::System::GetInstance(), save_path.value()); // TODO add backup path if save_path is empty
-
-    while (safe_to_quit == false)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-
-
-    ForceStop();
-
-
-
-    // As long as the shutdown isn't complete, we can't boot, so let's boot later
-    m_pending_boot = std::move(parameters);
-    return;
-  }
-
-  // We need the render widget before booting.
-  ShowRenderWidget();
-
-
-
-  // Boot up, show an error if it fails to load the game.
-  if (!BootManager::BootCore(Core::System::GetInstance(), std::move(parameters),
-                             ::GetWindowSystemInfo(m_render_widget->windowHandle())))
-  {
-    ModalMessageBox::critical(this, tr("Error"), tr("Failed to init core"), QMessageBox::Ok);
-    HideRenderWidget();
-    return;
-  }
-
-#ifdef USE_DISCORD_PRESENCE
-  if (!NetPlay::IsNetPlayRunning())
-    Discord::UpdateDiscordPresence();
-#endif
-
-  if (Config::Get(Config::MAIN_FULLSCREEN))
-    m_fullscreen_requested = true;
-
-
-
-  //StateLoadSlotAt(1);
-
-  //m_load_slot_on_start = 1;
-
-
-
 }
 
 void MainWindow::SetFullScreenResolution(bool fullscreen)
