@@ -307,6 +307,11 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
         connection_layout->addRow(bingo_lobby_id, m_bingo_lobby_id);
 
+        QLabel* player_name = new QLabel(tr("Player Name"));
+        m_bingo_player_name = new QLineEdit();
+
+        connection_layout->addRow(player_name, m_bingo_player_name);
+
         QLabel* bingo_lobby_password = new QLabel(tr("Password"));
         m_bingo_lobby_password = new QLineEdit();
         m_bingo_lobby_password->setEchoMode(QLineEdit::Password);
