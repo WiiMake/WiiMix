@@ -890,18 +890,27 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
 }
 
 void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
+  if (Core::GetState(Core::System::GetInstance()) != Core::State::Running)
+  {
+    return;
+  }
   UICommon::GameFile prev = selection;
   selection = gameList[rand() % gameList.size()];
-  // get savestate path D_WIIMIX_STATESAVES_IDX from get user path
   std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
   BootSessionData boot_data;
-  if (File::Exists(savestate_path + selection.GetGameID() + ".sav")) {
-    boot_data = BootSessionData(savestate_path + selection.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+  if (selection.GetFilePath() == prev.GetFilePath()) {
+    State::SaveAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
+    State::LoadAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
+
   } else {
-    boot_data = BootSessionData();
+    if (File::Exists(savestate_path + selection.GetGameID() + ".sav")) {
+      boot_data = BootSessionData(savestate_path + selection.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+    } else {
+      boot_data = BootSessionData();
+    }
+    StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
   }
-  StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
-  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000) + settings.GetMinTimeBetweenSwitch() * 1000;
+  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000 + 1) + settings.GetMinTimeBetweenSwitch() * 1000;
   QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, gameList]() {
     WiiMixShuffleUpdate(settings, selection, gameList);
   });
