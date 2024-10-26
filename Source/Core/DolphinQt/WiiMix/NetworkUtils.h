@@ -1,24 +1,19 @@
 // Copyright 2017 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#pragma once
+
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 // This is a file for syncing bingo cards between players
-class WiiMixBingoNetplay
+class WiiMixNetworkUtils
 {
 public:
-  WiiMixBingoNetplay();
+  WiiMixNetworkUtils();
 
-  void Connect();
+  static void* GetInAddr(struct sockaddr *sa);
 
-  void SendBingoCard();
-
-  void ReceiveBingoCard();
-
-private:
-    int m_client_socket;
-    sockaddr_in m_server_address;
 };

@@ -1,10 +1,8 @@
 #pragma once
 
-#include "DolphinQt/WiiMix/Objective.h"
 #include "UICommon/GameFile.h"
 
 namespace WiiMixEnums {
-
     enum class Difficulty {
         NORMAL,
         HARD,
@@ -40,6 +38,16 @@ namespace WiiMixEnums {
         TIME_ATTACK,
         END, // Default/size value
     };
+
+    enum class Player {
+        ONE,
+        TWO,
+        THREE,
+        FOUR,
+        END, // Default/size value
+    };
+
+    Color PlayerToColor(Player player);
 
     Color StringToColor(const std::string& color);
     std::string ColorToHex(Color color);

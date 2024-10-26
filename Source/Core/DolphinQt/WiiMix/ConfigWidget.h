@@ -41,7 +41,8 @@ public:
   bool GetEndless() const;
   WiiMixEnums::BingoType GetBingoType() const;
   QString GetCardSize() const;
-  QString GetLobbyName() const;
+  QString GetLobbyID() const;
+  QString GetPlayerName() const;
   QString GetLobbyPassword() const;
   bool GetTeamsEnabled() const;
   std::array<bool, MAX_PLAYERS> GetTeamSelectors() const;
@@ -53,7 +54,8 @@ private:
 
   // Bingo Config Options
   QMenuBar* m_menu_bar;
-  QLineEdit* m_bingo_lobby_name;
+  QLineEdit* m_bingo_lobby_id;
+  QLineEdit* m_bingo_player_name;
   QLineEdit* m_bingo_lobby_password;
   QRadioButton* m_bingo_button;
   QRadioButton* m_lockout_button;

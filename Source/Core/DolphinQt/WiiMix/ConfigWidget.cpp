@@ -86,12 +86,18 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         QGroupBox* connection_box = new QGroupBox(tr("Connection Settings"));
         QFormLayout* connection_layout = new QFormLayout();
 
-        QLabel* bingo_lobby_name = new QLabel(tr("Lobby Name:"));
-        m_bingo_lobby_name = new QLineEdit();
+        QLabel* bingo_lobby_id = new QLabel(tr("Lobby ID"));
+        m_bingo_lobby_id = new QLineEdit();
+        m_bingo_lobby_id->setReadOnly(true);
 
-        connection_layout->addRow(bingo_lobby_name, m_bingo_lobby_name);
+        connection_layout->addRow(bingo_lobby_id, m_bingo_lobby_id);
 
-        QLabel* bingo_lobby_password = new QLabel(tr("Password:"));
+        QLabel* player_name = new QLabel(tr("Player Name"));
+        m_bingo_player_name = new QLineEdit();
+
+        connection_layout->addRow(player_name, m_bingo_player_name);
+
+        QLabel* bingo_lobby_password = new QLabel(tr("Password"));
         m_bingo_lobby_password = new QLineEdit();
         m_bingo_lobby_password->setEchoMode(QLineEdit::Password);
 
@@ -99,6 +105,11 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
         m_connect_button = new QPushButton();
         m_connect_button->setText(tr("Host"));
+        connect(m_connect_button, &QPushButton::clicked, this, [this]() {
+            // TODOx: Set the bingo lobby ID, the player[x] name, and the lobby password
+            // Make sure to update the text of m_bingo_lobby_id so it can be shared with a friend!
+            // TODOx: Host the bingo lobby
+        });
 
         connection_layout->addWidget(m_connect_button);
 
@@ -291,12 +302,12 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         QGroupBox* connection_box = new QGroupBox(tr("Connection Settings"));
         QFormLayout* connection_layout = new QFormLayout();
 
-        QLabel* bingo_lobby_name = new QLabel(tr("Lobby Name:"));
-        m_bingo_lobby_name = new QLineEdit();
+        QLabel* bingo_lobby_id = new QLabel(tr("Lobby ID"));
+        m_bingo_lobby_id = new QLineEdit();
 
-        connection_layout->addRow(bingo_lobby_name, m_bingo_lobby_name);
+        connection_layout->addRow(bingo_lobby_id, m_bingo_lobby_id);
 
-        QLabel* bingo_lobby_password = new QLabel(tr("Password:"));
+        QLabel* bingo_lobby_password = new QLabel(tr("Password"));
         m_bingo_lobby_password = new QLineEdit();
         m_bingo_lobby_password->setEchoMode(QLineEdit::Password);
 
@@ -304,6 +315,12 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
         m_connect_button = new QPushButton();
         m_connect_button->setText(tr("Connect"));
+        connect(m_connect_button, &QPushButton::clicked, this, [this]() {
+            QString lobbyID = GetLobbyID();
+            QString lobbyPassword = GetLobbyPassword();
+            // TODOx: Connect to the bingo lobby
+        });
+
         connection_layout->addWidget(m_connect_button);
 
         connection_layout->setAlignment(Qt::AlignCenter);
@@ -487,8 +504,8 @@ int WiiMixConfigWidget::GetMaxTimeBetweenSwitch() const
     return m_max_time_between_switch->value();
 }
 
-QString WiiMixConfigWidget::GetLobbyName() const {
-    return m_bingo_lobby_name->text();
+QString WiiMixConfigWidget::GetLobbyID() const {
+    return m_bingo_lobby_id->text();
 }
 
 QString WiiMixConfigWidget::GetLobbyPassword() const {

@@ -192,7 +192,7 @@ std::string WiiMixSettings::GameFilesToGameIds(std::vector<UICommon::GameFile> g
 std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives) {
     std::string objective_ids_list = "";
     for (size_t i = 0; i < objectives.size(); ++i) {
-        objective_ids_list += objectives[i].GetObjectiveID();
+        objective_ids_list += objectives[i].GetObjectiveString();
         if (i + 1 != objectives.size()) {
             objective_ids_list += ",";
         }
@@ -310,7 +310,7 @@ void WiiMixSettings::AddObjective(WiiMixObjective objective) {
     std::string objective_ids_list = Config::Get(Config::WIIMIX_OBJECTIVE_IDS);
     if (!objective_ids_list.empty())
         objective_ids_list += ", ";
-    objective_ids_list += objective.GetObjectiveID();
+    objective_ids_list += objective.GetObjectiveString();
     Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(objective_ids_list));
 }
 

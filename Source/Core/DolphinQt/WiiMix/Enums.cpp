@@ -1,11 +1,6 @@
+#include "DolphinQt/WiiMix/Enums.h"
+
 #include <string>
-#include "Enums.h"
-enum class Color {
-    Red,
-    Green,
-    Blue,
-    Unknown
-};
 
 namespace WiiMixEnums {
     Color StringToColor(const std::string& color) {
@@ -20,6 +15,21 @@ namespace WiiMixEnums {
         }
         else {
             return Color::END;
+        }
+    }
+
+    Color PlayerToColor(Player player) {
+        switch (player) {
+            case Player::ONE:
+                return Color::RED;
+            case Player::TWO:
+                return Color::GREEN;
+            case Player::THREE:
+                return Color::BLUE;
+            case Player::FOUR:
+                return Color::PURPLE;
+            default:
+                return Color::END;
         }
     }
 

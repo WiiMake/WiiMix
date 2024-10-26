@@ -41,3 +41,9 @@ CMakeLists.txt.user
 .idea/
 # Ignore Visual Studio Code's working dir
 /.vscode/
+
+# Ignore WiiMix bingo server
+Source/Core/DolphinQt/WiiMix/basic_client.cpp
+Source/Core/DolphinQt/WiiMix/basic_server.cpp
+Source/Core/DolphinQt/WiiMix/BingoServer.cpp
+Source/Core/DolphinQt/WiiMix/BingoServer.h

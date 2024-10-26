@@ -905,7 +905,6 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
   //   }
   //   //StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
   // }
-
 }
 
 void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {

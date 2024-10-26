@@ -3,13 +3,21 @@
 
 #pragma once
 
+#include "DolphinQt/WiiMix/Enums.h"
+
 class WiiMixObjective 
 {
 public:
-  explicit WiiMixObjective();
+  explicit WiiMixObjective(
+    std::string objective_string, 
+    WiiMixEnums::Player completed
+  );
 
-  int GetObjectiveID();
+  std::string GetObjectiveString();
+  WiiMixEnums::Player GetCompleted();
+  void SetCompleted(WiiMixEnums::Player player);
   
 private:
-
+  std::string m_objective_string;
+  WiiMixEnums::Player m_completed;
 };
