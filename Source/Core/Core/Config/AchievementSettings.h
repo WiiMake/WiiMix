@@ -17,7 +17,6 @@ extern const Info<std::string> RA_API_TOKEN;
 extern const Info<bool> RA_HARDCORE_ENABLED;
 extern const Info<bool> RA_UNOFFICIAL_ENABLED;
 extern const Info<bool> RA_ENCORE_ENABLED;
-extern const Info<bool> RA_SPECTATOR_ENABLED;
 extern const Info<bool> RA_DISCORD_PRESENCE_ENABLED;
 extern const Info<bool> RA_PROGRESS_ENABLED;
 }  // namespace Config
