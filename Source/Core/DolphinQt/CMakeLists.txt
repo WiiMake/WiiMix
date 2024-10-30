@@ -14,7 +14,7 @@ endif()
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg Core5Compat)
 message(STATUS "Found Qt version ${Qt6_VERSION}")
 
 set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
@@ -411,6 +411,28 @@ add_executable(dolphin-emu
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
+
+option(BUILD_WIIMIX_SERVER "Build the WiiMix Bingo Server" ON)
+
+# Build the bingo server if it exists
+if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/BingoServer.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/BingoServer.h")
+  # Define common include directories and libraries for both targets
+  set(SERVER_INCLUDES "${CMAKE_SOURCE_DIR}/include")
+  set(SERVER_LIBS Qt6::Core Qt6::Network)  
+  add_executable(wiimix-server
+    WiiMix/BingoServer.cpp
+    WiiMix/BingoServer.h
+    WiiMix/Enums.cpp
+    WiiMix/Enums.h
+    WiiMix/Objective.h
+    WiiMix/Objective.cpp
+  )
+  target_include_directories(wiimix-server PRIVATE ${SERVER_INCLUDES})
+  target_link_libraries(wiimix-server PRIVATE ${SERVER_LIBS})
+# else()
+  # message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/WiiMix/BingoServer.cpp or ${CMAKE_SOURCE_DIR}/WiiMix/BingoServer.h not found")
+endif()
+
 # Ensure the resource path doesn't get overridden
 # set(DOLPHIN_RESOURCE_PATH "${PROJECT_SOURCE_DIR}/Data/Sys/Resources")
 
@@ -440,11 +462,21 @@ PRIVATE
   ${Qt6Gui_PRIVATE_INCLUDE_DIRS}
 )
 
+# Qt has JSON support built in
+# include(FetchContent)
+
+# FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+# FetchContent_MakeAvailable(json)
+
+# target_link_libraries(dolphin-emu PRIVATE nlohmann_json::nlohmann_json)
+
+
 target_link_libraries(dolphin-emu
 PRIVATE
-  core
+  Qt6::Core
   Qt6::Widgets
   Qt6::Network
+  Qt6::Core5Compat
   uicommon
   imgui
   implot

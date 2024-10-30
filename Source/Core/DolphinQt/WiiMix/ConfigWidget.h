@@ -12,6 +12,8 @@
 #include <QRadioButton>
 #include <QPushButton>
 #include <QMenuBar>
+
+#include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/Settings.h"
 
 #include <array>
@@ -42,6 +44,7 @@ public:
   WiiMixEnums::BingoType GetBingoType() const;
   QString GetCardSize() const;
   QString GetLobbyID() const;
+  QString GenerateLobbyID() const; 
   QString GetPlayerName() const;
   QString GetLobbyPassword() const;
   bool GetTeamsEnabled() const;
@@ -78,6 +81,9 @@ private:
 
   QComboBox* m_difficulty;
   QComboBox* m_save_state_bank;
+
+  WiiMixBingoClient* m_bingo_client;
+  WiiMixSettings m_settings;
   // Time (maybe I make this an estimate at the bottom rather than a parameter)
   // QLabel* m_time;
 };

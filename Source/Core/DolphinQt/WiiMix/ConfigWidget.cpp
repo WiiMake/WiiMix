@@ -13,6 +13,12 @@
 #include <QPushButton>
 #include <QMenuBar>
 #include <QFormLayout>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
+#include <QRandomGenerator>
+#include <QMessageBox>
+#include <QUuid>
+#include <QString>
 
 #include "Core/Config/MainSettings.h"
 
@@ -24,6 +30,7 @@
 #include "DolphinQt/Resources.h"
 
 WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
+    m_settings = WiiMixSettings();
     ConnectWidgets();
 }
 
@@ -99,16 +106,30 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
         QLabel* bingo_lobby_password = new QLabel(tr("Password"));
         m_bingo_lobby_password = new QLineEdit();
+        m_bingo_lobby_password->setMaxLength(MAX_LOBBY_PASSWORD_LENGTH);
         m_bingo_lobby_password->setEchoMode(QLineEdit::Password);
+        m_bingo_lobby_password->setValidator(new QRegularExpressionValidator(QRegularExpression(QStringLiteral("[A-Za-z0-9]+"))));
 
         connection_layout->addRow(bingo_lobby_password, m_bingo_lobby_password);
 
         m_connect_button = new QPushButton();
         m_connect_button->setText(tr("Host"));
         connect(m_connect_button, &QPushButton::clicked, this, [this]() {
-            // TODOx: Set the bingo lobby ID, the player[x] name, and the lobby password
-            // Make sure to update the text of m_bingo_lobby_id so it can be shared with a friend!
-            // TODOx: Host the bingo lobby
+            // Set the bingo lobby ID
+            QString id = GenerateLobbyID();
+            m_bingo_lobby_id->setText(id);
+            // Create a socket for communication with the server
+            m_bingo_client = new WiiMixBingoClient();
+            // Using the bingo lobby id, the player name, and the lobby password
+            // Create a bingo lobby
+
+            // try {
+            //     // You should ONLY be able to access the server through sending requests...
+            // }
+            // catch (const std::runtime_error& e) {
+            //     // If the lobby creation fails, display an error message
+            //     QMessageBox::critical(this, tr("Error"), tr("Failed to create lobby: %1").arg(e.what()));
+            // }
         });
 
         connection_layout->addWidget(m_connect_button);
@@ -507,6 +528,22 @@ int WiiMixConfigWidget::GetMinTimeBetweenSwitch() const
 int WiiMixConfigWidget::GetMaxTimeBetweenSwitch() const
 {
     return m_max_time_between_switch->value();
+}
+
+QString WiiMixConfigWidget::GenerateLobbyID() const {
+    // Generate a random string of length LOBBY_ID_LENGTH
+    // const QString possible_characters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+    // const int possible_characters_length = possible_characters.length();
+
+    // QString random_string;
+    // for (int i = 0; i < LOBBY_ID_LENGTH; ++i) {
+    //     int index = QRandomGenerator::global()->generate() % possible_characters_length;
+    //     random_string.append(possible_characters.at(index));
+    // }
+    // return random_string;
+
+    // Turns out Qt has a built-in function for this
+    return QUuid::createUuid().toString(QUuid::Id128); // Generates a 32 byte globally unique string 
 }
 
 QString WiiMixConfigWidget::GetLobbyID() const {

@@ -9,6 +9,15 @@ Blue: 97, 187, 232 (#61bbe8)
 Purple: (#a961e8)
 Green: (#61e873)
 
+Include files at /usr/include/x86_64-linux-gnu/qt6; however, there should be NO manual editing of include paths;
+the cmake tools extension combined with
+{
+"name": "CMake",
+"compileCommands": "${config:cmake.buildDirectory}/compile_commands.json",
+"configurationProvider": "ms-vscode.cmake-tools"
+}
+should take care of that
+
 - [x] Settings.cpp GameIdsToGameFiles and ObjectiveIdsToObjectives
 - [x] SettingsWindow.cpp LoadSettings()
 - [x] SettingsWindow.cpp SaveSettings()

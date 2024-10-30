@@ -7,6 +7,74 @@
 #include "DolphinQt/Resources.h"
 #include "Settings.h"
 
+
+WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank,
+    std::vector<WiiMixObjective> objectives, std::vector<UICommon::GameFile> games) {
+    WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
+    if (difficulty != DEFAULT_DIFFICULTY) {
+        m_difficulty = difficulty;
+    }
+    else if (config_difficulty != DEFAULT_DIFFICULTY) {
+        m_difficulty = config_difficulty;
+    }
+    else {
+        m_difficulty = DEFAULT_DIFFICULTY;
+    }
+    WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
+    if (mode != DEFAULT_MODE) {
+        m_mode = mode;
+    }
+    else if (config_mode != DEFAULT_MODE) {
+        m_mode = config_mode;
+    }
+    else {
+        m_mode = DEFAULT_MODE;
+    }
+
+    WiiMixEnums::SaveStateBank config_bank = Config::Get(Config::WIIMIX_SAVE_STATE_BANK);
+    if (bank != DEFAULT_SAVE_STATE_BANK) {
+        m_save_state_bank = bank;
+    }
+    else if (config_bank != DEFAULT_SAVE_STATE_BANK) {
+        m_save_state_bank = config_bank;
+    }
+    else {
+        m_save_state_bank = DEFAULT_SAVE_STATE_BANK;
+    }
+    // Config::Get(Config::WIIMIX_TIME);
+    // m_time = time;
+    // Objectives should always be an empty list on the very first load; it gets populated by:
+    // - Starting the WiiMix
+    // - Pressing save
+    // - Loading someone else's objectives
+    // Note that objectives get cleared at the end of a WiiMix (if the Quit or WiiMix buttons are pressed instead of replay),
+    // meaning if you want try the same set of objectives you'll need to reload the config file
+    std::vector<WiiMixObjective> config_objectives = WiiMixSettings::ObjectiveIdsToObjectives(Config::Get(Config::WIIMIX_OBJECTIVE_IDS));
+    if (objectives.size() != 0) {
+        m_objectives = objectives;
+    }
+    else if (config_objectives.size() != 0) {
+        m_objectives = objectives;
+    }
+    else {
+        m_objectives = DEFAULT_OBJECTIVES;
+    }
+    // Games is set whenever it needs to be set. That means:
+    // - Before loading objectives for WiiMix
+    // - Pressing save
+    // - Loading someone else's games (errors out if you don't have the compatible games)
+    std::vector<UICommon::GameFile> config_games = WiiMixSettings::GameIdsToGameFiles(Config::Get(Config::WIIMIX_GAME_IDS));
+    if (games.size() != 0) {
+        m_games = games;
+    }
+    else if (config_games.size() != 0) {
+        m_games = config_games;
+    }
+    else {
+        m_games = DEFAULT_GAMES;
+    }
+}
+
 QString WiiMixSettings::DifficultyToString(WiiMixEnums::Difficulty difficulty) {
     switch (difficulty)
     {
@@ -198,73 +266,6 @@ std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective
         }
     }
     return objective_ids_list;
-}
-
-WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank,
-    std::vector<WiiMixObjective> objectives, std::vector<UICommon::GameFile> games) {
-    WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
-    if (difficulty != DEFAULT_DIFFICULTY) {
-        m_difficulty = difficulty;
-    }
-    else if (config_difficulty != DEFAULT_DIFFICULTY) {
-        m_difficulty = config_difficulty;
-    }
-    else {
-        m_difficulty = DEFAULT_DIFFICULTY;
-    }
-    WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
-    if (mode != DEFAULT_MODE) {
-        m_mode = mode;
-    }
-    else if (config_mode != DEFAULT_MODE) {
-        m_mode = config_mode;
-    }
-    else {
-        m_mode = DEFAULT_MODE;
-    }
-
-    WiiMixEnums::SaveStateBank config_bank = Config::Get(Config::WIIMIX_SAVE_STATE_BANK);
-    if (bank != DEFAULT_SAVE_STATE_BANK) {
-        m_save_state_bank = bank;
-    }
-    else if (config_bank != DEFAULT_SAVE_STATE_BANK) {
-        m_save_state_bank = config_bank;
-    }
-    else {
-        m_save_state_bank = DEFAULT_SAVE_STATE_BANK;
-    }
-    // Config::Get(Config::WIIMIX_TIME);
-    // m_time = time;
-    // Objectives should always be an empty list on the very first load; it gets populated by:
-    // - Starting the WiiMix
-    // - Pressing save
-    // - Loading someone else's objectives
-    // Note that objectives get cleared at the end of a WiiMix (if the Quit or WiiMix buttons are pressed instead of replay),
-    // meaning if you want try the same set of objectives you'll need to reload the config file
-    std::vector<WiiMixObjective> config_objectives = WiiMixSettings::ObjectiveIdsToObjectives(Config::Get(Config::WIIMIX_OBJECTIVE_IDS));
-    if (objectives.size() != 0) {
-        m_objectives = objectives;
-    }
-    else if (config_objectives.size() != 0) {
-        m_objectives = objectives;
-    }
-    else {
-        m_objectives = DEFAULT_OBJECTIVES;
-    }
-    // Games is set whenever it needs to be set. That means:
-    // - Before loading objectives for WiiMix
-    // - Pressing save
-    // - Loading someone else's games (errors out if you don't have the compatible games)
-    std::vector<UICommon::GameFile> config_games = WiiMixSettings::GameIdsToGameFiles(Config::Get(Config::WIIMIX_GAME_IDS));
-    if (games.size() != 0) {
-        m_games = games;
-    }
-    else if (config_games.size() != 0) {
-        m_games = config_games;
-    }
-    else {
-        m_games = DEFAULT_GAMES;
-    }
 }
 
 void WiiMixSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank bank) {

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "UICommon/GameFile.h"
-
+#include <string>
 namespace WiiMixEnums {
     enum class Difficulty {
         NORMAL,
@@ -73,6 +72,26 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_CARD_SIZE 25
 #define DEFAULT_TEAMS false
 #define MAX_PLAYERS 4
+#define LOBBY_ID_LENGTH 32 // Uses QUuid, which ends up being length 32
+#define MAX_LOBBY_PASSWORD_LENGTH 20
+
+// BINGO NETWORKING
+#define PORT 19504
+
+#define ACTION "action"
+
+#define CONNECT "connect"
+#define LOBBY_NAME "lobby_name"
+#define PLAYER_NAME "player_name"
+#define LOBBY_PASSWORD "lobby_password"
+
+#define UPDATE_BINGO_CARD "update_bingo_card"
+#define OBJECTIVE "objective"
+#define PLAYER "player"
+
+#define CREATE_LOBBY "create_lobby"
+
+#define BINGO_END "bingo_end"
 
 // ROGUE
 
