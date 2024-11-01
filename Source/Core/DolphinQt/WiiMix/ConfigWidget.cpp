@@ -30,7 +30,6 @@
 #include "DolphinQt/Resources.h"
 
 WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
-    m_settings = WiiMixSettings();
     ConnectWidgets();
 }
 
@@ -39,6 +38,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
     // Separate menu_layout for the host and the connector
     QHBoxLayout* menu_layout = new QHBoxLayout();
+    
     // Create the menu bar
     m_menu_bar = new QMenuBar();
 
@@ -93,18 +93,18 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         QGroupBox* connection_box = new QGroupBox(tr("Connection Settings"));
         QFormLayout* connection_layout = new QFormLayout();
 
-        QLabel* bingo_lobby_id = new QLabel(tr("Lobby ID"));
+        QLabel*bingo_lobby_id = new QLabel(tr("Lobby ID"));
         m_bingo_lobby_id = new QLineEdit();
         m_bingo_lobby_id->setReadOnly(true);
 
         connection_layout->addRow(bingo_lobby_id, m_bingo_lobby_id);
 
-        QLabel* player_name = new QLabel(tr("Player Name"));
+        QLabel*player_name = new QLabel(tr("Player Name"));
         m_bingo_player_name = new QLineEdit();
 
         connection_layout->addRow(player_name, m_bingo_player_name);
 
-        QLabel* bingo_lobby_password = new QLabel(tr("Password"));
+        QLabel*bingo_lobby_password = new QLabel(tr("Password"));
         m_bingo_lobby_password = new QLineEdit();
         m_bingo_lobby_password->setMaxLength(MAX_LOBBY_PASSWORD_LENGTH);
         m_bingo_lobby_password->setEchoMode(QLineEdit::Password);
@@ -119,9 +119,11 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             QString id = GenerateLobbyID();
             m_bingo_lobby_id->setText(id);
             // Create a socket for communication with the server
-            m_bingo_client = new WiiMixBingoClient();
-            // Using the bingo lobby id, the player name, and the lobby password
-            // Create a bingo lobby
+            if (m_bingo_client == nullptr) {
+                m_bingo_client = new WiiMixBingoClient();
+            }
+            // Create a lobby with the given settings
+            m_bingo_client->CreateLobby(GetBingoSettings());
 
             // try {
             //     // You should ONLY be able to access the server through sending requests...
@@ -148,7 +150,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         m_team_selectors = QList<QCheckBox*>();
         m_team_selector_states = QList<std::string>();
 
-        QLabel* teams_enabled_label = new QLabel(tr("Teams Enabled:"));
+        QLabel*teams_enabled_label = new QLabel(tr("Teams Enabled:"));
         teams_enabled_layout->addWidget(teams_enabled_label);
         teams_enabled_layout->addWidget(m_teams_enabled);
         lobby_layout->addLayout(teams_enabled_layout);
@@ -190,7 +192,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                 //     team_selector->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WiiMixEnums::ColorToHex(static_cast<WiiMixEnums::Color>(index)))));
                 // }
             );
-            QLabel* player_widget = new QLabel(tr("Player ") + QString::number(i + 1) + tr(":"));
+            QLabel* player_widget = new QLabel(tr("Player ") + QString::number(i + 1) + tr(": ") + QString::fromStdString(m_bingo_player_names[i]));
             // TODOx: fix this event with player joined
             // connect(player_widget, &QLabel::linkActivated, this, [this, i]() {
             //     // Open a dialog to select a player
@@ -243,6 +245,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             m_lockout_button->setChecked(!checked);
             if (checked) {
                 Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::BINGO);
+                m_bingo_client->SetBingoType(WiiMixEnums::BingoType::BINGO);
             }
         });
 
@@ -262,6 +265,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             m_bingo_button->setChecked(!checked);
             if (checked) {
                 Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::LOCKOUT);
+                m_bingo_client->SetBingoType(WiiMixEnums::BingoType::LOCKOUT);
             }
         });
 
@@ -365,7 +369,7 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
-    QLabel* num_switches_label = new QLabel(tr("Number of Switches:"));
+    QLabel*num_switches_label = new QLabel(tr("Number of Switches:"));
     m_num_switches = new QLineEdit();
     m_num_switches->setText(QString::number(num_switches));
     QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
@@ -380,11 +384,11 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
 
-    QLabel* min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
+    QLabel*min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
     m_min_time_between_switch = new QSlider(Qt::Horizontal);
     m_min_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_min_time_between_switch->setValue(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH));
-    QLabel* max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
+    QLabel*max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
     m_max_time_between_switch = new QSlider(Qt::Horizontal);
     m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_max_time_between_switch->setValue(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
@@ -394,23 +398,19 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(m_max_time_between_switch);
     
     connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, text.toInt());
-    });
-
-    connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, checked);
+        SetNumSwitches(text.toInt());
     });
 
     // Connect endless_mode to disable/enable number of switches
     connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
-        m_num_switches->setDisabled(checked);
+        SetEndless(checked);
     });
 
     // Connect slider value change to update the label
-    connect(m_min_time_between_switch, &QSlider::valueChanged, this, [min_switch_time_label](int value) {
-        min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(value));
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, value);
+    connect(m_min_time_between_switch, &QSlider::valueChanged, this, [this](int value) {
+        SetMinTimeBetweenSwitch(value, min_switch_time_label);
     });
+
     connect(m_max_time_between_switch, &QSlider::valueChanged, this, [max_switch_time_label](int value) {
         max_switch_time_label->setText(QStringLiteral("Max Time Between Switches: ") + QString::number(value));
         Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, value);
@@ -429,7 +429,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     QGroupBox* common_settings_box = new QGroupBox(tr("Common Settings"));
     QVBoxLayout* common_settings_layout = new QVBoxLayout();
 
-    QLabel* difficulty_label = new QLabel(tr("Objective Difficulty:"));
+    QLabel*difficulty_label = new QLabel(tr("Objective Difficulty:"));
     m_difficulty = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Difficulty::END); i++) {
         m_difficulty->addItem(WiiMixSettings::DifficultyToString(static_cast<WiiMixEnums::Difficulty>(i)));
@@ -440,12 +440,12 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     common_settings_layout->addWidget(m_difficulty);
 
     // Time (maybe I make this an estimate at the bottom rather than a parameter)
-    // QLabel* time_label = new QLabel(tr("Time:"));
+    // QLabel*time_label = new QLabel(tr("Time:"));
     // m_time = new QLabel();
     // m_config_layout->addWidget(time_label);
     // m_config_layout->addWidget(m_time);
 
-    QLabel* save_state_label = new QLabel(tr("Save State Bank:"));
+    QLabel*save_state_label = new QLabel(tr("Save State Bank:"));
     m_save_state_bank = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::SaveStateBank::END); i++) {
         m_save_state_bank->addItem(WiiMixSettings::SaveStateBankToString(static_cast<WiiMixEnums::SaveStateBank>(i)));
@@ -554,7 +554,7 @@ QString WiiMixConfigWidget::GetLobbyPassword() const {
     return m_bingo_lobby_password->text();
 }
 
-bool WiiMixConfigWidget::GetTeamsEnabled() const {
+bool WiiMixConfigWidget::GetTeams() const {
     return m_teams_enabled->isChecked();
 }
 
@@ -565,3 +565,111 @@ std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     }
     return team_selectors;
 }
+
+void WiiMixConfigWidget::SetDifficulty(const QString& difficulty) {
+    int index = m_difficulty->findText(difficulty);
+    if (index != -1) {
+        m_difficulty->setCurrentIndex(index);
+    }
+}
+
+void WiiMixConfigWidget::SetSaveStateBank(const QString& bank) {
+    int index = m_save_state_bank->findText(bank);
+    if (index != -1) {
+        m_save_state_bank->setCurrentIndex(index);
+    }
+}
+
+void WiiMixConfigWidget::SetNumSwitches(int num_switches) {
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
+    m_num_switches->setText(QString::number(num_switches));
+}
+
+void WiiMixConfigWidget::SetEndless(bool endless) {
+    m_endless_mode->setChecked(endless);
+    m_num_switches->setDisabled(endless);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
+}
+
+void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {
+    switch (type) {
+        case WiiMixEnums::BingoType::BINGO:
+            m_bingo_button->setChecked(true);
+            break;
+        case WiiMixEnums::BingoType::LOCKOUT:
+            m_lockout_button->setChecked(true);
+            break;
+        case WiiMixEnums::BingoType::TIME_ATTACK:
+            m_time_attack_button->setChecked(true);
+            break;
+        default:
+            break;
+    }
+}
+
+void WiiMixConfigWidget::SetCardSize(const QString& size) {
+    int index = m_card_size->findText(size);
+    if (index != -1) {
+        m_card_size->setCurrentIndex(index);
+    }
+}
+
+void WiiMixConfigWidget::SetMinTimeBetweenSwitch(int min_time) {
+    m_min_time_between_switch->setValue(min_time);
+    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(value));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, value);
+}
+
+void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
+    m_max_time_between_switch->setValue(max_time);
+}
+
+void WiiMixConfigWidget::SetLobbyPassword(QString password) {
+    m_bingo_lobby_password->setText(password);
+}
+
+void WiiMixConfigWidget::SetTeams(bool enabled) {
+    m_teams_enabled->setChecked(enabled);
+}
+
+void WiiMixConfigWidget::SetTeamSelectors(std::array<bool, MAX_PLAYERS> selectors) {
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        m_team_selectors.at(i)->setChecked(selectors[i]);
+    }
+}
+
+void WiiMixConfigWidget::SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> states) {
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        m_team_selector_states[i] = states[i];
+    }
+}
+
+void WiiMixConfigWidget::SetBingoPlayerNames(QList<std::string> names) {
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        m_bingo_player_names[i] = names[i];
+    }
+}
+
+/// Creates a settings instance from the current configuration
+/// and sends it to the Bingo server 
+WiiMixBingoSettings WiiMixConfigWidget::GetBingoSettings() {
+    // Create a settings instance from the current configuration
+    WiiMixBingoSettings settings;
+    settings.SetDifficulty(WiiMixSettings::StringToDifficulty(GetDifficulty()));
+    settings.SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(GetSaveStateBank()));
+    settings.SetMode(WiiMixEnums::Mode::BINGO);
+    settings.SetBingoType(GetBingoType());
+    settings.SetCardSize(WiiMixSettings::StringToCardSize(GetCardSize()));
+    settings.SetTeams(GetTeams());
+    settings.SetPlayers(GetPlayers());
+    settings.SetLobbyID(GetLobbyID());
+    settings.SetLobbyPassword(GetLobbyPassword());
+
+    return settings;
+}
+
+void WiiMixConfigWidget::SetPlayerName(QString name) {
+    m_bingo_player_name->setText(name);
+}
+
+void WiiMixConfigWidget::onSettingsChanged() {}

@@ -415,13 +415,13 @@ set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
 option(BUILD_WIIMIX_SERVER "Build the WiiMix Bingo Server" ON)
 
 # Build the bingo server if it exists
-if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/BingoServer.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/BingoServer.h")
+if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.h")
   # Define common include directories and libraries for both targets
   set(SERVER_INCLUDES "${CMAKE_SOURCE_DIR}/include")
   set(SERVER_LIBS Qt6::Core Qt6::Network)  
   add_executable(wiimix-server
-    WiiMix/BingoServer.cpp
-    WiiMix/BingoServer.h
+    WiiMix/Server.cpp
+    WiiMix/Server.h
     WiiMix/Enums.cpp
     WiiMix/Enums.h
     WiiMix/Objective.h

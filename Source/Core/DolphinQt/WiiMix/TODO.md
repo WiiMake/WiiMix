@@ -18,6 +18,13 @@ the cmake tools extension combined with
 }
 should take care of that
 
+SERVER TODOS
+
+- [] Should make an enum
+- [] Need to edit config widget to send notifications to the server whenever a setting is changed
+- [] Need to structure the server, parse the sent data, and respond accordingly (with template responses at first)
+- [] Need to link the server responses to the GUI
+
 - [x] Settings.cpp GameIdsToGameFiles and ObjectiveIdsToObjectives
 - [x] SettingsWindow.cpp LoadSettings()
 - [x] SettingsWindow.cpp SaveSettings()

@@ -48,9 +48,63 @@ namespace WiiMixEnums {
 
     Color PlayerToColor(Player player);
 
-    Color StringToColor(const std::string& color);
     std::string ColorToHex(Color color);
+
+    // Bingo Networking Enums
+    enum class Action {
+        CONNECT,
+        UPDATE,
+        CREATE_LOBBY,
+        BINGO_END,
+        END // Default/size value
+    };
+
+    #define ACTION "ACTION"
+
+    enum class BingoNetplaySettings {
+        BINGO_TYPE,
+        TEAMS,
+        CARD_SIZE,
+        PLAYERS,
+        LOBBY_ID,
+        LOBBY_PASSWORD,
+        COLOR,
+        NAME,
+        END // Default/size value
+    };
+
+    // For API json
+    #define BINGO_NETPLAY_SETTINGS_BINGO_TYPE "BINGO_TYPE"
+    #define BINGO_NETPLAY_SETTINGS_TEAMS "TEAMS"
+    #define BINGO_NETPLAY_SETTINGS_CARD_SIZE "CARD_SIZE"
+    #define BINGO_NETPLAY_SETTINGS_PLAYERS "PLAYERS"
+    #define BINGO_NETPLAY_SETTINGS_LOBBY_ID "LOBBY_ID"
+    #define BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD "LOBBY_PASSWORD"
+    #define BINGO_NETPLAY_SETTINGS_COLOR "COLOR"
+    #define BINGO_NETPLAY_SETTINGS_NAME "NAME"
+
+    std::string BingoNetplaySettingsToString(BingoNetplaySettings setting);
+    BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);
+
+    enum class CommonNetplaySettings {
+        SAVE_STATE_BANK,
+        OBJECTIVES,
+        DIFFICULTY,
+        GAMES_LIST,
+        END // Default/size value
+    };
+
+    // For API json
+    #define COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
+    #define COMMON_NETPLAY_SETTINGS_OBJECTIVES "OBJECTIVES"
+    #define COMMON_NETPLAY_SETTINGS_DIFFICULTY "DIFFICULTY"
+    #define COMMON_NETPLAY_SETTINGS_GAMES_LIST "GAMES_LIST"
+
+    std::string CommonNetplaySettingsToString(CommonNetplaySettings setting);
+    CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
 }
+
+#define UNKNOWN "UNKNOWN"
 
 // THEME
 #define WII_MIX_RED "#da5133"
@@ -77,21 +131,6 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 
 // BINGO NETWORKING
 #define PORT 19504
-
-#define ACTION "action"
-
-#define CONNECT "connect"
-#define LOBBY_NAME "lobby_name"
-#define PLAYER_NAME "player_name"
-#define LOBBY_PASSWORD "lobby_password"
-
-#define UPDATE_BINGO_CARD "update_bingo_card"
-#define OBJECTIVE "objective"
-#define PLAYER "player"
-
-#define CREATE_LOBBY "create_lobby"
-
-#define BINGO_END "bingo_end"
 
 // ROGUE
 
