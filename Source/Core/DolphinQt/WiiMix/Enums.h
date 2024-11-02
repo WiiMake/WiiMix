@@ -34,7 +34,7 @@ namespace WiiMixEnums {
     enum class BingoType {
         BINGO,
         LOCKOUT,
-        TIME_ATTACK,
+        TIME_ATTACK, // You can take achievements away from other people
         END, // Default/size value
     };
 
@@ -52,10 +52,9 @@ namespace WiiMixEnums {
 
     // Bingo Networking Enums
     enum class Action {
+        CREATE_LOBBY,
         CONNECT,
         UPDATE,
-        CREATE_LOBBY,
-        BINGO_END,
         END // Default/size value
     };
 
@@ -87,6 +86,7 @@ namespace WiiMixEnums {
     BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);
 
     enum class CommonNetplaySettings {
+        MODE,
         SAVE_STATE_BANK,
         OBJECTIVES,
         DIFFICULTY,
@@ -95,6 +95,7 @@ namespace WiiMixEnums {
     };
 
     // For API json
+    #define COMMON_NETPLAY_SETTINGS_MODE "MODE"
     #define COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
     #define COMMON_NETPLAY_SETTINGS_OBJECTIVES "OBJECTIVES"
     #define COMMON_NETPLAY_SETTINGS_DIFFICULTY "DIFFICULTY"
@@ -104,7 +105,7 @@ namespace WiiMixEnums {
     CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
 }
 
-#define UNKNOWN "UNKNOWN"
+#define WII_MIX_UNKNOWN "UNKNOWN"
 
 // THEME
 #define WII_MIX_RED "#da5133"
@@ -119,6 +120,7 @@ constexpr WiiMixEnums::Mode DEFAULT_MODE = WiiMixEnums::Mode::BINGO;
 constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::SaveStateBank::USER;
 #define DEFAULT_TIME 0
 #define DEFAULT_GAMES {}
+#define MAX_GAMES 10
 #define DEFAULT_OBJECTIVES {}
 
 // BINGO

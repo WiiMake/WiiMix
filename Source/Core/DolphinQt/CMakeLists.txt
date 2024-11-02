@@ -415,10 +415,12 @@ set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
 option(BUILD_WIIMIX_SERVER "Build the WiiMix Bingo Server" ON)
 
 # Build the bingo server if it exists
+# TODOx: figure out how to build
 if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.h")
   # Define common include directories and libraries for both targets
   set(SERVER_INCLUDES "${CMAKE_SOURCE_DIR}/include")
-  set(SERVER_LIBS Qt6::Core Qt6::Network)  
+  set(SERVER_LIBS Qt6::Core Qt6::Network common core)
+  # set(SERVER_LIBS Qt6::Core Qt6::Network common core)  
   add_executable(wiimix-server
     WiiMix/Server.cpp
     WiiMix/Server.h
@@ -426,11 +428,20 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
     WiiMix/Enums.h
     WiiMix/Objective.h
     WiiMix/Objective.cpp
+    WiiMix/BingoSettings.cpp
+    WiiMix/BingoSettings.h
+    WiiMix/Settings.cpp
+    WiiMix/Settings.h
+    # How to get these files to include in the binary?
+    # Common/Config/Config.cpp
+    # Common/Config/Config.h
+    # Core/Config/MainSettings.cpp
+    # Core/Config/MainSettings.h
   )
   target_include_directories(wiimix-server PRIVATE ${SERVER_INCLUDES})
   target_link_libraries(wiimix-server PRIVATE ${SERVER_LIBS})
 # else()
-  # message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/WiiMix/BingoServer.cpp or ${CMAKE_SOURCE_DIR}/WiiMix/BingoServer.h not found")
+  # message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/WiiMix/Server.cpp or ${CMAKE_SOURCE_DIR}/WiiMix/Server.h not found")
 endif()
 
 # Ensure the resource path doesn't get overridden

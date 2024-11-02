@@ -11,13 +11,19 @@ WiiMixBingoClient::WiiMixBingoClient(QObject *parent, QTcpSocket *socket) : QObj
         m_socket = new QTcpSocket(this);
         m_socket->connectToHost(QStringLiteral("localhost"), PORT);
     }
+    connect(m_socket, &QTcpSocket::readyRead, this, [this]() {
+        QByteArray data = m_socket->readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isObject()) return;
+        ReceiveData(doc);
+    });
 }
 
 bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Action action) {
     bool success = false;
 
     // Connect a player to a lobby
-    QJsonDocument connect_json = settings.toJson();
+    QJsonDocument connect_json = settings.ToJson();
     QJsonObject connect_json_obj = connect_json.object();
 
     connect_json_obj[QStringLiteral(ACTION)] = static_cast<int>(action);
@@ -29,6 +35,15 @@ bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Acti
     m_socket->write(QJsonDocument::fromVariant(connect_json).toJson());
     success = m_socket->waitForBytesWritten();
     return success;
+}
+
+bool WiiMixBingoClient::ReceiveData(QJsonDocument doc) {
+    // Update the settings
+    WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(); 
+    bingo_settings = bingo_settings.FromJson(doc);
+    // Update the UI
+    emit onSettingsChanged(bingo_settings);
+    return true;
 }
 
 // Getters (retrieves values from server)

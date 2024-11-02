@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QPair>
 
 #include <iostream>
 #include <netinet/in.h>
@@ -14,6 +15,7 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/BingoSettings.h"
 
 // A server for all your WiiMix-related needs
 
@@ -22,34 +24,19 @@ class WiiMixServer : public QObject
   Q_OBJECT
 
 public:
-  explicit WiiMixServer(QObject *parent = nullptr, WiiMixEnums::BingoType bingo_type = WiiMixEnums::BingoType::BINGO, std::list<WiiMixEnums::Player> players = {}, std::list<WiiMixObjective> bingo_card = {});
-
-  // void CreateLobby(QString lobby_name, QString lobby_password);
-  
-  // // Bingo card objectives are read top to bottom left to right and are 0 indexed
-  // void SetBingoType(WiiMixEnums::BingoType bingo_type);
-  // WiiMixEnums::BingoType GetBingoType() const;
-
-  // void SetPlayers(const std::list<WiiMixEnums::Player>& players);
-  // void AddPlayer(WiiMixEnums::Player player);
-  // void RemovePlayer(WiiMixEnums::Player player);
-  // std::list<WiiMixEnums::Player> GetPlayers() const;
-
-  // void SetBingoCard(const std::list<WiiMixObjective>& bingo_card);
-  // void UpdateBingoCard(int objective, WiiMixEnums::Player player);
-  // std::list<WiiMixObjective> GetBingoCard() const;
-
-signals:
-  void DataReceived();
+  // explicit WiiMixServer(QObject *parent = nullptr, WiiMixEnums::BingoType bingo_type = WiiMixEnums::BingoType::BINGO, std::list<WiiMixEnums::Player> players = {}, std::list<WiiMixObjective> bingo_card = {});
+  explicit WiiMixServer(QObject *parent = nullptr);
 
 private slots:
     void NewConnection();
     void Disconnected();
-    void ReadyRead();
+    void Read();
 
 private:
+    void SendToLobby(const QString& lobby, const QJsonObject& message);
+    void ProcessMessage(QTcpSocket* client_socket, const QJsonObject& json);
+    
     QTcpServer *m_server;
-    WiiMixEnums::BingoType m_bingo_type;
-    std::list<WiiMixEnums::Player> m_players;
-    std::list<WiiMixObjective> m_bingo_card;
+    QMap<QString, QPair<QSet<QTcpSocket*>, WiiMixBingoSettings>> m_lobbies;  // lobbyName -> list of clients in lobby
+    QMap<QTcpSocket*, QString> m_client_lobbies;  // client -> lobbyName
 };

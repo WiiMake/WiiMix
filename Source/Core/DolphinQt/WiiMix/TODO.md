@@ -20,6 +20,10 @@ should take care of that
 
 SERVER TODOS
 
+- [x] Fix Server.cpp; I think some of the basic logic is there, but I need to build up the servers and settings for lobbies and manage memory correctly
+- [] Fix ConfigWidget; this is reliant on Server.cpp
+- WEEKEND GOAL: just get the server to compile; I think we can probably make this happen
+
 - [] Should make an enum
 - [] Need to edit config widget to send notifications to the server whenever a setting is changed
 - [] Need to structure the server, parse the sent data, and respond accordingly (with template responses at first)

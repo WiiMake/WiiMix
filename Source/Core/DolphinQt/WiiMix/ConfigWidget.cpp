@@ -19,6 +19,8 @@
 #include <QMessageBox>
 #include <QUuid>
 #include <QString>
+#include <QMap>
+#include <QPair>
 
 #include "Core/Config/MainSettings.h"
 
@@ -30,7 +32,17 @@
 #include "DolphinQt/Resources.h"
 
 WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
-    ConnectWidgets();
+    // Initialize m_players
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        m_players.insert(static_cast<WiiMixEnums::Player>(i), QPair(WiiMixEnums::PlayerToColor(static_cast<WiiMixEnums::Player>(i)), QStringLiteral("")));
+    }
+}
+
+void WiiMixConfigWidget::OnSettingsChanged(WiiMixBingoSettings settings) {
+    // Set players
+    m_players = settings.GetPlayers();
+    // TODOx: Set gui elements
+    return;
 }
 
 void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
@@ -80,6 +92,9 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         setLayout(m_config_layout);
     });
 
+    // Connect the local onSettingsChanged event to the settings changed slot
+    connect(this, &WiiMixConfigWidget::onSettingsChanged, this, &WiiMixConfigWidget::onSettingsChanged);
+
     menu_layout->addStretch();
     menu_layout->addWidget(m_menu_bar);
     menu_layout->addStretch();
@@ -118,12 +133,21 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             // Set the bingo lobby ID
             QString id = GenerateLobbyID();
             m_bingo_lobby_id->setText(id);
+            // Initialize the players map
+            if (m_players.isEmpty()) {
+                m_players.insert(WiiMixEnums::Player::ONE, QPair(WiiMixEnums::PlayerToColor(WiiMixEnums::Player::ONE), GetPlayerName()));
+            }
             // Create a socket for communication with the server
             if (m_bingo_client == nullptr) {
                 m_bingo_client = new WiiMixBingoClient();
+                    
+                // Upon receiving any data from the server (which should only be updated settings),
+                // the client should update its settings
+                connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::onSettingsChanged);
             }
-            // Create a lobby with the given settings
-            m_bingo_client->CreateLobby(GetBingoSettings());
+            
+            // Creates a lobby with the given settings
+            m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
 
             // try {
             //     // You should ONLY be able to access the server through sending requests...
@@ -148,7 +172,6 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         QHBoxLayout* teams_enabled_layout = new QHBoxLayout();
         m_teams_enabled = new QCheckBox();
         m_team_selectors = QList<QCheckBox*>();
-        m_team_selector_states = QList<std::string>();
 
         QLabel*teams_enabled_label = new QLabel(tr("Teams Enabled:"));
         teams_enabled_layout->addWidget(teams_enabled_label);
@@ -161,44 +184,11 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             team_selector->setStyleSheet(QStringLiteral(".QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(i)))));
             connect(team_selector, &QCheckBox::clicked, this, [this, team_selector](bool checked) {
                 int index = m_team_selectors.indexOf(team_selector);
-                team_selector->setChecked(false);
-                // Change the color to indicate team selection
-                // If teams, select the next color regardless of whether someone has it selected or not
-                if (m_teams_enabled->isChecked()) {
-                    int color_index = static_cast<int>(WiiMixEnums::StringToColor(m_team_selector_states[index]));
-                    color_index += 1;
-                    color_index %= static_cast<int>(WiiMixEnums::Color::END); 
-                    m_team_selector_states[index] = ColorToHex(static_cast<WiiMixEnums::Color>(color_index));
-                    m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
-                }
-                    // else {
-                    //     // If not teams, select the next available color
-                    //     int color_index = static_cast<int>(WiiMixEnums::StringToColor(m_team_selector_states[index]));
-                    //     for (int i = 0; i < 4; i++) {
-                    //         color_index += 1;
-                    //         if (color_index > static_cast<int>(WiiMixEnums::Color::END)) {
-                    //             color_index = 0;
-                    //         }
-                    //         if (color_index ) {
-
-                    //         }   
-                    //     }
-                    //     m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WiiMixEnums::ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
-                    // }
-                }
-                // } else {
-                //     // Reset the color to the individual player's color
-                //     int index = m_team_selectors.indexOf(team_selector);
-                //     team_selector->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WiiMixEnums::ColorToHex(static_cast<WiiMixEnums::Color>(index)))));
-                // }
-            );
-            QLabel* player_widget = new QLabel(tr("Player ") + QString::number(i + 1) + tr(": ") + QString::fromStdString(m_bingo_player_names[i]));
-            // TODOx: fix this event with player joined
-            // connect(player_widget, &QLabel::linkActivated, this, [this, i]() {
-            //     // Open a dialog to select a player
-            // });
+                SetTeamSelectors(index);
+            });
+            QLabel* player_widget = new QLabel(tr("Player ") + QString::number(i + 1) + tr(": ") + m_players[static_cast<WiiMixEnums::Player>(i)].second);
             m_team_selectors.append(team_selector);
-            m_team_selector_states.append(ColorToHex(static_cast<WiiMixEnums::Color>(i)));
+
             player_layout->addWidget(m_team_selectors.at(i));
             player_layout->addWidget(player_widget);
             lobby_layout->addLayout(player_layout);
@@ -209,27 +199,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         m_config_layout->addWidget(bingo_lobby);
 
         connect(m_teams_enabled, &QCheckBox::clicked, this, [this](bool checked) {
-            Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, checked);
-            if (checked) {
-                // If teams is toggled, sets the players to be on teams
-                int mid = m_team_selectors.size() / 2;
-                for (int i = 0; i < mid; i++) {
-                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_RED)));
-                    m_team_selector_states[i] = WII_MIX_RED;
-                }
-                for (int i = mid; i < m_team_selectors.size(); i++) {
-                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_BLUE)));
-                    m_team_selector_states[i] = WII_MIX_BLUE;
-                }
-            }
-            else {
-                // If teams is not toggled, give each player it's individual color again
-                for (int i = 0; i < MAX_PLAYERS; i++) {
-                    // Enable or disable team indicators based on the checkbox state
-                    m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(i)))));
-                    m_team_selector_states[i] = ColorToHex(static_cast<WiiMixEnums::Color>(i));
-                }
-            }
+            SetTeams(checked);
         });
 
         WiiMixEnums::BingoType bingo_type = Config::Get(Config::WIIMIX_BINGO_TYPE);
@@ -242,11 +212,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         }
 
         connect(m_bingo_button, &QRadioButton::toggled, this, [this](bool checked) {
-            m_lockout_button->setChecked(!checked);
-            if (checked) {
-                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::BINGO);
-                m_bingo_client->SetBingoType(WiiMixEnums::BingoType::BINGO);
-            }
+            SetBingoType(WiiMixEnums::BingoType::BINGO);
         });
 
         bingo_settings_layout->addWidget(m_bingo_button);
@@ -262,11 +228,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         bingo_settings_layout->addWidget(m_lockout_button);
 
         connect(m_lockout_button, &QRadioButton::toggled, this, [this](bool checked) {
-            m_bingo_button->setChecked(!checked);
-            if (checked) {
-                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::LOCKOUT);
-                m_bingo_client->SetBingoType(WiiMixEnums::BingoType::LOCKOUT);
-            }
+            SetBingoType(WiiMixEnums::BingoType::LOCKOUT);
         });
 
         m_time_attack_button = new QRadioButton(tr("Time Attack"));
@@ -278,10 +240,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         }
 
         connect(m_time_attack_button, &QRadioButton::toggled, this, [this](bool checked) {
-            m_bingo_button->setChecked(!checked);
-            if (checked) {
-                Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixEnums::BingoType::TIME_ATTACK);
-            }
+            SetBingoType(WiiMixEnums::BingoType::TIME_ATTACK);
         });
 
         bingo_settings_layout->addWidget(m_time_attack_button);
@@ -303,17 +262,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         }
 
         connect(m_card_size, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
-            int size = 0;
-            if (index == 0) {
-                size = 9;
-            }
-            else if (index == 1) {
-                size = 25;
-            }
-            else if (index == 2) {
-                size = 49;
-            }
-            Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, size);
+            SetCardSize(index);
         });
 
         bingo_settings_layout->addWidget(card_size_label);
@@ -346,9 +295,11 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         m_connect_button = new QPushButton();
         m_connect_button->setText(tr("Connect"));
         connect(m_connect_button, &QPushButton::clicked, this, [this]() {
-            QString lobbyID = GetLobbyID();
-            QString lobbyPassword = GetLobbyPassword();
-            // TODOx: Connect to the bingo lobby
+            // Attempt to connect
+            if (m_bingo_client == nullptr) {
+                m_bingo_client = new WiiMixBingoClient();
+            }
+            m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::CONNECT);
         });
 
         connection_layout->addWidget(m_connect_button);
@@ -384,17 +335,17 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
 
-    QLabel*min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
+    m_min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
     m_min_time_between_switch = new QSlider(Qt::Horizontal);
     m_min_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_min_time_between_switch->setValue(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH));
-    QLabel*max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
+    m_max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
     m_max_time_between_switch = new QSlider(Qt::Horizontal);
     m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_max_time_between_switch->setValue(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
-    shuffle_settings_layout->addWidget(min_switch_time_label);
+    shuffle_settings_layout->addWidget(m_min_switch_time_label);
     shuffle_settings_layout->addWidget(m_min_time_between_switch);
-    shuffle_settings_layout->addWidget(max_switch_time_label);
+    shuffle_settings_layout->addWidget(m_max_switch_time_label);
     shuffle_settings_layout->addWidget(m_max_time_between_switch);
     
     connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
@@ -408,12 +359,11 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
 
     // Connect slider value change to update the label
     connect(m_min_time_between_switch, &QSlider::valueChanged, this, [this](int value) {
-        SetMinTimeBetweenSwitch(value, min_switch_time_label);
+        SetMinTimeBetweenSwitch(value);
     });
 
-    connect(m_max_time_between_switch, &QSlider::valueChanged, this, [max_switch_time_label](int value) {
-        max_switch_time_label->setText(QStringLiteral("Max Time Between Switches: ") + QString::number(value));
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, value);
+    connect(m_max_time_between_switch, &QSlider::valueChanged, this, [this](int value) {
+        SetMaxTimeBetweenSwitch(value);
     });
 
     shuffle_settings_box->setLayout(shuffle_settings_layout);
@@ -516,10 +466,6 @@ QString WiiMixConfigWidget::GetCardSize() const {
     return m_card_size->currentText();
 }
 
-void WiiMixConfigWidget::ConnectWidgets() {
-    return;
-}
-
 int WiiMixConfigWidget::GetMinTimeBetweenSwitch() const
 {
     return m_min_time_between_switch->value();
@@ -558,6 +504,10 @@ bool WiiMixConfigWidget::GetTeams() const {
     return m_teams_enabled->isChecked();
 }
 
+QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> WiiMixConfigWidget::GetPlayers() const {
+    return m_players;
+}
+
 std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     std::array<bool, MAX_PLAYERS> team_selectors;
     for (int i = 0; i < MAX_PLAYERS; ++i) {
@@ -566,89 +516,195 @@ std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     return team_selectors;
 }
 
-void WiiMixConfigWidget::SetDifficulty(const QString& difficulty) {
+void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
     int index = m_difficulty->findText(difficulty);
     if (index != -1) {
         m_difficulty->setCurrentIndex(index);
     }
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
 
-void WiiMixConfigWidget::SetSaveStateBank(const QString& bank) {
+void WiiMixConfigWidget::SetSaveStateBank(QString bank) {
     int index = m_save_state_bank->findText(bank);
     if (index != -1) {
         m_save_state_bank->setCurrentIndex(index);
+    }
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
     }
 }
 
 void WiiMixConfigWidget::SetNumSwitches(int num_switches) {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
     m_num_switches->setText(QString::number(num_switches));
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
 
 void WiiMixConfigWidget::SetEndless(bool endless) {
     m_endless_mode->setChecked(endless);
     m_num_switches->setDisabled(endless);
     Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
 
 void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {
     switch (type) {
         case WiiMixEnums::BingoType::BINGO:
             m_bingo_button->setChecked(true);
+            m_lockout_button->setChecked(false);
+            m_time_attack_button->setChecked(false);
             break;
         case WiiMixEnums::BingoType::LOCKOUT:
+            m_bingo_button->setChecked(false);
             m_lockout_button->setChecked(true);
+            m_time_attack_button->setChecked(false);
             break;
         case WiiMixEnums::BingoType::TIME_ATTACK:
+            m_bingo_button->setChecked(false);
+            m_lockout_button->setChecked(false);
             m_time_attack_button->setChecked(true);
             break;
         default:
             break;
     }
-}
-
-void WiiMixConfigWidget::SetCardSize(const QString& size) {
-    int index = m_card_size->findText(size);
-    if (index != -1) {
-        m_card_size->setCurrentIndex(index);
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
     }
 }
 
-void WiiMixConfigWidget::SetMinTimeBetweenSwitch(int min_time) {
-    m_min_time_between_switch->setValue(min_time);
-    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(value));
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, value);
+void WiiMixConfigWidget::SetCardSize(int index) {
+    if (index != -1) {
+        m_card_size->setCurrentIndex(index);
+    }
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
 
+// WARNING: this combined with rerendering the entire window & network requests might be too costly
+void WiiMixConfigWidget::SetMinTimeBetweenSwitch(int min_time) {
+    m_min_time_between_switch->setValue(min_time);
+    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(min_time));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, min_time);
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
+}
+
+// WARNING: this combined with rerendering the entire window & network requests might be too costly
 void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
     m_max_time_between_switch->setValue(max_time);
+    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(max_time));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
 
 void WiiMixConfigWidget::SetLobbyPassword(QString password) {
     m_bingo_lobby_password->setText(password);
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
+    }
 }
+
 
 void WiiMixConfigWidget::SetTeams(bool enabled) {
     m_teams_enabled->setChecked(enabled);
-}
-
-void WiiMixConfigWidget::SetTeamSelectors(std::array<bool, MAX_PLAYERS> selectors) {
-    for (int i = 0; i < MAX_PLAYERS; ++i) {
-        m_team_selectors.at(i)->setChecked(selectors[i]);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, enabled);
+    if (enabled) {
+        // If teams is toggled, sets the players to be on teams
+        int mid = m_team_selectors.size() / 2;
+        for (int i = 0; i < mid; i++) {
+            m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_RED)));
+            m_players[static_cast<WiiMixEnums::Player>(i)].first = WiiMixEnums::Color::RED;
+        }
+        for (int i = mid; i < m_team_selectors.size(); i++) {
+            m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(WII_MIX_BLUE)));
+            m_players[static_cast<WiiMixEnums::Player>(i)].first = WiiMixEnums::Color::BLUE;
+        }
+    }
+    else {
+        // If teams is not toggled, give each player it's individual color again
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            // Enable or disable team indicators based on the checkbox state
+            m_team_selectors.at(i)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(i)))));
+            m_players[static_cast<WiiMixEnums::Player>(i)].first = static_cast<WiiMixEnums::Color>(i);
+        }
+    }
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
     }
 }
 
-void WiiMixConfigWidget::SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> states) {
-    for (int i = 0; i < MAX_PLAYERS; ++i) {
-        m_team_selector_states[i] = states[i];
+// Updates the color checkboxes based on whether teams is enabled or not
+void WiiMixConfigWidget::SetTeamSelectors(int index) {
+    // Change the color to indicate team selection
+    // If teams, select the next color regardless of whether someone has it selected or not
+    if (GetTeams()) {
+        int color_index = static_cast<int>(m_players.value(static_cast<WiiMixEnums::Player>(index)).first);
+        color_index += 1;
+        color_index %= static_cast<int>(WiiMixEnums::Color::END); 
+        auto& player = m_players[static_cast<WiiMixEnums::Player>(index)];
+        player.first = static_cast<WiiMixEnums::Color>(color_index);
+        m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
+    }
+    // If not teams, just use the default colors associated with the players
+    if (m_bingo_client != nullptr) {
+        m_bingo_client->SendData(GetBingoSettings(), WiiMixEnums::Action::UPDATE);
+    }
+    else {
+        emit onSettingsChanged(GetBingoSettings());
     }
 }
 
-void WiiMixConfigWidget::SetBingoPlayerNames(QList<std::string> names) {
-    for (int i = 0; i < MAX_PLAYERS; ++i) {
-        m_bingo_player_names[i] = names[i];
-    }
-}
+// void WiiMixConfigWidget::SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> states) {
+//     for (int i = 0; i < MAX_PLAYERS; ++i) {
+//         m_team_selector_states[i] = states[i];
+//     }
+// }
+
+// void WiiMixConfigWidget::SetBingoPlayerNames(QList<std::string> names) {
+//     for (int i = 0; i < MAX_PLAYERS; ++i) {
+//         m_bingo_player_names[i] = names[i];
+//     }
+// }
 
 /// Creates a settings instance from the current configuration
 /// and sends it to the Bingo server 
@@ -671,5 +727,3 @@ WiiMixBingoSettings WiiMixConfigWidget::GetBingoSettings() {
 void WiiMixConfigWidget::SetPlayerName(QString name) {
     m_bingo_player_name->setText(name);
 }
-
-void WiiMixConfigWidget::onSettingsChanged() {}

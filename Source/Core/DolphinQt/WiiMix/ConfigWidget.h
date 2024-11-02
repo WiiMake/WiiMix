@@ -12,6 +12,7 @@
 #include <QRadioButton>
 #include <QPushButton>
 #include <QMenuBar>
+#include <QPair>
 
 #include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
@@ -33,7 +34,6 @@ public:
   void CreateShuffleLayout();
   void CreateRogueLayout();
   void CreateCommonLayout();
-  void ConnectWidgets();
 
   // These values should ALWAYS be in sync with the server
 
@@ -57,7 +57,7 @@ public:
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
   QString GetCardSize() const;
-  void SetCardSize(QString value);
+  void SetCardSize(int index);
   QString GetLobbyID() const;
   QString GenerateLobbyID() const; 
   QString GetPlayerName() const;
@@ -66,12 +66,12 @@ public:
   void SetLobbyPassword(QString value);
   bool GetTeams() const;
   void SetTeams(bool value);
-  QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> GetPlayers() const;
-  void SetPlayer(WiiMixEnums::Player player, std::tuple<WiiMixEnums::Color, QString> value);
-  void SetPlayers(QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> value);
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> GetPlayers() const;
+  void SetPlayer(WiiMixEnums::Player player, QPair<WiiMixEnums::Color, QString> value);
+  void SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value);
 
-  // std::array<bool, MAX_PLAYERS> GetTeamSelectors() const;
-  // void SetTeamSelectors(std::array<bool, MAX_PLAYERS> value);
+  std::array<bool, MAX_PLAYERS> GetTeamSelectors() const;
+  void SetTeamSelectors(int index);
   // std::array<std::string, MAX_PLAYERS> GetTeamSelectorStates() const;
   // void SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> value);
   // QList<std::string> GetBingoPlayerName() const;
@@ -80,8 +80,13 @@ public:
   
   WiiMixBingoSettings GetBingoSettings();
 
+signals:
+  void onSettingsChanged(WiiMixBingoSettings settings); // This signal is for local one player
+  // The network client has its own signal for when it receives data that it will emit
+  // The corresponding signal is emitted based on whether bingo client exists or not
+
 public slots:
-  void onSettingsChanged();
+  void OnSettingsChanged(WiiMixBingoSettings settings);
 
 private:
   QVBoxLayout* m_config_layout;
@@ -101,7 +106,8 @@ private:
   QList<QCheckBox*> m_team_selectors;
   // QList<std::string> m_team_selector_states;
   // QList<std::string> m_bingo_player_names;
-  QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> m_players;
+  // player: (color, name)
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
   QComboBox* m_card_size;
 
   // Rogue Config Options

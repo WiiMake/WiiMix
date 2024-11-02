@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QDebug>
+#include <QJsonDocument>
 
 #include <iostream>
 #include <netinet/in.h>
@@ -33,7 +34,13 @@ public:
 
   // // Runs when the bingo card is completed
   // bool BingoEnd();
+signals:
+  void onSettingsChanged(WiiMixBingoSettings settings);
+
+  // Simplified it to just sending and receiving settings and an action
+  // The settings are encoded and decoded to and from json
   bool SendData(WiiMixBingoSettings settings, WiiMixEnums::Action action);
+  bool ReceiveData(QJsonDocument doc);
 
   // Getters (from server)
   // WiiMixEnums::BingoType GetBingoType() const;
@@ -45,9 +52,6 @@ public:
 // If desired, this can be optimized by storing in members and only sending the updated data
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time
 private:
-  // TODOx: I'd like to have an instance of settings on the server and just send a request
-  // to update that instance; this means that config widget should have an instance of settings
-  // and that instance of settings should just be passed to SettingsWindow 
   QTcpSocket* m_socket;
   // WiiMixBingoSettings m_bingo_settings;
 //     std::list<WiiMixEnums::Player> m_players;

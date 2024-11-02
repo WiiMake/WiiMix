@@ -1,14 +1,15 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/Settings.h"
 
 #include <QJsonObject>
 
 #include "DolphinQt/WiiMix/Enums.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(const WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type, int card_size)
-    : WiiMixSettings(settings), m_bingo_type(bingo_type), m_card_size(card_size) 
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type, int card_size)
+    : WiiMixSettings(settings.GetDifficulty(), settings.GetMode(), settings.GetSaveStateBank(), settings.GetObjectives(), settings.GetGamesList()), m_bingo_type(bingo_type), m_card_size(card_size) 
 {}
 
-WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size) : WiiMixSettings(WiiMixSettings()), m_bingo_type(WiiMixEnums::BingoType::END), m_card_size(9), m_teams(false)
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size) : WiiMixSettings(), m_bingo_type(bingo_type), m_card_size(card_size)
 {}
 
 WiiMixEnums::BingoType WiiMixBingoSettings::GetBingoType() const
@@ -47,9 +48,10 @@ void WiiMixBingoSettings::SetTeams(bool value)
     m_teams = value;
 }
 
-QJsonDocument WiiMixBingoSettings::toJson()
+QJsonDocument WiiMixBingoSettings::ToJson()
 {
-    QJsonObject json;
+    // Take care of the common settings first
+    QJsonObject json = ToJsonCommon();
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)] = static_cast<int>(m_bingo_type);
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)] = m_teams;
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)] = m_card_size;
@@ -64,17 +66,15 @@ QJsonDocument WiiMixBingoSettings::toJson()
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)] = m_lobby_id;
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
-    
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(GetSaveStateBank());
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = QString::fromStdString(WiiMixSettings::ObjectivesToObjectiveIds(GetObjectives()));
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_GAMES_LIST)] = QString::fromStdString(WiiMixSettings::GameFilesToGameIds(GetGamesList()));
+
     return QJsonDocument(json);
 }
 
-WiiMixBingoSettings WiiMixBingoSettings::fromJson(QJsonDocument json)
+WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
 {
-    WiiMixBingoSettings settings;
+    // Take care of the common settings first
+    WiiMixSettings common_settings = FromJsonCommon(json);
+    WiiMixBingoSettings settings = WiiMixBingoSettings(common_settings);
     QJsonObject obj = json.object();
     settings.SetBingoType(static_cast<WiiMixEnums::BingoType>(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)].toInt()));
     settings.SetTeams(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)].toBool());
@@ -86,15 +86,11 @@ WiiMixBingoSettings WiiMixBingoSettings::fromJson(QJsonDocument json)
         QJsonObject player_info = it.value().toObject();
         WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)].toInt());
         QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
-        settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = std::make_tuple(color, name);
+        settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair(color, name);
     }
     
     settings.m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
     settings.m_lobby_password = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)].toString();
-    settings.SetSaveStateBank(static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
-    settings.SetObjectives(WiiMixSettings::ObjectiveIdsToObjectives(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toString().toStdString()));
-    settings.SetDifficulty(static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)].toInt()));
-    settings.SetGamesList(WiiMixSettings::GameIdsToGameFiles(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_GAMES_LIST)].toString().toStdString()));
-    
+
     return settings;
 }

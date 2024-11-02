@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QString>
 #include <QMap>
+#include <QPair>
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Settings.h"
@@ -13,7 +14,7 @@
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixBingoSettings(const WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
+  explicit WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
   explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
   
   WiiMixEnums::BingoType GetBingoType() const;
@@ -23,15 +24,15 @@ public:
   void SetCardSize(int value);
   bool GetTeams();
   void SetTeams(bool value);
-  QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> GetPlayers();
-  void SetPlayers(QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> value);
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> GetPlayers();
+  void SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value);
   QString GetLobbyID();
   void SetLobbyID(QString value);
   QString GetLobbyPassword();
   void SetLobbyPassword(QString value);
   
-  QJsonDocument toJson();
-  WiiMixBingoSettings fromJson(QJsonDocument json); 
+  QJsonDocument ToJson();
+  WiiMixBingoSettings FromJson(QJsonDocument json); 
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions
   // of games satisfied by the objectives, they will be eligible to join. Otherwise, 
@@ -42,7 +43,7 @@ private:
   WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
   bool m_teams;
-  QMap<WiiMixEnums::Player, std::tuple<WiiMixEnums::Color, QString>> m_players;
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
   QString m_lobby_id;
   QString m_lobby_password;
 };

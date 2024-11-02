@@ -11,6 +11,9 @@ WiiMixObjective::WiiMixObjective(
     WiiMixEnums::Player completed
 ) : m_objective_string(objective_string), m_completed(completed){};
 
+// @gyoder ID?
+// @gyoder
+// @gyoder
 std::string WiiMixObjective::GetObjectiveString() {
     return m_objective_string;
 }
@@ -22,3 +25,5 @@ WiiMixEnums::Player WiiMixObjective::GetCompleted() {
 void WiiMixObjective::SetCompleted(WiiMixEnums::Player player) {
     m_completed = player;
 }
+
+// @gyoder icon?
