@@ -105,13 +105,6 @@ void AchievementSettingsWidget::CreateLayout()
          "the player has already unlocked on the site so that the player will be notified if they "
          "meet the unlock conditions again, useful for custom speedrun criteria or simply for fun."
          "<br><br>Setting takes effect on next game load."));
-  m_common_spectator_enabled_input = new ToolTipCheckBox(tr("Enable Spectator Mode"));
-  m_common_spectator_enabled_input->SetDescription(
-      tr("Enable unlocking achievements in Spectator Mode.<br><br>While in Spectator Mode, "
-         "achievements and leaderboards will be processed and displayed on screen, but will not be "
-         "submitted to the server.<br><br>If this is on at game launch, it will not be turned off "
-         "until game close, because a RetroAchievements session will not be created.<br><br>If "
-         "this is off at game launch, it can be toggled freely while the game is running."));
   m_common_discord_presence_enabled_input = new ToolTipCheckBox(tr("Enable Discord Presence"));
   m_common_discord_presence_enabled_input->SetDescription(
       tr("Use RetroAchievements rich presence in your Discord status.<br><br>Show Current Game on "
@@ -221,10 +214,6 @@ void AchievementSettingsWidget::LoadSettings()
   SignalBlocking(m_common_encore_enabled_input)->setChecked(Config::Get(Config::RA_ENCORE_ENABLED));
   SignalBlocking(m_common_encore_enabled_input)->setEnabled(enabled);
 
-  SignalBlocking(m_common_spectator_enabled_input)
-      ->setChecked(Config::Get(Config::RA_SPECTATOR_ENABLED));
-  SignalBlocking(m_common_spectator_enabled_input)->setEnabled(enabled);
-
   SignalBlocking(m_common_discord_presence_enabled_input)
       ->setChecked(Config::Get(Config::RA_DISCORD_PRESENCE_ENABLED));
   SignalBlocking(m_common_discord_presence_enabled_input)
@@ -245,8 +234,6 @@ void AchievementSettingsWidget::SaveSettings()
   Config::SetBaseOrCurrent(Config::RA_UNOFFICIAL_ENABLED,
                            m_common_unofficial_enabled_input->isChecked());
   Config::SetBaseOrCurrent(Config::RA_ENCORE_ENABLED, m_common_encore_enabled_input->isChecked());
-  Config::SetBaseOrCurrent(Config::RA_SPECTATOR_ENABLED,
-                           m_common_spectator_enabled_input->isChecked());
   Config::SetBaseOrCurrent(Config::RA_DISCORD_PRESENCE_ENABLED,
                            m_common_discord_presence_enabled_input->isChecked());
   Config::SetBaseOrCurrent(Config::RA_PROGRESS_ENABLED,

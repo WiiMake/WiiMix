@@ -1,6 +1,5 @@
 // Copyright 2023 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
-
 #ifdef USE_RETRO_ACHIEVEMENTS
 
 #include "Core/AchievementManager.h"
@@ -155,7 +154,7 @@ void AchievementManager::LoadGame(const std::string& file_path, const DiscIO::Vo
   }
   rc_client_set_unofficial_enabled(m_client, Config::Get(Config::RA_UNOFFICIAL_ENABLED));
   rc_client_set_encore_mode_enabled(m_client, Config::Get(Config::RA_ENCORE_ENABLED));
-  rc_client_set_spectator_mode_enabled(m_client, Config::Get(Config::RA_SPECTATOR_ENABLED));
+  rc_client_set_spectator_mode_enabled(m_client, true);
   if (volume)
   {
     std::lock_guard lg{m_lock};
@@ -431,7 +430,7 @@ void AchievementManager::FilterApprovedPatches(std::vector<PatchEngine::Patch>& 
 
 void AchievementManager::SetSpectatorMode()
 {
-  rc_client_set_spectator_mode_enabled(m_client, Config::Get(Config::RA_SPECTATOR_ENABLED));
+  rc_client_set_spectator_mode_enabled(m_client, true);
 }
 
 std::string_view AchievementManager::GetPlayerDisplayName() const
