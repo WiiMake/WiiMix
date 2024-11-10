@@ -127,7 +127,7 @@
 #include "DolphinQt/ToolBar.h"
 #include "DolphinQt/WiiUpdate.h"
 #include "DolphinQt/WiiMix/SettingsWindow.h"
-
+#include "DolphinQt/WiiMix/BingoClient.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -844,7 +844,7 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
-void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings) {
+void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client) {
   // Start the wiimix
   qDebug() << "Bingo calls";
 }

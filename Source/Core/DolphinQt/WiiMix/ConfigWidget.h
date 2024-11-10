@@ -80,6 +80,7 @@ public:
 
   
   WiiMixBingoSettings GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
+  WiiMixBingoClient* GetBingoClient();
 
 signals:
   void onSettingsChanged(WiiMixBingoSettings settings); // This signal is for local one player

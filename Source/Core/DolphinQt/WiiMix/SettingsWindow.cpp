@@ -89,7 +89,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
           WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(m_settings);
           bingo_settings.SetCardSize(WiiMixSettings::StringToCardSize(m_config->GetCardSize()));
           bingo_settings.SetBingoType(m_config->GetBingoType());
-          emit StartWiiMixBingo(bingo_settings);
+          emit StartWiiMixBingo(bingo_settings, m_config->GetBingoClient());
         }
         else if (m_settings.GetMode() == WiiMixEnums::Mode::SHUFFLE) {
           WiiMixShuffleSettings shuffle_settings = WiiMixShuffleSettings(m_settings);

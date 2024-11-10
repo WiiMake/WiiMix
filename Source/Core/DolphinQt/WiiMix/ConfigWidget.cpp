@@ -615,6 +615,10 @@ std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     return team_selectors;
 }
 
+WiiMixBingoClient* WiiMixConfigWidget::GetBingoClient() {
+    return m_bingo_client;
+}
+
 void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
     int index = m_difficulty->findText(difficulty);
     if (index != -1) {

@@ -15,6 +15,7 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
+#include "DolphinQt/WiiMix/BingoClient.h"
 
 class QMenu;
 class QStackedWidget;
@@ -164,7 +165,7 @@ private:
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
   void StartGame(std::unique_ptr<BootParameters>&& parameters,
                  std::string save_path);
-  void StartWiiMixBingo(WiiMixBingoSettings settings);
+  void StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client);
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
   void WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
