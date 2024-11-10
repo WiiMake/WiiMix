@@ -25,29 +25,16 @@ class WiiMixBingoClient : public QObject
 public:
   // explicit WiiMixBingoClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr, WiiMixBingoSettings settings = WiiMixBingoSettings());
   explicit WiiMixBingoClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
-  // bool Connect(WiiMixBingoSettings settings);
-
-  // bool CreateLobby(WiiMixBingoSettings settings);
-
-  // // Bingo card objectives are read top to bottom left to right and are 0 indexed
-  // bool Update(int objective, WiiMixEnums::Player player);
-
-  // // Runs when the bingo card is completed
-  // bool BingoEnd();
-signals:
-  void onSettingsChanged(WiiMixBingoSettings settings);
-
+  
   // Simplified it to just sending and receiving settings and an action
   // The settings are encoded and decoded to and from json
   bool SendData(WiiMixBingoSettings settings, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
+  bool ConnectToServer();
 
-  // Getters (from server)
-  // WiiMixEnums::BingoType GetBingoType() const;
-  // std::list<WiiMixEnums::Player> GetPlayers() const;
-  // std::list<WiiMixObjective> GetBingoCard() const;
-  // QString GetLobbyID() const;
-  // bool GetTeams() const;
+signals:
+  void onSettingsChanged(WiiMixBingoSettings settings);
+  void onError(QString error);
 
 // If desired, this can be optimized by storing in members and only sending the updated data
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time

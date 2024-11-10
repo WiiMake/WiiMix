@@ -29,6 +29,7 @@ class WiiMixConfigWidget final : public QDialog
 public:
   explicit WiiMixConfigWidget(QWidget* parent);
 
+  void DeleteLayout();
   void CreateLayout(WiiMixEnums::Mode mode = WiiMixEnums::Mode::END);
   void CreateBingoLayout(QString menu=QStringLiteral("Host"));
   void CreateShuffleLayout();
@@ -78,7 +79,7 @@ public:
   // void SetBingoPlayerNames(QList<std::string> value);
 
   
-  WiiMixBingoSettings GetBingoSettings();
+  WiiMixBingoSettings GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
 
 signals:
   void onSettingsChanged(WiiMixBingoSettings settings); // This signal is for local one player
@@ -87,6 +88,7 @@ signals:
 
 public slots:
   void OnSettingsChanged(WiiMixBingoSettings settings);
+  void DisplayClientError(QString error);
 
 private:
   QVBoxLayout* m_config_layout;
@@ -126,6 +128,10 @@ private:
   QComboBox* m_save_state_bank;
 
   WiiMixBingoClient* m_bingo_client;
+
+  WiiMixBingoSettings* m_bingo_settings;
+  QString m_player_name;
+  int m_player_num;
   // Time (maybe I make this an estimate at the bottom rather than a parameter)
   // QLabel* m_time;
 };

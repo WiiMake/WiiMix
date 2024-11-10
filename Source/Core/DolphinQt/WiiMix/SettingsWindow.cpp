@@ -118,8 +118,8 @@ void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
   m_config->CreateLayout(mode);
 
   // TODOx REMOVE THIS ITS ONLY FOR TESTING
-  m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/NewSuperMarioBrosWii.wbfs"));
-  m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/Wii Sports (USA) (Rev 1).wbfs"));
+  // m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/NewSuperMarioBrosWii.wbfs"));
+  // m_settings.AddGame(UICommon::GameFile("/Users/scie/Documents/dolphinjank/iso/Wii Sports (USA) (Rev 1).wbfs"));
 
   // Create a new window with the configuration options
   auto* config_window = new QDialog(this);

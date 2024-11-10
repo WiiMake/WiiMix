@@ -101,9 +101,9 @@ private:
   // We'll probably upload two files; the save state, and associated json with each save state that stores parsable info
   // This info includes control scheme, so you don't have to swap between vertical and horizontal wii remotes or
   // plug in a nunchuck during the middle of the match
-  WiiMixEnums::SaveStateBank m_save_state_bank;
   WiiMixEnums::Difficulty m_difficulty;
   WiiMixEnums::Mode m_mode;
+  WiiMixEnums::SaveStateBank m_save_state_bank;
   // @gyoder how to determine which objectives? When to populate them?
   std::vector<WiiMixObjective> m_objectives;
   #ifdef QT_GUI_LIB

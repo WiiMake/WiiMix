@@ -931,6 +931,7 @@ void MainWindow::ShowWiiMixWindow() {
   m_wiimix_window->show();
   m_wiimix_window->raise();
   m_wiimix_window->activateWindow();
+  qDebug() << "Showing WiiMix";
   ConnectWiiMix();
   return;
 }

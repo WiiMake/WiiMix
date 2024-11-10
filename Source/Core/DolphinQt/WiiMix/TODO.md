@@ -18,6 +18,8 @@ the cmake tools extension combined with
 }
 should take care of that
 
+Dolphin uses ninja, so instead of "make" you should be running "ninja", and make sure to be compiling with cmake .. -G Ninja -DLINUX_LOCAL_DEV=true -DCMAKE_BUILD_TYPE=Debug, otherwise ninja will develop for release and logging to console won't work
+
 SERVER TODOS
 
 - [x] Fix Server.cpp; I think some of the basic logic is there, but I need to build up the servers and settings for lobbies and manage memory correctly

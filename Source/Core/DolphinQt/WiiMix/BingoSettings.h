@@ -25,6 +25,8 @@ public:
   bool GetTeams();
   void SetTeams(bool value);
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> GetPlayers();
+  void AddPlayer(WiiMixEnums::Player player, QPair<WiiMixEnums::Color, QString> value);
+  void RemovePlayer(WiiMixEnums::Player player);
   void SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value);
   QString GetLobbyID();
   void SetLobbyID(QString value);

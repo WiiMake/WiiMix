@@ -11,9 +11,7 @@
 #ifdef QT_GUI_LIB
     #include "DolphinQt/Settings.h"
     #include "DolphinQt/Resources.h"
-#endif
 
-#ifdef QT_GUI_LIB
     WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank,
         std::vector<WiiMixObjective> objectives, std::vector<UICommon::GameFile> games) : m_difficulty(difficulty), m_mode(mode), m_save_state_bank(bank), m_objectives(objectives), m_games(games) {
         WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
@@ -80,37 +78,102 @@
             m_games = DEFAULT_GAMES;
         }
     }
+
+    QIcon WiiMixSettings::ModeToIcon(WiiMixEnums::Mode mode) {
+        switch (mode)
+        {
+            case WiiMixEnums::Mode::BINGO:
+                return Resources::GetResourceIcon("wiimix_bingo");
+            case WiiMixEnums::Mode::SHUFFLE:
+                return Resources::GetResourceIcon("wiimix_shuffle");
+            case WiiMixEnums::Mode::ROGUE:
+                return Resources::GetResourceIcon("wiimix_rogue");
+            default:
+                return QIcon();
+        }
+    }
+
+    std::vector<UICommon::GameFile> WiiMixSettings::GameIdsToGameFiles(std::string game_ids_list) {
+        std::vector<UICommon::GameFile> game_files;
+        std::istringstream stream(game_ids_list);
+        std::string game_id;
+        while (std::getline(stream, game_id, ',')) {
+            // TODOx: might be able to rework this by checking the game_id against the game config files
+            // It's unlikely that anyone would manually edit their config files to include a game that they don't have
+            UICommon::GameFile *game = new UICommon::GameFile();
+            UICommon::GameFile::GetGameFileById(game_id, game);
+            if (game->IsValid()) {
+                game_files.push_back(*game);
+            }
+            else {
+                // Error out if the game is not found
+                return {};
+            }
+        }
+        return game_files;
+    }
+
+    std::string WiiMixSettings::GameFilesToGameIds(std::vector<UICommon::GameFile> games) {
+        std::string game_ids_list = "";
+        for (size_t i = 0; i < games.size(); ++i) {
+            game_ids_list += games[i].GetGameID();
+            if (i + 1 != games.size()) {
+                game_ids_list += ",";
+            }
+        }
+        return game_ids_list;
+    }
+
+    void WiiMixSettings::SetGamesList(std::vector<UICommon::GameFile> game_list) {
+        m_games = game_list;
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, GameFilesToGameIds(m_games));
+        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(GameFilesToGameIds(m_games)));
+    }
+
+    void WiiMixSettings::AddGame(UICommon::GameFile game) {
+        m_games.push_back(game);
+        std::string game_ids_list = Config::Get(Config::WIIMIX_GAME_IDS);
+        if (!game_ids_list.empty())
+            game_ids_list += ", ";
+        game_ids_list += game.GetGameID();
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_ids_list);
+        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
+    }
+
+    std::vector<UICommon::GameFile> WiiMixSettings::GetGamesList() {
+        return m_games;
+    }
 #else
     WiiMixSettings::WiiMixSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::Mode mode, WiiMixEnums::SaveStateBank bank,
         std::vector<WiiMixObjective> objectives, std::vector<std::string> games) : m_difficulty(difficulty), m_mode(mode), m_save_state_bank(bank), m_objectives(objectives), m_games(games) {
-        WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
+        // WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_DIFFICULTY);
         if (difficulty != DEFAULT_DIFFICULTY) {
             m_difficulty = difficulty;
         }
-        else if (config_difficulty != DEFAULT_DIFFICULTY) {
-            m_difficulty = config_difficulty;
-        }
+        // else if (config_difficulty != DEFAULT_DIFFICULTY) {
+        //     m_difficulty = config_difficulty;
+        // }
         else {
             m_difficulty = DEFAULT_DIFFICULTY;
         }
-        WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
+        // WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
         if (mode != DEFAULT_MODE) {
             m_mode = mode;
         }
-        else if (config_mode != DEFAULT_MODE) {
-            m_mode = config_mode;
-        }
+        // else if (config_mode != DEFAULT_MODE) {
+        //     m_mode = config_mode;
+        // }
         else {
             m_mode = DEFAULT_MODE;
         }
 
-        WiiMixEnums::SaveStateBank config_bank = Config::Get(Config::WIIMIX_SAVE_STATE_BANK);
+        // WiiMixEnums::SaveStateBank config_bank = Config::Get(Config::WIIMIX_SAVE_STATE_BANK);
         if (bank != DEFAULT_SAVE_STATE_BANK) {
             m_save_state_bank = bank;
         }
-        else if (config_bank != DEFAULT_SAVE_STATE_BANK) {
-            m_save_state_bank = config_bank;
-        }
+        // else if (config_bank != DEFAULT_SAVE_STATE_BANK) {
+        //     m_save_state_bank = config_bank;
+        // }
         else {
             m_save_state_bank = DEFAULT_SAVE_STATE_BANK;
         }
@@ -122,13 +185,13 @@
         // - Loading someone else's objectives
         // Note that objectives get cleared at the end of a WiiMix (if the Quit or WiiMix buttons are pressed instead of replay),
         // meaning if you want try the same set of objectives you'll need to reload the config file
-        std::vector<WiiMixObjective> config_objectives = WiiMixSettings::ObjectiveIdsToObjectives(Config::Get(Config::WIIMIX_OBJECTIVE_IDS));
+        // std::vector<WiiMixObjective> config_objectives = WiiMixSettings::ObjectiveIdsToObjectives(Config::Get(Config::WIIMIX_OBJECTIVE_IDS));
         if (objectives.size() != 0) {
             m_objectives = objectives;
         }
-        else if (config_objectives.size() != 0) {
-            m_objectives = objectives;
-        }
+        // else if (config_objectives.size() != 0) {
+        //     m_objectives = objectives;
+        // }
         else {
             m_objectives = DEFAULT_OBJECTIVES;
         }
@@ -136,16 +199,57 @@
         // - Before loading objectives for WiiMix
         // - Pressing save
         // - Loading someone else's games (errors out if you don't have the compatible games)
-        std::vector<std::string> config_games = GameIdsToGameFiles(Config::Get(Config::WIIMIX_GAME_IDS));
+        // std::vector<std::string> config_games = GameIdsToGameFiles(Config::Get(Config::WIIMIX_GAME_IDS));
         if (games.size() != 0) {
             m_games = games;
         }
-        else if (config_games.size() != 0) {
-            m_games = config_games;
-        }
+        // else if (config_games.size() != 0) {
+        //     m_games = config_games;
+        // }
         else {
             m_games = DEFAULT_GAMES;
         }
+    }
+
+    std::vector<std::string> WiiMixSettings::GameIdsToGameFiles(std::string game_ids_list) {
+        std::vector<std::string> game_files;
+        std::istringstream stream(game_ids_list);
+        std::string game_id;
+        while (std::getline(stream, game_id, ',')) {
+            game_files.push_back(game_id);
+        }
+        return game_files;
+    }
+
+    std::string WiiMixSettings::GameFilesToGameIds(std::vector<std::string> games) {
+        std::string game_ids_list = "";
+        for (size_t i = 0; i < games.size(); ++i) {
+            game_ids_list += games[i];
+            if (i + 1 != games.size()) {
+                game_ids_list += ",";
+            }
+        }
+        return game_ids_list;
+    }
+
+    void WiiMixSettings::SetGamesList(std::string game_list) {
+        // Turn the comma seperated list of game ids into a vector of game ids
+        m_games = GameIdsToGameFiles(game_list);
+        // Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_list);
+        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(m_games));
+    }
+
+    void WiiMixSettings::AddGame(std::string game_id) {
+        m_games.push_back(game_id);
+        // std::string game_ids_list = Config::Get(Config::WIIMIX_GAME_IDS);
+        // if (!game_ids_list.empty())
+        //     game_ids_list += ", ";
+        // game_ids_list += game_id;
+        // Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_ids_list);
+        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
+    }
+    std::vector<std::string> WiiMixSettings::GetGamesList() {
+        return m_games;
     }
 #endif
 
@@ -239,22 +343,6 @@ QString WiiMixSettings::ModeToTitle(WiiMixEnums::Mode mode) {
     }
 }
 
-#ifdef QT_GUI_LIB
-    QIcon WiiMixSettings::ModeToIcon(WiiMixEnums::Mode mode) {
-        switch (mode)
-        {
-            case WiiMixEnums::Mode::BINGO:
-                return Resources::GetResourceIcon("wiimix_bingo");
-            case WiiMixEnums::Mode::SHUFFLE:
-                return Resources::GetResourceIcon("wiimix_shuffle");
-            case WiiMixEnums::Mode::ROGUE:
-                return Resources::GetResourceIcon("wiimix_rogue");
-            default:
-                return QIcon();
-        }
-    }
-#endif
-
 QString WiiMixSettings::ModeToDescription(WiiMixEnums::Mode mode) {
     switch (mode)
     {
@@ -281,44 +369,12 @@ WiiMixEnums::Mode WiiMixSettings::StringToMode(QString mode) {
 }
 
 int WiiMixSettings::StringToCardSize(QString size) {
-    bool ok;
-    int num = size.toInt(&ok);
-    // if (!ok)
-        // return 0; // Default case if conversion fails
+    int num = 0;
+    if (!size.isEmpty()) {
+        num = size[0].digitValue();
+    }
     return num * num;
 }
-
-#ifdef QT_GUI_LIB
-    std::vector<UICommon::GameFile> WiiMixSettings::GameIdsToGameFiles(std::string game_ids_list) {
-        std::vector<UICommon::GameFile> game_files;
-        std::istringstream stream(game_ids_list);
-        std::string game_id;
-        while (std::getline(stream, game_id, ',')) {
-            // TODOx: might be able to rework this by checking the game_id against the game config files
-            // It's unlikely that anyone would manually edit their config files to include a game that they don't have
-            UICommon::GameFile *game = new UICommon::GameFile();
-            UICommon::GameFile::GetGameFileById(game_id, game);
-            if (game->IsValid()) {
-                game_files.push_back(*game);
-            }
-            else {
-                // Error out if the game is not found
-                return {};
-            }
-        }
-        return game_files;
-    }
-#else
-    std::vector<std::string> GameIdsToGameFiles(std::string game_ids_list) {
-        std::vector<std::string> game_files;
-        std::istringstream stream(game_ids_list);
-        std::string game_id;
-        while (std::getline(stream, game_id, ',')) {
-            game_files.push_back(game_id);
-        }
-        return game_files;
-    }
-#endif
 
 // TODOx
 // @gyoder? Universal?
@@ -336,30 +392,6 @@ std::vector<WiiMixObjective> WiiMixSettings::ObjectiveIdsToObjectives(std::strin
     return {};
 }
 
-#ifdef QT_GUI_LIB
-    std::string WiiMixSettings::GameFilesToGameIds(std::vector<UICommon::GameFile> games) {
-        std::string game_ids_list = "";
-        for (size_t i = 0; i < games.size(); ++i) {
-            game_ids_list += games[i].GetGameID();
-            if (i + 1 != games.size()) {
-                game_ids_list += ",";
-            }
-        }
-        return game_ids_list;
-    }
-#else
-    std::string GameFilesToGameIds(std::vector<std::string> games) {
-        std::string game_ids_list = "";
-        for (size_t i = 0; i < games.size(); ++i) {
-            game_ids_list += games[i];
-            if (i + 1 != games.size()) {
-                game_ids_list += ",";
-            }
-        }
-        return game_ids_list;
-    }
-#endif
-
 std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives) {
     std::string objective_ids_list = "";
     for (size_t i = 0; i < objectives.size(); ++i) {
@@ -373,13 +405,13 @@ std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective
 
 void WiiMixSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank bank) {
     m_save_state_bank = bank;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_SAVE_STATE_BANK, bank);
+    // Config::Set(Config::LayerType::Base, Config::WIIMIX_SAVE_STATE_BANK, bank);
     // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/SaveStateBank"), static_cast<int>(bank));
 }
 
 void WiiMixSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
     m_difficulty = difficulty;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_DIFFICULTY, difficulty);
+    // Config::Set(Config::LayerType::Base, Config::WIIMIX_DIFFICULTY, difficulty);
     // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Difficulty"), static_cast<int>(difficulty));
 }
 
@@ -389,60 +421,23 @@ void WiiMixSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
 
 void WiiMixSettings::SetMode(WiiMixEnums::Mode mode) {
     m_mode = mode;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_MODE, mode);
+    // Config::Set(Config::LayerType::Base, Config::WIIMIX_MODE, mode);
     // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Mode"), static_cast<int>(mode));
 }
 
-#ifdef QT_GUI_LIB
-    void WiiMixSettings::SetGamesList(std::vector<UICommon::GameFile> game_list) {
-        m_games = game_list;
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, GameFilesToGameIds(m_games));
-        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(GameFilesToGameIds(m_games)));
-    }
-#else
-    void WiiMixSettings::SetGamesList(std::string game_list) {
-        // Turn the comma seperated list of game ids into a vector of game ids
-        m_games = GameIdsToGameFiles(game_list);
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_list);
-        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(m_games));
-    }
-#endif
-
-#ifdef QT_GUI_LIB
-    void WiiMixSettings::AddGame(UICommon::GameFile game) {
-        m_games.push_back(game);
-        std::string game_ids_list = Config::Get(Config::WIIMIX_GAME_IDS);
-        if (!game_ids_list.empty())
-            game_ids_list += ", ";
-        game_ids_list += game.GetGameID();
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_ids_list);
-        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
-    }
-#else
-    void WiiMixSettings::AddGame(std::string game_id) {
-        m_games.push_back(game_id);
-        std::string game_ids_list = Config::Get(Config::WIIMIX_GAME_IDS);
-        if (!game_ids_list.empty())
-            game_ids_list += ", ";
-        game_ids_list += game_id;
-        Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, game_ids_list);
-        // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Games"), QString::fromStdString(game_ids_list));
-    }
-#endif
-
 void WiiMixSettings::SetObjectives(std::vector<WiiMixObjective> objectives) {
     m_objectives = objectives;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, ObjectivesToObjectiveIds(m_objectives));
+    // Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, ObjectivesToObjectiveIds(m_objectives));
     // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(ObjectivesToObjectiveIds(m_objectives)));
 }
 
 void WiiMixSettings::AddObjective(WiiMixObjective objective) {
     m_objectives.push_back(objective);
-    std::string objective_ids_list = Config::Get(Config::WIIMIX_OBJECTIVE_IDS);
-    if (!objective_ids_list.empty())
-        objective_ids_list += ", ";
-    objective_ids_list += objective.GetObjectiveString();
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, objective_ids_list);
+    // std::string objective_ids_list = Config::Get(Config::WIIMIX_OBJECTIVE_IDS);
+    // if (!objective_ids_list.empty())
+    //     objective_ids_list += ", ";
+    // objective_ids_list += objective.GetObjectiveString();
+    // Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, objective_ids_list);
     // Settings::GetQSettings().setValue(QStringLiteral("WiiMix/Objectives"), QString::fromStdString(objective_ids_list));
 }
 
@@ -494,13 +489,3 @@ WiiMixEnums::SaveStateBank WiiMixSettings::GetSaveStateBank() {
 std::vector<WiiMixObjective> WiiMixSettings::GetObjectives() {
     return m_objectives;
 }
-
-#ifdef QT_GUI_LIB
-    std::vector<UICommon::GameFile> WiiMixSettings::GetGamesList() {
-        return m_games;
-    }
-#else
-    std::vector<std::string> WiiMixSettings::GetGamesList() {
-        return m_games;
-    }
-#endif

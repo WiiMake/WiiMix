@@ -48,6 +48,46 @@ void WiiMixBingoSettings::SetTeams(bool value)
     m_teams = value;
 }
 
+QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> WiiMixBingoSettings::GetPlayers()
+{
+    return m_players;
+}
+
+void WiiMixBingoSettings::AddPlayer(WiiMixEnums::Player player, QPair<WiiMixEnums::Color, QString> value)
+{
+    m_players[player] = value;
+}
+
+void WiiMixBingoSettings::RemovePlayer(WiiMixEnums::Player player)
+{
+    m_players.remove(player);
+}
+
+void WiiMixBingoSettings::SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value)
+{
+    m_players = value;
+}
+
+QString WiiMixBingoSettings::GetLobbyID()
+{
+    return m_lobby_id;
+}
+
+void WiiMixBingoSettings::SetLobbyID(QString value)
+{
+    m_lobby_id = value;
+}
+
+QString WiiMixBingoSettings::GetLobbyPassword()
+{
+    return m_lobby_password;
+}
+
+void WiiMixBingoSettings::SetLobbyPassword(QString value)
+{
+    m_lobby_password = value;
+}
+
 QJsonDocument WiiMixBingoSettings::ToJson()
 {
     // Take care of the common settings first
