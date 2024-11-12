@@ -7,9 +7,11 @@
 #include <QIcon>
 #include <QString>
 #include <QFrame>
+#include <QResizeEvent>
 
 #include <array>
 #include "DolphinQt/WiiMix/Settings.h"
+#include <iostream>
 
 
 class QIcon;

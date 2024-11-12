@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="Flag_Russia@4x">../../../../Data/Sys/Resources/Flag_Russia@4x.png</file>
+    </qresource>
+</RCC>

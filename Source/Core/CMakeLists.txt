@@ -31,6 +31,7 @@ if (WIN32 AND ENABLE_AUTOUPDATE)
   add_subdirectory(WinUpdater)
 endif()
 
+
 if (APPLE AND ENABLE_QT)
   set(DOLPHIN_MAC_BUNDLE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/WiiMix.app")
 

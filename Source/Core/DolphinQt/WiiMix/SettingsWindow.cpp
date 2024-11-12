@@ -24,22 +24,44 @@
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include <iostream>
+#include <QGraphicsDropShadowEffect>
 
 WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 {
   setWindowTitle(tr("WiiMix"));
-
+  QPixmap background = (Resources::GetResourceIcon("wiimix_background_top").pixmap(1200,800));
+  background.scaled(this->size());
+  QPalette palette;
+  QBrush* backgroundBrush = new QBrush();
+  backgroundBrush->setTexture(background);
+  palette.setBrush(QPalette::Window, *backgroundBrush);
+  this->setPalette(palette);
   m_modes = new WiiMixModesWidget(this);
-  m_load_button_box = new QPushButton(tr("Load"));
+  m_load_button_box = new QPushButton();
+  m_load_button_box->setMaximumSize(QSize(60,60));
+  m_load_button_box->setMinimumSize(QSize(60,60));
+  m_load_button_box->setStyleSheet(QStringLiteral("QPushButton {border-radius: 30px; border-width: 1px; border-style: solid; border-color: blue; background-color: LightGray; color: gray}"));
+  auto* effect = new QGraphicsDropShadowEffect;
+  effect->setOffset(0,0);
+  effect->setBlurRadius(25);
+  m_load_button_box->setGraphicsEffect(effect);
+  m_load_button_box->setText(QStringLiteral("Load"));
   // m_load_button_box->button(QDialogButtonBox::Open)->setText(tr("Load"));
   // m_save_button_box = new QDialogButtonBox(QDialogButtonBox::Save);
-  m_save_button_box = new QPushButton(tr("Save"));
-  // m_load_button_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  // m_save_button_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_save_button_box = new QPushButton();
+  m_save_button_box->setMaximumSize(QSize(60,60));
+  m_save_button_box->setMinimumSize(QSize(60,60));
+  m_save_button_box->setStyleSheet(QStringLiteral("QPushButton {border-radius: 30px; border-width: 1px; border-style: solid; border-color: blue; background-color: LightGray; color: gray}"));
+  auto* effect2 = new QGraphicsDropShadowEffect;
+  effect2->setOffset(0,0);
+  effect2->setBlurRadius(25);
+  m_save_button_box->setGraphicsEffect(effect2);
+  m_save_button_box->setText(QStringLiteral("Save"));
   m_wii_mix_button = new QPushButton();
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
-  m_wii_mix_button->setIconSize(QSize(128, 128));  // Adjust this size as needed
-  m_wii_mix_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  m_wii_mix_button->setStyleSheet(QStringLiteral("QPushButton {background-color: transparent;}"));
+  m_wii_mix_button->setIconSize(QSize(150,100));
+  //m_wii_mix_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   CreateMainLayout();
   ConnectWidgets();
   return;
@@ -59,17 +81,32 @@ void WiiMixSettingsWindow::CreateMainLayout()
   auto* layout = new QVBoxLayout();
 
   layout->addWidget(m_modes);
-
-  QHBoxLayout* bottom_buttons = new QHBoxLayout();
-  bottom_buttons->setSpacing(2);  // Set spacing between widgets
-  bottom_buttons->setContentsMargins(0, 0, 0, 0);  // Remove any margins around the buttons
+  QWidget* bgWidget = new QWidget();
+  bgWidget->setParent(this);
+  bgWidget->setAutoFillBackground(true);
+  bgWidget->setMaximumHeight(100);
+  //bgWidget->setMinimumHeight(1000);
+  layout->setContentsMargins(0,0,0,0);
+  QHBoxLayout* bottom_buttons = new QHBoxLayout(bgWidget);
+  //bottom_buttons->setAlignment(Qt::Alignment::);
+  bottom_buttons->setSpacing(0);  // Set spacing between widgets
+  bottom_buttons->setContentsMargins(2, 2, 0, 0);  // Remove any margins around the buttons
   bottom_buttons->addStretch(); // Add space before the buttons
   bottom_buttons->addWidget(m_load_button_box, 0);
+  bottom_buttons->addStretch();
   bottom_buttons->addWidget(m_wii_mix_button, 0);
+  bottom_buttons->addStretch();
   bottom_buttons->addWidget(m_save_button_box, 0);
   bottom_buttons->addStretch(); // Add space after the buttons
-
-  layout->addLayout(bottom_buttons);
+  QPixmap buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
+  buttonBackground.scaled(this->size());
+  QPalette* palette = new QPalette();
+  QBrush* buttonBackgroundBrush = new QBrush();
+  buttonBackgroundBrush->setTexture(buttonBackground);
+  palette->setBrush(QPalette::Window, *buttonBackgroundBrush);
+  bgWidget->setPalette(*palette);
+  layout->addWidget(bgWidget);
+  //layout->addLayout(bottom_buttons);
 
   // WrapInScrollArea(this, layout);
   setLayout(layout);
