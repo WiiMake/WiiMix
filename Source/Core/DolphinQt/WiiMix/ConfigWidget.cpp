@@ -39,7 +39,7 @@
 WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
     // Initialize m_players
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        m_players.insert(static_cast<WiiMixEnums::Player>(i), QPair(WiiMixEnums::PlayerToColor(static_cast<WiiMixEnums::Player>(i)), QStringLiteral("")));
+        m_players.insert(static_cast<WiiMixEnums::Player>(i), QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(static_cast<WiiMixEnums::Player>(i)), QStringLiteral("")));
     }
     m_bingo_settings = nullptr;
     m_player_name = QStringLiteral("");
@@ -178,7 +178,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                 m_bingo_lobby_id->setText(id);
                 // Update the first player (host)
                 WiiMixEnums::Player player = static_cast<WiiMixEnums::Player>(m_player_num);
-                m_players[player] = QPair(WiiMixEnums::PlayerToColor(player), GetPlayerName());
+                m_players[player] = QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(player), GetPlayerName());
                 // Create a socket for communication with the server
                 // qDebug() << m_bingo_client;
                 if (m_bingo_client == nullptr) {
@@ -211,7 +211,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                     }
                 }
                 WiiMixEnums::Player player = static_cast<WiiMixEnums::Player>(m_player_num);
-                m_players[player] = QPair(WiiMixEnums::PlayerToColor(player), m_player_name);
+                m_players[player] = QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(player), m_player_name);
                 m_bingo_client->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
             }
             // try {
@@ -380,7 +380,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             }
             m_player_name = GetPlayerName();
             // Just use player one as a placeholder; the server will assign the player index
-            m_players.insert(WiiMixEnums::Player::ONE, QPair(WiiMixEnums::PlayerToColor(WiiMixEnums::Player::ONE), m_player_name));
+            m_players.insert(WiiMixEnums::Player::ONE, QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(WiiMixEnums::Player::ONE), m_player_name));
             // Providing the connect action should prevent you from sending settings that you don't have
             m_bingo_client->SendData(GetBingoSettings(WiiMixEnums::Action::CONNECT), WiiMixEnums::Action::CONNECT);
         });

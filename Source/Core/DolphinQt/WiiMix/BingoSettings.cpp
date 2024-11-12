@@ -126,7 +126,7 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
         QJsonObject player_info = it.value().toObject();
         WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)].toInt());
         QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
-        settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair(color, name);
+        settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
     }
     
     settings.m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
