@@ -22,7 +22,7 @@ namespace WiiMixOverlay {
         return rowVector;
     }
     bool displayBingoBoard(std::vector<std::string> filenames) {
-        double sqrtSize = sqrt(filenames.size());
+        double sqrtSize = round(sqrt(filenames.size()));
         if (pow(floor(sqrtSize), 2) != filenames.size()) {
             std::printf("Files cannot be represented as a matrix, aborting drawing bingo board\n");
             return false;

@@ -17,6 +17,7 @@
 #include "Common/FileUtil.h"
 #include "DolphinQt/Resources.h"
 #include "WiiMixButton.h"
+#include "BingoGame.h"
 
 
 WiiMixModesWidget::WiiMixModesWidget(QWidget* parent) : QWidget(parent) {
@@ -131,7 +132,16 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
                     other_frame->setBorderColor("gray"); // gray is border color for non-selected frame
                 }
             }
-
+            std::vector<BingoItem> b;
+            b.reserve(25);
+            for (int i = 0; i < 25; i++) {
+                BingoItem bItem;
+                bItem.name = "Hello";
+                bItem.description = "HelloHelloHello";
+                bItem.icon = "Flag_Russia@2x";
+                b.push_back(bItem);
+            }
+            BingoGame::createObjectiveWindow(b);
             std::string theme = Config::Get(Config::MAIN_THEME_NAME);
 
             auto *shadow = new QGraphicsDropShadowEffect;
