@@ -410,6 +410,10 @@ add_executable(dolphin-emu
   WiiUpdate.h
         WiiMix/Overlay.cpp
         WiiMix/Overlay.h
+        WiiMix/WiiMixButton.cpp
+        WiiMix/WiiMixButton.h
+        WiiMix/BingoGame.cpp
+        WiiMix/BingoGame.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
