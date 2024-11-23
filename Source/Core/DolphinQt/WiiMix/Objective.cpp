@@ -60,7 +60,7 @@ std::map<uint16_t, std::string> WiiMixObjective::getGameAchievements(uint16_t ga
 
     curl = curl_easy_init();
     if (curl) {
-        std::string url = "https://retroachievements.org/API/API_GetGameExtended.php?i=" + std::to_string(game_id) + "&z=" + m_username + "&y=" + m_token + "&f=5";
+        std::string url = "https://retroachievements.org/API/API_GetGameExtended.php?i=" + std::to_string(game_id) + "&z=" + "WiiMix" + "&y=" + "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5" + "&f=5";
         qDebug() << url.c_str();
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -76,7 +76,7 @@ std::map<uint16_t, std::string> WiiMixObjective::getGameAchievements(uint16_t ga
             for (const auto& [key, achievement] : achievementsJson.items()) {
 
                 std::map<uint16_t, std::string> achievementMap;
-                achievements[achievement["ID"].get<uint16_t>()] = achievement["Title"].get<std::string>() + ":" + achievement["Description"].get<std::string>();
+                achievements[achievement["ID"].get<uint16_t>()] = achievement["Title"].get<std::string>() + ": " + achievement["Description"].get<std::string>();
 
             }
 
@@ -93,7 +93,7 @@ std::map<std::string, uint16_t> WiiMixObjective::getGameList(uint16_t console_id
 
     curl = curl_easy_init();
     if (curl) {
-        std::string url = "https://retroachievements.org/API/API_GetGameList.php?i=" + std::to_string(console_id) + "&z=" + m_username + "&y=" + m_token + "&f=1&h=1";
+        std::string url = "https://retroachievements.org/API/API_GetGameList.php?i=" + std::to_string(console_id) + "&z=" + "WiiMix" + "&y=" + "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5" + "&f=1&h=1";
         qDebug() << url.c_str();
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);

@@ -24,6 +24,9 @@ public:
   void UpdateData(AchievementManager::UpdatedItems updated_items);
   void ForceSettingsTab();
 
+signals:
+  void AchievementGet(std::set<uint32_t> achievements);
+
 private:
   void CreateMainLayout();
   void showEvent(QShowEvent* event) override;
