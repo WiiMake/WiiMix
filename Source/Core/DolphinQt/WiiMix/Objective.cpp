@@ -17,15 +17,29 @@ std::string WiiMixObjective::m_token = "";
 // Copyright 2017 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 WiiMixObjective::WiiMixObjective(
-    std::string objective_string,
+    uint16_t achievement_id,
+    uint16_t game_id,
+    std::string title,
+    std::string description,
     WiiMixEnums::Player completed
-) : m_objective_string(objective_string), m_completed(completed){};
+  ) : m_achievement_id(achievement_id), m_game_id(game_id), m_title(title), m_description(description), m_completed(completed){};
 
-// @gyoder ID?
-// @gyoder
-// @gyoder
-std::string WiiMixObjective::GetObjectiveString() {
-    return m_objective_string;
+
+
+uint16_t WiiMixObjective::GetAchievementID() {
+    return m_achievement_id;
+}
+
+uint16_t WiiMixObjective::GetGameID() {
+    return m_game_id;
+}
+
+std::string WiiMixObjective::GetTitle() {
+    return m_title;
+}
+
+std::string WiiMixObjective::GetDescription() {
+    return m_description;
 }
 
 WiiMixEnums::Player WiiMixObjective::GetCompleted() {
@@ -36,7 +50,9 @@ void WiiMixObjective::SetCompleted(WiiMixEnums::Player player) {
     m_completed = player;
 }
 
-// @gyoder icon?
+std::string WiiMixObjective::GetBadgeURL() {
+    return std::format("https://media.retroachievements.org/Badge/{0}.png", m_achievement_id);
+}
 
 void WiiMixObjective::RALoginCallback(std::string username, std::string token) {
     m_username = username;
