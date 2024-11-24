@@ -13,9 +13,11 @@
 #include <QPushButton>
 #include <QMenuBar>
 #include <QPair>
+#include <QRegularExpression>
 
 #include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/RogueSettings.h"
 
 #include <array>
 
@@ -37,6 +39,13 @@ public:
   void CreateCommonLayout();
 
   // These values should ALWAYS be in sync with the server
+
+  // Rogue
+  WiiMixRogueSettings::Length GetRogueLength() const;
+  void SetRogueLength() const;
+  QString GetRogueSeed() const;
+  void SetRogueSeed(QString seed);
+  QRegularExpression RogueSeedValidator();
 
   // Shuffle
   int GetMinTimeBetweenSwitch() const;
@@ -60,7 +69,13 @@ public:
   QString GetCardSize() const;
   void SetCardSize(int index);
   QString GetLobbyID() const;
-  QString GenerateLobbyID() const; 
+  QString GenerateLobbyID() const;
+  void SetLobbyID(QString seed);
+  QRegularExpression BingoLobbyIDValidator();
+  QString GetBingoSeed() const;
+  QString GenerateBingoSeed() const; 
+  void SetBingoSeed(QString seed);
+  QRegularExpression BingoSeedValidator();
   QString GetPlayerName() const;
   void SetPlayerName(QString value);
   QString GetLobbyPassword() const;
@@ -99,6 +114,7 @@ private:
   // Bingo Config Options
   QMenuBar* m_menu_bar;
   QLineEdit* m_bingo_lobby_id;
+  QLineEdit* m_bingo_seed;
   QLineEdit* m_bingo_player_name;
   QLineEdit* m_bingo_lobby_password;
   QRadioButton* m_bingo_button;
@@ -114,6 +130,8 @@ private:
   QComboBox* m_card_size;
 
   // Rogue Config Options
+  QComboBox* m_rogue_length;
+  QLineEdit* m_rogue_seed;
 
   // Shuffle Config Options
   QLabel* m_min_switch_time_label;

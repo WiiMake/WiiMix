@@ -20,11 +20,10 @@ should take care of that
 
 Dolphin uses ninja, so instead of "make" you should be running "ninja", and make sure to be compiling with cmake .. -G Ninja -DLINUX_LOCAL_DEV=true -DCMAKE_BUILD_TYPE=Debug, otherwise ninja will develop for release and logging to console won't work
 
-SERVER TODOS
+These are big challenges; I'm going to pseudocode the 251 project instead and come back to these later
 
-- [x] Fix Server.cpp; I think some of the basic logic is there, but I need to build up the servers and settings for lobbies and manage memory correctly
-- [] Fix ConfigWidget; this is reliant on Server.cpp
-- WEEKEND GOAL: just get the server to compile; I think we can probably make this happen
+- [] Seeds (bingo/rogue achievements/randomization)
+- [] Rework saving and loading to NOT save and load objectives and games (that was a poor decision)
 
 - [] Should make an enum
 - [] Need to edit config widget to send notifications to the server whenever a setting is changed

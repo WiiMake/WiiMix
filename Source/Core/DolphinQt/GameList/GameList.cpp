@@ -115,6 +115,7 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
 
   connect(m_list, &QTableView::doubleClicked, this, &GameList::GameSelected);
   connect(m_grid, &QListView::doubleClicked, this, &GameList::GameSelected);
+  // NOTE: use the GetWiiMixGames instead
   // Check if over the checkbox; if so, toggle a game in or out of the WiiMix
   // connect(m_list->find("WiiMix"), &QCheckBox::clicked, this, &GameList::WiiMixCheckboxClicked);
   connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
@@ -935,6 +936,24 @@ QList<std::shared_ptr<const UICommon::GameFile>> GameList::GetSelectedGames() co
     }
   }
   return selected_list;
+}
+
+QList<std::shared_ptr<const UICommon::GameFile>> GameList::GetWiiMixGames() const
+{
+  QList<std::shared_ptr<const UICommon::GameFile>> wiimix_list;
+
+  const int row_count = m_model.rowCount(QModelIndex());
+  qDebug() << "Row count: " << row_count;
+  for (int row = 0; row < row_count; ++row)
+  {
+    const QModelIndex model_index = m_model.index(row, 0);
+    auto game = m_model.GetGameFile(model_index.row());
+    if (game->GetWiiMix())  // Assuming IsWiiMixChecked() is a method to check the WiiMix field
+    {
+      wiimix_list.push_back(game);
+    }
+  }
+  return wiimix_list;
 }
 
 bool GameList::HasMultipleSelected() const

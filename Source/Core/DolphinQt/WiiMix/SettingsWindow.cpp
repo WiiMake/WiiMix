@@ -69,12 +69,12 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 
 // TODO: Maybe will want this in case there's a settings mismatch between people
 // trying to play together
-void WiiMixSettingsWindow::showEvent(QShowEvent* event)
-{
-//   QDialog::showEvent(event);
-//   m_wiimote_controllers->UpdateBluetoothAvailableStatus();
-    return;
-}
+// void WiiMixSettingsWindow::showEvent(QShowEvent* event)
+// {
+// //   QDialog::showEvent(event);
+// //   m_wiimote_controllers->UpdateBluetoothAvailableStatus();
+//     return;
+// }
 
 void WiiMixSettingsWindow::CreateMainLayout()
 {
@@ -138,6 +138,8 @@ void WiiMixSettingsWindow::ConnectWidgets()
         }
         else if (m_settings.GetMode() == WiiMixEnums::Mode::ROGUE) {
           WiiMixRogueSettings rogue_settings = WiiMixRogueSettings(m_settings);
+          rogue_settings.SetLength(WiiMixRogueSettings::StringToLength(m_config->GetRogueLength()));
+          rogue_settings.SetSeed(m_config->GetRogueSeed());
           emit StartWiiMixRogue(rogue_settings);
         }
       }

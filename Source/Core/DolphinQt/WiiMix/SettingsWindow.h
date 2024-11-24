@@ -32,8 +32,8 @@ signals:
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
   void ErrorLoadingSettings(QString error_message);
 
-protected:
-  void showEvent(QShowEvent* event) override;
+// protected:
+//   void showEvent(QShowEvent* event) override;
 
 private:
   void LoadSettings();

@@ -7,13 +7,11 @@
 // Copyright 2017 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 WiiMixObjective::WiiMixObjective(
-    std::string objective_string, 
+    std::string objective_string,
     WiiMixEnums::Player completed
 ) : m_objective_string(objective_string), m_completed(completed){};
 
 // @gyoder ID?
-// @gyoder
-// @gyoder
 std::string WiiMixObjective::GetObjectiveString() {
     return m_objective_string;
 }

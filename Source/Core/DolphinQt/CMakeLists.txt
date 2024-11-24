@@ -340,6 +340,8 @@ add_executable(dolphin-emu
   WiiMix/Objective.h
   WiiMix/RogueSettings.cpp
   WiiMix/RogueSettings.h
+  WiiMix/RogueWindow.cpp
+  WiiMix/RogueWindow.h
   WiiMix/Settings.cpp
   WiiMix/Settings.h
   WiiMix/SettingsWindow.cpp

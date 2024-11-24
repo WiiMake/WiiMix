@@ -850,8 +850,8 @@ void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClien
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
-  // Start the wiimix
-  qDebug() << "Rogue calls";
+  // Initializes values
+  settings->init();
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {

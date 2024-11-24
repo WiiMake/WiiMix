@@ -78,6 +78,14 @@ void WiiMixBingoSettings::SetLobbyID(QString value)
     m_lobby_id = value;
 }
 
+QString WiiMixBingoSettings::GetSeed() {
+    return m_seed;
+}
+
+void WiiMixBingoSettings::SetSeed(QString value) {
+    m_seed = value;
+}
+
 QString WiiMixBingoSettings::GetLobbyPassword()
 {
     return m_lobby_password;
