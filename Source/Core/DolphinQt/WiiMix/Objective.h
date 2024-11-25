@@ -4,7 +4,6 @@
 #pragma once
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include <QObject>
 #include <map>
 
 class WiiMixObjective
@@ -15,13 +14,19 @@ public:
     uint16_t game_id,
     std::string title,
     std::string description,
+    std::string savestate_file,
+    std::string iso_file,
     WiiMixEnums::Player completed
-  ) : m_achievement_id(achievement_id), m_game_id(game_id), m_title(title), m_description(description), m_completed(completed){};
+  ) : m_achievement_id(achievement_id), m_game_id(game_id), m_title(title), m_description(description), m_savestate_file(savestate_file), m_iso_file(iso_file), m_completed(completed){};
 
   uint16_t GetAchievementID();
   uint16_t GetGameID();
   std::string GetTitle();
   std::string GetDescription();
+  std::string GetSavestateFile();
+  void SetSavestateFile(std::string savestate_file);
+  std::string GetISOFile();
+  void SetISOFile(std::string iso_file);
   WiiMixEnums::Player GetCompleted();
   void SetCompleted(WiiMixEnums::Player player);
 
@@ -34,7 +39,7 @@ public:
   static std::map<std::string, uint16_t> getGameList(uint16_t console_id); // 16 for gamecube
 
 
-  const std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
+  std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 
     // WarioWare
     {394715, "GZWE01.so1"},
@@ -68,7 +73,7 @@ public:
 
   };
 
-  const std::map<uint16_t, uint16_t> AchievementIDToGameID = {
+  std::map<uint16_t, uint16_t> AchievementIDToGameID = {
 
     // WarioWare
     {394715, 6605},
@@ -102,15 +107,21 @@ public:
 
   };
 
-  const std::map<uint16_t, std::string> GameIDToFileName = {
+  std::map<uint16_t, std::string> GameIDToFileName = {
     {6605, "WarioWare, Inc. - Mega Party Game$! (USA).iso"},
     {9699, "F-Zero GX (USA).ciso"},
     {9510, "Super Monkey Ball (USA).ciso"},
     {7423, "Pokemon Colosseum (USA).iso"},
-    {9602, ""},
+    {9602, "Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"},
     {6049, "Super Mario Sunshine (USA).iso"},
     {2827, "Tony Hawk's Pro Skater 4 (USA).ciso"}
   };
+
+
+
+
+
+
 
 private:
   uint16_t m_achievement_id;
@@ -118,6 +129,8 @@ private:
   WiiMixEnums::Player m_completed;
   std::string m_title;
   std::string m_description;
+  std::string m_savestate_file;
+  std::string m_iso_file;
   static std::string m_username;
   static std::string m_token;
 };
