@@ -45,8 +45,8 @@ public:
   std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 
     // WarioWare
-    {394715, "GZWE01.so1"},
-    {394718, "GZWE01.so2"},
+    {394715, "GZWE01.s01"},
+    {394718, "GZWE01.s02"},
 
     // F-Zero GX
 
@@ -55,24 +55,24 @@ public:
     {472874, "GMBE8P.s02"},
 
     // Pokemon Coliseum
-    {404280, "GC6E01.so1"},
-    {404282, "GC6E01.so2"},
-    {404285, "GC6E01.so3"},
-    {404287, "GC6E01.so4"},
+    {404280, "GC6E01.s01"},
+    {404282, "GC6E01.s02"},
+    {404285, "GC6E01.s03"},
+    {404287, "GC6E01.s04"},
 
     // Smash Melee
-    {427418, "GALE01.so1"},
-    {434618, "GALE01.so2"},
-    {427477, "GALE01.so3"},
-    {437003, "GALE01.so4"},
-    {436331, "GALE01.so5"},
+    {427418, "GALE01.s01"},
+    {434618, "GALE01.s02"},
+    {427477, "GALE01.s03"},
+    {437003, "GALE01.s04"},
+    {436331, "GALE01.s05"},
 
     // Sunshine
-    {395001, "GMSE01.so1"},
-    {395002, "GMSE01.so2"},
-    {395003, "GMSE01.so3"},
-    {395004, "GMSE01.so4"},
-    {395098, "GMSE01.so5"},
+    {395001, "GMSE01.s01"},
+    {395002, "GMSE01.s02"},
+    {395003, "GMSE01.s03"},
+    {395004, "GMSE01.s04"},
+    {395098, "GMSE01.s05"},
 
   };
 

@@ -45,8 +45,7 @@ void Config::Refresh()
     s_has_registered_callback = true;
   }
 
-  camera_config.control_type = ::Config::Get(::Config::FL1_CONTROL_TYPE);
-  enabled = ::Config::Get(::Config::FREE_LOOK_ENABLED) &&
-            !AchievementManager::GetInstance().IsHardcoreModeActive();
+  camera_config.control_type = FreeLook::ControlType::SixAxis;
+  enabled = false;
 }
 }  // namespace FreeLook
