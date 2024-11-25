@@ -55,6 +55,7 @@
 #define SHADERCACHE_DIR "Shaders"
 #define RETROACHIEVEMENTSCACHE_DIR "RetroAchievements"
 #define STATESAVES_DIR "StateSaves"
+#define OBJECTIVES_DIR "Objectives"
 #define WIIMIX_STATESAVES_DIR "WiiMixStateSaves"
 #define SCREENSHOTS_DIR "ScreenShots"
 #define LOAD_DIR "Load"

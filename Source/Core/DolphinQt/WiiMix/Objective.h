@@ -5,6 +5,7 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include <map>
+#include <vector>
 
 class WiiMixObjective
 {

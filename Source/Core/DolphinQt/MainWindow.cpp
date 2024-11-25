@@ -945,7 +945,7 @@ void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
   std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile();
   UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
   BootSessionData boot_data;
-  qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
+  // qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
   if (gameFile.GetGameID() == SConfig::GetInstance().GetGameID()) {
     qDebug() << "Loading savestate: " << savestate_path.c_str();
     State::LoadAs(Core::System::GetInstance(), savestate_path);
@@ -1643,7 +1643,11 @@ void MainWindow::StateSaveSlotAt(int slot)
 
 void MainWindow::ObjectiveLoadSlotAt(int slot)
 {
-  qDebug() << "ObjectiveLoadSlotAt Calls";
+  // TODOx: this is hard coded currently
+  // In the future, we should be pulling from the objectives folder
+  // and this hotkey should only be run if bingo is actually running
+  // i.e. after objectives have been populated
+  StartWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
   return;
 }
 
