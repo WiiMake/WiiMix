@@ -425,7 +425,8 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
   message("Wiimix-server executable added")
   # Define common include directories and libraries for both targets
   # set(SERVER_INCLUDES "${CMAKE_SOURCE_DIR}/include")
-  set(SERVER_LIBS Qt6::Core Qt6::Network)
+  find_package(CURL REQUIRED)
+  set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl)
   # set(SERVER_LIBS Qt6::Core Qt6::Network)
   add_executable(wiimix-server
     WiiMix/Server.cpp

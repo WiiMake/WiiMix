@@ -79,8 +79,6 @@ std::map<uint16_t, std::string> WiiMixObjective::getGameAchievements(uint16_t ga
     CURLcode res;
     std::string readBuffer;
 
-
-
     curl = curl_easy_init();
     if (curl) {
         std::string url = "https://retroachievements.org/API/API_GetGameExtended.php?i=" + std::to_string(game_id) + "&z=" + "WiiMix" + "&y=" + "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5" + "&f=5";
@@ -135,3 +133,18 @@ std::map<std::string, uint16_t> WiiMixObjective::getGameList(uint16_t console_id
     }
     return game_list;
 }
+
+// @xanmankey: for retrieving objectives
+// std::string GetInfoStringOfSlot(int slot, bool translate)
+// {
+//   std::string filename = MakeStateFilename(slot);
+//   if (!File::Exists(filename))
+//     return translate ? Common::GetStringT("Empty") : "Empty";
+
+//   State::StateHeader header;
+//   if (!ReadHeader(filename, header))
+//     return translate ? Common::GetStringT("Unknown") : "Unknown";
+
+//   return SystemTimeAsDoubleToString(header.legacy_header.time);
+// }
+

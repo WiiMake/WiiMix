@@ -147,7 +147,6 @@ static void HandleFrameStepHotkeys()
   }
 }
 
-// TODO: need to update hotkey implementation
 void HotkeyScheduler::Run()
 {
   Common::SetCurrentThreadName("HotkeyScheduler");
@@ -624,11 +623,6 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_LOAD_STATE_SLOT_1 + i))
         emit StateLoadSlot(i + 1);
 
-      // Load Objective
-      if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
-        // TODOx: figure out how to get objective
-        // emit ObjectiveLoadSlot(new WiiMixObjective());
-
       if (IsHotkey(HK_SAVE_STATE_SLOT_1 + i))
         emit StateSaveSlot(i + 1);
 
@@ -637,6 +631,12 @@ void HotkeyScheduler::Run()
 
       if (IsHotkey(HK_SELECT_STATE_SLOT_1 + i))
         emit SetStateSlotHotkey(i + 1);
+    }
+
+    // For the number of objectives
+    for (u32 i = 0; i < 49; i++) {
+      if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
+        emit ObjectiveLoadSlot(i + 1);
     }
 
     if (IsHotkey(HK_SAVE_FIRST_STATE))

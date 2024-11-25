@@ -11,6 +11,8 @@
 #include "Common/Flag.h"
 #include "InputCommon/InputProfile.h"
 
+#include "DolphinQt/WiiMix/Objective.h"
+
 class HotkeyScheduler : public QObject
 {
   Q_OBJECT
@@ -43,7 +45,7 @@ signals:
   void StateSaveSlotHotkey();
   // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
-  void ObjectiveLoadSlot(WiiMixObjective objective);
+  void ObjectiveLoadSlot(int state);
   void StateSaveSlot(int state);
   void StateLoadLastSaved(int state);
   void StateSaveOldest();

@@ -104,7 +104,6 @@ private:
   WiiMixEnums::Difficulty m_difficulty;
   WiiMixEnums::Mode m_mode;
   WiiMixEnums::SaveStateBank m_save_state_bank;
-  // @gyoder how to determine which objectives? When to populate them?
   std::vector<WiiMixObjective> m_objectives;
   #ifdef QT_GUI_LIB
     std::vector<UICommon::GameFile> m_games;

@@ -128,6 +128,7 @@ void MenuBar::OnEmulationStateChanged(Core::State state)
   m_state_save_menu->setEnabled(running);
   m_state_send_menu->setEnabled(running);
   m_game_swap_menu->setEnabled(running);
+  m_objective_load_menu->setEnabled(running);
 
   const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
   m_state_load_menu->setEnabled(running && !hardcore);
@@ -359,9 +360,10 @@ void MenuBar::AddEmulationMenu()
   AddStateSendMenu(emu_menu);
   AddGameSwapMenu(emu_menu);
   AddStateSlotMenu(emu_menu);
+  AddObjectiveLoadMenu(emu_menu);
   UpdateStateSlotMenu();
 
-  for (QMenu* menu : {m_state_load_menu, m_state_save_menu, m_state_slot_menu})
+  for (QMenu* menu : {m_state_load_menu, m_state_save_menu, m_state_slot_menu, m_objective_load_menu})
     connect(menu, &QMenu::aboutToShow, this, &MenuBar::UpdateStateSlotMenu);
 }
 
@@ -422,6 +424,19 @@ void MenuBar::AddGameSwapMenu(QMenu* emu_menu)
   }
 }
 
+void MenuBar::AddObjectiveLoadMenu(QMenu* emu_menu)
+{
+  m_objective_load_menu = emu_menu->addMenu(tr("&Objective Load"));
+
+  // Temporary solution is to use 49 slots for now
+  for (int i = 1; i <= 49; i++)
+  {
+    QAction* action = m_objective_load_menu->addAction(QString{});
+
+    connect(action, &QAction::triggered, this, [=, this]() { emit ObjectiveLoadSlotAt(i); });
+  }
+}
+
 void MenuBar::AddStateSlotMenu(QMenu* emu_menu)
 {
   m_state_slot_menu = emu_menu->addMenu(tr("Select State Slot"));
@@ -450,6 +465,7 @@ void MenuBar::UpdateStateSlotMenu()
   QList<QAction*> actions_save = m_state_save_slots_menu->actions();
   QList<QAction*> actions_send = m_state_send_menu->actions();
   QList<QAction*> actions_swap = m_game_swap_menu->actions();
+  QList<QAction*> actions_objective_load = m_objective_load_menu->actions();
   for (int i = 0; i < actions_slot.length(); i++)
   {
     int slot = i + 1;
@@ -462,6 +478,12 @@ void MenuBar::UpdateStateSlotMenu()
     actions_swap.at(i)->setText(tr("Swap to Game %1").arg(slot));
     actions_slot.at(i)->setText(tr("Select Slot %1 - %2").arg(slot).arg(info));
   }
+  // for (int i = 0; i < actions_objective_load.length(); i++)
+  // {
+  //   int slot = i + 1;
+  //   // QString info = QString::fromStdString(Objective::GetInfoStringOfSlot(slot));
+  //   actions_objective_load.at(i)->setText(tr("Objective Load Slot %1 - %2").arg(slot).arg(info));
+  // }
 }
 
 void MenuBar::AddViewMenu()

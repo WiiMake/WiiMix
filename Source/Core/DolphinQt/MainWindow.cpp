@@ -240,7 +240,6 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   ConnectStack();
   ConnectMenuBar();
 
-
   State::EnableCompression(false); // hopefully speed things up
 
   QSettings& settings = Settings::GetQSettings();
@@ -848,6 +847,7 @@ void MainWindow::OpenUserFolder()
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client) {
   // Start the wiimix
   qDebug() << "Bingo calls";
+  m_bingo_settings = &settings;
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
@@ -1604,10 +1604,9 @@ void MainWindow::StateSaveSlotAt(int slot)
   State::Save(Core::System::GetInstance(), slot);
 }
 
-// @gyoder
-void MainWindow::ObjectiveLoadSlotAt(WiiMixObjective objective)
+void MainWindow::ObjectiveLoadSlotAt(int slot)
 {
-  // TODOx
+  qDebug() << "ObjectiveLoadSlotAt Calls";
   return;
 }
 

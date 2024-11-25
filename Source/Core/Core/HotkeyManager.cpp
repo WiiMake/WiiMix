@@ -143,18 +143,6 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Load State Slot 10"),
     _trans("Load from Selected Slot"),
 
-    _trans("Load Objective Slot 1"),
-    _trans("Load Objective Slot 2"),
-    _trans("Load Objective Slot 3"),
-    _trans("Load Objective Slot 4"),
-    _trans("Load Objective Slot 5"),
-    _trans("Load Objective Slot 6"),
-    _trans("Load Objective Slot 7"),
-    _trans("Load Objective Slot 8"),
-    _trans("Load Objective Slot 9"),
-    _trans("Load Objective Slot 10"),
-    _trans("Load from Selected Slot"),
-
     _trans("Save State Slot 1"),
     _trans("Save State Slot 2"),
     _trans("Save State Slot 3"),
@@ -200,6 +188,57 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Load State Last 8"),
     _trans("Load State Last 9"),
     _trans("Load State Last 10"),
+
+    _trans("Load Objective Slot 1"),
+    _trans("Load Objective Slot 2"),
+    _trans("Load Objective Slot 3"),
+    _trans("Load Objective Slot 4"),
+    _trans("Load Objective Slot 5"),
+    _trans("Load Objective Slot 6"),
+    _trans("Load Objective Slot 7"),
+    _trans("Load Objective Slot 8"),
+    _trans("Load Objective Slot 9"),
+    _trans("Load Objective Slot 10"),
+    _trans("Load Objective Slot 11"),
+    _trans("Load Objective Slot 12"),
+    _trans("Load Objective Slot 13"),
+    _trans("Load Objective Slot 14"),
+    _trans("Load Objective Slot 15"),
+    _trans("Load Objective Slot 16"),
+    _trans("Load Objective Slot 17"),
+    _trans("Load Objective Slot 18"),
+    _trans("Load Objective Slot 19"),
+    _trans("Load Objective Slot 20"),
+    _trans("Load Objective Slot 21"),
+    _trans("Load Objective Slot 22"),
+    _trans("Load Objective Slot 23"),
+    _trans("Load Objective Slot 24"),
+    _trans("Load Objective Slot 25"),
+    _trans("Load Objective Slot 26"),
+    _trans("Load Objective Slot 27"),
+    _trans("Load Objective Slot 28"),
+    _trans("Load Objective Slot 29"),
+    _trans("Load Objective Slot 30"),
+    _trans("Load Objective Slot 31"),
+    _trans("Load Objective Slot 32"),
+    _trans("Load Objective Slot 33"),
+    _trans("Load Objective Slot 34"),
+    _trans("Load Objective Slot 35"),
+    _trans("Load Objective Slot 36"),
+    _trans("Load Objective Slot 37"),
+    _trans("Load Objective Slot 38"),
+    _trans("Load Objective Slot 39"),
+    _trans("Load Objective Slot 40"),
+    _trans("Load Objective Slot 41"),
+    _trans("Load Objective Slot 42"),
+    _trans("Load Objective Slot 43"),
+    _trans("Load Objective Slot 44"),
+    _trans("Load Objective Slot 45"),
+    _trans("Load Objective Slot 46"),
+    _trans("Load Objective Slot 47"),
+    _trans("Load Objective Slot 48"),
+    _trans("Load Objective Slot 49"),
+    _trans("Load from Selected Slot"),
 
     _trans("Save Oldest State"),
     _trans("Undo Load State"),
@@ -386,6 +425,7 @@ constexpr std::array<HotkeyGroupInfo, NUM_HOTKEY_GROUPS> s_groups_info = {
      {_trans("Send State"), HK_SWAP_GAME_SLOT_1, HK_SWAP_GAME_SLOT_SELECTED},
      {_trans("Select State"), HK_SELECT_STATE_SLOT_1, HK_SELECT_STATE_SLOT_10},
      {_trans("Load Last State"), HK_LOAD_LAST_STATE_1, HK_LOAD_LAST_STATE_10},
+     {_trans("Load Objective"), HK_LOAD_OBJECTIVE_SLOT_1, HK_LOAD_OBJECTIVE_SLOT_SELECTED},
      {_trans("Other State Hotkeys"), HK_SAVE_FIRST_STATE, HK_DECREMENT_SELECTED_STATE_SLOT},
      {_trans("GBA Core"), HK_GBA_LOAD, HK_GBA_RESET, true},
      {_trans("GBA Volume"), HK_GBA_VOLUME_DOWN, HK_GBA_TOGGLE_MUTE, true},
@@ -503,12 +543,15 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
   for (int i = 0; i < 8; i++)
   {
     set_key_expression(HK_LOAD_STATE_SLOT_1 + i, hotkey_string({"`Ctrl`", fmt::format("{}", i + 1)}));
-    set_key_expression(HK_LOAD_OBJECTIVE_SLOT_1 + i, hotkey_string({fmt::format("{}", i + 1)})); // For showcase only
     set_key_expression(HK_SAVE_STATE_SLOT_1 + i,
                        hotkey_string({"Shift", fmt::format("{}", i + 1)}));
   }
+  // Load objective
+  for (int i = 0; i < 9; i++) {
+    set_key_expression(HK_LOAD_OBJECTIVE_SLOT_1 + i, fmt::format("{}", i + 1));
+  }
   set_key_expression(HK_UNDO_LOAD_STATE, "F12");
-  set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"Shift", "F12"}));
+  set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"`Shift`", "`F12`"}));
 
   // GBA
   set_key_expression(HK_GBA_LOAD, hotkey_string({"`Ctrl`", "`Shift`", "`O`"}));

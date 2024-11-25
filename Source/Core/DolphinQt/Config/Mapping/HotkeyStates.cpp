@@ -23,6 +23,8 @@ void HotkeyStates::CreateMainLayout()
       CreateGroupBox(tr("Load"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_LOAD_STATE)));
   m_main_layout->addWidget(
       CreateGroupBox(tr("Swap Game"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_SWAP_STATE)));
+  m_main_layout->addWidget(
+      CreateGroupBox(tr("Load Objective"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_LOAD_OBJECTIVE)));
 
   setLayout(m_main_layout);
 }

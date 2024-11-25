@@ -109,13 +109,13 @@ private:
   void StateSave();
   void StateLoadSlot();
   void StateSaveSlot();
-  void ObjectiveLoadSlot(WiiMixObjective objective);
+  // void ObjectiveLoadSlot(int slot);
   void StateSendSlot();
   void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
   void StateSendSlotAt(int slot);
-  void ObjectiveLoadSlotAt(WiiMixObjective objective);
+  void ObjectiveLoadSlotAt(int slot);
   void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();
@@ -266,6 +266,10 @@ private:
   InfinityBaseWindow* m_infinity_window = nullptr;
   MappingWindow* m_hotkey_window = nullptr;
   FreeLookWindow* m_freelook_window = nullptr;
+
+  WiiMixBingoSettings* m_bingo_settings = nullptr;
+  WiiMixShuffleSettings* m_shuffle_settings = nullptr;
+  WiiMixRogueSettings* m_rogue_settings = nullptr;
 
   HotkeyScheduler* m_hotkey_scheduler;
   NetPlayDialog* m_netplay_dialog;
