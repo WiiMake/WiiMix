@@ -12,6 +12,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QString>
 #include <QGraphicsItemAnimation>
+#include "Common/FileUtil.h"
 
 class ScreenSaver: public QFrame {
 private:
@@ -41,7 +42,8 @@ public:
     ScreenSaver() {
         layout = new QStackedLayout();
         mediaPlayer = new QMediaPlayer(this);
-        mediaPlayer->setSource(QUrl::fromLocalFile(QStringLiteral("/Users/vdadvdad/CLionProjects/qtTest2/trailer.mp4")));
+        std::string trailerPath = File::GetSysDirectory() + "Resources/trailer.mp4";
+        mediaPlayer->setSource(QUrl::fromLocalFile(QString::fromStdString(trailerPath)));
         mediaPlayer->setLoops(100000);
         audioOutput = new QAudioOutput(this);
         mediaPlayer->setAudioOutput(audioOutput);
