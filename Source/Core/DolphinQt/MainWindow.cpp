@@ -69,6 +69,8 @@
 #include "Core/System.h"
 #include "Core/WiiUtils.h"
 
+#include "Core/ConfigManager.h" // for getting current game
+
 #include "DiscIO/DirectoryBlob.h"
 #include "DiscIO/NANDImporter.h"
 #include "DiscIO/RiivolutionPatcher.h"
@@ -128,6 +130,7 @@
 #include "DolphinQt/WiiUpdate.h"
 #include "DolphinQt/WiiMix/SettingsWindow.h"
 #include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Objective.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -936,11 +939,45 @@ void MainWindow::ShowWiiMixWindow() {
   return;
 }
 
+void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
+  std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + std::filesystem::path::preferred_separator + objective.GetISOFile();
+  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile();
+  UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
+  BootSessionData boot_data;
+  qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
+  if (gameFile.GetGameID() == SConfig::GetInstance().GetGameID()) {
+    qDebug() << "Loading savestate: " << savestate_path.c_str();
+    State::LoadAs(Core::System::GetInstance(), savestate_path);
+  } else {
+    if (File::Exists(savestate_path)) {
+      qDebug() << "Loading savestate: " << savestate_path.c_str();
+      boot_data = BootSessionData(savestate_path, DeleteSavestateAfterBoot::No);
+    } else {
+      qDebug() << "No savestate found";
+      boot_data = BootSessionData(); // could do something else here
+    }
+    qDebug() << "Starting game: " << gameFile.GetGameID().c_str();
+    StartGame(BootParameters::GenerateFromFile(gameFile.GetFilePath(), std::move(boot_data)), File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav");
+  }
+}
+
 void MainWindow::Open()
 {
-  QStringList files = PromptFileNames();
-  if (!files.isEmpty())
-    StartGame(StringListToStdVector(files));
+
+  //TODOx: TEMP FILES FOR TESTING
+
+  WiiMixObjective::CacheGames();
+  std::vector<WiiMixObjective> objectives = WiiMixObjective::GetObjectives();
+  for (WiiMixObjective objective : objectives) {
+    qDebug() << "Objective: " << objective.GetTitle().c_str() << " Game ID: " << objective.GetGameID() << " ISO: " << objective.GetISOFile().c_str() << " Savestate: " << objective.GetSavestateFile().c_str() << " AchievementID: " << objective.GetAchievementID() << " Title: " << objective.GetTitle().c_str() << " Description: " << objective.GetDescription().c_str();
+  }
+
+  StartWiiMixObjective(objectives[rand() % objectives.size()]);
+
+
+  // QStringList files = PromptFileNames();
+  // if (!files.isEmpty())
+  //   StartGame(StringListToStdVector(files));
 }
 
 void MainWindow::Play(const std::optional<std::string>& savestate_path)
