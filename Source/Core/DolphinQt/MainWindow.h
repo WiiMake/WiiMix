@@ -16,6 +16,7 @@
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Objective.h"
 
 class QMenu;
 class QStackedWidget;
@@ -171,6 +172,7 @@ private:
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
   void WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
+  void StartWiiMixObjective(WiiMixObjective objective);
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
 

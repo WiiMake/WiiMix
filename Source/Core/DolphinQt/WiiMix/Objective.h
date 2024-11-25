@@ -38,6 +38,10 @@ public:
   static std::map<uint16_t, std::string> getGameAchievements(uint16_t game_id);
   static std::map<std::string, uint16_t> getGameList(uint16_t console_id); // 16 for gamecube
 
+  static std::vector<WiiMixObjective> GetObjectives();
+  static void CacheGames();
+
+
   std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 
     // WarioWare
@@ -57,11 +61,11 @@ public:
     {404287, "GC6E01.so4"},
 
     // Smash Melee
-    {427418, "GALEO1.so1"},
-    {434618, "GALEO1.so2"},
-    {427477, "GALEO1.so3"},
-    {437003, "GALEO1.so4"},
-    {436331, "GALEO1.so5"},
+    {427418, "GALE01.so1"},
+    {434618, "GALE01.so2"},
+    {427477, "GALE01.so3"},
+    {437003, "GALE01.so4"},
+    {436331, "GALE01.so5"},
 
     // Sunshine
     {395001, "GMSE01.so1"},
@@ -116,12 +120,7 @@ public:
     {2827, "Tony Hawk's Pro Skater 4 (USA).ciso"}
   };
 
-
-
-
-
-
-
+  static std::map<uint16_t, std::string> m_games_cache;
 private:
   uint16_t m_achievement_id;
   uint16_t m_game_id;
