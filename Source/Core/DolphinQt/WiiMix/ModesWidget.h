@@ -11,6 +11,7 @@
 
 #include <array>
 #include "DolphinQt/WiiMix/Settings.h"
+#include "WiiMixButton.h"
 #include <iostream>
 
 

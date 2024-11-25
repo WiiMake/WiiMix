@@ -14,7 +14,7 @@ endif()
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg Core5Compat)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg Core5Compat Multimedia MultimediaWidgets)
 message(STATUS "Found Qt version ${Qt6_VERSION}")
 
 set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
@@ -414,6 +414,8 @@ add_executable(dolphin-emu
         WiiMix/WiiMixButton.h
         WiiMix/BingoGame.cpp
         WiiMix/BingoGame.h
+        WiiMix/ScreenSaver.cpp
+        WiiMix/ScreenSaver.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
@@ -501,6 +503,8 @@ PRIVATE
   Qt6::Widgets
   Qt6::Network
   Qt6::Core5Compat
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
   uicommon
   imgui
   implot
