@@ -2,9 +2,8 @@
 // Created by Владислав Павловский on 12.11.2024.
 //
 
-#pragma once
 #include "WiiMixButton.h"
-
+#include <QEvent>
 #include <utility>
 
 void WiiMixButton::drawButton() {
