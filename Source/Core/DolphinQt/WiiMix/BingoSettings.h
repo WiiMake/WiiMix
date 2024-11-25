@@ -32,6 +32,9 @@ public:
   void SetLobbyID(QString value);
   QString GetLobbyPassword();
   void SetLobbyPassword(QString value);
+  QMap<WiiMixEnums::Player, int> GetCurrentObjectives();
+  void SetCurrentObjectives(QMap<WiiMixEnums::Player, int> value);
+  void UpdateCurrentObjectives(WiiMixEnums::Player player, int value);
   
   QJsonDocument ToJson();
   WiiMixBingoSettings FromJson(QJsonDocument json);
@@ -44,8 +47,10 @@ public:
 private:
   WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
+  // TODOx: teams hasn't been tested at all
   bool m_teams;
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
+  QMap<WiiMixEnums::Player, int> m_current_objectives;
   QString m_lobby_id;
   QString m_lobby_password;
 };

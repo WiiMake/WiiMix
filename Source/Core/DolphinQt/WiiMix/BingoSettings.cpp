@@ -88,6 +88,18 @@ void WiiMixBingoSettings::SetLobbyPassword(QString value)
     m_lobby_password = value;
 }
 
+QMap<WiiMixEnums::Player, int> GetCurrentObjectives() {
+    return m_current_objectives;
+}
+
+void SetCurrentObjectives(QMap<WiiMixEnums::Player, int> objectives) {
+    m_current_objectives = objectives;
+}
+
+void UpdateObjective(WiiMixEnums::Player player, int objective) {
+    m_current_objectives[player] = objective;
+}
+
 QJsonDocument WiiMixBingoSettings::ToJson()
 {
     // Take care of the common settings first
@@ -96,14 +108,17 @@ QJsonDocument WiiMixBingoSettings::ToJson()
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)] = m_teams;
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)] = m_card_size;
     QVariantMap players_variant;
+    QVariantMap current_objectives_variant;
     for (auto it = m_players.begin(); it != m_players.end(); ++it)
     {
         QVariantMap player_info;
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)] = static_cast<int>(std::get<0>(it.value()));
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)] = std::get<1>(it.value());
         players_variant[QString::number(static_cast<int>(it.key()))] = player_info;
+        current_objectives_variant[QString::number(static_cast<int>(it.key()))] = m_current_objectives[it.key()];
     }
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();
+    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)] = QJsonDocument::fromVariant(current_objectives_variant).object();
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)] = m_lobby_id;
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
 
@@ -127,6 +142,10 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
         WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)].toInt());
         QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
         settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
+    }
+    QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
+    for (auto it = current_objectives_variant.begin(); it != players_variant.end(); ++it) {
+        settings.m_current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
     }
     
     settings.m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();

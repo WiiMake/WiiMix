@@ -270,6 +270,9 @@ private:
   FreeLookWindow* m_freelook_window = nullptr;
 
   WiiMixBingoSettings* m_bingo_settings = nullptr;
+  QString m_player_name = QStringLiteral("");
+  int m_player_num = 0;
+  WiiMixBingoClient* m_bingo_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;
   WiiMixRogueSettings* m_rogue_settings = nullptr;
 

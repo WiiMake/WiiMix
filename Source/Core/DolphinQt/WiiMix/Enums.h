@@ -81,6 +81,7 @@ namespace WiiMixEnums {
     #define BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD "LOBBY_PASSWORD"
     #define BINGO_NETPLAY_SETTINGS_COLOR "COLOR"
     #define BINGO_NETPLAY_SETTINGS_NAME "NAME"
+    #define BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
 
     std::string BingoNetplaySettingsToString(BingoNetplaySettings setting);
     BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);
@@ -130,6 +131,7 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define MAX_PLAYERS 4
 #define LOBBY_ID_LENGTH 32 // Uses QUuid, which ends up being length 32
 #define MAX_LOBBY_PASSWORD_LENGTH 20
+#define DEFAULT_CURRENT_OBJECTIVES {}
 
 // BINGO NETWORKING
 #define PORT 19504

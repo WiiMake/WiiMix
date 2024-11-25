@@ -338,6 +338,45 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
     StartGame(std::move(m_pending_boot));
     m_pending_boot.reset();
   }
+
+  // Initialize bingo settings
+  m_bingo_settings = new WiiMixBingoSettings(WiiMixEnums::BingoType::LOCKOUT, 9);
+  // Add all games to the default bingo settings using the map
+  for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
+    UICommon::GameFile* game_file_obj = new UICommon::GameFile();
+    UICommon::GameFile::GetGameFileById(std::to_string(game_id), game_file_obj);
+    m_bingo_settings->AddGame(*game_file_obj);
+  }
+  // Hard code bingo lobby id for now
+  m_bingo_settings->SetLobbyID(QStringLiteral("123456789"));
+  // Hard code bingo players for now
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
+  // Populate players
+  for (int i = 0; i < 2; i++) {
+    players[static_cast<WiiMixEnums::Player>(i)] = QPair<WiiMixEnums::Color, QString>(static_cast<WiiMixEnums::Color>(i), QStringLiteral("Player %1").arg(i + 1));
+  }
+  m_bingo_settings->SetPlayers(players);
+  // Initialize bingo client
+  m_bingo_client = new WiiMixBingoClient();
+  // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
+  m_player_num = 1;
+  // TODOx: Connect signal to bingo UI
+  // @vlad
+  connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
+  
+  // Connect client to server
+  m_bingo_client->ConnectToServer();
+
+  // Create a new lobby if it doesn't exist
+  // Since two requests are being
+  // This should double as a connection if the lobby does exist
+  m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY)
+
+  // TODOx: Load ScreenSaver
+  // @vlad
+  // m_screen_saver = new ScreenSaver(this);
+  // m_screen_saver->show();
 }
 
 MainWindow::~MainWindow()
@@ -1643,11 +1682,17 @@ void MainWindow::StateSaveSlotAt(int slot)
 
 void MainWindow::ObjectiveLoadSlotAt(int slot)
 {
-  // TODOx: this is hard coded currently
+  // NOTE: this is hard coded currently
   // In the future, we should be pulling from the objectives folder
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
   StartWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
+  // Update settings using the hardcoded player_num`
+  m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
+  // SendData to the server containing the objective loaded mapped to the player that loaded it
+  if (m_bingo_client != nullptr) {
+    m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+  }
   return;
 }
 
