@@ -47,6 +47,8 @@
 #include "VideoCommon/VertexShaderManager.h"
 #include "VideoCommon/VideoConfig.h"
 
+#include "WiiMix/Objective.h"
+
 constexpr const char* DUBOIS_ALGORITHM_SHADER = "dubois";
 
 HotkeyScheduler::HotkeyScheduler() : m_stop_requested(false)
@@ -621,6 +623,11 @@ void HotkeyScheduler::Run()
     {
       if (IsHotkey(HK_LOAD_STATE_SLOT_1 + i))
         emit StateLoadSlot(i + 1);
+
+      // Load Objective
+      if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
+        // TODOx: figure out how to get objective
+        // emit ObjectiveLoadSlot(new WiiMixObjective());
 
       if (IsHotkey(HK_SAVE_STATE_SLOT_1 + i))
         emit StateSaveSlot(i + 1);

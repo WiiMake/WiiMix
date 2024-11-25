@@ -4,7 +4,6 @@
 #pragma once
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include <QObject>
 #include <map>
 
 class WiiMixObjective

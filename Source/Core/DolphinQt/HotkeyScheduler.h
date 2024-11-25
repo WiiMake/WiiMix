@@ -41,7 +41,9 @@ signals:
   void DecrementSelectedStateSlotHotkey();
   void StateLoadSlotHotkey();
   void StateSaveSlotHotkey();
+  // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
+  void ObjectiveLoadSlot(WiiMixObjective objective);
   void StateSaveSlot(int state);
   void StateLoadLastSaved(int state);
   void StateSaveOldest();

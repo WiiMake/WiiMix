@@ -642,6 +642,7 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::FullScreenHotkey, this, &MainWindow::FullScreen);
 
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadSlot, this, &MainWindow::StateLoadSlotAt);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveLoadSlot, this, &MainWindow::ObjectiveLoadSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateSaveSlot, this, &MainWindow::StateSaveSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadLastSaved, this,
           &MainWindow::StateLoadLastSavedAt);
@@ -1601,6 +1602,13 @@ void MainWindow::StateLoadLastSavedAt(int slot)
 void MainWindow::StateSaveSlotAt(int slot)
 {
   State::Save(Core::System::GetInstance(), slot);
+}
+
+// @gyoder
+void MainWindow::ObjectiveLoadSlotAt(WiiMixObjective objective)
+{
+  // TODOx
+  return;
 }
 
 // TODO: StateSendSlotAt

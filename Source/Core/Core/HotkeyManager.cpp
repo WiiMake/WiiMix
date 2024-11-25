@@ -143,6 +143,18 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Load State Slot 10"),
     _trans("Load from Selected Slot"),
 
+    _trans("Load Objective Slot 1"),
+    _trans("Load Objective Slot 2"),
+    _trans("Load Objective Slot 3"),
+    _trans("Load Objective Slot 4"),
+    _trans("Load Objective Slot 5"),
+    _trans("Load Objective Slot 6"),
+    _trans("Load Objective Slot 7"),
+    _trans("Load Objective Slot 8"),
+    _trans("Load Objective Slot 9"),
+    _trans("Load Objective Slot 10"),
+    _trans("Load from Selected Slot"),
+
     _trans("Save State Slot 1"),
     _trans("Save State Slot 2"),
     _trans("Save State Slot 3"),
@@ -490,9 +502,10 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
   // Savestates
   for (int i = 0; i < 8; i++)
   {
-    set_key_expression(HK_LOAD_STATE_SLOT_1 + i, fmt::format("F{}", i + 1));
+    set_key_expression(HK_LOAD_STATE_SLOT_1 + i, hotkey_string({"`Ctrl`", fmt::format("{}", i + 1)}));
+    set_key_expression(HK_LOAD_OBJECTIVE_SLOT_1 + i, hotkey_string({fmt::format("{}", i + 1)})); // For showcase only
     set_key_expression(HK_SAVE_STATE_SLOT_1 + i,
-                       hotkey_string({"Shift", fmt::format("F{}", i + 1)}));
+                       hotkey_string({"Shift", fmt::format("{}", i + 1)}));
   }
   set_key_expression(HK_UNDO_LOAD_STATE, "F12");
   set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"Shift", "F12"}));

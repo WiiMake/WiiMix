@@ -34,7 +34,7 @@ public:
   void SetLobbyPassword(QString value);
   
   QJsonDocument ToJson();
-  WiiMixBingoSettings FromJson(QJsonDocument json); 
+  WiiMixBingoSettings FromJson(QJsonDocument json);
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions
   // of games satisfied by the objectives, they will be eligible to join. Otherwise, 

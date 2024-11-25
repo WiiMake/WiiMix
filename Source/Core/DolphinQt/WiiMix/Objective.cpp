@@ -9,8 +9,6 @@
 using json = nlohmann::json;
 #include <QDebug>
 
-
-
 std::string WiiMixObjective::m_username = "";
 std::string WiiMixObjective::m_token = "";
 

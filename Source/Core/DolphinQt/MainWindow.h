@@ -109,11 +109,13 @@ private:
   void StateSave();
   void StateLoadSlot();
   void StateSaveSlot();
+  void ObjectiveLoadSlot(WiiMixObjective objective);
   void StateSendSlot();
   void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
   void StateSendSlotAt(int slot);
+  void ObjectiveLoadSlotAt(WiiMixObjective objective);
   void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();

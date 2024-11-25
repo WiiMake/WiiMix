@@ -79,7 +79,7 @@ bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Acti
 
 bool WiiMixBingoClient::ReceiveData(QJsonDocument doc) {
     // Update the settings
-    WiiMixBingoSettings bingo_settings = WiiMixBingoSettings(); 
+    WiiMixBingoSettings bingo_settings = WiiMixBingoSettings();
     bingo_settings = bingo_settings.FromJson(doc);
     // Update the UI
     qDebug() << QStringLiteral("Emitting onSettingsChanged");
