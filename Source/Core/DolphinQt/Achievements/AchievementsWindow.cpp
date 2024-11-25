@@ -116,6 +116,10 @@ void AchievementsWindow::UpdateData(AchievementManager::UpdatedItems updated_ite
     m_tab_widget->setTabVisible(2, is_game_loaded);
   }
   update();
+
+  if (updated_items.achievements.size() > 0)
+    emit AchievementGet(updated_items.achievements);
+
 }
 
 void AchievementsWindow::ForceSettingsTab()

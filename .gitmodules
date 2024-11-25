@@ -84,3 +84,6 @@
 [submodule "Externals/Vulkan-Headers"]
 	path = Externals/Vulkan-Headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "Externals/json"]
+	path = Externals/json
+	url = https://github.com/nlohmann/json

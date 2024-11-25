@@ -35,6 +35,8 @@
 #include "VideoCommon/OnScreenDisplay.h"
 #include "VideoCommon/VideoEvents.h"
 
+#include "DolphinQt/WiiMix/Objective.h"
+
 static const Common::HttpRequest::Headers USER_AGENT_HEADER = {
     {"User-Agent", Common::GetUserAgentStr()}};
 
@@ -763,6 +765,8 @@ void AchievementManager::LoginCallback(int result, const char* error_message, rc
     AchievementManager::GetInstance().m_update_callback({.failed_login_code = RC_INVALID_STATE});
     return;
   }
+
+  WiiMixObjective::RALoginCallback(user->username, user->token);
 
   std::string config_username = Config::Get(Config::RA_USERNAME);
   if (config_username != user->username)
