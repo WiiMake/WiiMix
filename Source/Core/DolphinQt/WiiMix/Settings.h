@@ -17,6 +17,9 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+#include <algorithm>
+#include <random>
+
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #ifdef QT_GUI_LIB

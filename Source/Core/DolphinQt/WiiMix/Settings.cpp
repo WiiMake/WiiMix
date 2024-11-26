@@ -449,7 +449,13 @@ QJsonObject WiiMixSettings::ToJsonCommon() {
     // json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = QString::fromStdString(ObjectivesToObjectiveIds(GetObjectives()));
     std::vector<WiiMixObjective> objectives = GetObjectives();
     QJsonArray selected_objectives;
+    #ifndef WIN32
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(objectives.begin(), objectives.end(), g);
+    #else
     std::random_shuffle(objectives.begin(), objectives.end());
+    #endif
     for (int i = 0; i < 9; i++) {
       selected_objectives.append(objectives[i].ToJson().object());
     }
