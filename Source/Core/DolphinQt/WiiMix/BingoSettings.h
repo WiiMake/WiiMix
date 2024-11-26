@@ -35,6 +35,9 @@ public:
   QMap<WiiMixEnums::Player, int> GetCurrentObjectives();
   void SetCurrentObjectives(QMap<WiiMixEnums::Player, int> value);
   void UpdateCurrentObjectives(WiiMixEnums::Player player, int value);
+  QMap<WiiMixEnums::Player, bool> GetPlayersReady();
+  void SetPlayersReady(QMap<WiiMixEnums::Player, bool> value);
+  void UpdatePlayerReady(WiiMixEnums::Player player, bool value);
   
   QJsonDocument ToJson();
   WiiMixBingoSettings FromJson(QJsonDocument json);
@@ -51,6 +54,7 @@ private:
   bool m_teams;
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
   QMap<WiiMixEnums::Player, int> m_current_objectives = {};
+  QMap<WiiMixEnums::Player, bool> m_players_ready = {};
   QString m_lobby_id;
   QString m_lobby_password;
 };

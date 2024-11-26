@@ -175,6 +175,7 @@ private:
   void StartWiiMixRogue(WiiMixRogueSettings settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings settings);
   void WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
+  void WiiMixShowcase(WiiMixBingoSettings settings);
   void StartWiiMixObjective(WiiMixObjective objective);
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
@@ -276,6 +277,8 @@ private:
   WiiMixBingoSettings* m_bingo_settings = nullptr;
   QString m_player_name = QStringLiteral("");
   int m_player_num = 0;
+  bool m_player_ready = false;
+  bool m_bingo_started = false;
   WiiMixBingoClient* m_bingo_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;
   WiiMixRogueSettings* m_rogue_settings = nullptr;

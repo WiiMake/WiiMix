@@ -82,6 +82,7 @@ namespace WiiMixEnums {
     #define BINGO_NETPLAY_SETTINGS_COLOR "COLOR"
     #define BINGO_NETPLAY_SETTINGS_NAME "NAME"
     #define BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
+    #define BINGO_NETPLAY_SETTINGS_PLAYERS_READY "PLAYERS_READY"
 
     std::string BingoNetplaySettingsToString(BingoNetplaySettings setting);
     BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);

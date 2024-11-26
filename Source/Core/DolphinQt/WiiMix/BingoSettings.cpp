@@ -100,6 +100,18 @@ void WiiMixBingoSettings::UpdateCurrentObjectives(WiiMixEnums::Player player, in
     m_current_objectives[player] = objective;
 }
 
+QMap<WiiMixEnums::Player, bool> WiiMixBingoSettings::GetPlayersReady() {
+    return m_players_ready;
+}
+
+void WiiMixBingoSettings::SetPlayersReady(QMap<WiiMixEnums::Player, bool> players_ready) {
+    m_players_ready = players_ready;
+}
+
+void WiiMixBingoSettings::UpdatePlayerReady(WiiMixEnums::Player player, bool ready) {
+    m_players_ready[player] = ready;
+}
+
 QJsonDocument WiiMixBingoSettings::ToJson()
 {
     // Take care of the common settings first
@@ -109,16 +121,19 @@ QJsonDocument WiiMixBingoSettings::ToJson()
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)] = m_card_size;
     QVariantMap players_variant;
     QVariantMap current_objectives_variant;
+    QVariantMap players_ready_variant;
     for (auto it = m_players.begin(); it != m_players.end(); ++it)
     {
         QVariantMap player_info;
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)] = static_cast<int>(std::get<0>(it.value()));
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)] = std::get<1>(it.value());
         players_variant[QString::number(static_cast<int>(it.key()))] = player_info;
+        players_ready_variant[QString::number(static_cast<int>(it.key()))] = m_players_ready[it.key()];
         current_objectives_variant[QString::number(static_cast<int>(it.key()))] = m_current_objectives[it.key()];
     }
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)] = QJsonDocument::fromVariant(current_objectives_variant).object();
+    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)] = QJsonDocument::fromVariant(players_ready_variant).object();
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)] = m_lobby_id;
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
 
@@ -146,6 +161,10 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
     QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
     for (auto it = current_objectives_variant.begin(); it != players_variant.end(); ++it) {
         settings.m_current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
+    }
+    QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)].toObject();
+    for (auto it = players_ready_variant.begin(); it != players_variant.end(); ++it) {
+        settings.m_players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
     }
     
     settings.m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();

@@ -371,7 +371,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
-  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
   // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
   
   // Connect client to server
@@ -384,8 +384,8 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
-  m_screen_saver = new WiiMixScreenSaver();
-  m_screen_saver->setParent(this);
+  m_screen_saver = new WiiMixScreenSaver(this);
+  m_screen_saver->show();
 }
 
 MainWindow::~MainWindow()
@@ -1701,12 +1701,14 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   // In the future, we should be pulling from the objectives folder
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
-  StartWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
-  // Update settings using the hardcoded player_num`
-  m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
-  // SendData to the server containing the objective loaded mapped to the player that loaded it
-  if (m_bingo_client != nullptr) {
-    m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+  if (m_bingo_started) {
+    StartWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
+    // Update settings using the hardcoded player_num`
+    m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
+    // SendData to the server containing the objective loaded mapped to the player that loaded it
+    if (m_bingo_client != nullptr) {
+      m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    }
   }
   return;
 }
@@ -1714,13 +1716,50 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
 void MainWindow::ObjectiveResetSlotAt(int slot) {
   // TODOx: reset the objective at the slot
   qDebug() << "Resetting objective at slot " << slot;
+  if (m_bingo_started) {
+
+  }
   return;
 }
 
 void MainWindow::BingoReady() {
   // TODOx: toggles ready on player player_num
   qDebug() << "Bingo ready";
+  m_player_ready = !m_player_ready;
+  m_bingo_settings->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
+  // SendData to the server containing the objective loaded mapped to the player that loaded it
+  if (m_bingo_client != nullptr) {
+    m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+  }
   return;
+}
+
+void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
+  // Check if both players are ready
+  // If bingo is not already started
+  // Check if both players are ready
+  QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
+  if (!m_bingo_started) {
+    for (int i = 0; i < 2; i++) {
+      if (!players_ready[static_cast<WiiMixEnums::Player>(i)]) {
+        return;
+      }
+    }
+    // If both players are ready, start the showcase
+    m_bingo_started = true;
+    // TODOx: start the showcase
+  }
+  else {
+    // If bingo is already started, check if both players are ready
+    for (int i = 0; i < 2; i++) {
+      if (players_ready[static_cast<WiiMixEnums::Player>(i)]) {
+        return;
+      }
+    }
+    // Both players are not ready, stop the showcase
+    m_bingo_started = false;
+    // TODOx: stop the showcase
+  }
 }
 
 // TODO: StateSendSlotAt
