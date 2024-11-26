@@ -1016,7 +1016,7 @@ void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
   qDebug() << "loading paths";
   UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
   BootSessionData boot_data;
-  qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
+  // qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
   if (gameFile.GetGameID() == SConfig::GetInstance().GetGameID()) {
     qDebug() << "Loading savestate: " << savestate_path.c_str();
     State::LoadAs(Core::System::GetInstance(), savestate_path);
