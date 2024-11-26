@@ -21,6 +21,7 @@
 #include "InputCommon/ControllerEmu/ControlGroup/ControlGroup.h"
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCPadStatus.h"
+#include <iostream>
 
 // clang-format off
 constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
@@ -238,7 +239,60 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Load Objective Slot 47"),
     _trans("Load Objective Slot 48"),
     _trans("Load Objective Slot 49"),
-    _trans("Load from Selected Slot"),
+    _trans("Load Objective from Selected Slot"),
+
+    _trans("Reset Objective Slot 1"),
+    _trans("Reset Objective Slot 2"),
+    _trans("Reset Objective Slot 3"),
+    _trans("Reset Objective Slot 4"),
+    _trans("Reset Objective Slot 5"),
+    _trans("Reset Objective Slot 6"),
+    _trans("Reset Objective Slot 7"),
+    _trans("Reset Objective Slot 8"),
+    _trans("Reset Objective Slot 9"),
+    _trans("Reset Objective Slot 10"),
+    _trans("Reset Objective Slot 11"),
+    _trans("Reset Objective Slot 12"),
+    _trans("Reset Objective Slot 13"),
+    _trans("Reset Objective Slot 14"),
+    _trans("Reset Objective Slot 15"),
+    _trans("Reset Objective Slot 16"),
+    _trans("Reset Objective Slot 17"),
+    _trans("Reset Objective Slot 18"),
+    _trans("Reset Objective Slot 19"),
+    _trans("Reset Objective Slot 20"),
+    _trans("Reset Objective Slot 21"),
+    _trans("Reset Objective Slot 22"),
+    _trans("Reset Objective Slot 23"),
+    _trans("Reset Objective Slot 24"),
+    _trans("Reset Objective Slot 25"),
+    _trans("Reset Objective Slot 26"),
+    _trans("Reset Objective Slot 27"),
+    _trans("Reset Objective Slot 28"),
+    _trans("Reset Objective Slot 29"),
+    _trans("Reset Objective Slot 30"),
+    _trans("Reset Objective Slot 31"),
+    _trans("Reset Objective Slot 32"),
+    _trans("Reset Objective Slot 33"),
+    _trans("Reset Objective Slot 34"),
+    _trans("Reset Objective Slot 35"),
+    _trans("Reset Objective Slot 36"),
+    _trans("Reset Objective Slot 37"),
+    _trans("Reset Objective Slot 38"),
+    _trans("Reset Objective Slot 39"),
+    _trans("Reset Objective Slot 40"),
+    _trans("Reset Objective Slot 41"),
+    _trans("Reset Objective Slot 42"),
+    _trans("Reset Objective Slot 43"),
+    _trans("Reset Objective Slot 44"),
+    _trans("Reset Objective Slot 45"),
+    _trans("Reset Objective Slot 46"),
+    _trans("Reset Objective Slot 47"),
+    _trans("Reset Objective Slot 48"),
+    _trans("Reset Objective Slot 49"),
+    _trans("Reset from Selected Slot"),
+
+    _trans("Bingo Ready"),
 
     _trans("Save Oldest State"),
     _trans("Undo Load State"),
@@ -355,8 +409,9 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
 
 void Initialize()
 {
-  if (s_config.ControllersNeedToBeCreated())
+  if (s_config.ControllersNeedToBeCreated()) {
     s_config.CreateController<HotkeyManager>();
+  }
 
   s_config.RegisterHotplugCallback();
 
@@ -426,6 +481,8 @@ constexpr std::array<HotkeyGroupInfo, NUM_HOTKEY_GROUPS> s_groups_info = {
      {_trans("Select State"), HK_SELECT_STATE_SLOT_1, HK_SELECT_STATE_SLOT_10},
      {_trans("Load Last State"), HK_LOAD_LAST_STATE_1, HK_LOAD_LAST_STATE_10},
      {_trans("Load Objective"), HK_LOAD_OBJECTIVE_SLOT_1, HK_LOAD_OBJECTIVE_SLOT_SELECTED},
+     {_trans("Reset Objective"), HK_RESET_OBJECTIVE_SLOT_1, HK_RESET_OBJECTIVE_SLOT_SELECTED},
+     {_trans("Bingo Ready"), HK_BINGO_READY, HK_BINGO_READY},
      {_trans("Other State Hotkeys"), HK_SAVE_FIRST_STATE, HK_DECREMENT_SELECTED_STATE_SLOT},
      {_trans("GBA Core"), HK_GBA_LOAD, HK_GBA_RESET, true},
      {_trans("GBA Volume"), HK_GBA_VOLUME_DOWN, HK_GBA_TOGGLE_MUTE, true},
@@ -550,6 +607,15 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
   for (int i = 0; i < 9; i++) {
     set_key_expression(HK_LOAD_OBJECTIVE_SLOT_1 + i, fmt::format("{}", i + 1));
   }
+
+  // Reset objective
+  for (int i = 0; i < 9; i++) {
+    set_key_expression(HK_RESET_OBJECTIVE_SLOT_1 + i, hotkey_string({"`Shift`", fmt::format("{}", i + 1)}));
+  }
+
+  // Ready for bingo
+  set_key_expression(HK_BINGO_READY, "X");
+
   set_key_expression(HK_UNDO_LOAD_STATE, "F12");
   set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"`Shift`", "`F12`"}));
 

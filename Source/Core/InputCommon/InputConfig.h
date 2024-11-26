@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/DynamicInputTextureManager.h"

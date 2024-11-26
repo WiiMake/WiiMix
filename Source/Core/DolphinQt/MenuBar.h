@@ -236,7 +236,7 @@ private:
   QMenu* m_state_save_menu;
   QMenu* m_state_send_menu;
   QMenu* m_game_swap_menu;
-  QMenu* m_objective_load_menu;
+  // QMenu* m_objective_load_menu;
   QMenu* m_state_slot_menu;
   QActionGroup* m_state_slots;
   QMenu* m_state_load_slots_menu;

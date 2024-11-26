@@ -46,6 +46,8 @@ signals:
   // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
   void ObjectiveLoadSlot(int state);
+  void ObjectiveResetSlot(int state);
+  void BingoReady();
   void StateSaveSlot(int state);
   void StateLoadLastSaved(int state);
   void StateSaveOldest();

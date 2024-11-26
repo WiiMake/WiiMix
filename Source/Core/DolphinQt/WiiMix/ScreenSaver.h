@@ -1,5 +1,3 @@
-
-
 #include <QFrame>
 #include <QTimeLine>
 #include <QLabel>
@@ -14,7 +12,7 @@
 #include <QGraphicsItemAnimation>
 #include "Common/FileUtil.h"
 
-class ScreenSaver: public QFrame {
+class WiiMixScreenSaver: public QFrame {
 private:
     QTimeLine* timer;
     QStackedLayout* layout;
@@ -39,7 +37,7 @@ private:
         }
     }
 public:
-    ScreenSaver() {
+    WiiMixScreenSaver() {
         layout = new QStackedLayout();
         mediaPlayer = new QMediaPlayer(this);
         std::string trailerPath = File::GetSysDirectory() + "Resources/trailer.mp4";
@@ -89,11 +87,11 @@ public:
         setLayout(layout);
         mediaPlayer->play();
         timer->start();
-        connect(timer, &QTimeLine::finished, this, &ScreenSaver::changeDirection);
+        connect(timer, &QTimeLine::finished, this, &WiiMixScreenSaver::changeDirection);
         layout->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
     }
 
-    ~ScreenSaver() {
+    ~WiiMixScreenSaver() {
         delete timer;
         delete layout;
         delete mediaPlayer;

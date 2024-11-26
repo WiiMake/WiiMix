@@ -17,6 +17,7 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/ScreenSaver.h"
 
 class QMenu;
 class QStackedWidget;
@@ -117,6 +118,8 @@ private:
   void StateSaveSlotAt(int slot);
   void StateSendSlotAt(int slot);
   void ObjectiveLoadSlotAt(int slot);
+  void ObjectiveResetSlotAt(int slot);
+  void BingoReady();
   void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();
@@ -260,6 +263,7 @@ private:
   std::unique_ptr<BootParameters> m_pending_boot;
 
   WiiMixSettingsWindow* m_wiimix_window = nullptr;
+  WiiMixScreenSaver* m_screen_saver = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;

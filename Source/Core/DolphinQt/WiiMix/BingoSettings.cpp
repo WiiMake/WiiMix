@@ -88,15 +88,15 @@ void WiiMixBingoSettings::SetLobbyPassword(QString value)
     m_lobby_password = value;
 }
 
-QMap<WiiMixEnums::Player, int> GetCurrentObjectives() {
+QMap<WiiMixEnums::Player, int> WiiMixBingoSettings::GetCurrentObjectives() {
     return m_current_objectives;
 }
 
-void SetCurrentObjectives(QMap<WiiMixEnums::Player, int> objectives) {
+void WiiMixBingoSettings::SetCurrentObjectives(QMap<WiiMixEnums::Player, int> objectives) {
     m_current_objectives = objectives;
 }
 
-void UpdateObjective(WiiMixEnums::Player player, int objective) {
+void WiiMixBingoSettings::UpdateCurrentObjectives(WiiMixEnums::Player player, int objective) {
     m_current_objectives[player] = objective;
 }
 

@@ -131,6 +131,7 @@
 #include "DolphinQt/WiiMix/SettingsWindow.h"
 #include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/Objective.h"
+// #include "DolphinQt/WiiMix/ScreenSaver.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -228,6 +229,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
                        const std::string& movie_path)
     : QMainWindow(nullptr)
 {
+  qDebug() << "Beginning of main window";
   setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
   setUnifiedTitleAndToolBarOnMac(true);
@@ -340,29 +342,36 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   }
 
   // Initialize bingo settings
+  qDebug() << "Initializing bingo settings";
   m_bingo_settings = new WiiMixBingoSettings(WiiMixEnums::BingoType::LOCKOUT, 9);
   // Add all games to the default bingo settings using the map
+  qDebug() << "Loading games";
   for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
     UICommon::GameFile* game_file_obj = new UICommon::GameFile();
     UICommon::GameFile::GetGameFileById(std::to_string(game_id), game_file_obj);
     m_bingo_settings->AddGame(*game_file_obj);
   }
   // Hard code bingo lobby id for now
+  qDebug() << "Set Lobby ID";
   m_bingo_settings->SetLobbyID(QStringLiteral("123456789"));
   // Hard code bingo players for now
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
   // Populate players
+  qDebug() << "Populate players";
   for (int i = 0; i < 2; i++) {
     players[static_cast<WiiMixEnums::Player>(i)] = QPair<WiiMixEnums::Color, QString>(static_cast<WiiMixEnums::Color>(i), QStringLiteral("Player %1").arg(i + 1));
   }
   m_bingo_settings->SetPlayers(players);
   // Initialize bingo client
+  qDebug() << "Initializing client";
   m_bingo_client = new WiiMixBingoClient();
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
   m_player_num = 1;
+  
   // TODOx: Connect signal to bingo UI
+  // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
-  connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
   // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
   
   // Connect client to server
@@ -371,12 +380,12 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // Create a new lobby if it doesn't exist
   // Since two requests are being
   // This should double as a connection if the lobby does exist
-  m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY)
+  // TODOx: move this into ready
+  m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
-  // TODOx: Load ScreenSaver
-  // @vlad
-  // m_screen_saver = new ScreenSaver(this);
-  // m_screen_saver->show();
+  // Load ScreenSaver
+  m_screen_saver = new WiiMixScreenSaver();
+  m_screen_saver->setParent(this);
 }
 
 MainWindow::~MainWindow()
@@ -421,13 +430,17 @@ WindowSystemInfo MainWindow::GetWindowSystemInfo() const
 
 void MainWindow::InitControllers()
 {
+  qDebug() << "g_controller_interface.IsInit():";
   if (g_controller_interface.IsInit())
     return;
 
+  qDebug() << "InitControllers";
   UICommon::InitControllers(::GetWindowSystemInfo(windowHandle()));
 
+  // qDebug() << "Hotkey scheduler start";
   m_hotkey_scheduler = new HotkeyScheduler();
   m_hotkey_scheduler->Start();
+  // qDebug() << "Hotkey scheduler started :)";
 
   // Defaults won't work reliably without loading and saving the config first
 
@@ -684,6 +697,8 @@ void MainWindow::ConnectHotkeys()
 
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadSlot, this, &MainWindow::StateLoadSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveLoadSlot, this, &MainWindow::ObjectiveLoadSlotAt);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveResetSlot, this, &MainWindow::ObjectiveResetSlotAt);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::BingoReady, this, &MainWindow::BingoReady);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateSaveSlot, this, &MainWindow::StateSaveSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadLastSaved, this,
           &MainWindow::StateLoadLastSavedAt);
@@ -1693,6 +1708,18 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   if (m_bingo_client != nullptr) {
     m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
   }
+  return;
+}
+
+void MainWindow::ObjectiveResetSlotAt(int slot) {
+  // TODOx: reset the objective at the slot
+  qDebug() << "Resetting objective at slot " << slot;
+  return;
+}
+
+void MainWindow::BingoReady() {
+  // TODOx: toggles ready on player player_num
+  qDebug() << "Bingo ready";
   return;
 }
 

@@ -637,6 +637,9 @@ void HotkeyScheduler::Run()
     for (u32 i = 0; i < 49; i++) {
       if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
         emit ObjectiveLoadSlot(i + 1);
+      
+      if (IsHotkey(HK_RESET_OBJECTIVE_SLOT_1 + i))
+        emit ObjectiveResetSlot(i + 1);
     }
 
     if (IsHotkey(HK_SAVE_FIRST_STATE))
@@ -653,6 +656,10 @@ void HotkeyScheduler::Run()
 
     if (IsHotkey(HK_SAVE_STATE_FILE))
       emit StateSaveFile();
+
+    // For readying up
+    if (IsHotkey(HK_BINGO_READY))
+      emit BingoReady();
   }
 }
 

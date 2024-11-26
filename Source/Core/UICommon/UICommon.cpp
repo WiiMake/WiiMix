@@ -18,6 +18,7 @@
 
 #include <fmt/format.h>
 
+
 #include "Common/Common.h"
 #include "Common/CommonPaths.h"
 #include "Common/Config/Config.h"
@@ -59,6 +60,7 @@
 #endif
 
 #include "VideoCommon/VideoBackendBase.h"
+#include <iostream>
 
 namespace UICommon
 {
@@ -155,11 +157,14 @@ void Shutdown()
 
 void InitControllers(const WindowSystemInfo& wsi)
 {
+  // std::cout << "g_controller_interface.IsInit()\n";
   if (g_controller_interface.IsInit())
     return;
 
+  // std::cout << "wsi\n";
   g_controller_interface.Initialize(wsi);
 
+  // std::cout << "hasDefaultDevice\n";
   if (!g_controller_interface.HasDefaultDevice())
   {
     // Note that the CI default device could be still temporarily removed at any time
@@ -167,12 +172,19 @@ void InitControllers(const WindowSystemInfo& wsi)
                                       "mappings intended for the default device may not work.");
   }
 
+  // std::cout << "gcadapter\n";
   GCAdapter::Init();
+  // std::cout << "pad init\n";
   Pad::Initialize();
+  // std::cout << "pad init gba\n";
   Pad::InitializeGBA();
+  // std::cout << "keyboard init\n";
   Keyboard::Initialize();
+  // std::cout << "wiimote init\n";
   Wiimote::Initialize(Wiimote::InitializeMode::DO_NOT_WAIT_FOR_WIIMOTES);
+  // std::cout << "hotkey manager init\n";
   HotkeyManagerEmu::Initialize();
+  // std::cout << "freelook init\n";
   FreeLook::Initialize();
 }
 
