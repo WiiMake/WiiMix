@@ -71,6 +71,29 @@ std::vector<WiiMixObjective> WiiMixObjective::GetObjectives() {
     return objectives;
 }
 
+QJsonDocument WiiMixObjective::ToJson() {
+    QJsonObject json;
+    json[QStringLiteral("AchievementID")] = m_achievement_id;
+    json[QStringLiteral("GameID")] = m_game_id;
+    json[QStringLiteral("Title")] = QString::fromStdString(m_title);
+    json[QStringLiteral("Description")] = QString::fromStdString(m_description);
+    json[QStringLiteral("SaveStateFile")] = QString::fromStdString(m_savestate_file);
+    json[QStringLiteral("ISOFile")] = QString::fromStdString(m_iso_file);
+    json[QStringLiteral("Completed")] = static_cast<int>(m_completed);
+    return QJsonDocument(json);
+}
+
+WiiMixObjective WiiMixObjective::FromJson(QJsonObject json) {
+    uint16_t achievement_id = json[QStringLiteral("AchievementID")].toInt();
+    uint16_t game_id = json[QStringLiteral("GameID")].toInt();
+    std::string title = json[QStringLiteral("Title")].toString().toStdString();
+    std::string description = json[QStringLiteral("Description")].toString().toStdString();
+    std::string savestate_file = json[QStringLiteral("SaveStateFile")].toString().toStdString();
+    std::string iso_file = json[QStringLiteral("ISOFile")].toString().toStdString();
+    WiiMixEnums::Player completed = static_cast<WiiMixEnums::Player>(json[QStringLiteral("Completed")].toInt());
+    return WiiMixObjective(achievement_id, game_id, title, description, savestate_file, iso_file, completed);
+}
+
 void WiiMixObjective::CacheGames() {
     if (m_games_cache.size() > 0) {
         return;

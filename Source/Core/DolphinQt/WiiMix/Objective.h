@@ -43,6 +43,12 @@ public:
   static void CacheGames();
 
 
+  QJsonObject WiiMixObjective::ToJson();
+  WiiMixObjective WiiMixObjective::FromJson(QJsonObject json);
+
+
+
+
   std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 
     // WarioWare
