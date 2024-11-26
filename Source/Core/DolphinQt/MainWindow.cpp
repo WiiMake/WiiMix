@@ -367,7 +367,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << "Initializing client";
   m_bingo_client = new WiiMixBingoClient();
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
-  m_player_num = 1;
+  m_player_num = 0;
 
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
@@ -1004,12 +1004,13 @@ void MainWindow::ShowWiiMixWindow() {
 void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
   qDebug() << "Starting WiiMix Objective";
   std::string savePath;
-  if (m_bingo_settings == nullptr) {
-    WiiMixObjective currentObjective = m_bingo_settings->GetObjectives().at(m_bingo_settings->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(m_player_num)]);
-    savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + currentObjective.GetSavestateFile() + "c";
-  } else {
-    savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav";
-  }
+  // if (m_bingo_settings == nullptr) {
+    // WiiMixObjective currentObjective = m_bingo_settings->GetObjectives().at(m_bingo_settings->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(m_player_num)]);
+    // savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + currentObjective.GetSavestateFile() + "c";
+  // } else {
+    // savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav";
+  // }
+  savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav";
   std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + std::filesystem::path::preferred_separator + objective.GetISOFile();
   std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile() + "c";
   qDebug() << "loading paths";
@@ -1732,6 +1733,7 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
   if (m_bingo_started) {
+    qDebug() << m_bingo_settings->GetObjectives().size();
     StartWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
     m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
@@ -1778,7 +1780,9 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
   // Check if both players are ready
   // If bingo is not already started
   // Check if both players are ready
+  qDebug() << "Showcase";
   *m_bingo_settings = settings;
+  qDebug() << "Updated settings";
   QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
   if (!m_bingo_started) {
     for (int i = 0; i < 2; i++) {
@@ -1787,6 +1791,7 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
       }
     }
     // If both players are ready, start the showcase
+    qDebug() << "Starting the showcase";
     m_bingo_started = true;
     // start the showcase
     // load objective
