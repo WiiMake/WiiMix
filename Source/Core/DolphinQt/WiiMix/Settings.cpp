@@ -449,18 +449,26 @@ QJsonObject WiiMixSettings::ToJsonCommon() {
     json[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(GetSaveStateBank());
     // json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = QString::fromStdString(ObjectivesToObjectiveIds(GetObjectives()));
     std::vector<WiiMixObjective> objectives = GetObjectives();
-    QJsonArray selected_objectives;
-    #ifndef WIN32
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(objectives.begin(), objectives.end(), g);
-    #else
-    std::random_shuffle(objectives.begin(), objectives.end());
-    #endif
-    for (int i = 0; i < 9; i++) {
-      selected_objectives.append(objectives[i].ToJson().object());
+    if (objectives.size() > 0) {
+        QJsonArray selected_objectives;
+        #ifndef WIN32   
+        qDebug() << "Win32";
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(objectives.begin(), objectives.end(), g);
+        #else
+        qDebug() << "random_shuffle";
+        std::random_shuffle(objectives.begin(), objectives.end());
+        #endif
+        qDebug() << "append objectives";
+        for (int i = 0; i < 9; i++) {
+        selected_objectives.append(objectives[i].ToJson().object());
+        }
+        json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = selected_objectives;
     }
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = selected_objectives;
+    else {
+        json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = {};
+    }
     json[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
     #ifdef QT_GUI_LIB
         json[QStringLiteral(COMMON_NETPLAY_SETTINGS_GAMES_LIST)] = QString::fromStdString(GameFilesToGameIds(GetGamesList()));
@@ -475,7 +483,7 @@ WiiMixSettings WiiMixSettings::FromJsonCommon(QJsonDocument settings_json) {
     SetMode(static_cast<WiiMixEnums::Mode>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
     SetSaveStateBank(static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
     // SetObjectives(WiiMixSettings::ObjectiveIdsToObjectives(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toString().toStdString()));
-    std::vector<WiiMixObjective> objectives;
+    std::vector<WiiMixObjective> objectives = {};
     QJsonArray objectives_array = obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toArray();
     for (const QJsonValue& value : objectives_array) {
         objectives.push_back(WiiMixObjective::FromJson(QJsonDocument(value.toObject())));

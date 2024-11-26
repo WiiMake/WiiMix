@@ -33,6 +33,8 @@ void WiiMixScreenSaver::CreateLayout() {
     graphicsView = new QGraphicsView();
     graphicsView->setContentsMargins(0, 0, 0, 0);
     graphicsView->setFixedSize(1920, 1080);
+    graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     graphicsView->fitInView(videoItem);
     graphicsView->setAlignment(Qt::AlignCenter);
     textItem = new QGraphicsTextItem(QStringLiteral("Press Start"));
@@ -69,7 +71,8 @@ void WiiMixScreenSaver::CreateLayout() {
     timer->start();
     connect(timer, &QTimeLine::finished, this, &WiiMixScreenSaver::changeDirection);
     layout->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    this->setFixedSize(1920, 1080);
+    // this->setFixedSize(1920, 1080);
+    this->setWindowState(Qt::WindowFullScreen);
     this->show();
 }
 

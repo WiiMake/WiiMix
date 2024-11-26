@@ -127,8 +127,11 @@ QJsonDocument WiiMixBingoSettings::ToJson()
         QVariantMap player_info;
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)] = static_cast<int>(std::get<0>(it.value()));
         player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)] = std::get<1>(it.value());
+        qDebug() << "players_variant";
         players_variant[QString::number(static_cast<int>(it.key()))] = player_info;
+        qDebug() << "players_ready_variant";
         players_ready_variant[QString::number(static_cast<int>(it.key()))] = m_players_ready[it.key()];
+        qDebug() << "curr_obj_variant";
         current_objectives_variant[QString::number(static_cast<int>(it.key()))] = m_current_objectives[it.key()];
     }
     json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();

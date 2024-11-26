@@ -182,6 +182,10 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_OPEN))
         emit Open();
 
+      // For readying up
+      if (IsHotkey(HK_BINGO_READY))
+        emit BingoReady();
+
       // Refresh Game List
       if (IsHotkey(HK_REFRESH_LIST))
         emit RefreshGameListHotkey();
@@ -656,10 +660,6 @@ void HotkeyScheduler::Run()
 
     if (IsHotkey(HK_SAVE_STATE_FILE))
       emit StateSaveFile();
-
-    // For readying up
-    if (IsHotkey(HK_BINGO_READY))
-      emit BingoReady();
   }
 }
 

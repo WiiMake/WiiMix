@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
   QCoreApplication::setOrganizationName(QStringLiteral("WiiMake"));
   QCoreApplication::setOrganizationDomain(QStringLiteral("https://github.com/xanmankey/WiiMix"));
-  QCoreApplication::setApplicationName(QStringLiteral("WiiMake"));
+  QCoreApplication::setApplicationName(QStringLiteral("WiiMix"));
 
   // QApplication will parse arguments and remove any it recognizes as targeting Qt
   QApplication app(argc, argv);

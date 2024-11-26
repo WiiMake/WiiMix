@@ -67,20 +67,30 @@ std::string WiiMixObjective::GetBadgeURL() {
 std::vector<WiiMixObjective> WiiMixObjective::GetObjectives() {
     WiiMixObjective obj = WiiMixObjective(0, 0, "Title", "Description", "SaveStateFile", "ISO", WiiMixEnums::Player::ONE);
     std::vector<WiiMixObjective> objectives;
+    qDebug() << "Getting objectives";
     for (const auto& [AchievementID, SaveStateFile] : obj.AchievementIDToSaveStateFile) {
         objectives.push_back(WiiMixObjective(AchievementID, obj.AchievementIDToGameID.at(AchievementID), WiiMixObjective::m_games_cache[AchievementID], "Description", SaveStateFile, obj.GameIDToFileName.at(obj.AchievementIDToGameID.at(AchievementID)), WiiMixEnums::Player::ONE));
     }
+    qDebug() << objectives.size();
     return objectives;
 }
 
 QJsonDocument WiiMixObjective::ToJson() {
     QJsonObject json;
-    json[QStringLiteral("AchievementID")] = m_achievement_id;
-    json[QStringLiteral("GameID")] = m_game_id;
+    qDebug() << m_achievement_id;
+    qDebug() << "Before achievementid";
+    json[QStringLiteral("AchievementID")] = static_cast<int>(m_achievement_id);
+    qDebug() << "Before gameid";
+    json[QStringLiteral("GameID")] = static_cast<int>(m_game_id);
+    qDebug() << "Before title";
     json[QStringLiteral("Title")] = QString::fromStdString(m_title);
+    qDebug() << "Before descript";
     json[QStringLiteral("Description")] = QString::fromStdString(m_description);
+    qDebug() << "Before savestatefile";
     json[QStringLiteral("SaveStateFile")] = QString::fromStdString(m_savestate_file);
+    qDebug() << "Before isofile";
     json[QStringLiteral("ISOFile")] = QString::fromStdString(m_iso_file);
+    qDebug() << "Before completed";
     json[QStringLiteral("Completed")] = static_cast<int>(m_completed);
     return QJsonDocument(json);
 }

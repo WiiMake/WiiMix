@@ -369,7 +369,6 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
   m_player_num = 1;
 
-
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
@@ -384,7 +383,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // Create a new lobby if it doesn't exist
   // Since two requests are being
   // This should double as a connection if the lobby does exist
-  // TODOx: move this into ready
+  // TODOx: may need to move this into ready
   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
