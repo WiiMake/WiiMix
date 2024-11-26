@@ -367,7 +367,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << "Initializing client";
   m_bingo_client = new WiiMixBingoClient();
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
-  m_player_num = 1;
+  m_player_num = 0;
 
 
   // TODOx: Connect signal to bingo UI
@@ -1785,7 +1785,9 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
     }
     // If both players are ready, start the showcase
     m_bingo_started = true;
-    // TODOx: start the showcase
+    // start the showcase
+    // load objective
+    ObjectiveLoadSlotAt(0);
   }
   else {
     // If bingo is already started, check if both players are ready

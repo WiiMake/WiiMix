@@ -7,6 +7,8 @@
 #include <map>
 #include <vector>
 
+#include <QJsonDocument>
+
 class WiiMixObjective
 {
 public:
@@ -42,12 +44,8 @@ public:
   static std::vector<WiiMixObjective> GetObjectives();
   static void CacheGames();
 
-
-  QJsonObject WiiMixObjective::ToJson();
-  WiiMixObjective WiiMixObjective::FromJson(QJsonObject json);
-
-
-
+  QJsonDocument ToJson();
+  WiiMixObjective FromJson(QJsonDocument json);
 
   std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 

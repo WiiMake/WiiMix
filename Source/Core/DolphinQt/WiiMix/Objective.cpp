@@ -8,6 +8,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 #include <QDebug>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 std::string WiiMixObjective::m_username = "";
 std::string WiiMixObjective::m_token = "";
@@ -83,7 +85,7 @@ QJsonDocument WiiMixObjective::ToJson() {
     return QJsonDocument(json);
 }
 
-WiiMixObjective WiiMixObjective::FromJson(QJsonObject json) {
+WiiMixObjective WiiMixObjective::FromJson(QJsonDocument json) {
     uint16_t achievement_id = json[QStringLiteral("AchievementID")].toInt();
     uint16_t game_id = json[QStringLiteral("GameID")].toInt();
     std::string title = json[QStringLiteral("Title")].toString().toStdString();
