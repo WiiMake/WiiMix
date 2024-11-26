@@ -265,7 +265,7 @@ private:
   std::unique_ptr<BootParameters> m_pending_boot;
 
   WiiMixSettingsWindow* m_wiimix_window = nullptr;
-  // WiiMixScreenSaver* m_screen_saver = nullptr;
+  WiiMixScreenSaver* m_screen_saver = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;

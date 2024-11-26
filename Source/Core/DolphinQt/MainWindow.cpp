@@ -388,8 +388,12 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
-  // m_screen_saver = new WiiMixScreenSaver(this);
-  // m_screen_saver->show();
+  printf("screensaver tries to load\n");
+  m_screen_saver = new WiiMixScreenSaver(this);
+  //m_screen_saver->setParent(this);
+  //todox: please change this so it's a child of render widget for games
+  m_screen_saver->CreateLayout();
+  //m_screen_saver->show();
 }
 
 MainWindow::~MainWindow()

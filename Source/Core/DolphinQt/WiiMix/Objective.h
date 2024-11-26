@@ -45,7 +45,7 @@ public:
   static void CacheGames();
 
   QJsonDocument ToJson();
-  WiiMixObjective FromJson(QJsonDocument json);
+  static WiiMixObjective FromJson(QJsonDocument json);
 
   std::map<uint16_t, std::string> AchievementIDToSaveStateFile = {
 

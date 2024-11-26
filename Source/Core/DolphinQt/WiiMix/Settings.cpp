@@ -1,6 +1,7 @@
 #include <QString>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 
 #include "DolphinQt/WiiMix/Settings.h"
 
@@ -468,8 +469,9 @@ WiiMixSettings WiiMixSettings::FromJsonCommon(QJsonDocument settings_json) {
     SetSaveStateBank(static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
     // SetObjectives(WiiMixSettings::ObjectiveIdsToObjectives(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toString().toStdString()));
     std::vector<WiiMixObjective> objectives;
-    for (const auto& [AchievementID, SaveStateFile] : obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toArray()) {
-        objectives.push_back(WiiMixObjective::FromJson(QJsonDocument(SaveStateFile).object()));
+    QJsonArray objectives_array = obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toArray();
+    for (const QJsonValue& value : objectives_array) {
+        objectives.push_back(WiiMixObjective::FromJson(QJsonDocument(value.toObject())));
     }
     SetObjectives(objectives);
     SetDifficulty(static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)].toInt()));
