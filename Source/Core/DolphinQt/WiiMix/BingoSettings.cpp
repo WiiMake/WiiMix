@@ -168,7 +168,7 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
     for (auto it = players_ready_variant.begin(); it != players_ready_variant.end(); ++it) {
         settings.m_players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
     }
-    
+
     settings.m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
     settings.m_lobby_password = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)].toString();
 

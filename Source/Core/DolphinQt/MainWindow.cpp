@@ -367,7 +367,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << "Initializing client";
   m_bingo_client = new WiiMixBingoClient();
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
-  m_player_num = 0;
+  m_player_num = 1;
 
 
   // TODOx: Connect signal to bingo UI

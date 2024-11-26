@@ -445,7 +445,14 @@ QJsonObject WiiMixSettings::ToJsonCommon() {
     QJsonObject json;
     json[QStringLiteral(COMMON_NETPLAY_SETTINGS_MODE)] = static_cast<int>(GetMode());
     json[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(GetSaveStateBank());
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = QString::fromStdString(ObjectivesToObjectiveIds(GetObjectives()));
+    // json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = QString::fromStdString(ObjectivesToObjectiveIds(GetObjectives()));
+    std::vector<WiiMixObjective> objectives = GetObjectives();
+    QJsonArray selected_objectives;
+    std::random_shuffle(objectives.begin(), objectives.end());
+    for (int i = 0; i < 9; i++) {
+      selected_objectives.append(objectives[i].ToJson().object());
+    }
+    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = selected_objectives;
     json[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
     #ifdef QT_GUI_LIB
         json[QStringLiteral(COMMON_NETPLAY_SETTINGS_GAMES_LIST)] = QString::fromStdString(GameFilesToGameIds(GetGamesList()));
@@ -459,7 +466,12 @@ WiiMixSettings WiiMixSettings::FromJsonCommon(QJsonDocument settings_json) {
     QJsonObject obj = settings_json.object();
     SetMode(static_cast<WiiMixEnums::Mode>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
     SetSaveStateBank(static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt()));
-    SetObjectives(WiiMixSettings::ObjectiveIdsToObjectives(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toString().toStdString()));
+    // SetObjectives(WiiMixSettings::ObjectiveIdsToObjectives(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toString().toStdString()));
+    std::vector<WiiMixObjective> objectives;
+    for (const auto& [AchievementID, SaveStateFile] : obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toArray()) {
+        objectives.push_back(WiiMixObjective::FromJson(QJsonDocument(SaveStateFile).object()));
+    }
+    SetObjectives(objectives);
     SetDifficulty(static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)].toInt()));
     #ifdef QT_GUI_LIB
         SetGamesList(WiiMixSettings::GameIdsToGameFiles(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_GAMES_LIST)].toString().toStdString()));

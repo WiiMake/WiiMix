@@ -13,7 +13,7 @@ bool WiiMixBingoClient::ConnectToServer() {
     // Use the loopback address for network testing
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
-        m_socket->connectToHost(QStringLiteral("localhost"), PORT);
+        m_socket->connectToHost(QStringLiteral("100.84.250.34"), PORT);
         qDebug() << QStringLiteral("Connecting client to server");
         if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
             qCritical() << "Failed to connect to server:" << m_socket->errorString();
@@ -88,14 +88,14 @@ bool WiiMixBingoClient::ReceiveData(QJsonDocument doc) {
 }
 
 // Getters (retrieves values from server)
-// WiiMixEnums::BingoType WiiMixBingoClient::GetBingoType() const { 
+// WiiMixEnums::BingoType WiiMixBingoClient::GetBingoType() const {
 //     return WiiMixEnums::BingoType();
 // }
 
-// std::list<WiiMixEnums::Player> WiiMixBingoClient::GetPlayers() const { 
+// std::list<WiiMixEnums::Player> WiiMixBingoClient::GetPlayers() const {
 //     return std::list<WiiMixEnums::Player>();
 // }
 
-// std::list<WiiMixObjective> WiiMixBingoClient::GetBingoCard() const { 
-//     return std::list<WiiMixObjective>(); 
+// std::list<WiiMixObjective> WiiMixBingoClient::GetBingoCard() const {
+//     return std::list<WiiMixObjective>();
 // }
