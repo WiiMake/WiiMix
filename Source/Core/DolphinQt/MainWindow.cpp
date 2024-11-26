@@ -1729,7 +1729,7 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
   if (m_bingo_started) {
-    StartWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
+    StartWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
     m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
@@ -1748,7 +1748,7 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
     // In the future, we should be pulling from the objectives folder
     // and this hotkey should only be run if bingo is actually running
     // i.e. after objectives have been populated
-    ResetWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
+    ResetWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
     m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
