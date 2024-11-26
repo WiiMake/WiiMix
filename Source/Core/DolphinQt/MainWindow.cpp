@@ -132,6 +132,7 @@
 #include "DolphinQt/WiiMix/BingoClient.h"
 #include "DolphinQt/WiiMix/Objective.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
+#include "DolphinQt/WiiMix/ConfigWidget.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -367,13 +368,16 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_bingo_client = new WiiMixBingoClient();
   // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
   m_player_num = 1;
-  
+
+
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
   connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
+  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  //connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
   // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
-  
+
   // Connect client to server
   m_bingo_client->ConnectToServer();
 
@@ -995,11 +999,24 @@ void MainWindow::ShowWiiMixWindow() {
 }
 
 void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
+  qDebug() << "Starting WiiMix Objective";
+  std::string savePath;
+  if (m_bingo_settings == nullptr) {
+    WiiMixObjective currentObjective = m_bingo_settings->GetObjectives().at(m_bingo_settings->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(m_player_num)]);
+    savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + currentObjective.GetSavestateFile() + "c";
+  } else {
+    savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav";
+  }
   std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + std::filesystem::path::preferred_separator + objective.GetISOFile();
-  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile();
+  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile() + "c";
+  qDebug() << "loading paths";
+  if (!File::Exists(savestate_path)) {
+    savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile();
+  }
+  qDebug() << "loading paths";
   UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
   BootSessionData boot_data;
-  // qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
+  qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
   if (gameFile.GetGameID() == SConfig::GetInstance().GetGameID()) {
     qDebug() << "Loading savestate: " << savestate_path.c_str();
     State::LoadAs(Core::System::GetInstance(), savestate_path);
@@ -1012,8 +1029,18 @@ void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
       boot_data = BootSessionData(); // could do something else here
     }
     qDebug() << "Starting game: " << gameFile.GetGameID().c_str();
-    StartGame(BootParameters::GenerateFromFile(gameFile.GetFilePath(), std::move(boot_data)), File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav");
+    StartGame(BootParameters::GenerateFromFile(gameFile.GetFilePath(), std::move(boot_data)), savePath);
   }
+}
+
+void MainWindow::ResetWiiMixObjective(WiiMixObjective objective) {
+  std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + std::filesystem::path::preferred_separator + objective.GetISOFile();
+  UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
+  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + objective.GetSavestateFile();
+  if (gameFile.GetGameID() != SConfig::GetInstance().GetGameID()) {
+    MainWindow::StartWiiMixObjective(objective);
+  }
+  State::LoadAs(Core::System::GetInstance(), savestate_path);
 }
 
 void MainWindow::Open()
@@ -1717,7 +1744,17 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
   // TODOx: reset the objective at the slot
   qDebug() << "Resetting objective at slot " << slot;
   if (m_bingo_started) {
-
+    // NOTE: this is hard coded currently
+    // In the future, we should be pulling from the objectives folder
+    // and this hotkey should only be run if bingo is actually running
+    // i.e. after objectives have been populated
+    ResetWiiMixObjective(WiiMixObjective::GetObjectives()[slot]);
+    // Update settings using the hardcoded player_num`
+    m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
+    // SendData to the server containing the objective loaded mapped to the player that loaded it
+    // if (m_bingo_client != nullptr) {
+    //   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    // }
   }
   return;
 }
