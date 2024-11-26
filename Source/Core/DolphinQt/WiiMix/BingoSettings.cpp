@@ -158,12 +158,14 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
         QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
         settings.m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
     }
+    qDebug() << "current_objectives_variant";
     QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
-    for (auto it = current_objectives_variant.begin(); it != players_variant.end(); ++it) {
+    for (auto it = current_objectives_variant.begin(); it != current_objectives_variant.end(); ++it) {
         settings.m_current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
     }
+    qDebug() << "players_ready_variant";
     QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)].toObject();
-    for (auto it = players_ready_variant.begin(); it != players_variant.end(); ++it) {
+    for (auto it = players_ready_variant.begin(); it != players_ready_variant.end(); ++it) {
         settings.m_players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
     }
     

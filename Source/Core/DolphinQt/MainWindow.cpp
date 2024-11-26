@@ -388,8 +388,8 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
-  m_screen_saver = new WiiMixScreenSaver(this);
-  m_screen_saver->show();
+  // m_screen_saver = new WiiMixScreenSaver(this);
+  // m_screen_saver->show();
 }
 
 MainWindow::~MainWindow()
@@ -1775,6 +1775,7 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
   // Check if both players are ready
   // If bingo is not already started
   // Check if both players are ready
+  *m_bingo_settings = settings;
   QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
   if (!m_bingo_started) {
     for (int i = 0; i < 2; i++) {
