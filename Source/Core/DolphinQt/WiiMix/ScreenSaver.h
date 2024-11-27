@@ -22,10 +22,10 @@ private:
     QGraphicsVideoItem* videoItem;
     QGraphicsScene* graphicsScene;
     QGraphicsView* graphicsView;
-    QGraphicsTextItem* textItem;
     QFont* font;
     QGraphicsDropShadowEffect* outline;
     QGraphicsItemAnimation* animation;
+    QGraphicsTextItem* textItem;
     void changeDirection() {
         //printf("animation finished\n");
         if (timer->direction() == QTimeLine::Forward) {
@@ -38,6 +38,9 @@ private:
         }
     }
 public:
+    void SetTextItemText(QString text) {
+        textItem->setHtml(QStringLiteral("<style> h2 {text-align: center; text-shadow: black, 5px, 10px;} </style> <h2>%1</h2>").arg(text));
+    }
     explicit WiiMixScreenSaver(QWidget *parent = nullptr);
     void CreateLayout();
     void DeleteLayout();
