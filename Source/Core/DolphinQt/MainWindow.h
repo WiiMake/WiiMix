@@ -279,7 +279,7 @@ private:
   QString m_player_name = QStringLiteral("");
   int m_player_num = 0;
   bool m_player_ready = false;
-  bool m_bingo_started = false;
+  // bool m_bingo_started = false;
   WiiMixBingoClient* m_bingo_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;
   WiiMixRogueSettings* m_rogue_settings = nullptr;

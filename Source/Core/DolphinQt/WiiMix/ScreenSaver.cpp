@@ -22,7 +22,7 @@ void WiiMixScreenSaver::CreateLayout() {
     mediaPlayer = new QMediaPlayer();
     std::string trailerPath = File::GetSysDirectory() + "Resources/trailer.mp4";
     mediaPlayer->setSource(QUrl::fromLocalFile(QString::fromStdString(trailerPath)));
-    mediaPlayer->setLoops(100000);
+    mediaPlayer->setLoops(QMediaPlayer::Infinite);
     audioOutput = new QAudioOutput();
     mediaPlayer->setAudioOutput(audioOutput);
     videoItem = new QGraphicsVideoItem();

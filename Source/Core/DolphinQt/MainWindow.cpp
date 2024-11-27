@@ -1732,7 +1732,7 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   // In the future, we should be pulling from the objectives folder
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
-  if (m_bingo_started) {
+  if (m_bingo_settings->GetObjectives().size() > 0) {
     qDebug() << m_bingo_settings->GetObjectives().size();
     StartWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
@@ -1748,7 +1748,7 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
 void MainWindow::ObjectiveResetSlotAt(int slot) {
   // TODOx: reset the objective at the slot
   qDebug() << "Resetting objective at slot " << slot;
-  if (m_bingo_started) {
+  if (m_bingo_settings->GetObjectives().size() > 0) {
     // NOTE: this is hard coded currently
     // In the future, we should be pulling from the objectives folder
     // and this hotkey should only be run if bingo is actually running
@@ -1784,7 +1784,7 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
   *m_bingo_settings = settings;
   qDebug() << "Updated settings";
   QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
-  if (!m_bingo_started) {
+  if (m_bingo_settings->GetObjectives().size() > 0) {
     for (int i = 0; i < 2; i++) {
       if (!players_ready[static_cast<WiiMixEnums::Player>(i)]) {
         return;
@@ -1792,7 +1792,6 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
     }
     // If both players are ready, start the showcase
     qDebug() << "Starting the showcase";
-    m_bingo_started = true;
     // start the showcase
     // load objective
     ObjectiveLoadSlotAt(0);
@@ -1805,8 +1804,7 @@ void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
       }
     }
     // Both players are not ready, stop the showcase
-    m_bingo_started = false;
-    // TODOx: stop the showcase
+    m_bingo_settings->SetObjectives({});
   }
 }
 
