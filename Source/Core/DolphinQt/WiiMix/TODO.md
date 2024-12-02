@@ -14,6 +14,7 @@
 - [] Roguelike (may not be possible within time constraints, we'll see)
 - [] Streamline keyboard shortcuts to be user friendly
 - [] New Trailer
+- [] Significantly more testing of starting games with state and saving to previous state
 
 ## NOTES
 
