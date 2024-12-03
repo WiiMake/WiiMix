@@ -766,8 +766,6 @@ void AchievementManager::LoginCallback(int result, const char* error_message, rc
     return;
   }
 
-  WiiMixObjective::RALoginCallback(user->username, user->token);
-
   std::string config_username = Config::Get(Config::RA_USERNAME);
   if (config_username != user->username)
   {
