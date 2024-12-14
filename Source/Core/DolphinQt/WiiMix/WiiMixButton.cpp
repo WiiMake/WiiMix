@@ -19,22 +19,27 @@ void WiiMixButton::drawButton() {
     }
     this->setStyleSheet(QString::fromStdString(styleSheet));
 }
+
 void WiiMixButton::setBackgroundImage(std::string path) {
     backgroundImage = std::move(path);
     drawButton();
 }
+
 void WiiMixButton::setBorderWidth(int width) {
     border_width = width;
     drawButton();
 }
+
 void WiiMixButton::setBorderColor(std::string color) {
     border_color = std::move(color);
     drawButton();
 }
+
 void WiiMixButton::setBorderRadius(int radius) {
     border_radius = radius;
     drawButton();
 }
+
 void WiiMixButton::setHasBackgroundImage(bool value) {
     hasBackgroundImage = value;
 }

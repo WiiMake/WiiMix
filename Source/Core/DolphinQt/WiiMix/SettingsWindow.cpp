@@ -5,6 +5,7 @@
 
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QToolButton>
 #include <QVBoxLayout>
 #include <QMessageBox>
 
@@ -57,9 +58,10 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   effect2->setBlurRadius(25);
   m_save_button_box->setGraphicsEffect(effect2);
   m_save_button_box->setText(QStringLiteral("Save"));
-  m_wii_mix_button = new QPushButton();
+  m_wii_mix_button = new QToolButton();
+  // m_wii_mix_button->setAttribute(Qt::WA_TranslucentBackground);
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
-  m_wii_mix_button->setStyleSheet(QStringLiteral("QPushButton {background-color: transparent;}"));
+  m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
   m_wii_mix_button->setIconSize(QSize(150,100));
   //m_wii_mix_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   CreateMainLayout();
@@ -164,7 +166,8 @@ void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
   auto* config_layout = new QVBoxLayout(config_window);
   config_layout->addWidget(m_config);
   config_window->setLayout(config_layout);
-  config_window->exec();
+  config_window->show();
+  // config_window->exec();
   return;
 }
 

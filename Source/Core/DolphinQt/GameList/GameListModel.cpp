@@ -112,9 +112,9 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
     }
     if (role == Qt::DisplayRole)
       return QVariant();
-    if (role == SORT_ROLE)
-      // return static_cast<int>(config_widget.GetWiiMix());
-      return static_cast<int>(true);
+    // if (role == SORT_ROLE)
+    //   // return static_cast<int>(config_widget.GetWiiMix());
+    //   return 2;
     break;
   case Column::Objectives:
     if (role == Qt::DisplayRole)
@@ -331,7 +331,7 @@ QVariant GameListModel::headerData(int section, Qt::Orientation orientation, int
   switch (static_cast<Column>(section))
   {
   case Column::WiiMix:
-    return tr("Mix");
+    return tr("");
   case Column::Objectives:
     return tr("Objectives");
   // case Column::Platform:

@@ -343,57 +343,54 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
     m_pending_boot.reset();
   }
 
-  // Initialize bingo settings
-  qDebug() << "Initializing bingo settings";
-  m_bingo_settings = new WiiMixBingoSettings(WiiMixEnums::BingoType::LOCKOUT, 9);
-  // Add all games to the default bingo settings using the map
-  qDebug() << "Loading games";
-  for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
-    UICommon::GameFile* game_file_obj = new UICommon::GameFile();
-    UICommon::GameFile::GetGameFileById(std::to_string(game_id), game_file_obj);
-    m_bingo_settings->AddGame(*game_file_obj);
-  }
-  // Hard code bingo lobby id for now
-  qDebug() << "Set Lobby ID";
-  m_bingo_settings->SetLobbyID(QStringLiteral("123456789"));
-  // Hard code bingo players for now
-  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
-  // Populate players
-  qDebug() << "Populate players";
-  for (int i = 0; i < 2; i++) {
-    players[static_cast<WiiMixEnums::Player>(i)] = QPair<WiiMixEnums::Color, QString>(static_cast<WiiMixEnums::Color>(i), QStringLiteral("Player %1").arg(i + 1));
-  }
-  m_bingo_settings->SetPlayers(players);
-  // Initialize bingo client
-  qDebug() << "Initializing client";
-  m_bingo_client = new WiiMixBingoClient();
-  // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
-  m_player_num = 0;
+  // // Initialize bingo settings
+  // // Add all games to the default bingo settings using the map
+  // for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
+  //   UICommon::GameFile* game_file_obj = new UICommon::GameFile();
+  //   UICommon::GameFile::GetGameFileById(std::to_string(game_id), game_file_obj);
+  //   m_bingo_settings->AddGame(*game_file_obj);
+  // }
+  // // Hard code bingo lobby id for now
+  // qDebug() << "Set Lobby ID";
+  // m_bingo_settings->SetLobbyID(QStringLiteral("123456789"));
+  // // Hard code bingo players for now
+  // QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
+  // // Populate players
+  // qDebug() << "Populate players";
+  // for (int i = 0; i < 2; i++) {
+  //   players[static_cast<WiiMixEnums::Player>(i)] = QPair<WiiMixEnums::Color, QString>(static_cast<WiiMixEnums::Color>(i), QStringLiteral("Player %1").arg(i + 1));
+  // }
+  // m_bingo_settings->SetPlayers(players);
+  // // Initialize bingo client
+  // qDebug() << "Initializing client";
+  // m_bingo_client = new WiiMixBingoClient();
+  // // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
+  // m_player_num = 0;
 
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
-  connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
+  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
   // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
   //connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
   // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
 
   // Connect client to server
-  m_bingo_client->ConnectToServer();
+  // m_bingo_client->ConnectToServer();
 
   // Create a new lobby if it doesn't exist
   // Since two requests are being
   // This should double as a connection if the lobby does exist
   // TODOx: may need to move this into ready
-  m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
+  // m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
-  printf("screensaver tries to load\n");
-  m_screen_saver = new WiiMixScreenSaver(this);
-  //m_screen_saver->setParent(this);
-  //todox: please change this so it's a child of render widget for games
-  m_screen_saver->CreateLayout();
-  //m_screen_saver->show();
+  // printf("screensaver tries to load\n");
+  // m_screen_saver = new WiiMixScreenSaver(this);
+  // //m_screen_saver->setParent(this);
+  // //todox: please change this so it's a child of render widget for games
+  // m_screen_saver->CreateLayout();
+  // //m_screen_saver->show();
 }
 
 MainWindow::~MainWindow()

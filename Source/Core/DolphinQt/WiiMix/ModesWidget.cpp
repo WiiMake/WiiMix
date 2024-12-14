@@ -73,6 +73,7 @@ void WiiMixModesWidget::CreateLayout() {
 
     setLayout(m_mode_layout);
 }
+
 bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
     if ((event->type() == QEvent::HoverLeave)) {
         //QToolTip::hideText();
@@ -144,17 +145,17 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
                     other_frame->setBorderColor("gray"); // gray is border color for non-selected frame
                 }
             }
-            std::vector<BingoGame::BingoItem> b;
-            b.reserve(25);
-            for (int i = 0; i < 25; i++) {
-                BingoGame::BingoItem bItem;
-                bItem.name = "Hello";
-                bItem.description = "HelloHelloHello";
-                bItem.icon = "Flag_Russia@2x";
-                bItem.iconFull = File::GetSysDirectory() + "Resources/Flag_Russia@2x.png";
-                b.push_back(bItem);
-            }
-            BingoGame::createObjectiveWindow(b);
+            // std::vector<BingoGame::BingoItem> b;
+            // b.reserve(25);
+            // for (int i = 0; i < 25; i++) {
+            //     BingoGame::BingoItem bItem;
+            //     bItem.name = "Hello";
+            //     bItem.description = "HelloHelloHello";
+            //     bItem.icon = "Flag_Russia@2x";
+            //     bItem.iconFull = File::GetSysDirectory() + "Resources/Flag_Russia@2x.png";
+            //     b.push_back(bItem);
+            // }
+            // BingoGame::createObjectiveWindow(b);
             std::string theme = Config::Get(Config::MAIN_THEME_NAME);
 
             // Highlight the selected frame

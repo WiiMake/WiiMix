@@ -38,6 +38,7 @@
 #include <QMap>
 #include <QMenu>
 #include <QShortcut>
+#include <QCheckBox>
 #include <QSortFilterProxyModel>
 #include <QTableView>
 #include <QUrl>
@@ -116,7 +117,7 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
   connect(m_list, &QTableView::doubleClicked, this, &GameList::GameSelected);
   connect(m_grid, &QListView::doubleClicked, this, &GameList::GameSelected);
   // Check if over the checkbox; if so, toggle a game in or out of the WiiMix
-  // connect(m_list->find("WiiMix"), &QCheckBox::clicked, this, &GameList::WiiMixCheckboxClicked);
+  // connect(&(m_list->find("WiiMix")), &QCheckBox::stateChanged, this, &GameList::WiiMixCheckboxClicked);
   connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
   connect(&m_model, &QAbstractItemModel::rowsRemoved, this, &GameList::ConsiderViewChange);
 
@@ -198,7 +199,6 @@ void GameList::MakeListView()
   {
     using Column = GameListModel::Column;
     using Mode = QHeaderView::ResizeMode;
-    SetResizeMode(Column::WiiMix, Mode::Fixed);
     SetResizeMode(Column::Objectives, Mode::Fixed);
     SetResizeMode(Column::Platform, Mode::Fixed);
     SetResizeMode(Column::Banner, Mode::Fixed);
@@ -217,8 +217,8 @@ void GameList::MakeListView()
 
     // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
     // are 96 pixels wide, platform and country icons are 32 pixels wide.
-    // m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 20);
-    m_list->horizontalHeader()->setSectionResizeMode(static_cast<int>(GameListModel::Column::WiiMix), QHeaderView::Fixed);
+    // m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 10);
+    // m_list->horizontalHeader()->setSectionResizeMode(static_cast<int>(GameListModel::Column::WiiMix), QHeaderView::Fixed);
     m_list->setColumnWidth(static_cast<int>(Column::Objectives), 80);
     m_list->setColumnWidth(static_cast<int>(Column::Banner), 102);
     m_list->setColumnWidth(static_cast<int>(Column::Platform), 38);

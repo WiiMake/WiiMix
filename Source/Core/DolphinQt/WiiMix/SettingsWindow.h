@@ -15,6 +15,7 @@ class WiiMixModesWidget;
 class WiiMixConfigWidget;
 class QDialogButtonBox;
 class QShowEvent;
+class QToolButton;
 
 class WiiMixSettingsWindow final : public QDialog
 {
@@ -47,7 +48,7 @@ private:
   WiiMixSettings m_settings;
   QPushButton* m_load_button_box;
   QPushButton* m_save_button_box;
-  QPushButton* m_wii_mix_button;
+  QToolButton* m_wii_mix_button;
 
   WiiMixModesWidget *m_modes;
   WiiMixConfigWidget* m_config;

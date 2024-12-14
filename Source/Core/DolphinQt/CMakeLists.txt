@@ -408,14 +408,14 @@ add_executable(dolphin-emu
   Updater.h
   WiiUpdate.cpp
   WiiUpdate.h
-        WiiMix/Overlay.cpp
-        WiiMix/Overlay.h
-        WiiMix/WiiMixButton.cpp
-        WiiMix/WiiMixButton.h
-        WiiMix/BingoGame.cpp
-        WiiMix/BingoGame.h
-        WiiMix/ScreenSaver.cpp
-        WiiMix/ScreenSaver.h
+  WiiMix/Overlay.cpp
+  WiiMix/Overlay.h
+  WiiMix/WiiMixButton.cpp
+  WiiMix/WiiMixButton.h
+  WiiMix/BingoGame.cpp
+  WiiMix/BingoGame.h
+  WiiMix/ScreenSaver.cpp
+  WiiMix/ScreenSaver.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
