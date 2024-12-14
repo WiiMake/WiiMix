@@ -6,6 +6,7 @@
 #include <QResizeEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QToolTip>
+#include <QString>
 
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/Settings.h"
@@ -64,6 +65,7 @@ void WiiMixModesWidget::CreateLayout() {
         // Title
         QLabel* title = new QLabel(titleText);
         title->setFont(titleFont);
+        title->setStyleSheet(QStringLiteral(".QLabel {color: white;}"));
         title->setAlignment(Qt::AlignCenter);
         QVBoxLayout* layout = new QVBoxLayout();
         layout->addWidget(title);

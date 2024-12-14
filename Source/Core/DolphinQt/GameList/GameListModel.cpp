@@ -272,14 +272,14 @@ Qt::ItemFlags GameListModel::flags(const QModelIndex& index) const
 
   Qt::ItemFlags flag = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
   if (index.column() == static_cast<int>(Column::WiiMix)) {
-    flag |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
+    flag |= Qt::ItemIsUserCheckable;
     flag &= ~Qt::ItemIsSelectable;
-    #ifndef DEBUG
-      if (m_games.at(index.row())->GetObjectives() == 0) {
-        flag &= ~Qt::ItemIsUserCheckable;
-        flag &= ~Qt::ItemIsEditable;
-      }
-    #endif
+    // #ifndef DEBUG
+    //   if (m_games.at(index.row())->GetObjectives() == 0) {
+    //     flag &= ~Qt::ItemIsUserCheckable;
+    //     flag &= ~Qt::ItemIsEditable;
+    //   }
+    // #endif
   }
 
   return flag;
@@ -305,7 +305,7 @@ bool GameListModel::setData(const QModelIndex& index, const QVariant& value, int
       // Update the config file
       if (!File::Exists(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini")) {
         // Create a new ini file and set the WiiMix state
-        Common::IniFile ini = SConfig::LoadDefaultGameIni(game.GetGameID(), game.GetRevision());;
+        Common::IniFile ini = SConfig::LoadDefaultGameIni(game.GetGameID(), game.GetRevision());
         ini.GetOrCreateSection("WiiMix")->Set("WiiMix", !state);
         ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game.GetGameID() + ".ini");
       }
@@ -331,7 +331,7 @@ QVariant GameListModel::headerData(int section, Qt::Orientation orientation, int
   switch (static_cast<Column>(section))
   {
   case Column::WiiMix:
-    return tr("");
+    return tr("Mix");
   case Column::Objectives:
     return tr("Objectives");
   // case Column::Platform:
