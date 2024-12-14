@@ -2,6 +2,15 @@
 
 > So me and my goldfish memory can remember what I was working on
 
+JUST A COUPLE TODOS AFTER WORKING TODAY
+
+[] - Implement Reset Objective code in GCPadEmu.cpp; make it so the input is handled and then if there is a current objective running, the objective is reset
+[] - Implement something like the emulation system for objectives; we need that and wiimix game states easily exposed (Grace?)
+[] - Work w/ Charlotte/Grace on server/sending states
+[] - Vlad working on UI for roguelike (Josh?)
+[] - Fix save/load system (only for settings)
+[] - Finish integrating and testing Bingo
+
 ## NOTES
 
 Red: 218, 81, 51 (#da5133)

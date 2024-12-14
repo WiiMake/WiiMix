@@ -183,8 +183,8 @@ void HotkeyScheduler::Run()
         emit Open();
 
       // For readying up
-      if (IsHotkey(HK_BINGO_READY))
-        emit BingoReady();
+      // if (IsHotkey(HK_BINGO_READY))
+      //   emit BingoReady();
 
       // Refresh Game List
       if (IsHotkey(HK_REFRESH_LIST))
@@ -638,13 +638,13 @@ void HotkeyScheduler::Run()
     }
 
     // For the number of objectives
-    for (u32 i = 0; i < 49; i++) {
-      if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
-        emit ObjectiveLoadSlot(i + 1);
+    // for (u32 i = 0; i < 49; i++) {
+    //   if (IsHotkey(HK_LOAD_OBJECTIVE_SLOT_1 + i))
+    //     emit ObjectiveLoadSlot(i + 1);
       
-      if (IsHotkey(HK_RESET_OBJECTIVE_SLOT_1 + i))
-        emit ObjectiveResetSlot(i + 1);
-    }
+    //   if (IsHotkey(HK_RESET_OBJECTIVE_SLOT_1 + i))
+    //     emit ObjectiveResetSlot(i + 1);
+    // }
 
     if (IsHotkey(HK_SAVE_FIRST_STATE))
       emit StateSaveOldest();

@@ -140,8 +140,8 @@ private:
   void AddStateLoadMenu(QMenu* emu_menu);
   void AddStateSaveMenu(QMenu* emu_menu);
   void AddStateSendMenu(QMenu* emu_menu);
-  void AddGameSwapMenu(QMenu* emu_menu);
-  void AddObjectiveLoadMenu(QMenu* emu_menu);
+  // void AddGameSwapMenu(QMenu* emu_menu);
+  // void AddObjectiveLoadMenu(QMenu* emu_menu);
   void AddStateSlotMenu(QMenu* emu_menu);
 
   void AddViewMenu();
@@ -235,7 +235,7 @@ private:
   QMenu* m_state_load_menu;
   QMenu* m_state_save_menu;
   QMenu* m_state_send_menu;
-  QMenu* m_game_swap_menu;
+  // QMenu* m_game_swap_menu;
   // QMenu* m_objective_load_menu;
   QMenu* m_state_slot_menu;
   QActionGroup* m_state_slots;

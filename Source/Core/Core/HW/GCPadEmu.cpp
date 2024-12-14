@@ -50,6 +50,9 @@ GCPad::GCPad(const unsigned int index) : m_index(index)
   // i18n: The START/PAUSE button on GameCube controllers
   m_buttons->AddInput(Translatability::Translate, START_BUTTON, _trans("START"));
 
+  // WiiMix button for resetting the game
+  m_buttons->AddInput(Translatability::Translate, RESET_BUTTON, _trans("RESET OBJECTIVE"));
+
   // sticks
   groups.emplace_back(m_main_stick = new ControllerEmu::OctagonAnalogStick(
                           MAIN_STICK_GROUP, _trans("Control Stick"), MAIN_STICK_GATE_RADIUS));

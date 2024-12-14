@@ -127,7 +127,7 @@ void MenuBar::OnEmulationStateChanged(Core::State state)
   m_screenshot_action->setEnabled(running);
   m_state_save_menu->setEnabled(running);
   m_state_send_menu->setEnabled(running);
-  m_game_swap_menu->setEnabled(running);
+  // m_game_swap_menu->setEnabled(running);
   // m_objective_load_menu->setEnabled(running);
 
   const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
@@ -358,7 +358,7 @@ void MenuBar::AddEmulationMenu()
   AddStateLoadMenu(emu_menu);
   AddStateSaveMenu(emu_menu);
   AddStateSendMenu(emu_menu);
-  AddGameSwapMenu(emu_menu);
+  // AddGameSwapMenu(emu_menu);
   AddStateSlotMenu(emu_menu);
   // AddObjectiveLoadMenu(emu_menu);
   UpdateStateSlotMenu();
@@ -412,17 +412,17 @@ void MenuBar::AddStateSendMenu(QMenu* emu_menu)
   }
 }
 
-void MenuBar::AddGameSwapMenu(QMenu* emu_menu)
-{
-  m_game_swap_menu = emu_menu->addMenu(tr("&Game Swap"));
+// void MenuBar::AddGameSwapMenu(QMenu* emu_menu)
+// {
+//   m_game_swap_menu = emu_menu->addMenu(tr("&Game Swap"));
 
-  for (int i = 1; i <= 10; i++)
-  {
-    QAction* action = m_game_swap_menu->addAction(QString{});
+//   for (int i = 1; i <= 10; i++)
+//   {
+//     QAction* action = m_game_swap_menu->addAction(QString{});
 
-    connect(action, &QAction::triggered, this, [=, this]() { emit GameSwapSlotAt(i); });
-  }
-}
+//     connect(action, &QAction::triggered, this, [=, this]() { emit GameSwapSlotAt(i); });
+//   }
+// }
 
 // void MenuBar::AddObjectiveLoadMenu(QMenu* emu_menu)
 // {
@@ -464,7 +464,7 @@ void MenuBar::UpdateStateSlotMenu()
   QList<QAction*> actions_load = m_state_load_slots_menu->actions();
   QList<QAction*> actions_save = m_state_save_slots_menu->actions();
   QList<QAction*> actions_send = m_state_send_menu->actions();
-  QList<QAction*> actions_swap = m_game_swap_menu->actions();
+  // QList<QAction*> actions_swap = m_game_swap_menu->actions();
   // QList<QAction*> actions_objective_load = m_objective_load_menu->actions();
   for (int i = 0; i < actions_slot.length(); i++)
   {
@@ -475,7 +475,7 @@ void MenuBar::UpdateStateSlotMenu()
     actions_send.at(i)->setText(tr("Send Slot %1").arg(slot));
     actions_send.at(i)->setEnabled(info != QStringLiteral("Empty"));
     // TODO: need to set enabled based on if game at slot exists or not
-    actions_swap.at(i)->setText(tr("Swap to Game %1").arg(slot));
+    // actions_swap.at(i)->setText(tr("Swap to Game %1").arg(slot));
     actions_slot.at(i)->setText(tr("Select Slot %1 - %2").arg(slot).arg(info));
   }
   // for (int i = 0; i < actions_objective_load.length(); i++)

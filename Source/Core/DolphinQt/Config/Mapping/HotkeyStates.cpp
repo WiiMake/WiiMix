@@ -21,14 +21,14 @@ void HotkeyStates::CreateMainLayout()
       CreateGroupBox(tr("Save"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_SAVE_STATE)));
   m_main_layout->addWidget(
       CreateGroupBox(tr("Load"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_LOAD_STATE)));
-  m_main_layout->addWidget(
-      CreateGroupBox(tr("Swap Game"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_SWAP_STATE)));
-  m_main_layout->addWidget(
-      CreateGroupBox(tr("Load Objective"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_LOAD_OBJECTIVE)));
-  m_main_layout->addWidget(
-      CreateGroupBox(tr("Reset Objective"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_RESET_OBJECTIVE)));
-  m_main_layout->addWidget(
-      CreateGroupBox(tr("Bingo Ready"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_BINGO_READY)));
+  // m_main_layout->addWidget(
+  //     CreateGroupBox(tr("Swap Game"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_SWAP_STATE)));
+  // m_main_layout->addWidget(
+  //     CreateGroupBox(tr("Load Objective"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_LOAD_OBJECTIVE)));
+  // m_main_layout->addWidget(
+  //     CreateGroupBox(tr("Reset Objective"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_RESET_OBJECTIVE)));
+  // m_main_layout->addWidget(
+  //     CreateGroupBox(tr("Bingo Ready"), HotkeyManagerEmu::GetHotkeyGroup(HKGP_BINGO_READY)));
 
   setLayout(m_main_layout);
 }
