@@ -107,6 +107,13 @@ namespace WiiMixEnums {
     CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
 }
 
+// Retroachievements currently (2024) supports around 400000 achievements
+#define MAX_ACHIEVEMENT_ID_LENGTH 6
+#define MAX_ACHIEVEMENT_ID "TODO"
+// Retroachievements currently (2024) supports around 40000 games
+#define MAX_GAME_ID_LENGTH 5
+#define MAX_GAME_ID "TODO"
+
 #define WII_MIX_UNKNOWN "UNKNOWN"
 
 // THEME

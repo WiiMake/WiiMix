@@ -81,6 +81,7 @@ class MainWindow final : public QMainWindow
   Q_OBJECT
 
 public:
+    QStackedWidget* m_stack;
   explicit MainWindow(std::unique_ptr<BootParameters> boot_parameters,
                       const std::string& movie_path);
   ~MainWindow();
@@ -248,7 +249,6 @@ private:
   std::unique_ptr<X11Utils::XRRConfiguration> m_xrr_config;
 #endif
 
-  QStackedWidget* m_stack;
   ToolBar* m_tool_bar;
   MenuBar* m_menu_bar;
   SearchBar* m_search_bar;

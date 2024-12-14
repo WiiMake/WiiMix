@@ -117,6 +117,10 @@ static bool QtMsgAlertHandler(const char* caption, const char* text, bool yes_no
 
 int main(int argc, char* argv[])
 {
+    //qDebug() << qgetenv("QT_DEBUG_PLUGINS");
+    qDebug() << qputenv("QT_DEBUG_PLUGINS", "1");
+    qDebug() << qVersion();
+    //qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
 #ifdef _WIN32
   const bool console_attached = AttachConsole(ATTACH_PARENT_PROCESS) != FALSE;
   HANDLE stdout_handle = ::GetStdHandle(STD_OUTPUT_HANDLE);

@@ -29,9 +29,37 @@ public:
   void RemovePlayer(WiiMixEnums::Player player);
   void SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value);
   QString GetLobbyID();
+    // Bingo lobby ids encode game information of all the selected game ids
+    // as well as have a unique random identifier at the end
+    // For example: 5000010000200003000042030234039204
+    // 5: # of selected games
+    // 00001: game id 1
+    // 00002: game id 2
+    // 00003: game id 3
+    // 00004: game id 4
+    // 20302: game id 5
+    // 34039204: random 8 digit identifier
+    // The LineEdit fields for connecting to bingo
+    // has a validator that checks against the current games you have enabled for wiimix,
+    // preventing connections to lobbies where the same games aren't enabled
+    // Also, the LineEdit field for hosting prevents hosting if no games are enabled
+    // or if the sum total of achievements of all enabled games < size of bingo board
   void SetLobbyID(QString value);
   QString GetLobbyPassword();
   void SetLobbyPassword(QString value);
+  QString GetSeed();
+  // Example seed: 50349569036230058245023057008257096345043578069584059874
+  // 9: size of the bingo board
+  // 349569: achievement 1
+  // 036230: 2
+  // 058245: 3
+  // 023057: 4
+  // 008257: 5
+  // 096345: 6
+  // 043578: 7
+  // 069584: 8
+  // 059874: 9
+  void SetSeed(QString value);
   QMap<WiiMixEnums::Player, int> GetCurrentObjectives();
   void SetCurrentObjectives(QMap<WiiMixEnums::Player, int> value);
   void UpdateCurrentObjectives(WiiMixEnums::Player player, int value);
@@ -57,4 +85,5 @@ private:
   QMap<WiiMixEnums::Player, bool> m_players_ready = {};
   QString m_lobby_id;
   QString m_lobby_password;
+  QString m_seed;
 };

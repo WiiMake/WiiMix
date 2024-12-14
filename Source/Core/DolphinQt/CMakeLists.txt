@@ -6,15 +6,19 @@ endif()
 if (MSVC)
   if(_M_ARM_64)
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/Externals/Qt/Qt6.5.1/ARM64")
+    message("MSVC=true")
   else()
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/Externals/Qt/Qt6.5.1/x64")
   endif()
 endif()
 
+# set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg Core5Compat Multimedia MultimediaWidgets)
+
+find_package(Qt6 COMPONENTS Core Gui Network Widgets Svg Core5Compat Multimedia MultimediaWidgets REQUIRED)
 message(STATUS "Found Qt version ${Qt6_VERSION}")
 
 set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
@@ -417,6 +421,8 @@ add_executable(dolphin-emu
   WiiMix/BingoGame.h
   WiiMix/ScreenSaver.cpp
   WiiMix/ScreenSaver.h
+        WiiMix/RogueWindow.cpp
+        WiiMix/RogueWindow.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
@@ -504,8 +510,8 @@ PRIVATE
   Qt6::Widgets
   Qt6::Network
   Qt6::Core5Compat
-        Qt6::Multimedia
-        Qt6::MultimediaWidgets
+        Qt::Multimedia
+        Qt::MultimediaWidgets
   uicommon
   imgui
   implot

@@ -19,6 +19,7 @@
 #include <QWindow>
 #include <QString>
 
+
 #include <fmt/format.h>
 
 #include <future>
@@ -232,6 +233,9 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
     : QMainWindow(nullptr)
 {
   qDebug() << "Beginning of main window";
+  qDebug() << qgetenv("QT_DEBUG_PLUGINS");
+  qDebug() << qputenv("QT_DEBUG_PLUGINS", "1");
+  qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
   setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
   setUnifiedTitleAndToolBarOnMac(true);
@@ -859,6 +863,17 @@ void MainWindow::RefreshGameList()
 {
   Settings::Instance().ReloadTitleDB();
   Settings::Instance().RefreshGameList();
+  WiiMixScreenSaver *screenSaver = new WiiMixScreenSaver();
+  screenSaver->CreateLayout();
+  QWidget* wItem;
+  //while ((wItem = m_stack->widget(0)) != 0) delete wItem;
+  m_stack->removeWidget(m_render_widget);
+  m_render_widget->setParent(nullptr);
+  m_stack->addWidget(screenSaver);
+  m_stack->setCurrentWidget(screenSaver);
+  screenSaver->showFullScreen();
+  m_stack->repaint();
+  //Host::GetInstance()->SetRenderFocus(isActiveWindow());
 }
 
 QStringList MainWindow::PromptFileNames()

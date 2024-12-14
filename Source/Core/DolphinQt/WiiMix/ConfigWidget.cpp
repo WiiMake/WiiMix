@@ -15,26 +15,21 @@
 #include <QFormLayout>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
-#include <QRandomGenerator>
 #include <QMessageBox>
 #include <QUuid>
 #include <QString>
 #include <QMap>
 #include <QPair>
-#include <QFile>
 
 #include "Core/Config/MainSettings.h"
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
-#include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
-#include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/Settings.h"
-#include "DolphinQt/Resources.h"
+#include "DolphinQt/MainWindow.h"
 #include <assert.h>
-#include <stdio.h>
 
 WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
     // Initialize m_players
@@ -45,6 +40,14 @@ WiiMixConfigWidget::WiiMixConfigWidget(QWidget* parent) : QDialog(parent) {
     m_player_name = QStringLiteral("");
     m_bingo_client = nullptr;
     m_player_num = 0;
+}
+
+void WiiMixConfigWidget::SetRogueSeed(QString seed) {
+    m_rogue_seed->setText(seed);
+}
+
+void WiiMixConfigWidget::SetRogueLength(QString length) const {
+    m_rogue_length->setCurrentText(length);
 }
 
 void WiiMixConfigWidget::DeleteLayout() {
@@ -343,6 +346,21 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         bingo_settings_layout->addWidget(card_size_label);
         bingo_settings_layout->addWidget(m_card_size);
 
+        // Bingo seeds just encode achievement information
+        m_bingo_seed = new QLineEdit();
+        // There are 3 different decoded lengths:
+        // 1 + (6 * 9)
+        // 1 + (6 * 16)
+        // 1 + (6 * 25)
+        // The bingo seed does not check whether all players have the games enabled,
+        // as they will require having the games enabled when connecting
+        // The games list used will be finalized during connection
+        // m_bingo_seed->setMaxLength(16);
+        QRegularExpression seed_regex(QStringLiteral("[A-Za-z0-9]{16}"));
+        QRegularExpressionValidator* seed_validator = new QRegularExpressionValidator(seed_regex, this);
+        m_bingo_seed->setValidator(seed_validator);
+        bingo_settings_layout->addWidget(new QLabel(tr("Bingo Seed:")));
+        bingo_settings_layout->addWidget(m_bingo_seed);
         bingo_box->setLayout(bingo_settings_layout);
         m_config_layout->addWidget(bingo_box);
     }
@@ -455,6 +473,28 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
 
 void WiiMixConfigWidget::CreateRogueLayout() {
     m_config_layout = new QVBoxLayout();
+    m_config_layout->addWidget(new QLabel(tr("Length")));
+    m_rogue_length = new QComboBox();
+    m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::SHORT));
+    m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::MEDIUM));
+    m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::MARATHON));
+    m_config_layout->addWidget(m_rogue_length);
+    connect(m_rogue_length, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        SetRogueLength(m_rogue_length->currentText());
+    });
+
+    m_config_layout->addWidget(new QLabel(tr("Seed")));
+    m_rogue_seed = new QLineEdit();
+    m_rogue_seed->setPlaceholderText(tr("random"));
+    m_rogue_seed->setMaxLength(16);
+    QRegularExpression regex(QStringLiteral("[A-Za-z0-9]{16}"));
+    QRegularExpressionValidator* validator = new QRegularExpressionValidator(regex, this);
+    m_rogue_seed->setValidator(validator);
+    m_config_layout->addWidget(m_rogue_seed);
+
+    connect(m_rogue_seed, &QLineEdit::textChanged, this, [this](const QString& text) {
+        SetRogueSeed(text);
+    });
 }
 
 void WiiMixConfigWidget::CreateCommonLayout() {
@@ -503,6 +543,46 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     common_settings_box->setLayout(common_settings_layout);
 
     m_config_layout->addWidget(common_settings_box);
+}
+
+// @xanmankey
+QRegularExpression BingoSeedValidator() {}
+
+// @xanmankey
+QRegularExpression RogueSeedValidator() {}
+
+// @xanmankey: for connecting to and hosting lobbies (game validation)
+QRegularExpression BingoLobbyIDValidator() {
+    // A validator that checks if you have all the games in the lobby checked
+    // Prevents people from connecting to lobbies without having all the games
+}
+
+WiiMixRogueSettings::Length WiiMixConfigWidget::GetRogueLength() const {
+    return static_cast<WiiMixRogueSettings::Length>(m_rogue_length->currentIndex());
+}
+
+QString WiiMixConfigWidget::GetRogueSeed() const {
+    return m_rogue_seed->text();
+}
+
+
+// Need to also implement the corresponding parsing, checks, and probably associated error messages
+// with the QValidators
+
+// @xanmankey
+void SetRogueSeed() {
+    return;
+}
+
+// @xanmankey
+void SetBingoSeed() {
+
+    return;
+}
+
+// @xanmankey
+void SetLobbyID() {
+    return;
 }
 
 void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {

@@ -177,3 +177,11 @@ WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
 
     return settings;
 }
+
+QString WiiMixBingoSettings::GetSeed() {
+    return m_seed;
+}
+
+void WiiMixBingoSettings::SetSeed(QString value) {
+    m_seed = value;
+}
