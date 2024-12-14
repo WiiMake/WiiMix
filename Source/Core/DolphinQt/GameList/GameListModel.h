@@ -45,6 +45,10 @@ public:
   // Using a custom sort role as it sometimes differs slightly from the default Qt::DisplayRole.
   static constexpr int SORT_ROLE = Qt::UserRole;
 
+  enum {
+    CheckAlignmentRole = Qt::UserRole + Qt::CheckStateRole + Qt::TextAlignmentRole
+  };
+
   enum class Column
   {
     WiiMix=0,

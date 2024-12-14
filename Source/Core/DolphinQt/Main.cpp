@@ -30,6 +30,7 @@
 #include "Core/DolphinAnalytics.h"
 #include "Core/System.h"
 
+#include "DolphinQt/CenteredBoxProxy.h"
 #include "DolphinQt/Host.h"
 #include "DolphinQt/MainWindow.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
@@ -156,6 +157,7 @@ int main(int argc, char* argv[])
 
   // QApplication will parse arguments and remove any it recognizes as targeting Qt
   QApplication app(argc, argv);
+  app.setStyle(new CenteredBoxProxy);
 
   auto parser = CommandLineParse::CreateParser(CommandLineParse::ParserOptions::IncludeGUIOptions);
   const optparse::Values& options = CommandLineParse::ParseArguments(parser.get(), argc, argv);

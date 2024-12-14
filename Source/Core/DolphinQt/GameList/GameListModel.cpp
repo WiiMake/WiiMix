@@ -105,13 +105,26 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
   switch (static_cast<Column>(index.column()))
   {
   case Column::WiiMix:
-    if (role == Qt::CheckStateRole)
-    {
+    if (role == Qt::CheckStateRole) {
       bool state = game.GetWiiMix();
-      return state ? Qt::Checked : Qt::Unchecked;
+      return state ? Qt::Checked : Qt::Unchecked; // Ensures the checkbox appears
     }
-    if (role == Qt::DisplayRole)
-      return QVariant();
+
+    if (role == CheckAlignmentRole) {
+        return Qt::AlignHCenter; // For custom alignment
+    }
+
+    // Optional fallback using Qt's default alignment role
+    if (role == Qt::TextAlignmentRole) {
+        return Qt::AlignHCenter;
+    }
+    // if (role == Qt::TextAlignmentRole)
+    // {
+    //     // Align center horizontally and vertically
+    //     return Qt::AlignHCenter;
+    // }
+    // if (role == Qt::DisplayRole)
+      // return QVariant();
     // if (role == SORT_ROLE)
     //   // return static_cast<int>(config_widget.GetWiiMix());
     //   return 2;
@@ -273,7 +286,7 @@ Qt::ItemFlags GameListModel::flags(const QModelIndex& index) const
   Qt::ItemFlags flag = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
   if (index.column() == static_cast<int>(Column::WiiMix)) {
     flag |= Qt::ItemIsUserCheckable;
-    flag &= ~Qt::ItemIsSelectable;
+    // flag &= ~Qt::ItemIsSelectable;
     // #ifndef DEBUG
     //   if (m_games.at(index.row())->GetObjectives() == 0) {
     //     flag &= ~Qt::ItemIsUserCheckable;

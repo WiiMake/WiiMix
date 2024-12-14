@@ -22,6 +22,7 @@ set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
 add_executable(dolphin-emu
   AboutDialog.cpp
   AboutDialog.h
+  CenteredBoxProxy.h
   CheatSearchFactoryWidget.cpp
   CheatSearchFactoryWidget.h
   CheatSearchWidget.cpp
