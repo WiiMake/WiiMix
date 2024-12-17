@@ -353,7 +353,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         // as they will require having the games enabled when connecting
         // The games list used will be finalized during connection
         // m_bingo_seed->setMaxLength(16);
-        // QRegularExpression seed_regex(QStringLiteral("[A-Za-z0-9]{16}"));
+        QRegularExpression seed_regex(QStringLiteral("[A-Za-z0-9]{16}"));
         QRegularExpressionValidator* seed_validator = new QRegularExpressionValidator(seed_regex, this);
         m_bingo_seed->setValidator(seed_validator);
         bingo_settings_layout->addWidget(new QLabel(tr("Bingo Seed:")));
@@ -475,7 +475,7 @@ void WiiMixConfigWidget::CreateRogueLayout() {
     m_rogue_length = new QComboBox();
     m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::SHORT));
     m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::MEDIUM));
-    m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::LONG));
+    m_rogue_length->addItem(WiiMixRogueSettings::LengthToString(WiiMixRogueSettings::Length::MARATHON));
     m_config_layout->addWidget(m_rogue_length);
     connect(m_rogue_length, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
         SetRogueLength(m_rogue_length->currentText());
@@ -657,11 +657,11 @@ QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> WiiMixConfigWidget
     return m_players;
 }
 
-WiiMixRogueSettings::Length GetRogueLength() {
-    return static_cast<WiiMixRogueSettings>(m_rogue_length->index());
+WiiMixRogueSettings::Length WiiMixConfigWidget::GetRogueLength() const {
+    return static_cast<WiiMixRogueSettings::Length>(m_rogue_length->currentIndex());
 }
 
-QString GetRogueSeed() {
+QString WiiMixConfigWidget::GetRogueSeed() const{
     return m_rogue_seed->text();
 }
 
@@ -680,19 +680,23 @@ WiiMixBingoClient* WiiMixConfigWidget::GetBingoClient() {
 // Need to also implement the corresponding parsing, checks, and probably associated error messages
 // with the QValidators
 
-// @xanmankey
-void SetRogueSeed() {
-    return;
+void WiiMixConfigWidget::SetRogueLength(QString length) const {
+    m_rogue_length->setCurrentText(length);
 }
 
 // @xanmankey
-void SetBingoSeed() {
-    return;
+void WiiMixConfigWidget::SetRogueSeed(QString seed) {
+    m_rogue_seed->setText(seed);
 }
 
 // @xanmankey
-void SetLobbyID() {
-    return;
+void WiiMixConfigWidget::SetBingoSeed(QString seed) {
+    m_bingo_seed->setText(seed);
+}
+
+// @xanmankey
+void WiiMixConfigWidget::SetLobbyID(QString id) {
+    m_bingo_lobby_id->setText(id);
 }
 
 

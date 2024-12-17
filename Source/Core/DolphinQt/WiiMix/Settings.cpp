@@ -395,7 +395,7 @@ std::vector<WiiMixObjective> WiiMixSettings::ObjectiveIdsToObjectives(std::strin
 std::string WiiMixSettings::ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives) {
     std::string objective_ids_list = "";
     for (size_t i = 0; i < objectives.size(); ++i) {
-        objective_ids_list += objectives[i].GetTitle();
+        objective_ids_list += objectives[i].GetObjectiveString();
         if (i + 1 != objectives.size()) {
             objective_ids_list += ",";
         }

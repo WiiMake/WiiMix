@@ -42,9 +42,9 @@ public:
 
   // Rogue
   WiiMixRogueSettings::Length GetRogueLength() const;
-  void SetRogueLength() const;
+  void SetRogueLength(QString) const;
   QString GetRogueSeed() const;
-  void SetRogueSeed(QString seed);
+  void SetRogueSeed(QString);
   QRegularExpression RogueSeedValidator();
 
   // Shuffle

@@ -3,16 +3,17 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
-
+#include <QDialog>
 #pragma once
 
-class WiiMixRogueWindow : public WiiMixRogueWindow 
+class WiiMixRogueWindow : public QDialog, WiiMixRogueSettings
 {
 public:
-  explicit WiiMixRogueWindow(const WiiMixRogueSettings& settings);
+  explicit WiiMixRogueWindow(const WiiMixRogueSettings &settings);
 
   static void GetSettings();
-
+  static WiiMixRogueSettings::Event GetEvent();
+    static WiiMixRogueSettings::Item GetItem();
 private:
   WiiMixRogueSettings m_settings;
 };

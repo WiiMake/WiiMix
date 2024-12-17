@@ -12,6 +12,7 @@
 class WiiMixRogueSettings : public WiiMixSettings 
 {
 public:
+  explicit WiiMixRogueSettings();
   explicit WiiMixRogueSettings(const WiiMixSettings& settings);
   enum class Item {
     REROLL_EFFECT, // Rerolls the effect for a round
@@ -75,14 +76,15 @@ public:
   // 1: 1st item
   // 5: 2nd item
   // 5: 3rd item
-  void SetSeed();
+  void SetSeed(QString);
 
   static QString LengthToString(Length length);
   static Length StringToLength(QString length);
 
   QList<WiiMixRogueSettings::Event> GetEvents();
   void SetEvents(QList<WiiMixRogueSettings::Event> events);
-  QList<WiiMixRogueSettings::Item> GetItemPool();
+  void SetItems(QList<WiiMixRogueSettings::Item>);
+  QList<WiiMixRogueSettings::Item> GetItems();
   QList<WiiMixRogueSettings::Item> GetPlayerItems();
   void SetPlayerItems(QList<WiiMixRogueSettings::Item> items);
   void AddPlayerItem(WiiMixRogueSettings::Item item);
@@ -92,7 +94,7 @@ public:
 
 private:
   QList<WiiMixRogueSettings::Event> m_events;
-  QList<WiiMixRogueSettings::Item> m_item_pool;
+  QList<WiiMixRogueSettings::Item> m_items;
   QList<WiiMixRogueSettings::Item> m_player_items;
   WiiMixRogueSettings::Length m_length;
   // Endless can potentially come later

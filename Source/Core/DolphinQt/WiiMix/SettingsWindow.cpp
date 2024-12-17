@@ -138,7 +138,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
         }
         else if (m_settings.GetMode() == WiiMixEnums::Mode::ROGUE) {
           WiiMixRogueSettings rogue_settings = WiiMixRogueSettings(m_settings);
-          rogue_settings.SetLength(WiiMixRogueSettings::StringToLength(m_config->GetRogueLength()));
+          rogue_settings.SetLength(m_config->GetRogueLength());
           rogue_settings.SetSeed(m_config->GetRogueSeed());
           emit StartWiiMixRogue(rogue_settings);
         }

@@ -851,7 +851,7 @@ void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClien
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
   // Initializes values
-  settings->init();
+  // settings->init(); //TODOx: idk what to with that it doesn't compile
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
