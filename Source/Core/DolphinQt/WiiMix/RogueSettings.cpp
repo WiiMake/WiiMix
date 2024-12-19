@@ -16,7 +16,7 @@ void WiiMixRogueSettings::SetSeed(QString seed) {
 
 QList<WiiMixRogueSettings::Event> WiiMixRogueSettings::GetEvents()
 {
-    
+  return m_events;
 }
 
 QList<WiiMixRogueSettings::Item> WiiMixRogueSettings::GetItems()

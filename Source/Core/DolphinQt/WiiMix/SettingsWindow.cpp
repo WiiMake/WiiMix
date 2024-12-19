@@ -438,3 +438,17 @@ void WiiMixSettingsWindow::SaveSettings() {
 std::vector<UICommon::GameFile> WiiMixSettingsWindow::GetGamesList() {
   return m_settings.GetGamesList();
 }
+
+void WiiMixSettingsWindow::StartWiiMixBingo(WiiMixBingoSettings settings, const std::string& client)
+{
+  
+}
+
+void WiiMixSettingsWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings)
+{
+}
+
+
+void WiiMixSettingsWindow::StartWiiMixRogue(WiiMixRogueSettings settings)
+{
+}

@@ -626,15 +626,20 @@ QString WiiMixConfigWidget::GenerateLobbyID() const {
 }
 
 // @xanmankey
-QRegularExpression BingoSeedValidator() {}
+QRegularExpression BingoSeedValidator() {
+  return QRegularExpression();
+}
 
 // @xanmankey
-QRegularExpression RogueSeedValidator() {}
+QRegularExpression RogueSeedValidator() {
+  return QRegularExpression();
+}
 
 // @xanmankey: for connecting to and hosting lobbies (game validation)
 QRegularExpression BingoLobbyIDValidator() {
     // A validator that checks if you have all of the games in the lobby checked
     // Prevents people from connecting to lobbies without having all the games
+  return QRegularExpression();
 }
 
 QString WiiMixConfigWidget::GetPlayerName() const {

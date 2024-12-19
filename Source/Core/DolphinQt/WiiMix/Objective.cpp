@@ -5,8 +5,6 @@
 #include <string>
 #include <curl/curl.h>
 #include <fstream>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>

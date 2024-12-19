@@ -416,8 +416,6 @@ add_executable(dolphin-emu
         WiiMix/WiiMixButton.h
         WiiMix/BingoGame.cpp
         WiiMix/BingoGame.h
-        WiiMix/ScreenSaver.cpp
-        WiiMix/ScreenSaver.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")

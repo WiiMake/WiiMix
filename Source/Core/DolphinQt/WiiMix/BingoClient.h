@@ -9,9 +9,13 @@
 #include <QJsonDocument>
 
 #include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#ifdef _WIN32
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+#else
+  #include <netinet/in.h>
+  #include <unistd.h>
+#endif
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
