@@ -10,18 +10,50 @@ class WiiMixObjective
 {
 public:
   explicit WiiMixObjective(
-    std::string objective_string,
-    WiiMixEnums::Player completed
+    uint16_t id,
+    std::string title,
+    uint16_t retroachievements_game_id,
+    std::string game_id,
+    uint16_t achievement_id,
+    WiiMixEnums::ObjectiveType objective_type,
+    std::string objective_description,
+    std::vector<WiiMixEnums::GameGenre> game_genres,
+    WiiMixEnums::Difficulty difficulty,
+    uint64_t time
   );
 
-  std::string GetObjectiveString();
+
+  uint16_t GetId();
+  std::string GetTitle();
+  uint16_t GetRetroAchievementsGameId();
+  std::string GetGameId();
+  uint16_t GetAchievementId();
+  WiiMixEnums::ObjectiveType GetObjectiveType();
+  std::string GetObjectiveDescription();
+  std::vector<WiiMixEnums::GameGenre> GetGameGenres();
+  WiiMixEnums::Difficulty GetDifficulty();
+  uint64_t GetTime();
+
+
   WiiMixEnums::Player GetCompleted();
   void SetCompleted(WiiMixEnums::Player player);
 
 
-
 private:
-  std::string m_objective_string;
-  WiiMixEnums::Player m_completed;
+  uint16_t m_id;
+  std::string m_title;
+  uint16_t m_retroachievements_game_id;
+  std::string m_game_id;
+  uint16_t m_achievement_id;
+  WiiMixEnums::ObjectiveType m_objective_type;
+  std::string m_objective_description;
+  std::vector<WiiMixEnums::GameGenre> m_game_genres;
+  WiiMixEnums::Difficulty m_difficulty;
+  uint64_t m_time;
+
+  // not in the db
+  WiiMixEnums::Player m_player_completed;
+
+
 
 };

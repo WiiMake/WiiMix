@@ -387,7 +387,7 @@ void WiiMixSettingsWindow::SaveSettings() {
 
       section->Set("CardSize", bingo_settings.GetCardSize());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, bingo_settings.GetCardSize());
-  
+
       section->Set("Teams", bingo_settings.GetTeams());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, bingo_settings.GetTeams());
     }
@@ -439,16 +439,4 @@ std::vector<UICommon::GameFile> WiiMixSettingsWindow::GetGamesList() {
   return m_settings.GetGamesList();
 }
 
-void WiiMixSettingsWindow::StartWiiMixBingo(WiiMixBingoSettings settings, const std::string& client)
-{
-  
-}
 
-void WiiMixSettingsWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings)
-{
-}
-
-
-void WiiMixSettingsWindow::StartWiiMixRogue(WiiMixRogueSettings settings)
-{
-}

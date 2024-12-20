@@ -102,7 +102,15 @@ namespace WiiMixEnums {
     #define COMMON_NETPLAY_SETTINGS_GAMES_LIST "GAMES_LIST"
 
     std::string CommonNetplaySettingsToString(CommonNetplaySettings setting);
-    CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
+    CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);
+
+    enum class ObjectiveType { //Temp to build, overwrite if needed
+        END // Default/size value
+    };
+
+    enum class GameGenre { //Temp to build, overwrite if needed
+        END // Default/size value
+    };
 }
 
 
