@@ -5,6 +5,7 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include <map>
+#include <QJsonObject>
 
 class WiiMixObjective
 {
@@ -34,6 +35,8 @@ public:
   WiiMixEnums::Difficulty GetDifficulty();
   uint64_t GetTime();
 
+  QJsonObject ToJson();
+  void FromJson(const QJsonObject& obj);
 
   WiiMixEnums::Player GetCompleted();
   void SetCompleted(WiiMixEnums::Player player);

@@ -9,6 +9,13 @@ namespace WiiMixEnums {
         END // Default/size value
     };
 
+    #define DIFFICULTY_NORMAL "NORMAL"
+    #define DIFFICULTY_HARD "HARD"
+    #define DIFFICULTY_WIISANITY "WIISANITY"
+
+    std::string DifficultyToString(Difficulty difficulty);
+    Difficulty DifficultyFromString(const std::string& str);
+
     enum class Mode {
         BINGO, // Sub-modes: lockout, capture the flag
         SHUFFLE, // Sub-modes: race
@@ -108,9 +115,15 @@ namespace WiiMixEnums {
         END // Default/size value
     };
 
+    std::string ObjectiveTypeToString(ObjectiveType type);
+    ObjectiveType ObjectiveTypeFromString(const std::string& str);
+
     enum class GameGenre { //Temp to build, overwrite if needed
         END // Default/size value
     };
+
+    std::string GameGenreToString(GameGenre genre);
+    GameGenre GameGenreFromString(const std::string& str);
 }
 
 

@@ -3,6 +3,33 @@
 #include <string>
 
 namespace WiiMixEnums {
+
+    std::string DifficultyToString(Difficulty difficulty) {
+        switch (difficulty) {
+            case Difficulty::NORMAL:
+                return DIFFICULTY_NORMAL;
+            case Difficulty::HARD:
+                return DIFFICULTY_HARD;
+            case Difficulty::WIISANITY:
+                return DIFFICULTY_WIISANITY;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    Difficulty DifficultyFromString(const std::string& str) {
+        if (str == DIFFICULTY_NORMAL) {
+            return Difficulty::NORMAL;
+        } else if (str == DIFFICULTY_HARD) {
+            return Difficulty::HARD;
+        } else if (str == DIFFICULTY_WIISANITY) {
+            return Difficulty::WIISANITY;
+        } else {
+            return Difficulty::END;
+        }
+    }
+
+
     // Color StringToColor(const std::string& color) {
     //     if (color == WII_MIX_RED) {
     //         return Color::RED;
@@ -47,7 +74,7 @@ namespace WiiMixEnums {
                 return WII_MIX_UNKNOWN;
         }
     }
-    
+
     std::string BingoNetplaySettingsToString(BingoNetplaySettings setting) {
         switch (setting) {
             case BingoNetplaySettings::BINGO_TYPE:
@@ -125,4 +152,40 @@ namespace WiiMixEnums {
     //         return CommonNetplaySettings::END;
     //     }
     // }
+
+    std::string ObjectiveTypeToString(ObjectiveType type)
+    {
+        switch (type) {
+            case ObjectiveType::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    ObjectiveType ObjectiveTypeFromString(const std::string& str)
+    {
+        if (str == WII_MIX_UNKNOWN) {
+            return ObjectiveType::END;
+        }
+        return ObjectiveType::END;
+    }
+
+    std::string GameGenreToString(GameGenre genre)
+    {
+        switch (genre) {
+            case GameGenre::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+    GameGenre GameGenreFromString(const std::string& str)
+    {
+        if (str == WII_MIX_UNKNOWN) {
+            return GameGenre::END;
+        }
+        return GameGenre::END;
+    }
+
 };
