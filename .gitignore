@@ -43,7 +43,7 @@ CMakeLists.txt.user
 /.vscode/
 
 # Ignore WiiMix bingo server
-Source/**/basic_client.cpp
-Source/**/basic_server.cpp
-Source/**/Server.cpp
-Source/**/Server.h
+Source/Core/DolphinQt/WiiMix/Server/Server.cpp
+Source/Core/DolphinQt/WiiMix/Server/Server.h
+Source/**/*/Server.cpp
+Source/**/*/Server.h

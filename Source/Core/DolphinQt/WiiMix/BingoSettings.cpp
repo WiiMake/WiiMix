@@ -7,13 +7,38 @@
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size) : WiiMixSettings(
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size, bool teams) : WiiMixSettings(
     WiiMixSettings::instance()->GetDifficulty(),
     WiiMixSettings::instance()->GetMode(),
     WiiMixSettings::instance()->GetSaveStateBank(),
     WiiMixSettings::instance()->GetObjectives(),
     WiiMixSettings::instance()->GetGamesList()
-), m_bingo_type(bingo_type), m_card_size(card_size) {}
+), m_bingo_type(bingo_type), m_card_size(card_size), m_teams(teams) {
+    // Check if config overrides defaults
+    if (bingo_type != DEFAULT_BINGO_TYPE) {
+        m_bingo_type = bingo_type;
+    } else if (Config::Get(Config::WIIMIX_BINGO_TYPE) != DEFAULT_BINGO_TYPE) {
+        m_bingo_type = Config::Get(Config::WIIMIX_BINGO_TYPE);
+    } else {
+        m_bingo_type = DEFAULT_BINGO_TYPE;
+    }
+
+    if (card_size != DEFAULT_CARD_SIZE) {
+        m_card_size = card_size;
+    } else if (Config::Get(Config::WIIMIX_CARD_SIZE) != DEFAULT_CARD_SIZE) {
+        m_card_size = Config::Get(Config::WIIMIX_CARD_SIZE);
+    } else {
+        m_card_size = DEFAULT_CARD_SIZE;
+    }
+
+    if (teams != DEFAULT_TEAMS) {
+        m_teams = teams;
+    } else if (Config::Get(Config::WIIMIX_TEAMS) != DEFAULT_TEAMS) {
+        m_teams = Config::Get(Config::WIIMIX_TEAMS);
+    } else {
+        m_teams = DEFAULT_TEAMS;
+    }
+}
 
 WiiMixEnums::BingoType WiiMixBingoSettings::GetBingoType() const
 {
@@ -79,14 +104,6 @@ QString WiiMixBingoSettings::GetLobbyID()
 void WiiMixBingoSettings::SetLobbyID(QString value)
 {
     m_lobby_id = value;
-}
-
-QString WiiMixBingoSettings::GetSeed() {
-    return m_seed;
-}
-
-void WiiMixBingoSettings::SetSeed(QString value) {
-    m_seed = value;
 }
 
 QString WiiMixBingoSettings::GetLobbyPassword()

@@ -95,7 +95,6 @@ public:
 
   
   WiiMixBingoSettings* GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
-  WiiMixClient* GetBingoClient();
 
 signals:
   void onSettingsChanged(WiiMixBingoSettings* settings); // This signal is for local one player
@@ -146,9 +145,6 @@ private:
   QComboBox* m_difficulty;
   QComboBox* m_save_state_bank;
 
-  WiiMixClient* m_wiimix_client;
-
-  WiiMixBingoSettings* m_bingo_settings;
   QString m_player_name;
   int m_player_num;
   // Time (maybe I make this an estimate at the bottom rather than a parameter)

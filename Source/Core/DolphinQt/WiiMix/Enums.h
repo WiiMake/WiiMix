@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+
 namespace WiiMixEnums {
     enum class Difficulty {
         NORMAL,
@@ -228,7 +229,8 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_CURRENT_OBJECTIVES {}
 
 // BINGO NETWORKING
-#define PORT 19504
+inline int PORT = std::getenv("PORT") != nullptr ? std::stoi(std::getenv("PORT")) : -1;
+inline std::string IP = std::getenv("IP") ? std::getenv("IP") : "";
 
 // ROGUE
 #define DEFAULT_ROGUE_LENGTH WiiMixEnums::RogueLength::MEDIUM

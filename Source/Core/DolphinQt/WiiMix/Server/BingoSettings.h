@@ -12,7 +12,7 @@
 #include "DolphinQt/WiiMix/Server/Settings.h"
 
 // SERVER BINGO SETTINGS; copyable
-class WiiMixBingoSettings : public WiiMixSettings 
+class WiiMixBingoSettings : public WiiMixSettings
 {
 public:
   explicit WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);

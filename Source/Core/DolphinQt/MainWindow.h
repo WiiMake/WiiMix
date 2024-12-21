@@ -275,7 +275,7 @@ private:
   MappingWindow* m_hotkey_window = nullptr;
   FreeLookWindow* m_freelook_window = nullptr;
 
-  WiiMixBingoSettings* m_bingo_settings = nullptr;
+  // WiiMixBingoSettings* m_bingo_settings = nullptr;
   QString m_player_name = QStringLiteral("");
   int m_player_num = 0;
   bool m_player_ready = false;

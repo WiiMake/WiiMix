@@ -380,13 +380,13 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // connect(m_wiimix_client, &WiiMixClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
 
   // Connect client to server
-  // m_wiimix_client->ConnectToServer();
+  // WiiMixClient::instance()->ConnectToServer();
 
   // Create a new lobby if it doesn't exist
   // Since two requests are being
   // This should double as a connection if the lobby does exist
   // TODOx: may need to move this into ready
-  // m_wiimix_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
+  // WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
   // printf("screensaver tries to load\n");
@@ -924,7 +924,7 @@ void MainWindow::OpenUserFolder()
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client) {
   // Start the wiimix
   qDebug() << "Bingo calls";
-  m_bingo_settings = settings;
+  // m_bingo_settings = settings;
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
@@ -1016,6 +1016,9 @@ void MainWindow::ShowWiiMixWindow() {
 
 void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
   qDebug() << "Starting WiiMix Objective";
+
+  // @gyoder: commented out for compilation purposes; objective needs to be updated
+  /*
   std::string savePath;
   // if (m_bingo_settings == nullptr) {
     // WiiMixObjective currentObjective = m_bingo_settings->GetObjectives().at(m_bingo_settings->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(m_player_num)]);
@@ -1050,9 +1053,12 @@ void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
     qDebug() << "Game file path: " << gameFile.GetFilePath().c_str();
     StartGame(BootParameters::GenerateFromFile(gameFile.GetFilePath(), std::move(boot_data)), savePath);
   }
+  */
 }
 
 void MainWindow::ResetWiiMixObjective(WiiMixObjective objective) {
+  // @gyoder: commented out for compilation purposes; objective needs to be updated
+  /*
   std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + "/" + objective.GetISOFile();
   UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
   std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + "/" + objective.GetSavestateFile();
@@ -1060,12 +1066,13 @@ void MainWindow::ResetWiiMixObjective(WiiMixObjective objective) {
     MainWindow::StartWiiMixObjective(objective);
   }
   State::LoadAs(Core::System::GetInstance(), savestate_path);
+  */
 }
 
 void MainWindow::Open()
 {
-  //TODOx: TEMP FILES FOR TESTING
-
+  // @gyoder: commented out for compilation purposes; objective needs to be updated
+  /*
   WiiMixObjective::CacheGames();
   std::vector<WiiMixObjective> objectives = WiiMixObjective::GetObjectives();
   for (WiiMixObjective objective : objectives) {
@@ -1073,7 +1080,7 @@ void MainWindow::Open()
   }
 
   StartWiiMixObjective(objectives[rand() % objectives.size()]);
-
+  */
 
   // QStringList files = PromptFileNames();
   // if (!files.isEmpty())
@@ -1752,14 +1759,14 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
   // In the future, we should be pulling from the objectives folder
   // and this hotkey should only be run if bingo is actually running
   // i.e. after objectives have been populated
-  if (m_bingo_settings->GetObjectives().size() > 0) {
-    qDebug() << m_bingo_settings->GetObjectives().size();
-    StartWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
+  if (WiiMixBingoSettings::instance()->GetObjectives().size() > 0) {
+    qDebug() << WiiMixBingoSettings::instance()->GetObjectives().size();
+    StartWiiMixObjective(WiiMixBingoSettings::instance()->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
-    m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
+    WiiMixBingoSettings::instance()->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
-    if (m_wiimix_client != nullptr) {
-      m_wiimix_client->SendData(m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    if (WiiMixClient::instance()->IsConnected()) {
+      WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE);
     }
   }
   return;
@@ -1768,17 +1775,17 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
 void MainWindow::ObjectiveResetSlotAt(int slot) {
   // TODOx: reset the objective at the slot
   qDebug() << "Resetting objective at slot " << slot;
-  if (m_bingo_settings->GetObjectives().size() > 0) {
+  if (WiiMixBingoSettings::instance()->GetObjectives().size() > 0) {
     // NOTE: this is hard coded currently
     // In the future, we should be pulling from the objectives folder
     // and this hotkey should only be run if bingo is actually running
     // i.e. after objectives have been populated
-    ResetWiiMixObjective(m_bingo_settings->GetObjectives()[slot]);
+    ResetWiiMixObjective(WiiMixBingoSettings::instance()->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
-    m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
+    WiiMixBingoSettings::instance()->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
-    // if (m_wiimix_client != nullptr) {
-    //   m_wiimix_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    // if (WiiMixClient::instance()->IsConnected()) {
+    //   WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
     // }
   }
   return;
@@ -1793,10 +1800,10 @@ void MainWindow::BingoReady() {
   } else {
     m_screen_saver->SetTextItemText(QStringLiteral("Press Start"));
   }
-  m_bingo_settings->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
+  WiiMixBingoSettings::instance()->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
-  if (m_wiimix_client != nullptr) {
-    m_wiimix_client->SendData(m_bingo_settings, WiiMixEnums::Action::UPDATE);
+  if (WiiMixClient::instance()->IsConnected()) {
+    WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE);
   }
   return;
 }

@@ -17,10 +17,10 @@
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size);
-  static WiiMixBingoSettings* instance(WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE) {
+  explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size, bool teams);
+  static WiiMixBingoSettings* instance(WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
     if (!s_instance) {
-        s_instance = new WiiMixBingoSettings(bingo_type, card_size);
+        s_instance = new WiiMixBingoSettings(bingo_type, card_size, teams);
     }
     // TODOx: is this cast actually what I want?
     return static_cast<WiiMixBingoSettings*>(s_instance);
@@ -94,10 +94,10 @@ private:
   int m_card_size;
   // TODOx: teams hasn't been tested at all
   bool m_teams;
-  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
+  QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players = {};
   QMap<WiiMixEnums::Player, int> m_current_objectives = {};
   QMap<WiiMixEnums::Player, bool> m_players_ready = {};
-  QString m_lobby_id;
-  QString m_lobby_password;
-  QString m_seed;
+  QString m_lobby_id = QStringLiteral("");
+  QString m_lobby_password = QStringLiteral("");
+  QString m_seed = QStringLiteral("");
 };

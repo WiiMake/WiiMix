@@ -13,7 +13,9 @@ bool WiiMixClient::ConnectToServer() {
     // Use the loopback address for network testing
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
-        m_socket->connectToHost(QStringLiteral("localhost"), PORT);
+        assert (PORT != -1);
+        assert (IP != "");
+        m_socket->connectToHost(QString::fromStdString(IP), PORT);
         qDebug() << QStringLiteral("Connecting client to server");
         if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
             qCritical() << "Failed to connect to server:" << m_socket->errorString();
@@ -35,6 +37,13 @@ bool WiiMixClient::ConnectToServer() {
 
 
     return false; //TODOx: temp to build
+}
+
+bool WiiMixClient::IsConnected() const {
+    if (m_socket == nullptr) {
+        return false;
+    }
+    return m_socket->state() == QAbstractSocket::ConnectedState;
 }
 
 bool WiiMixClient::SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action) {

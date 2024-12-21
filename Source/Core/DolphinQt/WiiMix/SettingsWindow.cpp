@@ -127,7 +127,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
           WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
           WiiMixBingoSettings::instance()->SetCardSize(WiiMixSettings::StringToCardSize(m_config->GetCardSize()));
           WiiMixBingoSettings::instance()->SetBingoType(m_config->GetBingoType());
-          emit StartWiiMixBingo(WiiMixBingoSettings::instance(), m_config->GetBingoClient());
+          emit StartWiiMixBingo(WiiMixBingoSettings::instance(), WiiMixClient::instance());
         }
         else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
           WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());

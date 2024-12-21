@@ -42,7 +42,6 @@ public:
   WiiMixEnums::Player GetCompleted();
   void SetCompleted(WiiMixEnums::Player player);
 
-
 private:
   uint16_t m_id;
   std::string m_title;
@@ -57,7 +56,4 @@ private:
 
   // not in the db
   WiiMixEnums::Player m_player_completed;
-
-
-
 };

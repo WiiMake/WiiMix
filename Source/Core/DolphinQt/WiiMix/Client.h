@@ -28,14 +28,23 @@ class WiiMixClient : public QObject
   Q_OBJECT
 
 public:
-  // explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr, WiiMixBingoSettings settings = WiiMixBingoSettings());
-  explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
+  WiiMixClient(const WiiMixClient& client) = delete;
+
+  static WiiMixClient* instance() {
+    if (!s_instance) {
+      s_instance = new WiiMixClient();
+    }
+    return s_instance;
+  }
+
+  // explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
   
   // Simplified it to just sending and receiving settings and an action
   // The settings are encoded and decoded to and from json
 
   // Note: these methods and signals could be overloaded to handle netplay for other modes
   // Bingo is the only one that has netplay currently implemented
+  bool IsConnected() const;
   bool SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
   bool ConnectToServer();
@@ -44,12 +53,16 @@ signals:
   void onSettingsChanged(WiiMixBingoSettings* settings);
   void onError(QString error);
 
+protected:
+  explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
+
+  inline static WiiMixClient* s_instance = nullptr;
+
 // If desired, this can be optimized by storing in members and only sending the updated data
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time
 private:
   QTcpSocket* m_socket;
-  // WiiMixBingoSettings m_bingo_settings;
-//     std::list<WiiMixEnums::Player> m_players;
-//     std::list<WiiMixObjective> m_bingo_card;
-//     WiiMixEnums::BingoType m_bingo_type;
+  //     std::list<WiiMixEnums::Player> m_players;
+  //     std::list<WiiMixObjective> m_bingo_card;
+  //     WiiMixEnums::BingoType m_bingo_type;
 };
