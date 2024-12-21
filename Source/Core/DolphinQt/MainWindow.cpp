@@ -131,7 +131,7 @@
 #include "DolphinQt/ToolBar.h"
 #include "DolphinQt/WiiUpdate.h"
 #include "DolphinQt/WiiMix/SettingsWindow.h"
-#include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
@@ -367,26 +367,26 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // m_bingo_settings->SetPlayers(players);
   // // Initialize bingo client
   // qDebug() << "Initializing client";
-  // m_bingo_client = new WiiMixBingoClient();
+  // m_wiimix_client = new WiiMixClient();
   // // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
   // m_player_num = 0;
 
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
-  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
-  // connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
-  //connect(m_bingo_client, &WiiMixBingoClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
-  // connect(m_bingo_client, &WiiMixBingoClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
+  // connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
+  // connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  //connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  // connect(m_wiimix_client, &WiiMixClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
 
   // Connect client to server
-  // m_bingo_client->ConnectToServer();
+  // m_wiimix_client->ConnectToServer();
 
   // Create a new lobby if it doesn't exist
   // Since two requests are being
   // This should double as a connection if the lobby does exist
   // TODOx: may need to move this into ready
-  // m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
+  // m_wiimix_client->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
 
   // Load ScreenSaver
   // printf("screensaver tries to load\n");
@@ -619,11 +619,11 @@ void MainWindow::ConnectMenuBar()
   connect(m_menu_bar, &MenuBar::StateLoadSlot, this, &MainWindow::StateLoadSlot);
   connect(m_menu_bar, &MenuBar::StateSaveSlot, this, &MainWindow::StateSaveSlot);
   connect(m_menu_bar, &MenuBar::StateSendSlot, this, &MainWindow::StateSendSlot);
-  connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
+  // connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
   connect(m_menu_bar, &MenuBar::StateLoadSlotAt, this, &MainWindow::StateLoadSlotAt);
   connect(m_menu_bar, &MenuBar::StateSaveSlotAt, this, &MainWindow::StateSaveSlotAt);
   connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::StateSendSlotAt);
-  connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
+  // connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
   connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
   connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
   connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
@@ -921,18 +921,18 @@ void MainWindow::OpenUserFolder()
   QDesktopServices::openUrl(url);
 }
 
-void MainWindow::StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client) {
+void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client) {
   // Start the wiimix
   qDebug() << "Bingo calls";
-  m_bingo_settings = &settings;
+  m_bingo_settings = settings;
 }
 
-void MainWindow::StartWiiMixRogue(WiiMixRogueSettings settings) {
+void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
   // Start the wiimix
   qDebug() << "Rogue calls";
 }
 
-void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
+void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
   // Start the wiimix
   qDebug() << "Shuffle calls";
 
@@ -961,13 +961,13 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings settings) {
   StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
                 std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
   qDebug() << "Started: " << selection.GetGameID().c_str();
-  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000) + settings.GetMinTimeBetweenSwitch() * 1000;
+  int sleep_time = rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000) + settings->GetMinTimeBetweenSwitch() * 1000;
   QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, m_game_list]() {
     WiiMixShuffleUpdate(settings, selection, m_game_list);
   });
 }
 
-void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
+void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Running)
   {
     return;
@@ -988,7 +988,7 @@ void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::G
     }
     StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
   }
-  int sleep_time = rand() % ((settings.GetMaxTimeBetweenSwitch() - settings.GetMinTimeBetweenSwitch()) * 1000 + 1) + settings.GetMinTimeBetweenSwitch() * 1000;
+  int sleep_time = rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000 + 1) + settings->GetMinTimeBetweenSwitch() * 1000;
   QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, gameList]() {
     WiiMixShuffleUpdate(settings, selection, gameList);
   });
@@ -1726,10 +1726,10 @@ void MainWindow::StateSendSlot()
 }
 
 // TODO: GameSwapSlot
-void MainWindow::GameSwapSlot()
-{
-  return;
-}
+// void MainWindow::GameSwapSlot()
+// {
+//   return;
+// }
 
 void MainWindow::StateLoadSlotAt(int slot)
 {
@@ -1758,8 +1758,8 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
     // Update settings using the hardcoded player_num`
     m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
-    if (m_bingo_client != nullptr) {
-      m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    if (m_wiimix_client != nullptr) {
+      m_wiimix_client->SendData(m_bingo_settings, WiiMixEnums::Action::UPDATE);
     }
   }
   return;
@@ -1777,8 +1777,8 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
     // Update settings using the hardcoded player_num`
     m_bingo_settings->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
-    // if (m_bingo_client != nullptr) {
-    //   m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+    // if (m_wiimix_client != nullptr) {
+    //   m_wiimix_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
     // }
   }
   return;
@@ -1795,55 +1795,56 @@ void MainWindow::BingoReady() {
   }
   m_bingo_settings->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
-  if (m_bingo_client != nullptr) {
-    m_bingo_client->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
+  if (m_wiimix_client != nullptr) {
+    m_wiimix_client->SendData(m_bingo_settings, WiiMixEnums::Action::UPDATE);
   }
   return;
 }
 
-void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
-  // Check if both players are ready
-  // If bingo is not already started
-  // Check if both players are ready
-  qDebug() << "Showcase";
-  *m_bingo_settings = settings;
-  qDebug() << "Updated settings";
-  QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
-  if (m_bingo_settings->GetObjectives().size() > 0) {
-    for (int i = 0; i < 2; i++) {
-      if (!players_ready[static_cast<WiiMixEnums::Player>(i)]) {
-        return;
-      }
-    }
-    // If both players are ready, start the showcase
-    qDebug() << "Starting the showcase";
-    // start the showcase
-    // load objective
-    ObjectiveLoadSlotAt(0);
-  }
-  else {
-    // If bingo is already started, check if both players are ready
-    for (int i = 0; i < 2; i++) {
-      if (players_ready[static_cast<WiiMixEnums::Player>(i)]) {
-        return;
-      }
-    }
-    // Both players are not ready, stop the showcase
-    m_bingo_settings->SetObjectives({});
-  }
-}
+// void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
+//   // Check if both players are ready
+//   // If bingo is not already started
+//   // Check if both players are ready
+//   qDebug() << "Showcase";
+//   *m_bingo_settings = settings;
+//   qDebug() << "Updated settings";
+//   QMap<WiiMixEnums::Player, bool> players_ready = settings.GetPlayersReady();
+//   if (m_bingo_settings->GetObjectives().size() > 0) {
+//     for (int i = 0; i < 2; i++) {
+//       if (!players_ready[static_cast<WiiMixEnums::Player>(i)]) {
+//         return;
+//       }
+//     }
+//     // If both players are ready, start the showcase
+//     qDebug() << "Starting the showcase";
+//     // start the showcase
+//     // load objective
+//     ObjectiveLoadSlotAt(0);
+//   }
+//   else {
+//     // If bingo is already started, check if both players are ready
+//     for (int i = 0; i < 2; i++) {
+//       if (players_ready[static_cast<WiiMixEnums::Player>(i)]) {
+//         return;
+//       }
+//     }
+//     // Both players are not ready, stop the showcase
+//     m_bingo_settings->SetObjectives({});
+//   }
+// }
 
-// TODO: StateSendSlotAt
+// TODOx: StateSendSlotAt
 void MainWindow::StateSendSlotAt(int slot)
 {
   return;
 }
 
-// TODO: GameSwapSlotAt
-void MainWindow::GameSwapSlotAt(int slot)
-{
-  return;
-}
+// Using ObjectiveLoadSlot instead
+// 
+// void MainWindow::GameSwapSlotAt(int slot)
+// {
+//   return;
+// }
 
 void MainWindow::StateLoadUndo()
 {

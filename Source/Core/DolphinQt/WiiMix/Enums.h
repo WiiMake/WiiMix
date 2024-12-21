@@ -46,6 +46,25 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    enum class ObjectiveType {
+        BOSS,
+        LEVEL,
+        PUZZLE,
+        SCORE,
+        RNG,
+        TIMER,
+        SURVIVAL,
+        EASTER_EGG,
+        COMPLETIONIST,
+        PACIFIST,
+        NO_HIT,
+        GLITCH,
+        END, // Default/size value
+    };
+
+    // NOTE: instead of storing genres ourselves, we'll be pulling tags from the Retroachievements API
+    // To populate genre
+
     Color PlayerToColor(Player player);
 
     std::string ColorToHex(Color color);
@@ -79,6 +98,7 @@ namespace WiiMixEnums {
     #define BINGO_NETPLAY_SETTINGS_PLAYERS "PLAYERS"
     #define BINGO_NETPLAY_SETTINGS_LOBBY_ID "LOBBY_ID"
     #define BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD "LOBBY_PASSWORD"
+    #define BINGO_NETPLAY_SETTINGS_SEED "SEED"
     #define BINGO_NETPLAY_SETTINGS_COLOR "COLOR"
     #define BINGO_NETPLAY_SETTINGS_NAME "NAME"
     #define BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
@@ -105,6 +125,48 @@ namespace WiiMixEnums {
 
     std::string CommonNetplaySettingsToString(CommonNetplaySettings setting);
     CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
+
+    // Rogue Settings
+    enum class RogueItem {
+        REROLL_EFFECT, // Rerolls the effect for a round
+        SWAP_OBJECTIVE, // Used to replace the current objective with a different one
+        EXTRA_TIME, // Used automatically if you run out of time; gives you 15 extra seconds
+        PAUSE, // Grants the ability to pause for a round
+        SPOTLIGHT, // Grants the ability to view the next 3 objectives/challenges
+        DOUBLE_TIME, // Make the current challenge slightly more difficult, but skip the next challenge on completion
+        END
+    };
+    // There's 10 objectives; the 2nd, 4th, and 7th rounds are always items
+    // The final stage is a different objective, but always the same Event:
+    // A multiobjective guantlet of boss objectives between different games:
+    // The first challenge is limited button presses
+    // The next challenge has inverted movement every x seconds (random interval)
+    // The final challenge is a survival shuffle round between 10 states marked as survival with save state manipulation,
+    // pausing and playing, and speedup and slowdown
+    // but if you survive for 100 seconds the next load will fail and you'll win
+    enum class RogueEvent {
+        GET_ITEM,
+        LIMITED_A_BUTTON,
+        LIMITED_B_BUTTON,
+        INVERTED_X,
+        INVERTED_Y,
+        // INDUCED_LATENCY,
+        INCREASED_SPEED,
+        VARIABLE_SPEED,
+        RANDOMIZED_CONTROLS,
+        STRICTER_TIME_LIMIT,
+        // DVD_SCREENSAVER_WINDOW,
+        LIMITED_BUTTONS,
+        INVERTED_MOVEMENT,
+        SAVE_STATE_MANIPULATION,
+        END
+    };
+    enum class RogueLength {
+        SHORT, // 5
+        MEDIUM, // 7
+        MARATHON, // 10
+        END
+    };
 }
 
 // Retroachievements currently (2024) supports around 400000 achievements
@@ -145,6 +207,7 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define PORT 19504
 
 // ROGUE
+#define DEFAULT_ROGUE_LENGTH WiiMixEnums::RogueLength::MEDIUM
 
 // SHUFFLE
 #define DEFAULT_MIN_SWITCH_TIME 15

@@ -1,5 +1,5 @@
-#include "DolphinQt/WiiMix/BingoSettings.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/Server/BingoSettings.h"
+#include "DolphinQt/WiiMix/Server/Settings.h"
 
 #include <QJsonObject>
 
@@ -7,13 +7,12 @@
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size) : WiiMixSettings(
-    WiiMixSettings::instance()->GetDifficulty(),
-    WiiMixSettings::instance()->GetMode(),
-    WiiMixSettings::instance()->GetSaveStateBank(),
-    WiiMixSettings::instance()->GetObjectives(),
-    WiiMixSettings::instance()->GetGamesList()
-), m_bingo_type(bingo_type), m_card_size(card_size) {}
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type, int card_size)
+    : WiiMixSettings(settings.GetDifficulty(), settings.GetMode(), settings.GetSaveStateBank(), settings.GetObjectives(), settings.GetGamesList()), m_bingo_type(bingo_type), m_card_size(card_size) 
+{}
+
+
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size) : WiiMixSettings(), m_bingo_type(bingo_type), m_card_size(card_size) {}
 
 WiiMixEnums::BingoType WiiMixBingoSettings::GetBingoType() const
 {
@@ -146,36 +145,51 @@ QJsonDocument WiiMixBingoSettings::ToJson()
     return QJsonDocument(json);
 }
 
-void WiiMixBingoSettings::FromJson(QJsonDocument json)
+// Copy constructor if on server
+WiiMixBingoSettings WiiMixBingoSettings::FromJson(QJsonDocument json)
 {
     // Take care of the common settings first
     FromJsonCommon(json);
     QJsonObject obj = json.object();
-    SetBingoType(static_cast<WiiMixEnums::BingoType>(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)].toInt()));
-    SetTeams(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)].toBool());
-    SetCardSize(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)].toInt());
+    WiiMixEnums::BingoType bingo_type = static_cast<WiiMixEnums::BingoType>(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)].toInt());
+    bool teams = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)].toBool();
+    int card_size = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)].toInt();
 
+    QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
     QJsonObject players_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)].toObject();
     for (auto it = players_variant.begin(); it != players_variant.end(); ++it)
     {
         QJsonObject player_info = it.value().toObject();
         WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)].toInt());
         QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
-        m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
-    }
-    qDebug() << "current_objectives_variant";
-    QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
-    for (auto it = current_objectives_variant.begin(); it != current_objectives_variant.end(); ++it) {
-        m_current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
-    }
-    qDebug() << "players_ready_variant";
-    QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)].toObject();
-    for (auto it = players_ready_variant.begin(); it != players_ready_variant.end(); ++it) {
-        m_players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
+        players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
     }
 
-    m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
-    m_lobby_password = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)].toString();
+    QMap<WiiMixEnums::Player, int> current_objectives;
+    QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
+    for (auto it = current_objectives_variant.begin(); it != current_objectives_variant.end(); ++it) {
+        current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
+    }
+
+    QMap<WiiMixEnums::Player, bool> players_ready;
+    QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)].toObject();
+    for (auto it = players_ready_variant.begin(); it != players_ready_variant.end(); ++it) {
+        players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
+    }
+
+    QString lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
+    QString lobby_password = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)].toString();
+    QString seed = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_SEED)].toString();
+
+    WiiMixBingoSettings new_settings(bingo_type, card_size);
+    new_settings.SetTeams(teams);
+    new_settings.SetPlayers(players);
+    new_settings.SetCurrentObjectives(current_objectives);
+    new_settings.SetPlayersReady(players_ready);
+    new_settings.SetLobbyID(lobby_id);
+    new_settings.SetLobbyPassword(lobby_password);
+    new_settings.SetSeed(seed);
+    return new_settings;
 }
 
 QString WiiMixBingoSettings::GetSeed() {
@@ -184,16 +198,4 @@ QString WiiMixBingoSettings::GetSeed() {
 
 void WiiMixBingoSettings::SetSeed(QString value) {
     m_seed = value;
-}
-
-void WiiMixBingoSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
-    m_difficulty = difficulty;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_DIFFICULTY, difficulty);
-    // emit SettingsChanged(difficulty);
-}
-
-void WiiMixBingoSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
-    m_save_state_bank = save_state_bank;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SAVE_STATE_BANK, save_state_bank);
-    // emit SettingsChanged(save_state_bank);
 }

@@ -1,20 +1,18 @@
 #include "DolphinQt/WiiMix/RogueWindow.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 
-WiiMixRogueWindow::WiiMixRogueWindow(const WiiMixRogueSettings& settings)
-        : m_settings(settings)
-{}
+WiiMixRogueWindow::WiiMixRogueWindow() {}
 
-WiiMixRogueSettings::Event WiiMixRogueSettings::GetEvent()
+WiiMixEnums::RogueEvent WiiMixRogueSettings::GetEvent()
 {
-    int num_events = static_cast<int>(WiiMixRogueSettings::Event::END);
-    WiiMixRogueSettings::Event event = static_cast<WiiMixRogueSettings::Event>(rand() % num_events);
+    int num_events = static_cast<int>(WiiMixEnums::RogueEvent::END);
+    WiiMixEnums::RogueEvent event = static_cast<WiiMixEnums::RogueEvent>(rand() % num_events);
     return event;
 }
 
-WiiMixRogueSettings::Item WiiMixRogueSettings::GetItem()
+WiiMixEnums::RogueItem WiiMixRogueSettings::GetItem()
 {
-    int num_items = static_cast<int>(WiiMixRogueSettings::Item::END);
-    WiiMixRogueSettings::Item item = static_cast<WiiMixRogueSettings::Item>(rand() % num_items);
+    int num_items = static_cast<int>(WiiMixEnums::RogueItem::END);
+    WiiMixEnums::RogueItem item = static_cast<WiiMixEnums::RogueItem>(rand() % num_items);
     return item;
 }

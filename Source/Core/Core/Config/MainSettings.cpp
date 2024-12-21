@@ -531,21 +531,28 @@ const Info<std::string> MAIN_USB_PASSTHROUGH_DEVICES{{System::Main, "USBPassthro
                                                      ""};
 
 // WiiMix (base)
-const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY{{System::Main, "WiiMix", "Difficulty"}, DEFAULT_DIFFICULTY};
+// const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY{{System::Main, "WiiMix", "Difficulty"}, DEFAULT_DIFFICULTY};
 const Info<WiiMixEnums::Mode> WIIMIX_MODE{{System::Main, "WiiMix", "Mode"}, DEFAULT_MODE};
-const Info<WiiMixEnums::SaveStateBank> WIIMIX_SAVE_STATE_BANK{{System::Main, "WiiMix", "SaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
 // Comma separated list of objective ids and game ids respectively that can be parsed into the desired information
-const Info<std::string> WIIMIX_OBJECTIVE_IDS{{System::Main, "WiiMix", "Objectives"}, ""};
-const Info<std::string> WIIMIX_GAME_IDS{{System::Main, "WiiMix", "Games"}, ""};
+// Games and Objectives are getting cut from the settings file; these both get loaded dynamically based on seeds 
+// const Info<std::string> WIIMIX_OBJECTIVE_IDS{{System::Main, "WiiMix", "Objectives"}, ""};
+// const Info<std::string> WIIMIX_GAME_IDS{{System::Main, "WiiMix", "Games"}, ""};
 
 // WiiMix (bingo)
+const Info<WiiMixEnums::Difficulty> WIIMIX_BINGO_DIFFICULTY{{System::Main, "WiiMix", "BingoDifficulty"}, DEFAULT_DIFFICULTY};
+const Info<WiiMixEnums::SaveStateBank> WIIMIX_BINGO_SAVE_STATE_BANK{{System::Main, "WiiMix", "BingoSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
 const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE{{System::Main, "WiiMix", "BingoType"}, DEFAULT_BINGO_TYPE};
 const Info<int> WIIMIX_CARD_SIZE{{System::Main, "WiiMix", "CardSize"}, DEFAULT_CARD_SIZE};
 const Info<bool> WIIMIX_TEAMS{{System::Main, "WiiMix", "Teams"}, DEFAULT_TEAMS};
 
 // WiiMix (rogue)
+const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY{{System::Main, "WiiMix", "RogueDifficulty"}, DEFAULT_DIFFICULTY};
+const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK{{System::Main, "WiiMix", "RogueSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
+const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH{{System::Main, "WiiMix", "RogueLength"}, DEFAULT_ROGUE_LENGTH};
 
 // WiiMix (shuffle)
+const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY{{System::Main, "WiiMix", "ShuffleDifficulty"}, DEFAULT_DIFFICULTY};
+const Info<WiiMixEnums::SaveStateBank> WIIMIX_SHUFFLE_SAVE_STATE_BANK{{System::Main, "WiiMix", "ShuffleSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
 const Info<int> WIIMIX_NUMBER_OF_SWITCHES{{System::Main, "WiiMix", "NumSwitches"}, DEFAULT_NUMBER_OF_SWITCHES};
 const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MinTimeBetweenSwitch"}, DEFAULT_MIN_SWITCH_TIME};
 const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MaxTimeBetweenSwitch"}, DEFAULT_MAX_SWITCH_TIME};

@@ -1,82 +1,99 @@
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include <QList>
+#include "Common/Config/Config.h"
+#include "Core/Config/MainSettings.h"
 
-
-WiiMixRogueSettings::WiiMixRogueSettings(const WiiMixSettings& settings)
-    : WiiMixSettings(settings)
-{}
+WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::RogueLength length) : WiiMixSettings(
+    WiiMixSettings::instance()->GetDifficulty(),
+    WiiMixSettings::instance()->GetMode(),
+    WiiMixSettings::instance()->GetSaveStateBank(),
+    WiiMixSettings::instance()->GetObjectives(),
+    WiiMixSettings::instance()->GetGamesList()
+), m_length(length) {}
 
 void WiiMixRogueSettings::SetSeed(QString seed) {
     m_seed = seed;
 }
 
-QList<WiiMixRogueSettings::Event> WiiMixRogueSettings::GetEvents()
+QList<WiiMixEnums::RogueEvent> WiiMixRogueSettings::GetEvents()
 {
 
 }
 
-QList<WiiMixRogueSettings::Item> WiiMixRogueSettings::GetItemSet()
+void WiiMixRogueSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
+    m_difficulty = difficulty;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_DIFFICULTY, difficulty);
+    // emit SettingsChanged(difficulty);
+}
+
+void WiiMixRogueSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
+    m_save_state_bank = save_state_bank;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SAVE_STATE_BANK, save_state_bank);
+    // emit SettingsChanged(save_state_bank);
+}
+
+QList<WiiMixEnums::RogueItem> WiiMixRogueSettings::GetItemSet()
 {
     // Returns m_items
     // Populates m_items using GetLength() if m_items is empty
     if (m_items.isEmpty())
     {
-        WiiMixRogueSettings::Length length = GetLength();
+        WiiMixEnums::RogueLength length = GetLength();
         for (int i = 0; i < static_cast<int>(length); i++)
         {
             // Assuming Item has a constructor that takes an int or some other logic to populate items
-            m_items.append(Item(i));
+            m_items.append(WiiMixEnums::RogueItem(i));
         }
     }
     return m_items;
 }
 
-void WiiMixRogueSettings::SetEvents(QList<WiiMixRogueSettings::Event> events)
+void WiiMixRogueSettings::SetEvents(QList<WiiMixEnums::RogueEvent> events)
 {
     m_events = events;
 }
 
-void WiiMixRogueSettings::SetItems(QList<WiiMixRogueSettings::Item> items)
+void WiiMixRogueSettings::SetItems(QList<WiiMixEnums::RogueItem> items)
 {
     m_items = items;
 }
 
-WiiMixRogueSettings::Length WiiMixRogueSettings::GetLength()
+WiiMixEnums::RogueLength WiiMixRogueSettings::GetLength()
 {
     return m_length;
 }
 
-void WiiMixRogueSettings::SetLength(WiiMixRogueSettings::Length length)
+void WiiMixRogueSettings::SetLength(WiiMixEnums::RogueLength length)
 {
     m_length = length;
 }
 
-QString WiiMixRogueSettings::LengthToString(Length length)
+QString WiiMixRogueSettings::LengthToString(WiiMixEnums::RogueLength length)
 {
     switch (length) {
-        case Length::SHORT:
+        case WiiMixEnums::RogueLength::SHORT:
             return QStringLiteral("Short");
-        case Length::MEDIUM:
+        case WiiMixEnums::RogueLength::MEDIUM:
             return QStringLiteral("Medium");
-        case Length::MARATHON:
+        case WiiMixEnums::RogueLength::MARATHON:
             return QStringLiteral("Marathon");
         default:
             return QStringLiteral("");
     }
 }
 
-WiiMixRogueSettings::Length WiiMixRogueSettings::StringToLength(QString length)
+WiiMixEnums::RogueLength WiiMixRogueSettings::StringToLength(QString length)
 {
     if (length == QStringLiteral("Short")) {
-        return Length::SHORT;
+        return WiiMixEnums::RogueLength::SHORT;
     }
     else if (length == QStringLiteral("Medium")) {
-        return Length::MEDIUM;
+        return WiiMixEnums::RogueLength::MEDIUM;
     }
     else if (length == QStringLiteral("Long") || length == QStringLiteral("MARATHON")) {
-        return Length::MARATHON;
+        return WiiMixEnums::RogueLength::MARATHON;
     }
     else {
-        return Length::END;
+        return WiiMixEnums::RogueLength::END;
     }
 }

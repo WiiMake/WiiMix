@@ -7,98 +7,72 @@
 #include <QList>
 #include <QString>
 
+#include "Common/Config/Config.h"
+#include "Core/Config/MainSettings.h"
 
 #pragma once
 
+// CLIENT ROGUE SETTINGS -> singleton
 class WiiMixRogueSettings : public WiiMixSettings 
 {
 public:
-  explicit WiiMixRogueSettings(const WiiMixSettings& settings);
-  enum class Item {
-      REROLL_EFFECT, // Rerolls the effect for a round
-      SWAP_OBJECTIVE, // Used to replace the current objective with a different one
-      EXTRA_TIME, // Used automatically if you run out of time; gives you 15 extra seconds
-      PAUSE, // Grants the ability to pause for a round
-      SPOTLIGHT, // Grants the ability to view the next 3 objectives/challenges
-      DOUBLE_TIME, // Make the current challenge slightly more difficult, but skip the next challenge on completion
-    END
-  };
-  // There's 10 objectives; the 2nd, 4th, and 7th rounds are always items
-  // The final stage is a different objective, but always the same Event:
-  // A multiobjective guantlet of boss objectives between different games:
-  // The first challenge is limited button presses
-  // The next challenge has inverted movement every x seconds (random interval)
-  // The final challenge is a survival shuffle round between 10 states marked as survival with save state manipulation,
-  // pausing and playing, and speedup and slowdown
-  // but if you survive for 100 seconds the next load will fail and you'll win
-  enum class Event {
-    GET_ITEM,
-    LIMITED_A_BUTTON,
-    LIMITED_B_BUTTON,
-    INVERTED_X,
-    INVERTED_Y,
-    // INDUCED_LATENCY,
-    INCREASED_SPEED,
-    VARIABLE_SPEED,
-    RANDOMIZED_CONTROLS,
-    STRICTER_TIME_LIMIT,
-    // DVD_SCREENSAVER_WINDOW,
-    LIMITED_BUTTONS,
-    INVERTED_MOVEMENT,
-    SAVE_STATE_MANIPULATION,
-    END
-  };
-  enum class Length {
-      SHORT, // 5
-      MEDIUM, // 7
-      MARATHON, // 10
-      END
-  };
-// Seeds will be encoded and decoded using Qt
-    QString GetSeed();
-    // Example seed: 50402523039501042031012343722364155 (34 digits long)
-    // 5: Length; the number of events before the finale
-    // 040252: the id of achievement 1
-    // 303950: the id of achievement 2
-    // 104203: the id of achievement 3
-    // 1: the number of boss achievements
-    // 012345: the boss achievement
-    // 3: the id of event 1
-    // 7: the id of event 2
-    // 2: the id of event 3
-    // 2: the position of the first item selection
-    // 2: the first item offered for item 1
-    // 3: the 2nd item offered
-    // 6: the 3rd item offered
-    // 4: the position of the second item selection
-    // 1: 1st item
-    // 5: 2nd item
-    // 5: 3rd item
-    void SetSeed(QString string);
+  static WiiMixRogueSettings* instance(WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
+    if (!s_instance) {
+        s_instance = new WiiMixRogueSettings(rogue_length);
+    }
+    return static_cast<WiiMixRogueSettings*>(s_instance);
+  }
 
-    static QString LengthToString(Length length);
-    static Length StringToLength(QString length);
+  explicit WiiMixRogueSettings(WiiMixEnums::RogueLength length);
 
-    QList<WiiMixRogueSettings::Event> GetEvents();
-    Event GetEvent();
-    void SetEvents(QList<WiiMixRogueSettings::Event> events);
-    QList<WiiMixRogueSettings::Item> GetItemSet();
-    void SetItems(QList<WiiMixRogueSettings::Item>);
-    Item GetItem();
-    QList<WiiMixRogueSettings::Item> GetPlayerItems();
-    void SetPlayerItems(QList<WiiMixRogueSettings::Item> items);
-    void AddPlayerItem(WiiMixRogueSettings::Item item);
-    QList<WiiMixRogueSettings::Item> Get3Items();
-    WiiMixRogueSettings::Length GetLength();
-    void SetLength(WiiMixRogueSettings::Length length);
+  // Seeds will be encoded and decoded using Qt
+  QString GetSeed();
+  // Example seed: 50402523039501042031012343722364155 (34 digits long)
+  // 5: Length; the number of events before the finale
+  // 040252: the id of achievement 1
+  // 303950: the id of achievement 2
+  // 104203: the id of achievement 3
+  // 1: the number of boss achievements
+  // 012345: the boss achievement
+  // 3: the id of event 1
+  // 7: the id of event 2
+  // 2: the id of event 3
+  // 2: the position of the first item selection
+  // 2: the first item offered for item 1
+  // 3: the 2nd item offered
+  // 6: the 3rd item offered
+  // 4: the position of the second item selection
+  // 1: 1st item
+  // 5: 2nd item
+  // 5: 3rd item
+  void SetSeed(QString string);
+
+  static QString LengthToString(WiiMixEnums::RogueLength length);
+  static WiiMixEnums::RogueLength StringToLength(QString length);
+
+  QList<WiiMixEnums::RogueEvent> GetEvents();
+  WiiMixEnums::RogueEvent GetEvent();
+  void SetEvents(QList<WiiMixEnums::RogueEvent> events);
+  QList<WiiMixEnums::RogueItem> GetItemSet();
+  void SetItems(QList<WiiMixEnums::RogueItem>);
+  WiiMixEnums::RogueItem GetItem();
+  QList<WiiMixEnums::RogueItem> GetPlayerItems();
+  void SetPlayerItems(QList<WiiMixEnums::RogueItem> items);
+  void AddPlayerItem(WiiMixEnums::RogueItem item);
+  QList<WiiMixEnums::RogueItem> Get3Items();
+  WiiMixEnums::RogueLength GetLength();
+  void SetLength(WiiMixEnums::RogueLength length);
+  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
+
 
 private:
-    QList<WiiMixRogueSettings::Event> m_events;
-    QList<WiiMixRogueSettings::Item> m_items;
-    QList<WiiMixRogueSettings::Item> m_player_items;
-    WiiMixRogueSettings::Length m_length;
-    // Endless can potentially come later
-    // bool m_endless;
-    QString m_seed;
+  QList<WiiMixEnums::RogueEvent> m_events;
+  QList<WiiMixEnums::RogueItem> m_items;
+  QList<WiiMixEnums::RogueItem> m_player_items;
+  WiiMixEnums::RogueLength m_length;
+  // Endless can potentially come later
+  // bool m_endless;
+  QString m_seed;
 
 };

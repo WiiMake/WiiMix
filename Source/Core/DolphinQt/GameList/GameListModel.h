@@ -31,6 +31,7 @@ public:
   // Qt's Model/View stuff uses these overrides.
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
   bool setData(const QModelIndex& index, const QVariant& value, int role) override;
+  void setWiiMixData(std::vector<std::shared_ptr<const UICommon::GameFile>> games);
   Qt::ItemFlags flags(const QModelIndex& index) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;

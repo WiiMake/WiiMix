@@ -9,10 +9,7 @@
 class WiiMixRogueWindow : public QDialog
 {
 public:
-    explicit WiiMixRogueWindow(const WiiMixRogueSettings& settings);
-
-    static void GetSettings();
+    explicit WiiMixRogueWindow();
 
 private:
-    WiiMixRogueSettings m_settings;
 };

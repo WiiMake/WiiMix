@@ -18,22 +18,26 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 
 // This is a file for syncing bingo cards between players
-class WiiMixBingoClient : public QObject
+// This is also a singleton; you can only be connected to ONE lobby at a time
+class WiiMixClient : public QObject
 {
   Q_OBJECT
 
 public:
-  // explicit WiiMixBingoClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr, WiiMixBingoSettings settings = WiiMixBingoSettings());
-  explicit WiiMixBingoClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
+  // explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr, WiiMixBingoSettings settings = WiiMixBingoSettings());
+  explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
   
   // Simplified it to just sending and receiving settings and an action
   // The settings are encoded and decoded to and from json
-  bool SendData(WiiMixBingoSettings settings, WiiMixEnums::Action action);
+
+  // Note: these methods and signals could be overloaded to handle netplay for other modes
+  // Bingo is the only one that has netplay currently implemented
+  bool SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
   bool ConnectToServer();
 
 signals:
-  void onSettingsChanged(WiiMixBingoSettings settings);
+  void onSettingsChanged(WiiMixBingoSettings* settings);
   void onError(QString error);
 
 // If desired, this can be optimized by storing in members and only sending the updated data

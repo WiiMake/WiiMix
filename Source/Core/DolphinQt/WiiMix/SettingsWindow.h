@@ -8,7 +8,7 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
-#include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Client.h"
 
 
 class WiiMixModesWidget;
@@ -28,9 +28,9 @@ public:
   std::vector<UICommon::GameFile> GetGamesList();
 
 signals:
-  void StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client);
-  void StartWiiMixRogue(WiiMixRogueSettings settings);
-  void StartWiiMixShuffle(WiiMixShuffleSettings settings);
+  void StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client);
+  void StartWiiMixRogue(WiiMixRogueSettings* settings);
+  void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
   void ErrorLoadingSettings(QString error_message);
 
 protected:
@@ -45,7 +45,6 @@ private:
 
   // QDialogButtonBox* m_load_button_box;
   // QDialogButtonBox* m_save_button_box;
-  WiiMixSettings m_settings;
   QPushButton* m_load_button_box;
   QPushButton* m_save_button_box;
   QToolButton* m_wii_mix_button;

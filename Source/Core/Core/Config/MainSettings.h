@@ -360,20 +360,25 @@ extern const Info<bool> MAIN_EMULATE_SKYLANDER_PORTAL;
 extern const Info<bool> MAIN_EMULATE_INFINITY_BASE;
 
 // WiiMix
-extern const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY;
 extern const Info<WiiMixEnums::Mode> WIIMIX_MODE;
-extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_SAVE_STATE_BANK;
 extern const Info<std::string> WIIMIX_OBJECTIVE_IDS;
 extern const Info<std::string> WIIMIX_GAME_IDS;
 
 // WiiMix (bingo)
+extern const Info<WiiMixEnums::Difficulty> WIIMIX_BINGO_DIFFICULTY;
+extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_BINGO_SAVE_STATE_BANK;
 extern const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE;
 extern const Info<int> WIIMIX_CARD_SIZE;
 extern const Info<bool> WIIMIX_TEAMS;
 
 // WiiMix (rogue)
+extern const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY;
+extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK;
+extern const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH;
 
 // WiiMix (shuffle)
+extern const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY;
+extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_SHUFFLE_SAVE_STATE_BANK;
 extern const Info<int> WIIMIX_NUMBER_OF_SWITCHES;
 extern const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH;
 extern const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH;

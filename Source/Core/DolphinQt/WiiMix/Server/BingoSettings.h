@@ -9,22 +9,17 @@
 #include <QPair>
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include "DolphinQt/WiiMix/Settings.h"
-#include "Common/Config/Config.h"
-#include "Core/Config/MainSettings.h"
+#include "DolphinQt/WiiMix/Server/Settings.h"
 
-// CLIENT BINGO SETTINGS -> singleton
+// SERVER BINGO SETTINGS; copyable
 class WiiMixBingoSettings : public WiiMixSettings 
 {
 public:
+  explicit WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
   explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size);
-  static WiiMixBingoSettings* instance(WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE) {
-    if (!s_instance) {
-        s_instance = new WiiMixBingoSettings(bingo_type, card_size);
-    }
-    // TODOx: is this cast actually what I want?
-    return static_cast<WiiMixBingoSettings*>(s_instance);
-  }
+
+  // TODOx: not sure why a default constructor is required here 
+  WiiMixBingoSettings() = default;
 
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
@@ -38,21 +33,21 @@ public:
   void RemovePlayer(WiiMixEnums::Player player);
   void SetPlayers(QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> value);
   QString GetLobbyID();
-    // Bingo lobby ids encode game information of all the selected game ids
-    // as well as have a unique random identifier at the end
-    // For example: 5000010000200003000042030234039204
-    // 5: # of selected games
-    // 00001: game id 1
-    // 00002: game id 2
-    // 00003: game id 3
-    // 00004: game id 4
-    // 20302: game id 5
-    // 34039204: random 8 digit identifier
-    // The LineEdit fields for connecting to bingo
-    // has a validator that checks against the current games you have enabled for wiimix,
-    // preventing connections to lobbies where the same games aren't enabled
-    // Also, the LineEdit field for hosting prevents hosting if no games are enabled
-    // or if the sum total of achievements of all enabled games < size of bingo board
+  // Bingo lobby ids encode game information of all the selected game ids
+  // as well as have a unique random identifier at the end
+  // For example: 5000010000200003000042030234039204
+  // 5: # of selected games
+  // 00001: game id 1
+  // 00002: game id 2
+  // 00003: game id 3
+  // 00004: game id 4
+  // 20302: game id 5
+  // 34039204: random 8 digit identifier
+  // The LineEdit fields for connecting to bingo
+  // has a validator that checks against the current games you have enabled for wiimix,
+  // preventing connections to lobbies where the same games aren't enabled
+  // Also, the LineEdit field for hosting prevents hosting if no games are enabled
+  // or if the sum total of achievements of all enabled games < size of bingo board
   void SetLobbyID(QString value);
   QString GetLobbyPassword();
   void SetLobbyPassword(QString value);
@@ -77,11 +72,15 @@ public:
   void UpdatePlayerReady(WiiMixEnums::Player player, bool value);
   
   QJsonDocument ToJson();
-  void FromJson(QJsonDocument json);
+  static WiiMixBingoSettings FromJson(QJsonDocument json);
 
-  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override {
+    m_difficulty = difficulty;
+  }
 
-  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
+    m_save_state_bank = save_state_bank;
+  }
 
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions

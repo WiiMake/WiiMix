@@ -50,8 +50,9 @@ GCPad::GCPad(const unsigned int index) : m_index(index)
   // i18n: The START/PAUSE button on GameCube controllers
   m_buttons->AddInput(Translatability::Translate, START_BUTTON, _trans("START"));
 
-  // WiiMix button for resetting the game
+  // WiiMix mappings
   m_buttons->AddInput(Translatability::Translate, RESET_BUTTON, _trans("RESET OBJECTIVE"));
+  m_buttons->AddInput(Translatability::Translate, BINGO_BOARD_BUTTON, _trans("BINGO BOARD"));
 
   // sticks
   groups.emplace_back(m_main_stick = new ControllerEmu::OctagonAnalogStick(
@@ -129,6 +130,7 @@ ControllerEmu::ControlGroup* GCPad::GetGroup(PadGroup group)
   }
 }
 
+// TODOx: for specific events such as randomizing controls, we could modify this function
 GCPadStatus GCPad::GetInput() const
 {
   const auto lock = GetStateLock();

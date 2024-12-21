@@ -1,4 +1,4 @@
-#include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
 
 #include <QTcpSocket>
@@ -7,9 +7,9 @@
 
 #include <assert.h>
 
-WiiMixBingoClient::WiiMixBingoClient(QObject *parent, QTcpSocket *socket) : QObject(parent), m_socket(socket) {}
+WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent), m_socket(socket) {}
 
-bool WiiMixBingoClient::ConnectToServer() {
+bool WiiMixClient::ConnectToServer() {
     // Use the loopback address for network testing
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
@@ -34,7 +34,7 @@ bool WiiMixBingoClient::ConnectToServer() {
     });
 }
 
-bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Action action) {
+bool WiiMixClient::SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action) {
     // For some reason m_socket here is erroring
     assert(m_socket != nullptr);
     // This statement would print otherwise
@@ -42,7 +42,7 @@ bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Acti
     bool success = false;
 
     // Connect a player to a lobby
-    QJsonDocument connect_json = settings.ToJson();
+    QJsonDocument connect_json = settings->ToJson();
     // connect_json[QStringLiteral(ACTION)] = static_cast<int>(action);
     QJsonObject connect_json_obj = connect_json.object();
 
@@ -77,25 +77,24 @@ bool WiiMixBingoClient::SendData(WiiMixBingoSettings settings, WiiMixEnums::Acti
     return success;
 }
 
-bool WiiMixBingoClient::ReceiveData(QJsonDocument doc) {
+bool WiiMixClient::ReceiveData(QJsonDocument doc) {
     // Update the settings
-    WiiMixBingoSettings bingo_settings = WiiMixBingoSettings();
-    bingo_settings = bingo_settings.FromJson(doc);
+    WiiMixBingoSettings::instance()->FromJson(doc);
     // Update the UI
     qDebug() << QStringLiteral("Emitting onSettingsChanged");
-    emit onSettingsChanged(bingo_settings);
+    emit onSettingsChanged(WiiMixBingoSettings::instance());
     return true;
 }
 
 // Getters (retrieves values from server)
-// WiiMixEnums::BingoType WiiMixBingoClient::GetBingoType() const {
+// WiiMixEnums::BingoType WiiMixClient::GetBingoType() const {
 //     return WiiMixEnums::BingoType();
 // }
 
-// std::list<WiiMixEnums::Player> WiiMixBingoClient::GetPlayers() const {
+// std::list<WiiMixEnums::Player> WiiMixClient::GetPlayers() const {
 //     return std::list<WiiMixEnums::Player>();
 // }
 
-// std::list<WiiMixObjective> WiiMixBingoClient::GetBingoCard() const {
+// std::list<WiiMixObjective> WiiMixClient::GetBingoCard() const {
 //     return std::list<WiiMixObjective>();
 // }

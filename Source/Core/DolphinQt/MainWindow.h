@@ -15,7 +15,7 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
-#include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/ScreenSaver.h"
 
@@ -114,14 +114,14 @@ private:
   void StateSaveSlot();
   // void ObjectiveLoadSlot(int slot);
   void StateSendSlot();
-  void GameSwapSlot();
+  // void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
   void StateSendSlotAt(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
   void BingoReady();
-  void GameSwapSlotAt(int slot);
+  // void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();
   void StateSaveUndo();
@@ -172,11 +172,11 @@ private:
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
   void StartGame(std::unique_ptr<BootParameters>&& parameters,
                  std::string save_path);
-  void StartWiiMixBingo(WiiMixBingoSettings settings, WiiMixBingoClient* client);
-  void StartWiiMixRogue(WiiMixRogueSettings settings);
-  void StartWiiMixShuffle(WiiMixShuffleSettings settings);
-  void WiiMixShuffleUpdate(WiiMixShuffleSettings settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
-  void WiiMixShowcase(WiiMixBingoSettings settings);
+  void StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client);
+  void StartWiiMixRogue(WiiMixRogueSettings* settings);
+  void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
+  void WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
+  // void WiiMixShowcase(WiiMixBingoSettings settings);
   void StartWiiMixObjective(WiiMixObjective objective);
   void ResetWiiMixObjective(WiiMixObjective objective);
   void ShowRenderWidget();
@@ -281,7 +281,7 @@ private:
   bool m_player_ready = false;
   QGraphicsTextItem* m_ready_text = nullptr;
   // bool m_bingo_started = false;
-  WiiMixBingoClient* m_bingo_client = nullptr;
+  WiiMixClient* m_wiimix_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;
   WiiMixRogueSettings* m_rogue_settings = nullptr;
 

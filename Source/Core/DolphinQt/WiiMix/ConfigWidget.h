@@ -15,7 +15,7 @@
 #include <QPair>
 #include <QRegularExpression>
 
-#include "DolphinQt/WiiMix/BingoClient.h"
+#include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 
@@ -41,7 +41,7 @@ public:
   // These values should ALWAYS be in sync with the server
 
   // Rogue
-  WiiMixRogueSettings::Length GetRogueLength() const;
+  WiiMixEnums::RogueLength GetRogueLength() const;
   void SetRogueLength(QString) const;
   QString GetRogueSeed() const;
   void SetRogueSeed(QString seed);
@@ -94,16 +94,16 @@ public:
   // void SetBingoPlayerNames(QList<std::string> value);
 
   
-  WiiMixBingoSettings GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
-  WiiMixBingoClient* GetBingoClient();
+  WiiMixBingoSettings* GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
+  WiiMixClient* GetBingoClient();
 
 signals:
-  void onSettingsChanged(WiiMixBingoSettings settings); // This signal is for local one player
+  void onSettingsChanged(WiiMixBingoSettings* settings); // This signal is for local one player
   // The network client has its own signal for when it receives data that it will emit
   // The corresponding signal is emitted based on whether bingo client exists or not
 
 public slots:
-  void OnSettingsChanged(WiiMixBingoSettings settings);
+  void OnSettingsChanged(WiiMixBingoSettings* settings);
   void DisplayClientError(QString error);
 
 private:
@@ -146,7 +146,7 @@ private:
   QComboBox* m_difficulty;
   QComboBox* m_save_state_bank;
 
-  WiiMixBingoClient* m_bingo_client;
+  WiiMixClient* m_wiimix_client;
 
   WiiMixBingoSettings* m_bingo_settings;
   QString m_player_name;

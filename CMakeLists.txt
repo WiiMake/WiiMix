@@ -106,6 +106,8 @@ option(USE_MGBA "Enables GBA controllers emulation using libmgba" ON)
 option(ENABLE_AUTOUPDATE "Enables support for automatic updates" ON)
 option(USE_RETRO_ACHIEVEMENTS "Enables integration with retroachievements.org" ON)
 
+option(BUILD_WIIMIX_SERVER "Build the WiiMix Bingo Server" ON)
+
 # Maintainers: if you consider blanket disabling this for your users, please
 # consider the following points:
 #  * No data is being sent without explicit user approval (pop up box at first

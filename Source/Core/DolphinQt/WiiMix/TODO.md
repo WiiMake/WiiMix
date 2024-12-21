@@ -4,12 +4,14 @@
 
 JUST A COUPLE TODOS AFTER WORKING TODAY
 
-[] - Implement Reset Objective code in GCPadEmu.cpp; make it so the input is handled and then if there is a current objective running, the objective is reset
-[] - Implement something like the emulation system for objectives; we need that and wiimix game states easily exposed (Grace?)
+[] - Make settings a singleton
+[] - Figure out sending states - When you send a state, you will send with a description,
+
+[] - Implement Reset Objective code and possibly code for navigating the bingo board in GCPadEmu.cpp; make it so the input is handled and then if there is a current objective running, the objective is reset
+[] - Fix save/load system (only for settings) W
 [] - Work w/ Charlotte/Grace on server/sending states
 [] - Vlad working on UI for roguelike (Josh?)
-[] - Fix save/load system (only for settings)
-[] - Finish integrating and testing Bingo
+[] - Finish integrating and testing Bingo; host on Purdue Hackers rack
 
 ## NOTES
 

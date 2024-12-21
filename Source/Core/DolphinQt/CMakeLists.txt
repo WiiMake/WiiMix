@@ -329,8 +329,8 @@ add_executable(dolphin-emu
   QtUtils/WindowActivationEventFilter.h
   QtUtils/WrapInScrollArea.cpp
   QtUtils/WrapInScrollArea.h
-  WiiMix/BingoClient.cpp
-  WiiMix/BingoClient.h
+  WiiMix/Client.cpp
+  WiiMix/Client.h
   WiiMix/BingoSettings.cpp
   WiiMix/BingoSettings.h
   WiiMix/ConfigWidget.cpp
@@ -421,16 +421,14 @@ add_executable(dolphin-emu
   WiiMix/BingoGame.h
   WiiMix/ScreenSaver.cpp
   WiiMix/ScreenSaver.h
-        WiiMix/RogueWindow.cpp
-        WiiMix/RogueWindow.h
+  WiiMix/RogueWindow.cpp
+  WiiMix/RogueWindow.h
 )
 
 set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
 
-option(BUILD_WIIMIX_SERVER "Build the WiiMix Bingo Server" ON)
-
 # Build the bingo server if it exists
-if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server.h")
+if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.cpp" AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.h")
   message("Wiimix-server executable added")
   # Define common include directories and libraries for both targets
   # set(SERVER_INCLUDES "${CMAKE_SOURCE_DIR}/include")
@@ -438,16 +436,18 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
   set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl)
   # set(SERVER_LIBS Qt6::Core Qt6::Network)
   add_executable(wiimix-server
-    WiiMix/Server.cpp
-    WiiMix/Server.h
+    WiiMix/Server/Server.cpp
+    WiiMix/Server/Server.h
+    WiiMix/Server/BingoSettings.cpp
+    WiiMix/Server/BingoSettings.h
+    WiiMix/Server/Settings.cpp
+    WiiMix/Server/Settings.h
     WiiMix/Enums.cpp
     WiiMix/Enums.h
     WiiMix/Objective.h
     WiiMix/Objective.cpp
-    WiiMix/BingoSettings.cpp
-    WiiMix/BingoSettings.h
-    WiiMix/Settings.cpp
-    WiiMix/Settings.h
+    # If you want to add netplay support for shuffle or rogue, add the files here
+    
     # How to get these files to include in the binary?
     # ../Common/Config/Config.cpp
     # ../Common/Config/Config.h
@@ -463,7 +463,7 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
   # set_target_properties(wiimix-server PROPERTIES EXCLUDE_FROM_ALL OFF)
   # add_dependencies(dolphin-emu wiimix-server)
 else()
-  message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/WiiMix/Server.cpp or ${CMAKE_SOURCE_DIR}/WiiMix/Server.h not found")
+  message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.cpp or ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.h not found")
 endif()
 
 # Ensure the resource path doesn't get overridden

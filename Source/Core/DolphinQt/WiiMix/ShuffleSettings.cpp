@@ -1,12 +1,18 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 
 
-WiiMixShuffleSettings::WiiMixShuffleSettings(const WiiMixSettings& settings, 
+WiiMixShuffleSettings::WiiMixShuffleSettings(
     int number_of_switches, 
     int min_time_between_switch, 
     int max_time_between_switch, 
     bool endless)
-    : WiiMixSettings(settings),  // Initialize base class with settings
+    : WiiMixSettings(
+        WiiMixSettings::instance()->GetDifficulty(),
+        WiiMixSettings::instance()->GetMode(),
+        WiiMixSettings::instance()->GetSaveStateBank(),
+        WiiMixSettings::instance()->GetObjectives(),
+        WiiMixSettings::instance()->GetGamesList()
+    ),
       m_number_of_switches(number_of_switches),
       m_min_time_between_switch(min_time_between_switch),
       m_max_time_between_switch(max_time_between_switch),
@@ -51,4 +57,16 @@ bool WiiMixShuffleSettings::GetEndless() const
 void WiiMixShuffleSettings::SetEndless(bool value)
 {
     m_endless = value;
+}
+
+void WiiMixShuffleSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
+    m_difficulty = difficulty;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_DIFFICULTY, difficulty);
+    // emit SettingsChanged(difficulty);
+}
+
+void WiiMixShuffleSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
+    m_save_state_bank = save_state_bank;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, save_state_bank);
+    // emit SettingsChanged(save_state_bank);
 }

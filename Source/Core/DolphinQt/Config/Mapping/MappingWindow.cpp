@@ -95,8 +95,9 @@ MappingWindow::MappingWindow(QWidget* parent, Type type, int port_num)
 void MappingWindow::CreateDevicesLayout()
 {
   m_devices_layout = new QHBoxLayout();
-  m_devices_box = new QGroupBox(tr("Device"));
+  m_devices_box = new QGroupBox(tr("Devices"));
   m_devices_combo = new QComboBox();
+  m_device_two_combo = new QComboBox();
 
   auto* const options = new QToolButton();
   // Make it more apparent that this is a menu with more options.
@@ -113,9 +114,11 @@ void MappingWindow::CreateDevicesLayout()
   options->setDefaultAction(refresh_action);
 
   m_devices_combo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+  m_device_two_combo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
   options->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   m_devices_layout->addWidget(m_devices_combo);
+  m_devices_layout->addWidget(m_device_two_combo);
   m_devices_layout->addWidget(options);
 
   m_devices_box->setLayout(m_devices_layout);
@@ -184,6 +187,7 @@ void MappingWindow::ConnectWidgets()
           &MappingWindow::OnGlobalDevicesChanged);
   connect(this, &MappingWindow::ConfigChanged, this, &MappingWindow::OnGlobalDevicesChanged);
   connect(m_devices_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDevice);
+  connect(m_device_two_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDeviceTwo);
 
   connect(m_reset_clear, &QPushButton::clicked, this, &MappingWindow::OnClearFieldsPressed);
   connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPressed);
@@ -341,6 +345,16 @@ void MappingWindow::OnSelectDevice(int)
 
   m_controller->SetDefaultDevice(device);
   m_controller->UpdateReferences(g_controller_interface);
+}
+
+void MappingWindow::OnSelectDeviceTwo(int)
+{
+  // Original string is stored in the "user-data".
+  const auto device = m_device_two_combo->currentData().toString().toStdString();
+
+  // TODOx: need to update m_controller to support multiple devices
+  // m_controller->SetDefaultDevice(device);
+  // m_controller->UpdateReferences(g_controller_interface);
 }
 
 bool MappingWindow::IsMappingAllDevices() const

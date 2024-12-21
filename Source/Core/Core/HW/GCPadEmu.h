@@ -69,6 +69,7 @@ public:
   static constexpr const char* Z_BUTTON = "Z";
   static constexpr const char* START_BUTTON = "Start";
   static constexpr const char* RESET_BUTTON = "Reset";
+  static constexpr const char* BINGO_BOARD_BUTTON = "Bingo Board";
 
   // i18n: The left trigger button (labeled L on real controllers)
   static constexpr const char* L_DIGITAL = _trans("L");

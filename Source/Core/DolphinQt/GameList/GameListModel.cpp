@@ -24,6 +24,8 @@
 #include "UICommon/GameFile.h"
 #include "UICommon/UICommon.h"
 
+#include "DolphinQt/WiiMix/Settings.h"
+
 const QSize GAMECUBE_BANNER_SIZE(96, 32);
 
 GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
@@ -31,6 +33,13 @@ GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
   connect(&m_tracker, &GameTracker::GameLoaded, this, &GameListModel::AddGame);
   connect(&m_tracker, &GameTracker::GameUpdated, this, &GameListModel::UpdateGame);
   connect(&m_tracker, &GameTracker::GameRemoved, this, &GameListModel::RemoveGame);
+  // Connect the game tracker to the WiiMixSettings singleton
+  connect(&m_tracker, &GameTracker::GameLoaded, WiiMixSettings::instance(), &WiiMixSettings::AddGame);
+  connect(&m_tracker, &GameTracker::GameUpdated, WiiMixSettings::instance(), &WiiMixSettings::UpdateGame);
+  connect(&m_tracker, &GameTracker::GameRemoved, WiiMixSettings::instance(), &WiiMixSettings::RemoveGame);
+
+  connect(WiiMixSettings::instance(), &WiiMixSettings::SettingsChanged, this, &GameListModel::setWiiMixData);
+
   connect(&Settings::Instance(), &Settings::PathAdded, &m_tracker, &GameTracker::AddDirectory);
   connect(&Settings::Instance(), &Settings::PathRemoved, &m_tracker, &GameTracker::RemoveDirectory);
   connect(&Settings::Instance(), &Settings::GameListRefreshRequested, &m_tracker,
@@ -107,6 +116,7 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
   case Column::WiiMix:
     if (role == Qt::CheckStateRole) {
       bool state = game.GetWiiMix();
+      // Upon returning the state, the game specific config files get updated 
       return state ? Qt::Checked : Qt::Unchecked; // Ensures the checkbox appears
     }
 
@@ -298,8 +308,52 @@ Qt::ItemFlags GameListModel::flags(const QModelIndex& index) const
   return flag;
 }
 
+void GameListModel::setWiiMixData(std::vector<std::shared_ptr<const UICommon::GameFile>> games)
+{
+  for (int i = 0; i < m_games.size(); ++i)
+  {
+    const auto& game = m_games[i];
+    bool found = false;
+
+    for (const auto& new_game : games)
+    {
+      if (game->GetGameID() == new_game->GetGameID())
+      {
+        found = true;
+        break;
+      }
+    }
+
+    // Load the ini file
+    Common::IniFile ini;
+    if (!File::Exists(File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini"))
+    {
+      // Create a new ini file and set the WiiMix state
+      ini = SConfig::LoadDefaultGameIni(game->GetGameID(), game->GetRevision());
+    }
+    else
+    {
+      ini = SConfig::LoadLocalGameIni(game->GetGameID(), game->GetRevision());
+    }
+
+    ini.GetOrCreateSection("WiiMix")->Set("WiiMix", found);
+    ini.Save(File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini");
+
+    // Create a mutable copy of the game object
+    auto updated_game = std::make_shared<UICommon::GameFile>(*game);
+
+    // Modify the mutable copy
+    updated_game->SetWiiMix(found);
+
+    // Update the m_games list with the updated game
+    m_games[i] = updated_game;
+
+    // Emit dataChanged signal
+    emit dataChanged(createIndex(i, static_cast<int>(Column::WiiMix)), createIndex(i, static_cast<int>(Column::WiiMix)), {Qt::CheckStateRole});
+  }
+}
+
 // Checkbox clicks automatically routed to SetData
-// NOTE: was going to use value toBool, but couldn't seem to get it to work
 bool GameListModel::setData(const QModelIndex& index, const QVariant& value, int role) 
 {
   if (role == Qt::CheckStateRole && index.isValid()) {
