@@ -26,6 +26,8 @@
       <AdditionalIncludeDirectories>$(QtIncludeDir)QtCore;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(QtIncludeDir)QtGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(QtIncludeDir)QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(QtIncludeDir)QtNetwork;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(QtIncludeDir)QtConcurrent;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <!--
         As of Qt6.3, Qt needs user code deriving from certain Qt types to have RTTI (AS WELL AS MOC, UGH).
         Do NOT enable in dolphin outside of Qt-dependant code.

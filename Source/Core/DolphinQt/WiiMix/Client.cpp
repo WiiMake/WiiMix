@@ -32,6 +32,9 @@ bool WiiMixClient::ConnectToServer() {
         if (!doc.isObject()) return;
         ReceiveData(doc);
     });
+
+
+    return false; //TODOx: temp to build
 }
 
 bool WiiMixClient::SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action) {

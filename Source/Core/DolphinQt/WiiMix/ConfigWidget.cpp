@@ -362,6 +362,23 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         m_bingo_seed->setValidator(seed_validator);
         bingo_settings_layout->addWidget(new QLabel(tr("Bingo Seed:")));
         bingo_settings_layout->addWidget(m_bingo_seed);
+        
+        // Bingo seeds just encode achievement information
+        m_bingo_seed = new QLineEdit();
+        // There are 3 different decoded lengths:
+        // 1 + (6 * 9)
+        // 1 + (6 * 16)
+        // 1 + (6 * 25)
+        // The bingo seed does not check whether all players have the games enabled, 
+        // as they will require having the games enabled when connecting
+        // The games list used will be finalized during connection
+        // m_bingo_seed->setMaxLength(16);
+        QRegularExpression seed_regex(QStringLiteral("[A-Za-z0-9]{16}"));
+        QRegularExpressionValidator* seed_validator = new QRegularExpressionValidator(seed_regex, this);
+        m_bingo_seed->setValidator(seed_validator);
+        bingo_settings_layout->addWidget(new QLabel(tr("Bingo Seed:")));
+        bingo_settings_layout->addWidget(m_bingo_seed);
+
         bingo_box->setLayout(bingo_settings_layout);
         m_config_layout->addWidget(bingo_box);
     }
@@ -697,6 +714,23 @@ QString WiiMixConfigWidget::GenerateLobbyID() const {
     return QUuid::createUuid().toString(QUuid::Id128); // Generates a 32 byte globally unique string 
 }
 
+// @xanmankey
+QRegularExpression BingoSeedValidator() {
+  return QRegularExpression();
+}
+
+// @xanmankey
+QRegularExpression RogueSeedValidator() {
+  return QRegularExpression();
+}
+
+// @xanmankey: for connecting to and hosting lobbies (game validation)
+QRegularExpression BingoLobbyIDValidator() {
+    // A validator that checks if you have all of the games in the lobby checked
+    // Prevents people from connecting to lobbies without having all the games
+  return QRegularExpression();
+}
+
 QString WiiMixConfigWidget::GetPlayerName() const {
     return m_bingo_player_name->text();
 }
@@ -717,6 +751,14 @@ QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> WiiMixConfigWidget
     return m_players;
 }
 
+WiiMixRogueSettings::Length WiiMixConfigWidget::GetRogueLength() const {
+    return static_cast<WiiMixRogueSettings::Length>(m_rogue_length->currentIndex());
+}
+
+QString WiiMixConfigWidget::GetRogueSeed() const{
+    return m_rogue_seed->text();
+}
+
 std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     std::array<bool, MAX_PLAYERS> team_selectors;
     for (int i = 0; i < MAX_PLAYERS; ++i) {
@@ -728,6 +770,26 @@ std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
 WiiMixClient* WiiMixConfigWidget::GetBingoClient() {
     return m_wiimix_client;
 }
+
+// Need to also implement the corresponding parsing, checks, and probably associated error messages
+// with the QValidators
+
+void WiiMixConfigWidget::SetRogueLength(QString length) const {
+    m_rogue_length->setCurrentText(length);
+}
+
+void WiiMixConfigWidget::SetRogueSeed(QString seed) {
+    m_rogue_seed->setText(seed);
+}
+
+void WiiMixConfigWidget::SetBingoSeed(QString seed) {
+    m_bingo_seed->setText(seed);
+}
+
+void WiiMixConfigWidget::SetLobbyID(QString id) {
+    m_bingo_lobby_id->setText(id);
+}
+
 
 void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
     int index = m_difficulty->findText(difficulty);

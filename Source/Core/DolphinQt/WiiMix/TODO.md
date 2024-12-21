@@ -2,16 +2,19 @@
 
 > So me and my goldfish memory can remember what I was working on
 
-JUST A COUPLE TODOS AFTER WORKING TODAY
+## NEW YEARS RELEASE
 
-[] - Make settings a singleton
-[] - Figure out sending states - When you send a state, you will send with a description,
-
-[] - Implement Reset Objective code and possibly code for navigating the bingo board in GCPadEmu.cpp; make it so the input is handled and then if there is a current objective running, the objective is reset
-[] - Fix save/load system (only for settings) W
-[] - Work w/ Charlotte/Grace on server/sending states
-[] - Vlad working on UI for roguelike (Josh?)
-[] - Finish integrating and testing Bingo; host on Purdue Hackers rack
+- [] Save State Client/Server Encryption/Decryption Validation System
+- [] Sending States to the Purdue Hackers Server
+- [] Fix the Toolbar (fullscreen)
+- [] Migrate Bingo to Purdue Hackers rack
+- [] Seeding logic
+- [] Basic Windows Testing/Fixes
+- [] Build and host a simple interface plus database for achievements/games supported
+- [] Roguelike (may not be possible within time constraints, we'll see)
+- [] Streamline keyboard shortcuts to be user friendly
+- [] New Trailer
+- [] Significantly more testing of starting games with state and saving to previous state
 
 ## NOTES
 

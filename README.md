@@ -20,6 +20,7 @@ By combining objectives with extra functionality such as game swapping, WiiMix t
 - Shuffle: swap between games with randomized time intervals in between
 - Roguelike: the console has gone rogue! Can you complete a series of achievements while the console attempts to stop you?
 
+<<<<<<< HEAD
 ## Contributing
 
 The project is still in it's early stages. As such, we appreciate any help that you can provide, whether it's documenting a bug on the [Issues](https://github.com/WiiMake/WiiMix/issues) tab, [creating objectives](#creating-objectives), or [adding new features/fixing bugs in line with our contribution guidelines](https://github.com/WiiMake/WiiMix/blob/master/Contributing.md). If you are contributing or using the project, please follow the [code of conduct](https://github.com/WiiMake/WiiMix/blob/master/CODE_OF_CONDUCT.md); we follow the exact same policies as Dolphin Emulator and encourage people to be respectful and make positive contributions to our efforts to relive our favorite games and experience hidden gems through WiiMix.
@@ -29,3 +30,16 @@ The project is still in it's early stages. As such, we appreciate any help that 
 TODO: finish documenting this once this system is finished. Use pics.
 
 PLEASE before you upload an objective, make sure the objective DOES NOT ALREADY EXIST!
+=======
+## Support
+
+Our goal is to eventually support Windows, Mac, and Linux systems; TODO finish write up on the current state of each platform before release  
+
+## Contributing
+
+The project is still in it's early stages. As such, we appreciate any help that you can provide, whether it's documenting a bug on the [Issues](https://github.com/WiiMake/WiiMix/issues) tab, [creating objectives](#creating-objectives), or [adding new features/fixing bugs in line with our contribution guidelines](https://github.com/WiiMake/WiiMix/blob/master/Contributing.md). If you are contributing or using the project, please follow the [code of conduct](https://github.com/WiiMake/WiiMix/blob/master/CODE_OF_CONDUCT.md); we follow the exact same policies as Dolphin Emulator and encourage people to be respectful and make positive contributions to our efforts to relive our favorite games and experience hidden gems through WiiMix.
+
+### Creating Objectives
+
+TODO: finish documenting this once this system is finished. Use pics.
+>>>>>>> 1ee1fa91a9a806254045f6c4c3a23e26fdf6daea

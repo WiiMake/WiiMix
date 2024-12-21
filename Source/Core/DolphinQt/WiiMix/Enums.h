@@ -62,6 +62,30 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    // Sourced from the retroachievements genre list at https://retroachievements.org/game/9553
+    enum class GameGenre {
+        ACTION_ADVENTURE,
+        ACTION,
+        ADVENTURE,
+        ARCADE,
+        BOARD_AND_CARD,
+        EDUCATIONAL,
+        FIGHTING,
+        HORROR,
+        LITERATURE,
+        OTHER,
+        PLATFORMER,
+        PUZZLE,
+        RACING,
+        RHYTHM,
+        RPG,
+        SHOOTER,
+        SIMULATION,
+        SPORTS,
+        STRATEGY,
+        END, // Default/size value
+    };
+
     // NOTE: instead of storing genres ourselves, we'll be pulling tags from the Retroachievements API
     // To populate genre
 

@@ -1,6 +1,8 @@
 // Copyright 2017 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#pragma once
+
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Settings.h"
 
@@ -9,8 +11,6 @@
 
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
-
-#pragma once
 
 // CLIENT ROGUE SETTINGS -> singleton
 class WiiMixRogueSettings : public WiiMixSettings 

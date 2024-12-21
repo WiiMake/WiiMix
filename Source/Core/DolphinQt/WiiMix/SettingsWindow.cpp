@@ -71,12 +71,12 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 
 // TODO: Maybe will want this in case there's a settings mismatch between people
 // trying to play together
-void WiiMixSettingsWindow::showEvent(QShowEvent* event)
-{
-//   QDialog::showEvent(event);
-//   m_wiimote_controllers->UpdateBluetoothAvailableStatus();
-    return;
-}
+// void WiiMixSettingsWindow::showEvent(QShowEvent* event)
+// {
+// //   QDialog::showEvent(event);
+// //   m_wiimote_controllers->UpdateBluetoothAvailableStatus();
+//     return;
+// }
 
 void WiiMixSettingsWindow::CreateMainLayout()
 {

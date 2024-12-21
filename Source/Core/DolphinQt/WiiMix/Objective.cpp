@@ -2,210 +2,128 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 
-#include <string>
+#include <QDebug>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QString>
 #include <curl/curl.h>
 #include <fstream>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
-#include <QDebug>
-#include <QJsonObject>
-#include <QJsonDocument>
+#include <string>
+#include "Objective.h"
 
-std::string WiiMixObjective::m_username = "";
-std::string WiiMixObjective::m_token = "";
-std::map<uint16_t, std::string> WiiMixObjective::m_games_cache = std::map<uint16_t, std::string>();
-
-// Copyright 2017 Dolphin Emulator Project
-// SPDX-License-Identifier: GPL-2.0-or-later
-
-
-
-uint16_t WiiMixObjective::GetAchievementID() {
-    return m_achievement_id;
+WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroachievements_game_id,
+                                 std::string game_id, uint16_t achievement_id,
+                                 WiiMixEnums::ObjectiveType objective_type,
+                                 std::string objective_description,
+                                 std::vector<WiiMixEnums::GameGenre> game_genres,
+                                 WiiMixEnums::Difficulty difficulty, uint64_t time)
+    : m_id(id), m_title(std::move(title)), m_retroachievements_game_id(retroachievements_game_id),
+      m_game_id(std::move(game_id)), m_achievement_id(achievement_id),
+      m_objective_type(objective_type), m_objective_description(std::move(objective_description)),
+      m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time)
+{
 }
 
-uint16_t WiiMixObjective::GetGameID() {
-    return m_game_id;
+uint16_t WiiMixObjective::GetId()
+{
+  return m_id;
 }
 
-std::string WiiMixObjective::GetTitle() {
-    return m_title;
+std::string WiiMixObjective::GetTitle()
+{
+  return m_title;
 }
 
-std::string WiiMixObjective::GetDescription() {
-    return m_description;
+uint16_t WiiMixObjective::GetRetroAchievementsGameId()
+{
+  return m_retroachievements_game_id;
 }
 
-std::string WiiMixObjective::GetSavestateFile() {
-    return m_savestate_file;
+std::string WiiMixObjective::GetGameId()
+{
+  return m_game_id;
 }
 
-void WiiMixObjective::SetSavestateFile(std::string savestate_file) {
-    m_savestate_file = savestate_file;
+uint16_t WiiMixObjective::GetAchievementId()
+{
+  return m_achievement_id;
 }
 
-std::string WiiMixObjective::GetISOFile() {
-    return m_iso_file;
+WiiMixEnums::ObjectiveType WiiMixObjective::GetObjectiveType()
+{
+  return m_objective_type;
 }
 
-void WiiMixObjective::SetISOFile(std::string iso_file) {
-    m_iso_file = iso_file;
+std::string WiiMixObjective::GetObjectiveDescription()
+{
+  return m_objective_description;
 }
 
-WiiMixEnums::Player WiiMixObjective::GetCompleted() {
-    return m_completed;
+std::vector<WiiMixEnums::GameGenre> WiiMixObjective::GetGameGenres()
+{
+  return m_game_genres;
 }
 
-void WiiMixObjective::SetCompleted(WiiMixEnums::Player player) {
-    m_completed = player;
+WiiMixEnums::Difficulty WiiMixObjective::GetDifficulty()
+{
+  return m_difficulty;
 }
 
-std::string WiiMixObjective::GetBadgeURL() {
-    return "https://media.retroachievements.org/Badge/" + std::to_string(m_achievement_id) + ".png";
+uint64_t WiiMixObjective::GetTime()
+{
+  return m_time;
 }
 
-std::vector<WiiMixObjective> WiiMixObjective::GetObjectives() {
-    WiiMixObjective obj = WiiMixObjective(0, 0, "Title", "Description", "SaveStateFile", "ISO", WiiMixEnums::Player::ONE);
-    std::vector<WiiMixObjective> objectives;
-    qDebug() << "Getting objectives";
-    for (const auto& [AchievementID, SaveStateFile] : obj.AchievementIDToSaveStateFile) {
-        objectives.push_back(WiiMixObjective(AchievementID, obj.AchievementIDToGameID.at(AchievementID), WiiMixObjective::m_games_cache[AchievementID], "Description", SaveStateFile, obj.GameIDToFileName.at(obj.AchievementIDToGameID.at(AchievementID)), WiiMixEnums::Player::ONE));
-    }
-    qDebug() << objectives.size();
-    return objectives;
+WiiMixEnums::Player WiiMixObjective::GetCompleted()
+{
+  return m_player_completed;
+}
+
+void WiiMixObjective::SetCompleted(WiiMixEnums::Player player)
+{
+  m_player_completed = player;
 }
 
 QJsonDocument WiiMixObjective::ToJson() {
     QJsonObject json;
-    qDebug() << m_achievement_id;
-    qDebug() << "Before achievementid";
     json[QStringLiteral("AchievementID")] = static_cast<int>(m_achievement_id);
-    qDebug() << "Before gameid";
-    json[QStringLiteral("GameID")] = static_cast<int>(m_game_id);
-    qDebug() << "Before title";
+    json[QStringLiteral("GameID")] = QString::fromStdString(m_game_id);
     json[QStringLiteral("Title")] = QString::fromStdString(m_title);
-    qDebug() << "Before descript";
-    json[QStringLiteral("Description")] = QString::fromStdString(m_description);
-    qDebug() << "Before savestatefile";
-    json[QStringLiteral("SaveStateFile")] = QString::fromStdString(m_savestate_file);
-    qDebug() << "Before isofile";
-    json[QStringLiteral("ISOFile")] = QString::fromStdString(m_iso_file);
-    qDebug() << "Before completed";
-    json[QStringLiteral("Completed")] = static_cast<int>(m_completed);
+    json[QStringLiteral("Description")] = QString::fromStdString(m_objective_description);
+    json[QStringLiteral("ObjectiveType")] = static_cast<int>(m_objective_type);
+    json[QStringLiteral("Difficulty")] = static_cast<int>(m_difficulty);
+    json[QStringLiteral("Time")] = static_cast<qint64>(m_time);
+
+    QJsonArray genres_array;
+    for (const auto& genre : m_game_genres)
+    {
+        genres_array.append(static_cast<int>(genre));
+    }
+    json[QStringLiteral("GameGenres")] = genres_array;
+
+    json[QStringLiteral("Completed")] = static_cast<int>(m_player_completed);
     return QJsonDocument(json);
 }
 
 WiiMixObjective WiiMixObjective::FromJson(QJsonDocument json) {
-    uint16_t achievement_id = json[QStringLiteral("AchievementID")].toInt();
-    uint16_t game_id = json[QStringLiteral("GameID")].toInt();
-    std::string title = json[QStringLiteral("Title")].toString().toStdString();
-    std::string description = json[QStringLiteral("Description")].toString().toStdString();
-    std::string savestate_file = json[QStringLiteral("SaveStateFile")].toString().toStdString();
-    std::string iso_file = json[QStringLiteral("ISOFile")].toString().toStdString();
-    WiiMixEnums::Player completed = static_cast<WiiMixEnums::Player>(json[QStringLiteral("Completed")].toInt());
-    return WiiMixObjective(achievement_id, game_id, title, description, savestate_file, iso_file, completed);
-}
+    QJsonObject jsonObj = json.object();
+    uint16_t achievement_id = static_cast<uint16_t>(jsonObj[QStringLiteral("AchievementID")].toInt());
+    std::string game_id = jsonObj[QStringLiteral("GameID")].toString().toStdString();
+    std::string title = jsonObj[QStringLiteral("Title")].toString().toStdString();
+    std::string description = jsonObj[QStringLiteral("Description")].toString().toStdString();
+    WiiMixEnums::ObjectiveType objective_type = static_cast<WiiMixEnums::ObjectiveType>(jsonObj[QStringLiteral("ObjectiveType")].toInt());
+    WiiMixEnums::Difficulty difficulty = static_cast<WiiMixEnums::Difficulty>(jsonObj[QStringLiteral("Difficulty")].toInt());
+    uint64_t time = static_cast<uint64_t>(jsonObj[QStringLiteral("Time")].toVariant().toLongLong());
 
-void WiiMixObjective::CacheGames() {
-    if (m_games_cache.size() > 0) {
-        return;
+    QJsonArray genres_array = jsonObj[QStringLiteral("GameGenres")].toArray();
+    std::vector<WiiMixEnums::GameGenre> game_genres;
+    for (const auto& genre : genres_array)
+    {
+        game_genres.push_back(static_cast<WiiMixEnums::GameGenre>(genre.toInt()));
     }
-    WiiMixObjective obj = WiiMixObjective(0, 0, "Title", "Description", "SaveStateFile", "ISO", WiiMixEnums::Player::ONE);
-    m_games_cache = std::map<uint16_t, std::string>();
-    std::map<uint16_t, std::string> game_list = obj.GameIDToFileName;
-    for (const auto& [game_id, game_file] : game_list) {
-        std::map<uint16_t, std::string> achievements = getGameAchievements(game_id);
-        for (const auto& [achievement_id, achievement_name] : achievements) {
-            m_games_cache[achievement_id] = achievement_name;
-        }
-    }
+
+    WiiMixEnums::Player completed = static_cast<WiiMixEnums::Player>(jsonObj[QStringLiteral("Completed")].toInt());
+
+    return WiiMixObjective(0, title, 0, game_id, achievement_id, objective_type, description, game_genres, difficulty, time);
 }
-
-
-void WiiMixObjective::RALoginCallback(std::string username, std::string token) {
-    m_username = username;
-    //TODOx: this is not the correct api token
-    m_token = token;
-}
-
-
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
-}
-
-std::map<uint16_t, std::string> WiiMixObjective::getGameAchievements(uint16_t game_id) {
-    std::map<uint16_t, std::string> achievements;
-    CURL* curl;
-    CURLcode res;
-    std::string readBuffer;
-
-    curl = curl_easy_init();
-    if (curl) {
-        std::string url = "https://retroachievements.org/API/API_GetGameExtended.php?i=" + std::to_string(game_id) + "&z=" + "WiiMix" + "&y=" + "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5" + "&f=5";
-        qDebug() << url.c_str();
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-
-        if (res == CURLE_OK) {
-            qDebug() << readBuffer.c_str();
-
-            json root = json::parse(readBuffer);
-            const json& achievementsJson = root["Achievements"];
-            for (const auto& [key, achievement] : achievementsJson.items()) {
-
-                std::map<uint16_t, std::string> achievementMap;
-                achievements[achievement["ID"].get<uint16_t>()] = achievement["Title"].get<std::string>() + ": " + achievement["Description"].get<std::string>();
-
-            }
-
-        }
-    }
-    return achievements;
-}
-
-std::map<std::string, uint16_t> WiiMixObjective::getGameList(uint16_t console_id) {
-    std::map<std::string, uint16_t> game_list;
-    CURL* curl;
-    CURLcode res;
-    std::string readBuffer;
-
-    curl = curl_easy_init();
-    if (curl) {
-        std::string url = "https://retroachievements.org/API/API_GetGameList.php?i=" + std::to_string(console_id) + "&z=" + "WiiMix" + "&y=" + "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5" + "&f=1&h=1";
-        qDebug() << url.c_str();
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-
-        if (res == CURLE_OK) {
-            qDebug() << readBuffer.c_str();
-
-            json root = json::parse(readBuffer);
-            for (const auto& game : root) {
-                game_list[game["Title"].get<std::string>()] = game["ID"].get<uint16_t>();
-            }
-        }
-    }
-    return game_list;
-}
-
-// @xanmankey: for retrieving objectives
-// std::string GetInfoStringOfSlot(int slot, bool translate)
-// {
-//   std::string filename = MakeStateFilename(slot);
-//   if (!File::Exists(filename))
-//     return translate ? Common::GetStringT("Empty") : "Empty";
-
-//   State::StateHeader header;
-//   if (!ReadHeader(filename, header))
-//     return translate ? Common::GetStringT("Unknown") : "Unknown";
-
-//   return SystemTimeAsDoubleToString(header.legacy_header.time);
-// }
-

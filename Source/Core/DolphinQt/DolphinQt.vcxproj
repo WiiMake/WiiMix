@@ -38,10 +38,20 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch_qt.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch_qt.h</ForcedIncludeFiles>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)</ObjectFileName>
     </ClCompile>
     <Manifest>
       <AdditionalManifestFiles>DolphinQt.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Qt6Core$(QtLibSuffix).lib;Qt6Gui$(QtLibSuffix).lib;Qt6Widgets$(QtLibSuffix).lib;Qt6Network$(QtLibSuffix).lib;Qt6Concurrent$(QtLibSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Qt6Core$(QtLibSuffix).lib;Qt6Gui$(QtLibSuffix).lib;Qt6Widgets$(QtLibSuffix).lib;Qt6Network$(QtLibSuffix).lib;Qt6Concurrent$(QtLibSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AboutDialog.cpp" />
@@ -230,7 +240,21 @@
     <ClCompile Include="ToolBar.cpp" />
     <ClCompile Include="Translation.cpp" />
     <ClCompile Include="Updater.cpp" />
+    <ClCompile Include="WiiMix\WebAPI.cpp" />
+    <ClCompile Include="WiiMix\WiiMixButton.cpp" />
     <ClCompile Include="WiiUpdate.cpp" />
+    <ClCompile Include="WiiMix/BingoClient.cpp" />
+    <ClCompile Include="WiiMix/BingoSettings.cpp" />
+    <ClCompile Include="WiiMix/ConfigWidget.cpp" />
+    <ClCompile Include="WiiMix/Enums.cpp" />
+    <ClCompile Include="WiiMix/ModesWidget.cpp" />
+    <ClCompile Include="WiiMix/NetworkUtils.cpp" />
+    <ClCompile Include="WiiMix/Objective.cpp" />
+    <ClCompile Include="WiiMix/RogueSettings.cpp" />
+    <ClCompile Include="WiiMix/RogueWindow.cpp" />
+    <ClCompile Include="WiiMix/Settings.cpp" />
+    <ClCompile Include="WiiMix/SettingsWindow.cpp" />
+    <ClCompile Include="WiiMix/ShuffleSettings.cpp" />
   </ItemGroup>
   <!--
     Put C/C++ headers here. If moc needs to be run for the file (only needed if
@@ -263,6 +287,8 @@
     <ClInclude Include="TAS\TASControlState.h" />
     <ClInclude Include="TAS\TASSlider.h" />
     <ClInclude Include="Translation.h" />
+    <ClInclude Include="WiiMix\WebAPI.h" />
+    <ClInclude Include="WiiMix\WiiMixButton.h" />
     <ClInclude Include="WiiUpdate.h" />
     <QtMoc Include="AboutDialog.h" />
     <QtMoc Include="CheatSearchFactoryWidget.h" />
@@ -428,6 +454,18 @@
     <QtMoc Include="TAS\WiiTASInputWindow.h" />
     <QtMoc Include="ToolBar.h" />
     <QtMoc Include="Updater.h" />
+    <ClInclude Include="WiiMix/BingoClient.h" />
+    <ClInclude Include="WiiMix/BingoSettings.h" />
+    <ClInclude Include="WiiMix/ConfigWidget.h" />
+    <ClInclude Include="WiiMix/Enums.h" />
+    <ClInclude Include="WiiMix/ModesWidget.h" />
+    <ClInclude Include="WiiMix/NetworkUtils.h" />
+    <ClInclude Include="WiiMix/Objective.h" />
+    <ClInclude Include="WiiMix/RogueSettings.h" />
+    <ClInclude Include="WiiMix/RogueWindow.h" />
+    <ClInclude Include="WiiMix/Settings.h" />
+    <ClInclude Include="WiiMix/SettingsWindow.h" />
+    <ClInclude Include="WiiMix/ShuffleSettings.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
