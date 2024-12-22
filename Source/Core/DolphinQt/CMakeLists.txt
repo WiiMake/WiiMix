@@ -329,14 +329,18 @@ add_executable(dolphin-emu
   QtUtils/WindowActivationEventFilter.h
   QtUtils/WrapInScrollArea.cpp
   QtUtils/WrapInScrollArea.h
-  WiiMix/Client.cpp
-  WiiMix/Client.h
   WiiMix/BingoSettings.cpp
   WiiMix/BingoSettings.h
+  WiiMix/Client.cpp
+  WiiMix/Client.h
+  WiiMix/CommonSettings.cpp
+  WiiMix/CommonSettings.h
   WiiMix/ConfigWidget.cpp
   WiiMix/ConfigWidget.h
   WiiMix/Enums.cpp
   WiiMix/Enums.h
+  WiiMix/GlobalSettings.cpp
+  WiiMix/GlobalSettings.h
   WiiMix/ModesWidget.cpp
   WiiMix/ModesWidget.h
   WiiMix/NetworkUtils.cpp
@@ -347,8 +351,6 @@ add_executable(dolphin-emu
   WiiMix/RogueSettings.h
   WiiMix/RogueWindow.cpp
   WiiMix/RogueWindow.h
-  WiiMix/Settings.cpp
-  WiiMix/Settings.h
   WiiMix/SettingsWindow.cpp
   WiiMix/SettingsWindow.h
   WiiMix/ShuffleSettings.cpp
@@ -438,16 +440,20 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
   set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl)
   # set(SERVER_LIBS Qt6::Core Qt6::Network)
   add_executable(wiimix-server
-    WiiMix/Server/Server.cpp
-    WiiMix/Server/Server.h
     WiiMix/Server/BingoSettings.cpp
     WiiMix/Server/BingoSettings.h
-    WiiMix/Server/Settings.cpp
-    WiiMix/Server/Settings.h
+    # WiiMix/Server/Settings.cpp
+    # WiiMix/Server/Settings.h
+    # WiiMix/BingoSettings.cpp
+    # WiiMix/BingoSettings.h
+    WiiMix/CommonSettings.cpp
+    WiiMix/CommonSettings.h
     WiiMix/Enums.cpp
     WiiMix/Enums.h
     WiiMix/Objective.h
     WiiMix/Objective.cpp
+    WiiMix/Server/Server.cpp
+    WiiMix/Server/Server.h
     # If you want to add netplay support for shuffle or rogue, add the files here
     
     # How to get these files to include in the binary?

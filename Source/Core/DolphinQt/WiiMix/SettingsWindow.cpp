@@ -80,6 +80,35 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 
 void WiiMixSettingsWindow::CreateMainLayout()
 {
+  // qDebug() << "Bingo Settings:";
+  // qDebug() << "Difficulty:" << static_cast<int>(WiiMixBingoSettings::instance()->GetDifficulty());
+  // qDebug() << "Save State Bank:" << static_cast<int>(WiiMixBingoSettings::instance()->GetSaveStateBank());
+  // // qDebug() << "Mode:" << static_cast<int>(WiiMixBingoSettings::instance()->GetMode());
+  // qDebug() << "Bingo Type:" << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
+  // qDebug() << "Card Size:" << static_cast<int>(WiiMixBingoSettings::instance()->GetCardSize());
+  // qDebug() << "Teams Enabled:" << WiiMixBingoSettings::instance()->GetTeams();
+  // qDebug() << "Lobby ID:" << WiiMixBingoSettings::instance()->GetLobbyID();
+  // qDebug() << "Lobby Password:" << WiiMixBingoSettings::instance()->GetLobbyPassword();
+  // qDebug() << "Players:";
+
+  // qDebug() << "Shuffle Settings:";
+  // qDebug() << "Min Time Between Switch:" << WiiMixShuffleSettings::instance()->GetMinTimeBetweenSwitch();
+  // qDebug() << "Max Time Between Switch:" << WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch();
+  // qDebug() << "Endless:" << WiiMixShuffleSettings::instance()->GetEndless();
+  // qDebug() << "Number of Switches:" << WiiMixShuffleSettings::instance()->GetNumberOfSwitches();
+
+  // qDebug() << "Rogue Settings:";
+  // qDebug() << "Rogue Length:" << static_cast<int>(WiiMixRogueSettings::instance()->GetLength());
+
+  // qDebug() << "Bingo Settings (again):";
+  // qDebug() << "Bingo Type:" << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
+  // qDebug() << "Lobby ID:" << WiiMixBingoSettings::instance()->GetLobbyID();
+
+  // qDebug() << "Address of BingoSettings instance:" << WiiMixBingoSettings::instance();
+  // qDebug() << "Address of ShuffleSettings instance:" << WiiMixShuffleSettings::instance();
+  // qDebug() << "Address of RogueSettings instance:" << WiiMixRogueSettings::instance();
+
+
   auto* layout = new QVBoxLayout();
 
   layout->addWidget(m_modes);
@@ -122,21 +151,21 @@ void WiiMixSettingsWindow::ConnectWidgets()
     connect(m_save_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::SaveSettings);
     connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
       if (m_config) {
-        if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
-          WiiMixBingoSettings::instance()->SetDifficulty(WiiMixSettings::StringToDifficulty(m_config->GetDifficulty()));
-          WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
-          WiiMixBingoSettings::instance()->SetCardSize(WiiMixSettings::StringToCardSize(m_config->GetCardSize()));
+        if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+          WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));
+          WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
+          WiiMixBingoSettings::instance()->SetCardSize(WiiMixBingoSettings::StringToCardSize(m_config->GetCardSize()));
           WiiMixBingoSettings::instance()->SetBingoType(m_config->GetBingoType());
           emit StartWiiMixBingo(WiiMixBingoSettings::instance(), WiiMixClient::instance());
         }
-        else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+        else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
           WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
           WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
           WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_config->GetMaxTimeBetweenSwitch());
           WiiMixShuffleSettings::instance()->SetEndless(m_config->GetEndless());
           emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
         }
-        else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+        else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
           WiiMixRogueSettings::instance()->SetLength(m_config->GetRogueLength());
           WiiMixRogueSettings::instance()->SetSeed(m_config->GetRogueSeed());
           emit StartWiiMixRogue(WiiMixRogueSettings::instance());
@@ -152,7 +181,7 @@ void WiiMixSettingsWindow::ConnectWidgets()
 void WiiMixSettingsWindow::CreateLayout(WiiMixEnums::Mode mode)
 {
   m_config = new WiiMixConfigWidget(this);
-  WiiMixSettings::instance()->SetMode(mode);
+  WiiMixGlobalSettings::instance()->SetMode(mode);
   m_config->CreateLayout(mode);
 
   // TODOx REMOVE THIS ITS ONLY FOR TESTING
@@ -213,15 +242,31 @@ void WiiMixSettingsWindow::LoadSettings() {
       emit ErrorLoadingSettings(QStringLiteral("Mode not found in WiiMix settings file"));
       return;
     }
-    WiiMixSettings::instance()->SetMode(WiiMixSettings::StringToMode(QString::fromStdString(val->c_str())));
+    WiiMixGlobalSettings::instance()->SetMode(WiiMixGlobalSettings::StringToMode(QString::fromStdString(val->c_str())));
 
-    section->Get("Difficulty", val, "");
+    section->Get("BingoDifficulty", val, "");
     if (val->empty()) {
       // Emit error
-      emit ErrorLoadingSettings(QStringLiteral("Difficulty not found in WiiMix settings file"));
+      emit ErrorLoadingSettings(QStringLiteral("Bingo Difficulty not found in WiiMix settings file"));
       return;
     }
-    WiiMixSettings::instance()->SetDifficulty(WiiMixSettings::StringToDifficulty(QString::fromStdString(val->c_str())));
+    WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(QString::fromStdString(val->c_str())));
+
+    section->Get("ShuffleDifficulty", val, "");
+    if (val->empty()) {
+      // Emit error
+      emit ErrorLoadingSettings(QStringLiteral("Shuffle Difficulty not found in WiiMix settings file"));
+      return;
+    }
+    WiiMixShuffleSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(QString::fromStdString(val->c_str())));
+
+    section->Get("RogueDifficulty", val, "");
+    if (val->empty()) {
+      // Emit error
+      emit ErrorLoadingSettings(QStringLiteral("Rogue Difficulty not found in WiiMix settings file"));
+      return;
+    }
+    WiiMixRogueSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(QString::fromStdString(val->c_str())));
 
     // Cut saving and loading objectives
     // section->Get("Objectives", val, "");
@@ -240,20 +285,34 @@ void WiiMixSettingsWindow::LoadSettings() {
     // WiiMixSettings::instance()->SetObjectives(objectives);
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, val->c_str());
 
-    section->Get("SaveStateBank", val, "");
+    section->Get("BingoSaveStateBank", val, "");
     if (val->empty()) {
-      emit ErrorLoadingSettings(QStringLiteral("Save State Bank not found in WiiMix settings file"));
+      emit ErrorLoadingSettings(QStringLiteral("Bingo Save State Bank not found in WiiMix settings file"));
       return;
     }
-    WiiMixSettings::instance()->SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(QString::fromStdString(val->c_str())));
+    WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(QString::fromStdString(val->c_str())));
 
-    if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+    section->Get("ShuffleSaveStateBank", val, "");
+    if (val->empty()) {
+      emit ErrorLoadingSettings(QStringLiteral("Shuffle Save State Bank not found in WiiMix settings file"));
+      return;
+    }
+    WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(QString::fromStdString(val->c_str())));
+
+    section->Get("RogueSaveStateBank", val, "");
+    if (val->empty()) {
+      emit ErrorLoadingSettings(QStringLiteral("Rogue Save State Bank not found in WiiMix settings file"));
+      return;
+    }
+    WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(QString::fromStdString(val->c_str())));
+
+    if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
       section->Get("BingoType", val, "");
       if (val->empty()) {
         emit ErrorLoadingSettings(QStringLiteral("BingoType not found in WiiMix settings file"));
         return;
       }
-      WiiMixBingoSettings::instance()->SetBingoType(WiiMixSettings::StringToBingoType(QString::fromStdString(val->c_str())));
+      WiiMixBingoSettings::instance()->SetBingoType(WiiMixBingoSettings::StringToBingoType(QString::fromStdString(val->c_str())));
       Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixBingoSettings::instance()->GetBingoType());
 
       section->Get("CardSize", val, "");
@@ -261,7 +320,7 @@ void WiiMixSettingsWindow::LoadSettings() {
         emit ErrorLoadingSettings(QStringLiteral("Card Size not found in WiiMix settings file"));
         return;
       }
-      WiiMixBingoSettings::instance()->SetCardSize(WiiMixSettings::StringToCardSize(QString::fromStdString(val->c_str())));
+      WiiMixBingoSettings::instance()->SetCardSize(WiiMixBingoSettings::StringToCardSize(QString::fromStdString(val->c_str())));
       Config::Set(Config::LayerType::Base, Config::WIIMIX_CARD_SIZE, WiiMixBingoSettings::instance()->GetCardSize());
 
       section->Get("Teams", val, "");
@@ -272,7 +331,7 @@ void WiiMixSettingsWindow::LoadSettings() {
       WiiMixBingoSettings::instance()->SetTeams(val->c_str() == std::string("true"));
       Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, WiiMixBingoSettings::instance()->GetTeams());
     }
-    else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+    else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
       section->Get("NumberOfSwitches", val, "");
       if (val->empty()) {
         emit ErrorLoadingSettings(QStringLiteral("Number of Switches not found in WiiMix settings file"));
@@ -305,7 +364,7 @@ void WiiMixSettingsWindow::LoadSettings() {
       WiiMixShuffleSettings::instance()->SetEndless(val->c_str() == std::string("true"));
       Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
     }
-    else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+    else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
       section->Get("RogueLength", val, "");
       if (val->empty()) {
         emit ErrorLoadingSettings(QStringLiteral("RogueLength not found in WiiMix settings file"));
@@ -373,19 +432,23 @@ void WiiMixSettingsWindow::SaveSettings() {
 
     // section->Set("Games", WiiMixSettings::GameFilesToGameIds(WiiMixSettings::instance()->GetGamesList()));
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_GAME_IDS, WiiMixSettings::GameFilesToGameIds(WiiMixSettings::instance()->GetGamesList()));
-    section->Set("Mode", WiiMixSettings::ModeToTitle(WiiMixSettings::instance()->GetMode()).toStdString());
+    section->Set("Mode", WiiMixGlobalSettings::ModeToTitle(WiiMixGlobalSettings::instance()->GetMode()).toStdString());
     // NOTE: commented this
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_MODE, WiiMixSettings::instance()->GetMode());
-    section->Set("Difficulty", WiiMixSettings::DifficultyToString(WiiMixSettings::instance()->GetDifficulty()).toStdString());
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_DIFFICULTY, WiiMixSettings::instance()->GetDifficulty());
     
     // section->Set("Objectives", WiiMixSettings::ObjectivesToObjectiveIds(WiiMixSettings::instance()->GetObjectives()));
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_OBJECTIVE_IDS, WiiMixSettings::ObjectivesToObjectiveIds(WiiMixSettings::instance()->GetObjectives()));
 
-    section->Set("SaveStateBank", WiiMixSettings::SaveStateBankToString(WiiMixSettings::instance()->GetSaveStateBank()).toStdString());
     // Config::Set(Config::LayerType::Base, Config::WIIMIX_SAVE_STATE_BANK, WiiMixSettings::instance()->GetSaveStateBank());
 
-    if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+    if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+      section->Set("BingoDifficulty", WiiMixCommonSettings::DifficultyToString(WiiMixBingoSettings::instance()->GetDifficulty()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_DIFFICULTY, WiiMixBingoSettings::instance()->GetDifficulty());
+      
+      section->Set("BingoSaveStateBank", WiiMixCommonSettings::SaveStateBankToString(WiiMixBingoSettings::instance()->GetSaveStateBank()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SAVE_STATE_BANK, WiiMixBingoSettings::instance()->GetSaveStateBank());
+
       section->Set("BingoType", WiiMixBingoSettings::instance()->GetBingoType());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_TYPE, WiiMixBingoSettings::instance()->GetBingoType());
 
@@ -395,7 +458,14 @@ void WiiMixSettingsWindow::SaveSettings() {
       section->Set("Teams", WiiMixBingoSettings::instance()->GetTeams());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_TEAMS, WiiMixBingoSettings::instance()->GetTeams());
     }
-    else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+    else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+      section->Set("ShuffleDifficulty", WiiMixCommonSettings::DifficultyToString(WiiMixShuffleSettings::instance()->GetDifficulty()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_DIFFICULTY, WiiMixShuffleSettings::instance()->GetDifficulty());
+      
+      section->Set("ShuffleSaveStateBank", WiiMixCommonSettings::SaveStateBankToString(WiiMixShuffleSettings::instance()->GetSaveStateBank()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, WiiMixShuffleSettings::instance()->GetSaveStateBank());
+
+      
       section->Set("NumberOfSwitches", WiiMixShuffleSettings::instance()->GetNumberOfSwitches());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, WiiMixShuffleSettings::instance()->GetNumberOfSwitches());
 
@@ -408,7 +478,13 @@ void WiiMixSettingsWindow::SaveSettings() {
       section->Set("Endless", WiiMixShuffleSettings::instance()->GetEndless());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
     }
-    else if (WiiMixSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+    else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+      section->Set("RogueDifficulty", WiiMixCommonSettings::DifficultyToString(WiiMixRogueSettings::instance()->GetDifficulty()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_DIFFICULTY, WiiMixRogueSettings::instance()->GetDifficulty());
+      
+      section->Set("RogueSaveStateBank", WiiMixCommonSettings::SaveStateBankToString(WiiMixRogueSettings::instance()->GetSaveStateBank()).toStdString());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SAVE_STATE_BANK, WiiMixRogueSettings::instance()->GetSaveStateBank());
+
       section->Set("RogueLength", WiiMixRogueSettings::instance()->GetLength());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_LENGTH, WiiMixRogueSettings::instance()->GetLength());
     }
@@ -441,7 +517,7 @@ void WiiMixSettingsWindow::SaveSettings() {
 
 std::vector<UICommon::GameFile> WiiMixSettingsWindow::GetGamesList() {
   std::vector<UICommon::GameFile> game_files;
-  for (const auto& game_ptr : WiiMixSettings::instance()->GetGamesList())
+  for (const auto& game_ptr : WiiMixGlobalSettings::instance()->GetGamesList())
   {
     game_files.push_back(*game_ptr);
   }

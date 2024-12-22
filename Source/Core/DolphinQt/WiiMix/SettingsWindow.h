@@ -4,7 +4,7 @@
 #pragma once
 
 #include <QDialog>
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"

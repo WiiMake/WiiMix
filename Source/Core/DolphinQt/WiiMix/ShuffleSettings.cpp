@@ -2,24 +2,59 @@
 
 
 WiiMixShuffleSettings::WiiMixShuffleSettings(
+    WiiMixEnums::Difficulty difficulty,
+      WiiMixEnums::SaveStateBank save_state_bank,
+      std::vector<WiiMixObjective> objectives,
     int number_of_switches, 
     int min_time_between_switch, 
     int max_time_between_switch, 
     bool endless)
-    : WiiMixSettings(
-        WiiMixSettings::instance()->GetDifficulty(),
-        WiiMixSettings::instance()->GetMode(),
-        WiiMixSettings::instance()->GetSaveStateBank(),
-        WiiMixSettings::instance()->GetObjectives(),
-        WiiMixSettings::instance()->GetGamesList()
+    : WiiMixCommonSettings(
+        difficulty,
+        save_state_bank,
+        objectives
     ),
       m_number_of_switches(number_of_switches),
       m_min_time_between_switch(min_time_between_switch),
       m_max_time_between_switch(max_time_between_switch),
       m_endless(endless)
-{}
+{
+    if (number_of_switches != DEFAULT_NUMBER_OF_SWITCHES) {
+        m_number_of_switches = number_of_switches;
+    } else if (Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES) != DEFAULT_NUMBER_OF_SWITCHES) {
+        m_number_of_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
+    } else {
+        m_number_of_switches = DEFAULT_NUMBER_OF_SWITCHES;
+    }
 
-bool WiiMixShuffleSettings::GetNumberOfSwitches() const
+    if (min_time_between_switch != DEFAULT_MIN_SWITCH_TIME) {
+        m_min_time_between_switch = min_time_between_switch;
+    } else if (Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH) != DEFAULT_MIN_SWITCH_TIME) {
+        m_min_time_between_switch = Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);
+    } else {
+        m_min_time_between_switch = DEFAULT_MIN_SWITCH_TIME;
+    }
+    qDebug() << "min_time_between_switch: " << m_min_time_between_switch;
+
+    if (max_time_between_switch != DEFAULT_MAX_SWITCH_TIME) {
+        m_max_time_between_switch = max_time_between_switch;
+    } else if (Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH) != DEFAULT_MAX_SWITCH_TIME) {
+        m_max_time_between_switch = Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH);
+    } else {
+        m_max_time_between_switch = DEFAULT_MAX_SWITCH_TIME;
+    }
+    qDebug() << "max_time_between_switch: " << m_max_time_between_switch;
+
+    if (endless != DEFAULT_IS_ENDLESS) {
+        m_endless = endless;
+    } else if (Config::Get(Config::WIIMIX_IS_ENDLESS) != DEFAULT_IS_ENDLESS) {
+        m_endless = Config::Get(Config::WIIMIX_IS_ENDLESS);
+    } else {
+        m_endless = DEFAULT_IS_ENDLESS;
+    }
+}
+
+int WiiMixShuffleSettings::GetNumberOfSwitches() const
 {
     return m_number_of_switches;
 }

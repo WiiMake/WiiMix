@@ -9,17 +9,28 @@
 #include <QPair>
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include "DolphinQt/WiiMix/Server/Settings.h"
+#include "DolphinQt/WiiMix/CommonSettings.h"
+
 
 // SERVER BINGO SETTINGS; copyable
-class WiiMixBingoSettings : public WiiMixSettings
+class WiiMixBingoSettings : public WiiMixCommonSettings
 {
 public:
-  explicit WiiMixBingoSettings(WiiMixSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
+  explicit WiiMixBingoSettings(WiiMixCommonSettings& settings, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE);
   explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size);
 
-  // TODOx: not sure why a default constructor is required here 
-  WiiMixBingoSettings() = default;
+  WiiMixBingoSettings(const WiiMixBingoSettings& other)
+    : WiiMixCommonSettings(other.GetDifficulty(), other.GetSaveStateBank(), other.GetObjectives()),
+      m_bingo_type(other.m_bingo_type),
+      m_card_size(other.m_card_size),
+      m_teams(other.m_teams),
+      m_players(other.m_players),
+      m_lobby_id(other.m_lobby_id),
+      m_lobby_password(other.m_lobby_password),
+      m_current_objectives(other.m_current_objectives),
+      m_players_ready(other.m_players_ready),
+      m_seed(other.m_seed)
+  {}
 
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
@@ -73,14 +84,13 @@ public:
   
   QJsonDocument ToJson();
   static WiiMixBingoSettings FromJson(QJsonDocument json);
+  void UpdateFromJson(QJsonDocument json);
 
-  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override {
-    m_difficulty = difficulty;
-  }
+  static QString BingoTypeToString(WiiMixEnums::BingoType type);
+  static WiiMixEnums::BingoType StringToBingoType(QString type);
 
-  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
-    m_save_state_bank = save_state_bank;
-  }
+  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
 
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions
@@ -91,7 +101,6 @@ public:
 private:
   WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
-  // TODOx: teams hasn't been tested at all
   bool m_teams;
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players;
   QMap<WiiMixEnums::Player, int> m_current_objectives = {};

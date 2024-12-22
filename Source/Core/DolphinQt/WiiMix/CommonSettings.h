@@ -19,12 +19,16 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 
-// SERVER SETTINGS; copyable
-class WiiMixSettings {
+// Operating on the assumption that GameFile.h is not reliant on Qt GUI
+
+// This is just meant for class extension, and as such is not a singleton
+class WiiMixCommonSettings : public QObject {
+  Q_OBJECT
 
 public:
-  explicit WiiMixSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::Mode mode = DEFAULT_MODE, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK,
-    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::string games = DEFAULT_GAMES);
+  explicit WiiMixCommonSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK,
+    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES);
+  WiiMixCommonSettings(const WiiMixCommonSettings& other) = default;
 
   virtual void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
   virtual void SetDifficulty(WiiMixEnums::Difficulty difficulty);
@@ -36,11 +40,9 @@ public:
   // then achievements for the game will not be used for the sake of stability.
   //   void SetVersion();
   //   void SetRegion();
-  void SetMode(WiiMixEnums::Mode mode);
 
   void SetObjectives(std::vector<WiiMixObjective> objectives); // A list of objectives; bingo objectives are read from left to right on the bingo board
   void AddObjective(WiiMixObjective objective);
-  const WiiMixEnums::Mode GetMode() const;
   const WiiMixEnums::Difficulty GetDifficulty() const;
   // int GetTime();
   const WiiMixEnums::SaveStateBank GetSaveStateBank() const;
@@ -49,36 +51,30 @@ public:
   static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
   static WiiMixEnums::Difficulty StringToDifficulty(QString difficulty);
 
-  static QString ModeToTitle(WiiMixEnums::Mode mode);
-  static QString ModeToDescription(WiiMixEnums::Mode mode);
-  static WiiMixEnums::Mode StringToMode(QString mode);
-
   static QString SaveStateBankToString(WiiMixEnums::SaveStateBank bank);
   static WiiMixEnums::SaveStateBank StringToSaveStateBank(QString bank);
-
-  static QString BingoTypeToString(WiiMixEnums::BingoType type);
-  static WiiMixEnums::BingoType StringToBingoType(QString type);
-
-  static int StringToCardSize(QString size);
 
   static std::vector<WiiMixObjective> ObjectiveIdsToObjectives(std::string objective_ids_list);
   // Using the built-in Objective::ToJson() function as opposed to the below function
   // static std::string ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives);
 
-  const std::string GetGamesList() const;
-
   QJsonObject ToJsonCommon();
-  static WiiMixSettings FromJsonCommon(QJsonDocument settings_json);
+  static WiiMixCommonSettings FromJsonCommon(QJsonDocument settings_json);
   // WiiMixSettings FromJsonCommon(QJsonDocument settings_json);
+
+  // NOTE: it would probably be easier to work with these signals
+  // rather than the current implementation in ConfigWidget where each change causes a rebuild and update
+  // signals:
+  //   void SettingsChanged(WiiMixEnums::Difficulty difficulty);
+  //   void SettingsChanged(WiiMixEnums::SaveStateBank bank);
+  //   void SettingsChanged(std::vector<WiiMixObjective> objectives);
 
 protected:
   WiiMixEnums::Difficulty m_difficulty;
   WiiMixEnums::SaveStateBank m_save_state_bank;
 
 private:
-  WiiMixEnums::Mode m_mode;
   std::vector<WiiMixObjective> m_objectives;
-  std::string m_games; // Use string IDs for server because UICommon::GameFile can't be passed via json
-  
+
   int m_time; // unused for now
 };

@@ -10,6 +10,13 @@ namespace WiiMixEnums {
         END // Default/size value
     };
 
+    #define DIFFICULTY_NORMAL "NORMAL"
+    #define DIFFICULTY_HARD "HARD"
+    #define DIFFICULTY_WIISANITY "WIISANITY"
+
+    std::string DifficultyToString(Difficulty difficulty);
+    Difficulty DifficultyFromString(const std::string& str);
+
     enum class Mode {
         BINGO, // Sub-modes: lockout, capture the flag
         SHUFFLE, // Sub-modes: race
@@ -62,6 +69,9 @@ namespace WiiMixEnums {
         GLITCH,
         END, // Default/size value
     };
+
+    std::string ObjectiveTypeToString(ObjectiveType type);
+    ObjectiveType ObjectiveTypeFromString(const std::string& str);
 
     // Sourced from the retroachievements genre list at https://retroachievements.org/game/9553
     enum class GameGenre {
@@ -192,6 +202,9 @@ namespace WiiMixEnums {
         MARATHON, // 10
         END
     };
+
+    std::string GameGenreToString(GameGenre genre);
+    GameGenre GameGenreFromString(const std::string& str);
 }
 
 // Retroachievements currently (2024) supports around 400000 achievements
@@ -220,6 +233,8 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_OBJECTIVES {}
 
 // BINGO
+#define DEFAULT_BINGO_DIFFICULTY WiiMixEnums::Difficulty::NORMAL
+#define DEFAULT_BINGO_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_BINGO_TYPE WiiMixEnums::BingoType::BINGO
 #define DEFAULT_CARD_SIZE 25
 #define DEFAULT_TEAMS false
@@ -233,9 +248,13 @@ inline int PORT = std::getenv("PORT") != nullptr ? std::stoi(std::getenv("PORT")
 inline std::string IP = std::getenv("IP") ? std::getenv("IP") : "";
 
 // ROGUE
+#define DEFAULT_ROGUE_DIFFICULTY WiiMixEnums::Difficulty::NORMAL
+#define DEFAULT_ROGUE_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_ROGUE_LENGTH WiiMixEnums::RogueLength::MEDIUM
 
 // SHUFFLE
+#define DEFAULT_SHUFFLE_DIFFICULTY WiiMixEnums::Difficulty::NORMAL
+#define DEFAULT_SHUFFLE_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_MIN_SWITCH_TIME 15
 #define DEFAULT_MAX_SWITCH_TIME 60
 #define DEFAULT_NUMBER_OF_SWITCHES 10

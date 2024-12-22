@@ -21,28 +21,25 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 
-// Operating on the assumption that GameFile.h is not reliant on Qt GUI
-
 #include "UICommon/GameFile.h"
 
-class WiiMixSettings : public QObject {
+// This is a singleton class that holds the global settings for WiiMix
+class WiiMixGlobalSettings : public QObject {
   Q_OBJECT
 
 public:
   // Singleton; delete the copy constructor to prevent copies
   // This is only on client side; the server doesn't need a singleton
-  WiiMixSettings(const WiiMixSettings& settings) = delete;
+  WiiMixGlobalSettings(const WiiMixGlobalSettings& settings) = delete;
 
   // Singleton accessor method
-  static WiiMixSettings* instance() {
+  static WiiMixGlobalSettings* instance() {
       if (!s_instance) {
-          s_instance = new WiiMixSettings();  // Create the singleton if it doesn't exist
+          s_instance = new WiiMixGlobalSettings();  // Create the singleton if it doesn't exist
       }
       return s_instance;
   }
 
-  virtual void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
-  virtual void SetDifficulty(WiiMixEnums::Difficulty difficulty);
   // Time will be an optional parameter that the user can set in case they only have a certain amount of time
   // It will be taken into account when populating objectives
   // void SetTime(int time);
@@ -61,42 +58,19 @@ public:
   int FindGameIndex(const std::string& path) const;
 
 
-  void SetObjectives(std::vector<WiiMixObjective> objectives); // A list of objectives; bingo objectives are read from left to right on the bingo board
-  void AddObjective(WiiMixObjective objective);
   const WiiMixEnums::Mode GetMode() const;
-  const WiiMixEnums::Difficulty GetDifficulty() const;
-  // int GetTime();
-  const WiiMixEnums::SaveStateBank GetSaveStateBank() const;
-  const std::vector<WiiMixObjective> GetObjectives() const;
-
-  static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
-  static WiiMixEnums::Difficulty StringToDifficulty(QString difficulty);
 
   static QString ModeToTitle(WiiMixEnums::Mode mode);
   static QIcon ModeToIcon(WiiMixEnums::Mode mode);
   static QString ModeToDescription(WiiMixEnums::Mode mode);
   static WiiMixEnums::Mode StringToMode(QString mode);
 
-  static QString SaveStateBankToString(WiiMixEnums::SaveStateBank bank);
-  static WiiMixEnums::SaveStateBank StringToSaveStateBank(QString bank);
-
-  static QString BingoTypeToString(WiiMixEnums::BingoType type);
-  static WiiMixEnums::BingoType StringToBingoType(QString type);
-
-  static int StringToCardSize(QString size);
-
-  static std::vector<WiiMixObjective> ObjectiveIdsToObjectives(std::string objective_ids_list);
-  // Using the built-in Objective::ToJson() function as opposed to the below function
-  // static std::string ObjectivesToObjectiveIds(std::vector<WiiMixObjective> objectives);
-
   static std::vector<std::shared_ptr<const UICommon::GameFile>> GameIdsToGameFiles(std::string game_ids_list);
   static std::string GameFilesToGameIds(std::vector<std::shared_ptr<const UICommon::GameFile>> games);
   const std::vector<std::shared_ptr<const UICommon::GameFile>> GetGamesList() const;
 
-  QJsonObject ToJsonCommon();
-  // Since this is a singleton, FromJsonCommon must return void
-  void FromJsonCommon(QJsonDocument settings_json);
-  // WiiMixSettings FromJsonCommon(QJsonDocument settings_json);
+  // QJsonObject ToJsonCommon();
+  // void FromJsonCommon(QJsonDocument settings_json);
 
 // SettingsChanged signals update the UI
 // but also send a request to the WiiMixClient to propagate the new values to the server
@@ -115,20 +89,11 @@ protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings
   // It should only be called within the classes that extend it
 
-  explicit WiiMixSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::Mode mode = DEFAULT_MODE, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK,
-    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES);
+  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES);
 
-  inline static WiiMixSettings* s_instance = nullptr; // Singleton instance
-  // TODOx: if singleton doesn't work, move these back
-  WiiMixEnums::Difficulty m_difficulty;
-  WiiMixEnums::SaveStateBank m_save_state_bank;
+  inline static WiiMixGlobalSettings* s_instance = nullptr; // Singleton instance
 
 private:
   WiiMixEnums::Mode m_mode;
-  std::vector<WiiMixObjective> m_objectives;
-
-  // Making the same assumption as above
-
   std::vector<std::shared_ptr<const UICommon::GameFile>> m_games;
-  int m_time; // unused for now
 };

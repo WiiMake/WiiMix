@@ -3,13 +3,21 @@
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
-WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::RogueLength length) : WiiMixSettings(
-    WiiMixSettings::instance()->GetDifficulty(),
-    WiiMixSettings::instance()->GetMode(),
-    WiiMixSettings::instance()->GetSaveStateBank(),
-    WiiMixSettings::instance()->GetObjectives(),
-    WiiMixSettings::instance()->GetGamesList()
-), m_length(length) {}
+WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::RogueLength length) : WiiMixCommonSettings(
+    difficulty,
+    bank,
+    objectives
+), m_length(length) {
+    if (length != DEFAULT_ROGUE_LENGTH) {
+        m_length = length;
+    }
+    else if (Config::Get(Config::WIIMIX_ROGUE_LENGTH) != DEFAULT_ROGUE_LENGTH) {
+        m_length = Config::Get(Config::WIIMIX_ROGUE_LENGTH);
+    }
+    else {
+        m_length = DEFAULT_ROGUE_LENGTH;
+    }
+}
 
 void WiiMixRogueSettings::SetSeed(QString seed) {
     m_seed = seed;

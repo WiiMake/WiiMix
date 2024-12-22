@@ -27,7 +27,8 @@
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/CommonSettings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 #include "DolphinQt/MainWindow.h"
 #include <assert.h>
 
@@ -87,6 +88,18 @@ void WiiMixConfigWidget::OnSettingsChanged(WiiMixBingoSettings *settings) {
 }
 
 void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
+    qDebug() << "Bingo Settings (Config Widget):";
+    qDebug() << "Difficulty:" << static_cast<int>(WiiMixBingoSettings::instance()->GetDifficulty());
+    qDebug() << "Save State Bank:" << static_cast<int>(WiiMixBingoSettings::instance()->GetSaveStateBank());
+    qDebug() << "Bingo Type:" << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
+    qDebug() << "Card Size:" << static_cast<int>(WiiMixBingoSettings::instance()->GetCardSize());
+    qDebug() << "Teams Enabled:" << WiiMixBingoSettings::instance()->GetTeams();
+    qDebug() << "Lobby ID:" << WiiMixBingoSettings::instance()->GetLobbyID();
+    qDebug() << "Lobby Password:" << WiiMixBingoSettings::instance()->GetLobbyPassword();
+    qDebug() << "Players:";
+    for (const auto& player : WiiMixBingoSettings::instance()->GetPlayers()) {
+        qDebug() << "  Player" << static_cast<int>(player.first) << ":" << player.second;
+    }
     m_config_layout = new QVBoxLayout();
 
     // Separate menu_layout for the host and the connector
@@ -274,7 +287,6 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
         });
 
         WiiMixEnums::BingoType bingo_type = Config::Get(Config::WIIMIX_BINGO_TYPE);
-        qDebug() << "Bingo type: " << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
         bingo_type = WiiMixBingoSettings::instance()->GetBingoType();
         m_bingo_button = new QRadioButton(tr("Bingo"));
         if (bingo_type == WiiMixEnums::BingoType::BINGO) {
@@ -431,6 +443,7 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
 
     m_endless_mode = new QCheckBox(tr("Endless Mode"));
     m_endless_mode->setChecked(Config::Get(Config::WIIMIX_IS_ENDLESS));
+    m_num_switches->setDisabled(m_endless_mode->isChecked());
 
     num_switches_layout->addWidget(m_num_switches);
     num_switches_layout->addWidget(m_endless_mode);
@@ -507,7 +520,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     QLabel*difficulty_label = new QLabel(tr("Objective Difficulty:"));
     m_difficulty = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Difficulty::END); i++) {
-        m_difficulty->addItem(WiiMixSettings::DifficultyToString(static_cast<WiiMixEnums::Difficulty>(i)));
+        m_difficulty->addItem(WiiMixCommonSettings::DifficultyToString(static_cast<WiiMixEnums::Difficulty>(i)));
     }
     WiiMixEnums::Mode mode = Config::Get(Config::WIIMIX_MODE);
     WiiMixEnums::Difficulty difficulty;
@@ -541,7 +554,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     QLabel*save_state_label = new QLabel(tr("Save State Bank:"));
     m_save_state_bank = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::SaveStateBank::END); i++) {
-        m_save_state_bank->addItem(WiiMixSettings::SaveStateBankToString(static_cast<WiiMixEnums::SaveStateBank>(i)));
+        m_save_state_bank->addItem(WiiMixCommonSettings::SaveStateBankToString(static_cast<WiiMixEnums::SaveStateBank>(i)));
     }
     WiiMixEnums::SaveStateBank bank;
     switch (mode)
@@ -743,9 +756,9 @@ void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+    // else {
+    //     emit onSettingsChanged(GetBingoSettings());
+    // }
 }
 
 void WiiMixConfigWidget::SetSaveStateBank(QString bank) {
@@ -756,32 +769,20 @@ void WiiMixConfigWidget::SetSaveStateBank(QString bank) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+   // else {
+   //     emit onSettingsChanged(GetBingoSettings());
+   // }
 }
 
 void WiiMixConfigWidget::SetNumSwitches(int num_switches) {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
     m_num_switches->setText(QString::number(num_switches));
-    if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
-    }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
 }
 
 void WiiMixConfigWidget::SetEndless(bool endless) {
     m_endless_mode->setChecked(endless);
     m_num_switches->setDisabled(endless);
     Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
-    if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
-    }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
 }
 
 void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {
@@ -820,9 +821,9 @@ void WiiMixConfigWidget::SetCardSize(int index) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+   // else {
+   //     emit onSettingsChanged(GetBingoSettings());
+   // }
 }
 
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
@@ -830,12 +831,6 @@ void WiiMixConfigWidget::SetMinTimeBetweenSwitch(int min_time) {
     m_min_time_between_switch->setValue(min_time);
     m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(min_time));
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, min_time);
-    if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
-    }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
 }
 
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
@@ -843,12 +838,6 @@ void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
     m_max_time_between_switch->setValue(max_time);
     m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(max_time));
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
-    if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
-    }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
 }
 
 void WiiMixConfigWidget::SetLobbyPassword(QString password) {
@@ -856,9 +845,9 @@ void WiiMixConfigWidget::SetLobbyPassword(QString password) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+   // else {
+   //     emit onSettingsChanged(GetBingoSettings());
+   // }
 }
 
 
@@ -888,9 +877,9 @@ void WiiMixConfigWidget::SetTeams(bool enabled) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+   // else {
+   //     emit onSettingsChanged(GetBingoSettings());
+   // }
 }
 
 // Updates the color checkboxes based on whether teams is enabled or not
@@ -909,9 +898,9 @@ void WiiMixConfigWidget::SetTeamSelectors(int index) {
     if (WiiMixClient::instance()->IsConnected()) {
         WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
     }
-    else {
-        emit onSettingsChanged(GetBingoSettings());
-    }
+   // else {
+   //     emit onSettingsChanged(GetBingoSettings());
+   // }
 }
 
 // void WiiMixConfigWidget::SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> states) {
@@ -927,7 +916,7 @@ void WiiMixConfigWidget::SetTeamSelectors(int index) {
 // }
 
 /// Creates a settings instance from the current configuration
-/// and sends it to the Bingo server 
+/// and sends it to the Bingo server
 WiiMixBingoSettings* WiiMixConfigWidget::GetBingoSettings(WiiMixEnums::Action action) {
     // Create a settings instance from the current configuration
     if (action == WiiMixEnums::Action::CONNECT) {
@@ -943,21 +932,21 @@ WiiMixBingoSettings* WiiMixConfigWidget::GetBingoSettings(WiiMixEnums::Action ac
         WiiMixBingoSettings::instance()->SetLobbyPassword(GetLobbyPassword());
     }
     else {
-        WiiMixBingoSettings::instance()->SetDifficulty(WiiMixSettings::StringToDifficulty(GetDifficulty()));
+        WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(GetDifficulty()));
         qDebug() << QStringLiteral("Difficulty set to: %1").arg(GetDifficulty());
         
-        WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(GetSaveStateBank()));
+        WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(GetSaveStateBank()));
         qDebug() << QStringLiteral("SaveStateBank set to: %1").arg(GetSaveStateBank());
         
-        WiiMixBingoSettings::instance()->SetMode(WiiMixEnums::Mode::BINGO);
+        WiiMixGlobalSettings::instance()->SetMode(WiiMixEnums::Mode::BINGO);
         qDebug() << QStringLiteral("Mode set to: BINGO");
         
         WiiMixBingoSettings::instance()->SetBingoType(GetBingoType());
         qDebug() << QStringLiteral("BingoType set to: %1").arg(static_cast<int>(GetBingoType()));
         
-        WiiMixBingoSettings::instance()->SetCardSize(WiiMixSettings::StringToCardSize(GetCardSize()));
+        WiiMixBingoSettings::instance()->SetCardSize(WiiMixBingoSettings::StringToCardSize(GetCardSize()));
         qDebug() << QStringLiteral("CardSize set to: %1").arg(GetCardSize());
-        qDebug() << QStringLiteral("Possible error with StringToCardSize: %1").arg(WiiMixSettings::StringToCardSize(GetCardSize()));
+        qDebug() << QStringLiteral("Possible error with StringToCardSize: %1").arg(WiiMixBingoSettings::StringToCardSize(GetCardSize()));
         
         WiiMixBingoSettings::instance()->SetTeams(GetTeams());
         qDebug() << QStringLiteral("Teams set to: %1").arg(GetTeams());

@@ -4,7 +4,7 @@
 #pragma once
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/CommonSettings.h"
 
 #include <QList>
 #include <QString>
@@ -13,17 +13,27 @@
 #include "Core/Config/MainSettings.h"
 
 // CLIENT ROGUE SETTINGS -> singleton
-class WiiMixRogueSettings : public WiiMixSettings 
+class WiiMixRogueSettings : public WiiMixCommonSettings 
 {
 public:
-  static WiiMixRogueSettings* instance(WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
-    if (!s_instance) {
-        s_instance = new WiiMixRogueSettings(rogue_length);
+  static WiiMixRogueSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_ROGUE_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_ROGUE_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
+    // Check if difficulty or save state bank are different from the default
+    WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_ROGUE_DIFFICULTY);
+    if (difficulty == DEFAULT_ROGUE_DIFFICULTY && config_difficulty != DEFAULT_ROGUE_DIFFICULTY) {
+        difficulty = difficulty;
     }
-    return static_cast<WiiMixRogueSettings*>(s_instance);
+
+    WiiMixEnums::SaveStateBank config_save_state_bank = Config::Get(Config::WIIMIX_ROGUE_SAVE_STATE_BANK);
+    if (save_state_bank == DEFAULT_ROGUE_SAVE_STATE_BANK && config_save_state_bank != DEFAULT_ROGUE_SAVE_STATE_BANK) {
+        save_state_bank = config_save_state_bank;
+    }
+    if (!s_instance) {
+        s_instance = new WiiMixRogueSettings(difficulty, save_state_bank, objectives, rogue_length);
+    }
+    return s_instance;
   }
 
-  explicit WiiMixRogueSettings(WiiMixEnums::RogueLength length);
+  explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::RogueLength length);
 
   // Seeds will be encoded and decoded using Qt
   QString GetSeed();
@@ -67,12 +77,13 @@ public:
 
 
 private:
-  QList<WiiMixEnums::RogueEvent> m_events;
-  QList<WiiMixEnums::RogueItem> m_items;
-  QList<WiiMixEnums::RogueItem> m_player_items;
+  inline static WiiMixRogueSettings* s_instance = nullptr; // Singleton instance
+  QList<WiiMixEnums::RogueEvent> m_events = QList<WiiMixEnums::RogueEvent>();
+  QList<WiiMixEnums::RogueItem> m_items = QList<WiiMixEnums::RogueItem>();
+  QList<WiiMixEnums::RogueItem> m_player_items = QList<WiiMixEnums::RogueItem>();
   WiiMixEnums::RogueLength m_length;
   // Endless can potentially come later
   // bool m_endless;
-  QString m_seed;
+  QString m_seed = QStringLiteral("");
 
 };

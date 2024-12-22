@@ -10,10 +10,10 @@
 #include <QResizeEvent>
 
 #include <array>
-#include "DolphinQt/WiiMix/Settings.h"
 #include "WiiMixButton.h"
 #include <iostream>
 
+#include "DolphinQt/WiiMix/Enums.h"
 
 class QIcon;
 class QString;

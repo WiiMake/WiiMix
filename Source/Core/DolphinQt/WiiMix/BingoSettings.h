@@ -9,21 +9,29 @@
 #include <QPair>
 
 #include "DolphinQt/WiiMix/Enums.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/CommonSettings.h"
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
 // CLIENT BINGO SETTINGS -> singleton
-class WiiMixBingoSettings : public WiiMixSettings 
+class WiiMixBingoSettings : public WiiMixCommonSettings 
 {
 public:
-  explicit WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size, bool teams);
-  static WiiMixBingoSettings* instance(WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
-    if (!s_instance) {
-        s_instance = new WiiMixBingoSettings(bingo_type, card_size, teams);
+  explicit WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS);
+  static WiiMixBingoSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
+    WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_BINGO_DIFFICULTY);
+    if (difficulty == DEFAULT_BINGO_DIFFICULTY && config_difficulty != DEFAULT_BINGO_DIFFICULTY) {
+        difficulty = difficulty;
     }
-    // TODOx: is this cast actually what I want?
-    return static_cast<WiiMixBingoSettings*>(s_instance);
+
+    WiiMixEnums::SaveStateBank config_save_state_bank = Config::Get(Config::WIIMIX_BINGO_SAVE_STATE_BANK);
+    if (save_state_bank == DEFAULT_BINGO_SAVE_STATE_BANK && config_save_state_bank != DEFAULT_BINGO_SAVE_STATE_BANK) {
+        save_state_bank = config_save_state_bank;
+    }
+    if (!s_instance) {
+        s_instance = new WiiMixBingoSettings(difficulty, save_state_bank, objectives, bingo_type, card_size, teams);
+    }
+    return s_instance;
   }
 
   WiiMixEnums::BingoType GetBingoType() const;
@@ -79,9 +87,13 @@ public:
   QJsonDocument ToJson();
   void FromJson(QJsonDocument json);
 
-  void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+  static QString BingoTypeToString(WiiMixEnums::BingoType type);
+  static WiiMixEnums::BingoType StringToBingoType(QString type);
 
-  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
+  void SetDifficulty(WiiMixEnums::Difficulty difficulty);
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank);
+
+  static int StringToCardSize(QString size);
 
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions
@@ -90,6 +102,7 @@ public:
   // This info is not stored in bingo settings, but rather managed via BingoNetplay
 
 private:
+  inline static WiiMixBingoSettings* s_instance = nullptr; // Singleton instance
   WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
   // TODOx: teams hasn't been tested at all

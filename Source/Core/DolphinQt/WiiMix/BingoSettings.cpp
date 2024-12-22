@@ -1,5 +1,5 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/CommonSettings.h"
 
 #include <QJsonObject>
 
@@ -7,12 +7,10 @@
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::BingoType bingo_type, int card_size, bool teams) : WiiMixSettings(
-    WiiMixSettings::instance()->GetDifficulty(),
-    WiiMixSettings::instance()->GetMode(),
-    WiiMixSettings::instance()->GetSaveStateBank(),
-    WiiMixSettings::instance()->GetObjectives(),
-    WiiMixSettings::instance()->GetGamesList()
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank save_state_bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::BingoType bingo_type, int card_size, bool teams) : WiiMixCommonSettings(
+    difficulty,
+    save_state_bank,
+    objectives
 ), m_bingo_type(bingo_type), m_card_size(card_size), m_teams(teams) {
     // Check if config overrides defaults
     if (bingo_type != DEFAULT_BINGO_TYPE) {
@@ -221,4 +219,37 @@ void WiiMixBingoSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state
     m_save_state_bank = save_state_bank;
     Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SAVE_STATE_BANK, save_state_bank);
     // emit SettingsChanged(save_state_bank);
+}
+
+QString WiiMixBingoSettings::BingoTypeToString(WiiMixEnums::BingoType type) {
+    switch (type)
+    {
+        case WiiMixEnums::BingoType::BINGO:
+            return QStringLiteral("Bingo");
+        case WiiMixEnums::BingoType::LOCKOUT:
+            return QStringLiteral("Lockout");
+        case WiiMixEnums::BingoType::TIME_ATTACK:
+            return QStringLiteral("Time Attack");
+        default:
+            return QStringLiteral("");
+    }
+}
+
+WiiMixEnums::BingoType WiiMixBingoSettings::StringToBingoType(QString type) {
+    if (type == QStringLiteral("Bingo"))
+        return WiiMixEnums::BingoType::BINGO;
+    else if (type == QStringLiteral("Lockout"))
+        return WiiMixEnums::BingoType::LOCKOUT;
+    else if (type == QStringLiteral("Time Attack"))
+        return WiiMixEnums::BingoType::TIME_ATTACK;
+    else
+        return WiiMixEnums::BingoType::END; // Default case
+}
+
+int WiiMixBingoSettings::StringToCardSize(QString size) {
+    int num = 0;
+    if (!size.isEmpty()) {
+        num = size[0].digitValue();
+    }
+    return num * num;
 }

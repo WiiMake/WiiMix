@@ -9,7 +9,7 @@
 #include <QString>
 
 #include "DolphinQt/WiiMix/ModesWidget.h"
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 #include "VideoCommon/OnScreenDisplay.h"
@@ -57,7 +57,7 @@ void WiiMixModesWidget::CreateLayout() {
     descriptionFont.setPointSize(16);
 
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
-        QString titleText = WiiMixSettings::ModeToTitle(WiiMixEnums::Mode(i));
+        QString titleText = WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode(i));
         if (titleText == QStringLiteral("")) {
             continue;
         }

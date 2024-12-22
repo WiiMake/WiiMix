@@ -24,7 +24,7 @@
 #include "UICommon/GameFile.h"
 #include "UICommon/UICommon.h"
 
-#include "DolphinQt/WiiMix/Settings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 
 const QSize GAMECUBE_BANNER_SIZE(96, 32);
 
@@ -34,11 +34,11 @@ GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
   connect(&m_tracker, &GameTracker::GameUpdated, this, &GameListModel::UpdateGame);
   connect(&m_tracker, &GameTracker::GameRemoved, this, &GameListModel::RemoveGame);
   // Connect the game tracker to the WiiMixSettings singleton
-  connect(&m_tracker, &GameTracker::GameLoaded, WiiMixSettings::instance(), &WiiMixSettings::AddGame);
-  connect(&m_tracker, &GameTracker::GameUpdated, WiiMixSettings::instance(), &WiiMixSettings::UpdateGame);
-  connect(&m_tracker, &GameTracker::GameRemoved, WiiMixSettings::instance(), &WiiMixSettings::RemoveGame);
+  connect(&m_tracker, &GameTracker::GameLoaded, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::AddGame);
+  connect(&m_tracker, &GameTracker::GameUpdated, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::UpdateGame);
+  connect(&m_tracker, &GameTracker::GameRemoved, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::RemoveGame);
 
-  connect(WiiMixSettings::instance(), &WiiMixSettings::SettingsChanged, this, &GameListModel::setWiiMixData);
+  connect(WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::SettingsChanged, this, &GameListModel::setWiiMixData);
 
   connect(&Settings::Instance(), &Settings::PathAdded, &m_tracker, &GameTracker::AddDirectory);
   connect(&Settings::Instance(), &Settings::PathRemoved, &m_tracker, &GameTracker::RemoveDirectory);
