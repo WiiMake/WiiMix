@@ -87,3 +87,6 @@
 [submodule "Externals/json"]
 	path = Externals/json
 	url = https://github.com/nlohmann/json
+[submodule "Source/Core/DolphinQt/WiiMix/Server"]
+    path = Source/Core/DolphinQt/WiiMix/Server
+    url = https://github.com/WiiMake/server.git
