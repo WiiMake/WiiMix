@@ -90,3 +90,6 @@
 [submodule "Externals/dotenv-cpp"]
 	path = Externals/dotenv-cpp
 	url = https://github.com/laserpants/dotenv-cpp.git
+[submodule "Source/Core/DolphinQt/WiiMix/Server"]
+	path = Source/Core/DolphinQt/WiiMix/Server
+	url = https://github.com/WiiMake/Server.git
