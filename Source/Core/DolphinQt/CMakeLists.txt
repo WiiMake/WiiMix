@@ -153,6 +153,8 @@ add_executable(dolphin-emu
   Config/Mapping/HotkeyUSBEmu.h
   Config/Mapping/HotkeyWii.cpp
   Config/Mapping/HotkeyWii.h
+  Config/Mapping/HotkeyWiiMix.cpp
+  Config/Mapping/HotkeyWiiMix.h
   Config/Mapping/IOWindow.cpp
   Config/Mapping/MappingButton.cpp
   Config/Mapping/MappingButton.h
@@ -474,6 +476,7 @@ else()
   message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.cpp or ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.h not found")
 endif()
 
+
 # Ensure the resource path doesn't get overridden
 # set(DOLPHIN_RESOURCE_PATH "${PROJECT_SOURCE_DIR}/Data/Sys/Resources")
 
@@ -511,6 +514,7 @@ PRIVATE
 
 # target_link_libraries(dolphin-emu PRIVATE nlohmann_json::nlohmann_json)
 
+# target_include_directories(dolphin-emu PRIVATE ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src)
 
 target_link_libraries(dolphin-emu
 PRIVATE
@@ -523,6 +527,7 @@ PRIVATE
   uicommon
   imgui
   implot
+  dotenv
 )
 
 if (WIN32)
@@ -769,3 +774,15 @@ if(USE_RETRO_ACHIEVEMENTS)
   target_link_libraries(dolphin-emu PRIVATE rcheevos)
   target_compile_definitions(dolphin-emu PRIVATE -DUSE_RETRO_ACHIEVEMENTS)
 endif()
+
+# Define paths
+set(SYS_DIR ${CMAKE_SOURCE_DIR}/Data/Sys)
+set(TARGET_SYS_DIR ${CMAKE_BINARY_DIR}/Binaries/Sys)
+
+# Copy Sys directory to the binary directory
+add_custom_command(
+    TARGET dolphin-emu POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${SYS_DIR} ${TARGET_SYS_DIR}
+    COMMENT "Copying Sys directory to Binaries"
+)

@@ -41,6 +41,7 @@
 #include "DolphinQt/Config/Mapping/HotkeyTAS.h"
 #include "DolphinQt/Config/Mapping/HotkeyUSBEmu.h"
 #include "DolphinQt/Config/Mapping/HotkeyWii.h"
+#include "DolphinQt/Config/Mapping/HotkeyWiiMix.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtension.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtensionMotionInput.h"
 #include "DolphinQt/Config/Mapping/WiimoteEmuExtensionMotionSimulation.h"
@@ -187,7 +188,7 @@ void MappingWindow::ConnectWidgets()
           &MappingWindow::OnGlobalDevicesChanged);
   connect(this, &MappingWindow::ConfigChanged, this, &MappingWindow::OnGlobalDevicesChanged);
   connect(m_devices_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDevice);
-  connect(m_device_two_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDeviceTwo);
+  // connect(m_device_two_combo, &QComboBox::currentIndexChanged, this, &MappingWindow::OnSelectDeviceTwo);
 
   connect(m_reset_clear, &QPushButton::clicked, this, &MappingWindow::OnClearFieldsPressed);
   connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPressed);
@@ -455,6 +456,7 @@ void MappingWindow::SetMappingType(MappingWindow::Type type)
   {
     widget = new HotkeyGeneral(this);
     AddWidget(tr("General"), widget);
+    AddWidget(tr("WiiMix"), new HotkeyWiiMix(this));
     // i18n: TAS is short for tool-assisted speedrun. Read http://tasvideos.org/ for details.
     // Frame advance is an example of a typical TAS tool.
     AddWidget(tr("TAS Tools"), new HotkeyTAS(this));

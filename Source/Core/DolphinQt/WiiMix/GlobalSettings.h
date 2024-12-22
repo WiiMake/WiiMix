@@ -57,7 +57,6 @@ public:
   void RemoveGame(const std::string& path);
   int FindGameIndex(const std::string& path) const;
 
-
   const WiiMixEnums::Mode GetMode() const;
 
   static QString ModeToTitle(WiiMixEnums::Mode mode);
@@ -68,6 +67,9 @@ public:
   static std::vector<std::shared_ptr<const UICommon::GameFile>> GameIdsToGameFiles(std::string game_ids_list);
   static std::string GameFilesToGameIds(std::vector<std::shared_ptr<const UICommon::GameFile>> games);
   const std::vector<std::shared_ptr<const UICommon::GameFile>> GetGamesList() const;
+
+  void SetCurrentObjective(int objective);
+  int GetCurrentObjective();
 
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
@@ -89,11 +91,12 @@ protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings
   // It should only be called within the classes that extend it
 
-  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES);
+  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES, int current_objective = 0);
 
   inline static WiiMixGlobalSettings* s_instance = nullptr; // Singleton instance
 
 private:
   WiiMixEnums::Mode m_mode;
   std::vector<std::shared_ptr<const UICommon::GameFile>> m_games;
+  int m_current_objective;
 };

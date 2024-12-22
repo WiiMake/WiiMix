@@ -540,6 +540,14 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_DECREMENT_SELECTED_STATE_SLOT))
         emit DecrementSelectedStateSlotHotkey();
 
+      // WiiMix
+      if (IsHotkey(HK_BINGO_BOARD))
+        // Toggles the bingo board
+        emit BingoBoardHotkey();
+
+      if (IsHotkey(HK_RESET_OBJECTIVE))
+        emit ResetCurrentObjectiveHotkey();
+
       // Stereoscopy
       if (IsHotkey(HK_TOGGLE_STEREO_SBS))
       {

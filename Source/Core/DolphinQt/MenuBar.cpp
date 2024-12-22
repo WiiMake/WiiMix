@@ -681,12 +681,12 @@ void MenuBar::AddHelpMenu()
   });
   QAction* github = help_menu->addAction(tr("&GitHub Repository"));
   connect(github, &QAction::triggered, this, []() {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/xanmankey/WiiMix.git")));
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/WiiMake/WiiMix")));
   });
   QAction* bugtracker = help_menu->addAction(tr("&Bug Tracker"));
   connect(bugtracker, &QAction::triggered, this, []() {
     QDesktopServices::openUrl(
-        QUrl(QStringLiteral("https://github.com/xanmankey/WiiMix/issues")));
+        QUrl(QStringLiteral("https://github.com/WiiMake/WiiMix/issues")));
   });
 
   if (AutoUpdateChecker::SystemSupportsAutoUpdates())

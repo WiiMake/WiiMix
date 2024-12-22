@@ -293,6 +293,8 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     // _trans("Reset Current Objective"),
 
     // _trans("Bingo Ready"),
+    _trans("Show Bingo Board"),
+    _trans("Reset Objective"),
 
     _trans("Save Oldest State"),
     _trans("Undo Load State"),
@@ -477,6 +479,7 @@ constexpr std::array<HotkeyGroupInfo, NUM_HOTKEY_GROUPS> s_groups_info = {
      {_trans("3D Depth"), HK_DECREASE_DEPTH, HK_INCREASE_CONVERGENCE},
      {_trans("Load State"), HK_LOAD_STATE_SLOT_1, HK_LOAD_STATE_SLOT_SELECTED},
      {_trans("Save State"), HK_SAVE_STATE_SLOT_1, HK_SAVE_STATE_SLOT_SELECTED},
+     {_trans("Bingo"), HK_BINGO_BOARD, HK_RESET_OBJECTIVE},
     //  {_trans("Send State"), HK_SWAP_GAME_SLOT_1, HK_SWAP_GAME_SLOT_SELECTED},
      {_trans("Select State"), HK_SELECT_STATE_SLOT_1, HK_SELECT_STATE_SLOT_10},
      {_trans("Load Last State"), HK_LOAD_LAST_STATE_1, HK_LOAD_LAST_STATE_10},
@@ -566,6 +569,10 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
   auto hotkey_string = [](std::vector<std::string> inputs) {
     return fmt::format("@({})", fmt::join(inputs, "+"));
   };
+
+  // WiiMix hotkeys
+  set_key_expression(HK_BINGO_BOARD, "B");
+  set_key_expression(HK_RESET_OBJECTIVE, "R");
 
   // General hotkeys
   set_key_expression(HK_OPEN, hotkey_string({"Ctrl", "O"}));

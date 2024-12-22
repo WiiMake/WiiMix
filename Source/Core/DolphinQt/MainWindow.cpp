@@ -707,6 +707,8 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadSlot, this, &MainWindow::StateLoadSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveLoadSlot, this, &MainWindow::ObjectiveLoadSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveResetSlot, this, &MainWindow::ObjectiveResetSlotAt);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::ResetCurrentObjectiveHotkey, this, &MainWindow::ResetCurrentObjective);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::BingoBoardHotkey, this, &MainWindow::ToggleBingoBoard);
   connect(m_hotkey_scheduler, &HotkeyScheduler::BingoReady, this, &MainWindow::BingoReady);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateSaveSlot, this, &MainWindow::StateSaveSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadLastSaved, this,
@@ -1791,6 +1793,12 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
   return;
 }
 
+// TODOx @gyoder
+void MainWindow::ResetCurrentObjective() {
+  // WiiMixGlobalSettings::instance()->GetCurrentObjective();
+  return;
+}
+
 void MainWindow::BingoReady() {
   // TODOx: toggles ready on player player_num
   qDebug() << "Bingo ready";
@@ -1805,6 +1813,11 @@ void MainWindow::BingoReady() {
   if (WiiMixClient::instance()->IsConnected()) {
     WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE);
   }
+  return;
+}
+
+// @vlad TODOx
+void MainWindow::ToggleBingoBoard() {
   return;
 }
 

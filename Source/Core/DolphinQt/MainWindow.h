@@ -120,7 +120,9 @@ private:
   void StateSendSlotAt(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
+  void ResetCurrentObjective();
   void BingoReady();
+  void ToggleBingoBoard();
   // void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();

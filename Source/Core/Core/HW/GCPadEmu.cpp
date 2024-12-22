@@ -51,8 +51,8 @@ GCPad::GCPad(const unsigned int index) : m_index(index)
   m_buttons->AddInput(Translatability::Translate, START_BUTTON, _trans("START"));
 
   // WiiMix mappings
-  m_buttons->AddInput(Translatability::Translate, RESET_BUTTON, _trans("RESET OBJECTIVE"));
-  m_buttons->AddInput(Translatability::Translate, BINGO_BOARD_BUTTON, _trans("BINGO BOARD"));
+  // m_buttons->AddInput(Translatability::Translate, RESET_BUTTON, _trans("RESET OBJECTIVE"));
+  // m_buttons->AddInput(Translatability::Translate, BINGO_BOARD_BUTTON, _trans("BINGO BOARD"));
 
   // sticks
   groups.emplace_back(m_main_stick = new ControllerEmu::OctagonAnalogStick(

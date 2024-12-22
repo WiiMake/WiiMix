@@ -762,6 +762,8 @@ endif()
 
 include_directories(Externals/picojson)
 
+add_subdirectory(Externals/dotenv-cpp)
+
 add_subdirectory(Externals/expr)
 
 add_subdirectory(Externals/rangeset)

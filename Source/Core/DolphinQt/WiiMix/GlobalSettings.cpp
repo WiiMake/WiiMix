@@ -19,7 +19,7 @@
 #include "Common/IniFile.h"
 #include "Core/ConfigManager.h"
 
-WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games) : m_mode(mode), m_games(games) {
+WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games, int current_objective) : m_mode(mode), m_games(games), m_current_objective(current_objective) {
     WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
     if (mode != DEFAULT_MODE) {
         m_mode = mode;
@@ -31,6 +31,7 @@ WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<s
         m_mode = DEFAULT_MODE;
     }
     m_games = DEFAULT_GAMES;
+    m_current_objective = 0;
 }
 
 QIcon WiiMixGlobalSettings::ModeToIcon(WiiMixEnums::Mode mode) {
@@ -212,4 +213,12 @@ void WiiMixGlobalSettings::SetMode(WiiMixEnums::Mode mode) {
 
 const WiiMixEnums::Mode WiiMixGlobalSettings::GetMode() const {
     return m_mode;
+}
+
+void WiiMixGlobalSettings::SetCurrentObjective(int objective) {
+    m_current_objective = objective;
+}
+
+int WiiMixGlobalSettings::GetCurrentObjective() {
+    return m_current_objective;
 }

@@ -43,6 +43,8 @@ signals:
   void DecrementSelectedStateSlotHotkey();
   void StateLoadSlotHotkey();
   void StateSaveSlotHotkey();
+  void BingoBoardHotkey();
+  void ResetCurrentObjectiveHotkey();
   // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
   void ObjectiveLoadSlot(int state);

@@ -20,6 +20,8 @@
 #include <QPushButton>
 #include <QWidget>
 
+#include <dotenv.h>
+
 #include "Common/Config/Config.h"
 #include "Common/MsgHandler.h"
 #include "Common/ScopeGuard.h"
@@ -155,8 +157,11 @@ int main(int argc, char* argv[])
 #endif
 #endif
 
+  // Load WiiMix env vars (if a .env file exists)
+  dotenv::init("./WiiMix/.env");
+
   QCoreApplication::setOrganizationName(QStringLiteral("WiiMake"));
-  QCoreApplication::setOrganizationDomain(QStringLiteral("https://github.com/xanmankey/WiiMix"));
+  QCoreApplication::setOrganizationDomain(QStringLiteral("https://github.com/WiiMake/WiiMix"));
   QCoreApplication::setApplicationName(QStringLiteral("WiiMix"));
 
   // QApplication will parse arguments and remove any it recognizes as targeting Qt
@@ -288,6 +293,7 @@ int main(int argc, char* argv[])
 //       DolphinAnalytics::Instance().ReloadConfig();
 //     }
 // #endif
+
 
     if (!Settings::Instance().IsBatchModeEnabled())
     {

@@ -51,3 +51,4 @@ Source/Core/DolphinQt/WiiMix/Server/Server.cpp
 Source/Core/DolphinQt/WiiMix/Server/Server.h
 Source/**/*/Server.cpp
 Source/**/*/Server.h
+Source/**/*/*.env
