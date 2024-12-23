@@ -104,11 +104,11 @@ void WiiMixGlobalSettings::SetGamesList(std::vector<std::shared_ptr<const UIComm
 
 void WiiMixGlobalSettings::AddGame(const std::shared_ptr<const UICommon::GameFile>& game) {
     // Only make changes if the system is not running or starting
-    if (!Core::IsRunning(Core::System::GetInstance()))
-        return;
+    //if (Core::IsRunning(Core::System::GetInstance())) // TODOx: something is wrong with this. it should not be true. changed for testing. see #2
+        // return;
 
     m_games.push_back(game);
-    
+
     // NOTE: the GUI does not need to be rebuilt here because the game tracker in GameListModel emits a signal to build the GUI already
     // This is just also connected to that signal to have the data all in one place
 }
@@ -138,11 +138,11 @@ void WiiMixGlobalSettings::RemoveGame(const std::string& path)
     // Only make changes if the system is not running or starting
     if (!Core::IsRunning(Core::System::GetInstance()))
         return;
-        
+
     int entry = WiiMixGlobalSettings::FindGameIndex(path);
     if (entry < 0)
         return;
-    
+
     // TODOx: not sure if the code below works
     // Should just delete a single element
     m_games.erase(m_games.begin() + entry);

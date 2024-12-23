@@ -95,6 +95,14 @@ signals:
   void ReadOnlyModeChanged(bool read_only);
   void RecordingStatusChanged(bool recording);
 
+public slots:
+  void WiiMixStartObjective(WiiMixObjective new_objective);
+  void WiiMixStartObjective(WiiMixObjective new_objective, std::string save_path);  // not expected to call from signal, mostly for
+                                                                                    // sharing code between these functions ~ @gyoder
+  void WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+  void WiiMixRestartObjective(WiiMixObjective new_objective);
+  void WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+
 private:
   void ShowWiiMixWindow();
   void Open();

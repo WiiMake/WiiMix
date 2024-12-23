@@ -464,11 +464,11 @@ static void CompressAndDumpState(Core::System& system, CompressAndDumpState_args
     {
       const std::filesystem::path temp_path(filename);
       Core::DisplayMessage(fmt::format("Saved State to {}", temp_path.filename().string()), 2000);
-      safe_to_quit = true;
     }
   }
 
   Host_UpdateMainFrame();
+  safe_to_quit = true;
 }
 
 void SaveAs(Core::System& system, const std::string& filename, bool wait)
@@ -528,10 +528,10 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
               s_state_write_queue_is_empty.notify_all();
           }
           Core::DisplayMessage("Unable to save: Internal DoState Error", 4000);
-          safe_to_quit = true;
         }
       },
       true);
+  safe_to_quit = true;
 }
 
 static bool GetVersionFromLZO(StateHeader& header, File::IOFile& f)
