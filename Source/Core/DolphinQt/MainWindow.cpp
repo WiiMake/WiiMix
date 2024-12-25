@@ -931,11 +931,10 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
   char buf[6];
   sprintf(buf, "%05d", new_objective.GetId());
   std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
-  qDebug() << "Savestatefile: " + savestate_file;
+
   if (!File::Exists(savestate_file)) {
     savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
     if (!File::Exists(savestate_file)) {
-      qDebug() << "Objective does not exist";
       return;
     }
   }
@@ -943,7 +942,6 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
   std::vector<UICommon::GameFile> game_list = m_wiimix_window->GetGamesList();
   for (UICommon::GameFile game : game_list) {
     if (game.GetGameID() == new_objective.GetGameId()) {
-      qDebug() << "Starting Objective";
       StartGame(BootParameters::GenerateFromFile(game.GetFilePath(), BootSessionData(savestate_file, DeleteSavestateAfterBoot::No)), save_path);
       return;
     }
@@ -959,7 +957,6 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
   std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
   // dont stop the game if its the same game
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
-    qDebug() << "Objective is the same";
     State::SaveAs(Core::System::GetInstance(), savestate_file);
     while (safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
@@ -968,14 +965,12 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     if (!File::Exists(savestate_file)) {
       savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
       if (!File::Exists(savestate_file)) {
-        qDebug() << "Objective does not exist";
         return;
       }
     }
     State::LoadAs(Core::System::GetInstance(), savestate_file);
     return;
   }
-  qDebug() << "Objective is different";
   WiiMixStartObjective(new_objective, savestate_file);
 }
 
@@ -984,7 +979,6 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
   sprintf(buf, "%05d", new_objective.GetId());
   std::string savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
   if (!File::Exists(savestate_file)) {
-    qDebug() << "Objective does not exist";
     return;
   }
   // ShowRenderWidget();
@@ -996,7 +990,6 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
     }
   }
 
-  qDebug() << "Game does not exist";
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
@@ -1027,6 +1020,7 @@ void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
+  // TODOx: this should probably be reviewed before release: @gyoder
   // Start the wiimix
   qDebug() << "Shuffle calls";
 
@@ -1108,93 +1102,11 @@ void MainWindow::ShowWiiMixWindow() {
   return;
 }
 
-void MainWindow::StartWiiMixObjective(WiiMixObjective objective) {
-  qDebug() << "Starting WiiMix Objective";
-
-  // @gyoder: commented out for compilation purposes; objective needs to be updated
-  /*
-  std::string savePath;
-  // if (m_bingo_settings == nullptr) {
-    // WiiMixObjective currentObjective = m_bingo_settings->GetObjectives().at(m_bingo_settings->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(m_player_num)]);
-    // savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + currentObjective.GetSavestateFile() + "c";
-  // } else {
-    // savePath = File::GetUserPath(D_STATESAVES_IDX) + std::filesystem::path::preferred_separator + "last.sav";
-  // }
-  savePath = File::GetUserPath(D_STATESAVES_IDX) + "last.sav";
-  std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + "/" + objective.GetISOFile();
-  qDebug() << "loading isoPath" << isoPath.c_str();
-  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + "/" + objective.GetSavestateFile() + "c";
-  qDebug() << "loading path";
-  if (!File::Exists(savestate_path)) {
-    savestate_path = File::GetUserPath(D_STATESAVES_IDX) + "/" + objective.GetSavestateFile();
-  }
-  qDebug() << "loading paths";
-  UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
-  BootSessionData boot_data;
-  // qDebug() << "Game ID: " << gameFile.GetGameID().c_str() << " Savestate: " << savestate_path.c_str() << "Title: " << objective.GetTitle();
-  if (gameFile.GetGameID() == SConfig::GetInstance().GetGameID()) {
-    qDebug() << "Loading savestate: " << savestate_path.c_str();
-    State::LoadAs(Core::System::GetInstance(), savestate_path);
-  } else {
-    if (File::Exists(savestate_path)) {
-      qDebug() << "Loading savestate: " << savestate_path.c_str();
-      boot_data = BootSessionData(savestate_path, DeleteSavestateAfterBoot::No);
-    } else {
-      qDebug() << "No savestate found";
-      boot_data = BootSessionData(); // could do something else here
-    }
-    qDebug() << "Starting game: " << gameFile.GetGameID().c_str();
-    qDebug() << "Game file path: " << gameFile.GetFilePath().c_str();
-    StartGame(BootParameters::GenerateFromFile(gameFile.GetFilePath(), std::move(boot_data)), savePath);
-  }
-  */
-}
-
-void MainWindow::ResetWiiMixObjective(WiiMixObjective objective) {
-  // @gyoder: commented out for compilation purposes; objective needs to be updated
-  /*
-  std::string isoPath = Settings::Instance().GetPaths()[0].toStdString() + "/" + objective.GetISOFile();
-  UICommon::GameFile gameFile = UICommon::GameFile(isoPath);
-  std::string savestate_path = File::GetUserPath(D_STATESAVES_IDX) + "/" + objective.GetSavestateFile();
-  if (gameFile.GetGameID() != SConfig::GetInstance().GetGameID()) {
-    MainWindow::StartWiiMixObjective(objective);
-  }
-  State::LoadAs(Core::System::GetInstance(), savestate_path);
-  */
-}
-
 void MainWindow::Open()
 {
-  // @gyoder: commented out for compilation purposes; objective needs to be updated
-  auto delay = []() {
-    QTime dieTime= QTime::currentTime().addSecs(10);
-    while (QTime::currentTime() < dieTime)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-  };
-  std::vector<WiiMixObjective> objectives = std::vector<WiiMixObjective>();
-  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-
-  WiiMixStartObjective(objectives[0]);
-  delay();
-  WiiMixSwapObjective(objectives[1], objectives[0]);
-  delay();
-  WiiMixSwapObjective(objectives[2], objectives[1]);
-  delay();
-  WiiMixSwapObjective(objectives[1], objectives[2]);
-  delay();
-  WiiMixSwapObjective(objectives[0], objectives[1]);
-  delay();
-  WiiMixSwapObjective(objectives[1], objectives[0]);
-  delay();
-  WiiMixRestartObjective(objectives[1]);
-  delay();
-  WiiMixRestartObjective(objectives[2], objectives[1]);
-
-  // QStringList files = PromptFileNames();
-  // if (!files.isEmpty())
-  //   StartGame(StringListToStdVector(files));
+  QStringList files = PromptFileNames();
+  if (!files.isEmpty())
+    StartGame(StringListToStdVector(files));
 }
 
 void MainWindow::Play(const std::optional<std::string>& savestate_path)
@@ -1486,7 +1398,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
 {
 
   //TODOx: for @gyoder, clean up all these qdebug statements
-  qDebug() << "parameters. Save Path: " + save_path;
   if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
   {
     if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
@@ -1497,14 +1408,12 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   }
 
   // If we're running, only start a new game once we've stopped the last.
-  qDebug() << "uninitialized";
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
 
     qDebug() << "saveas";
     std::cout << save_path << std::endl;
-    // if (!save_path.empty() && safe_to_quit == true)
-    if (save_path != "") {
+    if (!save_path.empty() && safe_to_quit == true) {
       qDebug() << "saving state now";
       State::SaveAs(Core::System::GetInstance(), save_path);
     }
@@ -1512,16 +1421,13 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     while (safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     // ForceStop();
-    // qDebug() << "force stopped";
-    RequestStop();
+    RequestStop(); // for some reason (probably because its a stupid idea) force stop wasnt working. A custom stop function should be added in the future for speed.
     // As long as the shutdown isn't complete, we can't boot, so let's boot later
-    qDebug() << "pending boot";
     m_pending_boot = std::move(parameters);
     return;
   }
 
   // We need the render widget before booting.
-  qDebug() << "render widget";
   ShowRenderWidget();
 
   // Boot up, show an error if it fails to load the game.
@@ -1543,7 +1449,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
 
   //StateLoadSlotAt(1);
 
-  qDebug() << "finish startgmae call";
 }
 
 void MainWindow::SetFullScreenResolution(bool fullscreen)
@@ -1871,6 +1776,8 @@ void MainWindow::StateSaveSlotAt(int slot)
 
 void MainWindow::ObjectiveLoadSlotAt(int slot)
 {
+  // TODOx: This is all temp code for testing functionality. it should be removed before release.
+  // you can either replace save or load slot with a call to this function to test.
   // // NOTE: this is hard coded currently
   // // In the future, we should be pulling from the objectives folder
   // // and this hotkey should only be run if bingo is actually running
@@ -1919,7 +1826,7 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
     // In the future, we should be pulling from the objectives folder
     // and this hotkey should only be run if bingo is actually running
     // i.e. after objectives have been populated
-    ResetWiiMixObjective(WiiMixBingoSettings::instance()->GetObjectives()[slot]);
+    WiiMixRestartObjective(WiiMixBingoSettings::instance()->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
     WiiMixBingoSettings::instance()->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
     // SendData to the server containing the objective loaded mapped to the player that loaded it
