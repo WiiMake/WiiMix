@@ -622,7 +622,7 @@ void MainWindow::ConnectMenuBar()
   // connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
   connect(m_menu_bar, &MenuBar::StateLoadSlotAt, this, &MainWindow::StateLoadSlotAt);
   connect(m_menu_bar, &MenuBar::StateSaveSlotAt, this, &MainWindow::StateSaveSlotAt);
-  connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::StateSendSlotAt);
+  connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::ShowStateSendMenu);
   // connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
   connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
   connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
@@ -931,7 +931,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
   char buf[6];
   sprintf(buf, "%05d", new_objective.GetId());
   std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
-  qDebug() << "Savestatefile: " + savestate_file;
+  qDebug() << QStringLiteral("Savestatefile: ") + QString::fromStdString(savestate_file);
   if (!File::Exists(savestate_file)) {
     savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
     if (!File::Exists(savestate_file)) {
@@ -1172,9 +1172,9 @@ void MainWindow::Open()
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
   };
   std::vector<WiiMixObjective> objectives = std::vector<WiiMixObjective>();
-  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
 
   WiiMixStartObjective(objectives[0]);
   delay();
@@ -1486,7 +1486,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
 {
 
   //TODOx: for @gyoder, clean up all these qdebug statements
-  qDebug() << "parameters. Save Path: " + save_path;
+  qDebug() << QStringLiteral("parameters. Save Path: ") + QString::fromStdString(save_path);
   if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
   {
     if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())
@@ -1842,7 +1842,6 @@ void MainWindow::StateSaveSlot()
   State::Save(Core::System::GetInstance(), m_state_slot);
 }
 
-// TODO: StateSendSlot
 void MainWindow::StateSendSlot()
 {
   return;
@@ -1889,9 +1888,9 @@ void MainWindow::ObjectiveLoadSlotAt(int slot)
 
 
   std::vector<WiiMixObjective> objectives = std::vector<WiiMixObjective>();
-  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
-  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, WiiMixEnums::ObjectiveType::END, "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
+  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0));
   if (slot == 1) {
     WiiMixStartObjective(objectives[0]);
   } else if (slot == 2) {
@@ -1990,9 +1989,21 @@ void MainWindow::ToggleBingoBoard() {
 //   }
 // }
 
-// TODOx: StateSendSlotAt
-void MainWindow::StateSendSlotAt(int slot)
+void MainWindow::ShowStateSendMenu(int slot)
 {
+  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(slot) + ".sav";
+  m_state_send_menu = new WiiMixStateSendMenu(savestate_file);
+  connect(m_state_send_menu, &WiiMixStateSendMenu::SendObjective, this, &MainWindow::StateSend);
+  m_state_send_menu->setWindowTitle(QStringLiteral("State Send Menu"));
+  SetQWidgetWindowDecorations(m_state_send_menu);
+  m_state_send_menu->show();
+  m_state_send_menu->raise();
+  m_state_send_menu->activateWindow();
+  return;
+}
+
+void MainWindow::StateSend(WiiMixObjective objective, std::string state_path) {
+  // TODOx: send the state to the server, update the objective
   return;
 }
 

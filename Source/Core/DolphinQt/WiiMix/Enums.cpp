@@ -156,6 +156,28 @@ namespace WiiMixEnums {
     std::string ObjectiveTypeToString(ObjectiveType type)
     {
         switch (type) {
+            case ObjectiveType::BOSS:
+                return OBJECTIVE_TYPE_BOSS;
+            case ObjectiveType::LEVEL:
+                return OBJECTIVE_TYPE_LEVEL;
+            case ObjectiveType::PUZZLE:
+                return OBJECTIVE_TYPE_PUZZLE;
+            case ObjectiveType::SCORE:
+                return OBJECTIVE_TYPE_SCORE;
+            case ObjectiveType::RNG:
+                return OBJECTIVE_TYPE_RNG;
+            case ObjectiveType::TIMER:
+                return OBJECTIVE_TYPE_TIMER;
+            case ObjectiveType::SURVIVAL:
+                return OBJECTIVE_TYPE_SURVIVAL;
+            case ObjectiveType::EASTER_EGG:
+                return OBJECTIVE_TYPE_EASTER_EGG;
+            case ObjectiveType::COMPLETIONIST:
+                return OBJECTIVE_TYPE_COMPLETIONIST;
+            case ObjectiveType::PACIFIST:
+                return OBJECTIVE_TYPE_PACIFIST;
+            case ObjectiveType::NO_HIT:
+                return OBJECTIVE_TYPE_NO_HIT;
             case ObjectiveType::END:
                 return WII_MIX_UNKNOWN;
             default:
@@ -165,15 +187,74 @@ namespace WiiMixEnums {
 
     ObjectiveType ObjectiveTypeFromString(const std::string& str)
     {
-        if (str == WII_MIX_UNKNOWN) {
+        if (str == OBJECTIVE_TYPE_BOSS) {
+            return ObjectiveType::BOSS;
+        } else if (str == OBJECTIVE_TYPE_LEVEL) {
+            return ObjectiveType::LEVEL;
+        } else if (str == OBJECTIVE_TYPE_PUZZLE) {
+            return ObjectiveType::PUZZLE;
+        } else if (str == OBJECTIVE_TYPE_SCORE) {
+            return ObjectiveType::SCORE;
+        } else if (str == OBJECTIVE_TYPE_RNG) {
+            return ObjectiveType::RNG;
+        } else if (str == OBJECTIVE_TYPE_TIMER) {
+            return ObjectiveType::TIMER;
+        } else if (str == OBJECTIVE_TYPE_SURVIVAL) {
+            return ObjectiveType::SURVIVAL;
+        } else if (str == OBJECTIVE_TYPE_EASTER_EGG) {
+            return ObjectiveType::EASTER_EGG;
+        } else if (str == OBJECTIVE_TYPE_COMPLETIONIST) {
+            return ObjectiveType::COMPLETIONIST;
+        } else if (str == OBJECTIVE_TYPE_PACIFIST) {
+            return ObjectiveType::PACIFIST;
+        } else if (str == OBJECTIVE_TYPE_NO_HIT) {
+            return ObjectiveType::NO_HIT;
+        } else {
             return ObjectiveType::END;
         }
-        return ObjectiveType::END;
     }
 
     std::string GameGenreToString(GameGenre genre)
     {
         switch (genre) {
+            case GameGenre::ACTION_ADVENTURE:
+                return GAME_GENRE_ACTION_ADVENTURE;
+            case GameGenre::ACTION:
+                return GAME_GENRE_ACTION;
+            case GameGenre::ADVENTURE:
+                return GAME_GENRE_ADVENTURE;
+            case GameGenre::ARCADE:
+                return GAME_GENRE_ARCADE;
+            case GameGenre::BOARD_AND_CARD:
+                return GAME_GENRE_BOARD_AND_CARD;
+            case GameGenre::EDUCATIONAL:
+                return GAME_GENRE_EDUCATIONAL;
+            case GameGenre::FIGHTING:
+                return GAME_GENRE_FIGHTING;
+            case GameGenre::HORROR:
+                return GAME_GENRE_HORROR;
+            case GameGenre::LITERATURE:
+                return GAME_GENRE_LITERATURE;
+            case GameGenre::OTHER:
+                return GAME_GENRE_OTHER;
+            case GameGenre::PLATFORMER:
+                return GAME_GENRE_PLATFORMER;
+            case GameGenre::PUZZLE:
+                return GAME_GENRE_PUZZLE;
+            case GameGenre::RACING:
+                return GAME_GENRE_RACING;
+            case GameGenre::RHYTHM:
+                return GAME_GENRE_RHYTHM;
+            case GameGenre::RPG:
+                return GAME_GENRE_RPG;
+            case GameGenre::SHOOTER:
+                return GAME_GENRE_SHOOTER;
+            case GameGenre::SIMULATION:
+                return GAME_GENRE_SIMULATION;
+            case GameGenre::SPORTS:
+                return GAME_GENRE_SPORTS;
+            case GameGenre::STRATEGY:
+                return GAME_GENRE_STRATEGY;
             case GameGenre::END:
                 return WII_MIX_UNKNOWN;
             default:
@@ -182,10 +263,47 @@ namespace WiiMixEnums {
     }
     GameGenre GameGenreFromString(const std::string& str)
     {
-        if (str == WII_MIX_UNKNOWN) {
-            return GameGenre::END;
-        }
+        if (str == GAME_GENRE_ACTION_ADVENTURE) {
+        return GameGenre::ACTION_ADVENTURE;
+        } else if (str == GAME_GENRE_ACTION) {
+        return GameGenre::ACTION;
+        } else if (str == GAME_GENRE_ADVENTURE) {
+        return GameGenre::ADVENTURE;
+        } else if (str == GAME_GENRE_ARCADE) {
+        return GameGenre::ARCADE;
+        } else if (str == GAME_GENRE_BOARD_AND_CARD) {
+        return GameGenre::BOARD_AND_CARD;
+        } else if (str == GAME_GENRE_EDUCATIONAL) {
+        return GameGenre::EDUCATIONAL;
+        } else if (str == GAME_GENRE_FIGHTING) {
+        return GameGenre::FIGHTING;
+        } else if (str == GAME_GENRE_HORROR) {
+        return GameGenre::HORROR;
+        } else if (str == GAME_GENRE_LITERATURE) {
+        return GameGenre::LITERATURE;
+        } else if (str == GAME_GENRE_OTHER) {
+        return GameGenre::OTHER;
+        } else if (str == GAME_GENRE_PLATFORMER) {
+        return GameGenre::PLATFORMER;
+        } else if (str == GAME_GENRE_PUZZLE) {
+        return GameGenre::PUZZLE;
+        } else if (str == GAME_GENRE_RACING) {
+        return GameGenre::RACING;
+        } else if (str == GAME_GENRE_RHYTHM) {
+        return GameGenre::RHYTHM;
+        } else if (str == GAME_GENRE_RPG) {
+        return GameGenre::RPG;
+        } else if (str == GAME_GENRE_SHOOTER) {
+        return GameGenre::SHOOTER;
+        } else if (str == GAME_GENRE_SIMULATION) {
+        return GameGenre::SIMULATION;
+        } else if (str == GAME_GENRE_SPORTS) {
+        return GameGenre::SPORTS;
+        } else if (str == GAME_GENRE_STRATEGY) {
+        return GameGenre::STRATEGY;
+        } else {
         return GameGenre::END;
+        }
     }
 
 };

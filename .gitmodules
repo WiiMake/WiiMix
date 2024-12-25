@@ -93,3 +93,6 @@
 [submodule "Source/Core/DolphinQt/WiiMix/Server"]
 	path = Source/Core/DolphinQt/WiiMix/Server
 	url = https://github.com/WiiMake/Server.git
+[submodule "Externals/libpqxx"]
+	path = Externals/libpqxx
+	url = https://github.com/jtv/libpqxx.git

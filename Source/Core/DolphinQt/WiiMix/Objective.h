@@ -16,7 +16,7 @@ public:
     uint16_t retroachievements_game_id,
     std::string game_id,
     uint16_t achievement_id,
-    WiiMixEnums::ObjectiveType objective_type,
+    std::vector<WiiMixEnums::ObjectiveType> objective_type,
     std::string objective_description,
     std::vector<WiiMixEnums::GameGenre> game_genres,
     WiiMixEnums::Difficulty difficulty,
@@ -28,7 +28,7 @@ public:
   uint16_t GetRetroAchievementsGameId();
   std::string GetGameId();
   uint16_t GetAchievementId();
-  WiiMixEnums::ObjectiveType GetObjectiveType();
+  std::vector<WiiMixEnums::ObjectiveType> GetObjectiveTypes();
   std::string GetObjectiveDescription();
   std::vector<WiiMixEnums::GameGenre> GetGameGenres();
   WiiMixEnums::Difficulty GetDifficulty();
@@ -46,7 +46,7 @@ private:
   uint16_t m_retroachievements_game_id;
   std::string m_game_id;
   uint16_t m_achievement_id;
-  WiiMixEnums::ObjectiveType m_objective_type;
+  std::vector<WiiMixEnums::ObjectiveType> m_objective_types;
   std::string m_objective_description;
   std::vector<WiiMixEnums::GameGenre> m_game_genres;
   WiiMixEnums::Difficulty m_difficulty;

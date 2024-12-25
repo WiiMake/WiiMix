@@ -228,8 +228,8 @@ QString WiiMixBingoSettings::BingoTypeToString(WiiMixEnums::BingoType type) {
             return QStringLiteral("Bingo");
         case WiiMixEnums::BingoType::LOCKOUT:
             return QStringLiteral("Lockout");
-        case WiiMixEnums::BingoType::TIME_ATTACK:
-            return QStringLiteral("Time Attack");
+        // case WiiMixEnums::BingoType::TIME_ATTACK:
+        //     return QStringLiteral("Time Attack");
         default:
             return QStringLiteral("");
     }
@@ -240,8 +240,8 @@ WiiMixEnums::BingoType WiiMixBingoSettings::StringToBingoType(QString type) {
         return WiiMixEnums::BingoType::BINGO;
     else if (type == QStringLiteral("Lockout"))
         return WiiMixEnums::BingoType::LOCKOUT;
-    else if (type == QStringLiteral("Time Attack"))
-        return WiiMixEnums::BingoType::TIME_ATTACK;
+    // else if (type == QStringLiteral("Time Attack"))
+    //     return WiiMixEnums::BingoType::TIME_ATTACK;
     else
         return WiiMixEnums::BingoType::END; // Default case
 }

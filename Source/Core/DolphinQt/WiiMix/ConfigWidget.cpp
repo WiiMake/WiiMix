@@ -316,19 +316,19 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             SetBingoType(WiiMixEnums::BingoType::LOCKOUT);
         });
 
-        m_time_attack_button = new QRadioButton(tr("Time Attack"));
-        if (bingo_type == WiiMixEnums::BingoType::TIME_ATTACK) {
-            m_time_attack_button->setChecked(true);
-        }
-        else {
-            m_time_attack_button->setChecked(false);
-        }
+        // m_time_attack_button = new QRadioButton(tr("Time Attack"));
+        // if (bingo_type == WiiMixEnums::BingoType::TIME_ATTACK) {
+        //     m_time_attack_button->setChecked(true);
+        // }
+        // else {
+        //     m_time_attack_button->setChecked(false);
+        // }
 
-        connect(m_time_attack_button, &QRadioButton::clicked, this, [this](bool checked) {
-            SetBingoType(WiiMixEnums::BingoType::TIME_ATTACK);
-        });
+        // connect(m_time_attack_button, &QRadioButton::clicked, this, [this](bool checked) {
+        //     SetBingoType(WiiMixEnums::BingoType::TIME_ATTACK);
+        // });
 
-        bingo_settings_layout->addWidget(m_time_attack_button);
+        // bingo_settings_layout->addWidget(m_time_attack_button);
         
         QLabel* card_size_label = new QLabel(tr("Card Size:"));
         int card_size = Config::Get(Config::WIIMIX_CARD_SIZE);
@@ -646,9 +646,9 @@ WiiMixEnums::BingoType WiiMixConfigWidget::GetBingoType() const {
     else if (m_lockout_button->isChecked()) {
         return WiiMixEnums::BingoType::LOCKOUT;
     }
-    else if (m_time_attack_button->isChecked()) {
-        return WiiMixEnums::BingoType::TIME_ATTACK;
-    }
+    // else if (m_time_attack_button->isChecked()) {
+    //     return WiiMixEnums::BingoType::TIME_ATTACK;
+    // }
     else {
         return WiiMixEnums::BingoType::END;
     }
@@ -790,18 +790,18 @@ void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {
         case WiiMixEnums::BingoType::BINGO:
             m_bingo_button->setChecked(true);
             m_lockout_button->setChecked(false);
-            m_time_attack_button->setChecked(false);
+            // m_time_attack_button->setChecked(false);
             break;
         case WiiMixEnums::BingoType::LOCKOUT:
             m_bingo_button->setChecked(false);
             m_lockout_button->setChecked(true);
-            m_time_attack_button->setChecked(false);
+            // m_time_attack_button->setChecked(false);
             break;
-        case WiiMixEnums::BingoType::TIME_ATTACK:
-            m_bingo_button->setChecked(false);
-            m_lockout_button->setChecked(false);
-            m_time_attack_button->setChecked(true);
-            break;
+        // case WiiMixEnums::BingoType::TIME_ATTACK:
+        //     m_bingo_button->setChecked(false);
+        //     m_lockout_button->setChecked(false);
+        //     m_time_attack_button->setChecked(true);
+        //     break;
         default:
             break;
     }

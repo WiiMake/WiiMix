@@ -4,3 +4,6 @@
 
 [] - Save State Compression
 [] - Player table (track objective completion, success stats, victory stats, etc) and auth
+[] - Time Attack Bingo Mode
+[] - Support multiple devices for hotkeys so you can play with controller but also have a reset button while maintaining all of your other hotkeys
+[] - Figure out access; DB API? Does the server REALLY need to be a PRIVATE submodule if everything's abstracted already?

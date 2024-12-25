@@ -118,7 +118,7 @@ private:
   QLineEdit* m_bingo_lobby_password;
   QRadioButton* m_bingo_button;
   QRadioButton* m_lockout_button;
-  QRadioButton* m_time_attack_button;
+  // QRadioButton* m_time_attack_button;
   QCheckBox* m_teams_enabled;
   QPushButton* m_connect_button;
   QList<QCheckBox*> m_team_selectors;

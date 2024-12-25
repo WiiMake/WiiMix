@@ -42,7 +42,7 @@ namespace WiiMixEnums {
     enum class BingoType {
         BINGO,
         LOCKOUT,
-        TIME_ATTACK, // You can take achievements away from other people
+        // TIME_ATTACK, // You can take achievements away from other people
         END, // Default/size value
     };
 
@@ -69,6 +69,19 @@ namespace WiiMixEnums {
         GLITCH,
         END, // Default/size value
     };
+
+    #define OBJECTIVE_TYPE_BOSS "BOSS"
+    #define OBJECTIVE_TYPE_LEVEL "LEVEL"
+    #define OBJECTIVE_TYPE_PUZZLE "PUZZLE"
+    #define OBJECTIVE_TYPE_SCORE "SCORE"
+    #define OBJECTIVE_TYPE_RNG "RNG"
+    #define OBJECTIVE_TYPE_TIMER "TIMER"
+    #define OBJECTIVE_TYPE_SURVIVAL "SURVIVAL"
+    #define OBJECTIVE_TYPE_EASTER_EGG "EASTER_EGG"
+    #define OBJECTIVE_TYPE_COMPLETIONIST "COMPLETIONIST"
+    #define OBJECTIVE_TYPE_PACIFIST "PACIFIST"
+    #define OBJECTIVE_TYPE_NO_HIT "NO_HIT"
+    
 
     std::string ObjectiveTypeToString(ObjectiveType type);
     ObjectiveType ObjectiveTypeFromString(const std::string& str);
@@ -97,6 +110,26 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    #define GAME_GENRE_ACTION_ADVENTURE "ACTION_ADVENTURE"
+    #define GAME_GENRE_ACTION "ACTION"
+    #define GAME_GENRE_ADVENTURE "ADVENTURE"
+    #define GAME_GENRE_ARCADE "ARCADE"
+    #define GAME_GENRE_BOARD_AND_CARD "BOARD_AND_CARD"
+    #define GAME_GENRE_EDUCATIONAL "EDUCATIONAL"
+    #define GAME_GENRE_FIGHTING "FIGHTING"
+    #define GAME_GENRE_HORROR "HORROR"
+    #define GAME_GENRE_LITERATURE "LITERATURE"
+    #define GAME_GENRE_OTHER "OTHER"
+    #define GAME_GENRE_PLATFORMER "PLATFORMER"
+    #define GAME_GENRE_PUZZLE "PUZZLE"
+    #define GAME_GENRE_RACING "RACING"
+    #define GAME_GENRE_RHYTHM "RHYTHM"
+    #define GAME_GENRE_RPG "RPG"
+    #define GAME_GENRE_SHOOTER "SHOOTER"
+    #define GAME_GENRE_SIMULATION "SIMULATION"
+    #define GAME_GENRE_SPORTS "SPORTS"
+    #define GAME_GENRE_STRATEGY "STRATEGY"
+
     // NOTE: instead of storing genres ourselves, we'll be pulling tags from the Retroachievements API
     // To populate genre
 
@@ -112,7 +145,7 @@ namespace WiiMixEnums {
         END // Default/size value
     };
 
-    #define ACTION "ACTION"
+    #define SERVER_ACTION "ACTION"
 
     enum class BingoNetplaySettings {
         BINGO_TYPE,

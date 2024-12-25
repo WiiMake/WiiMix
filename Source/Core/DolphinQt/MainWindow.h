@@ -18,6 +18,7 @@
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/ScreenSaver.h"
+#include "DolphinQt/WiiMix/StateSendMenu.h"
 
 class QMenu;
 class QStackedWidget;
@@ -125,7 +126,8 @@ private:
   // void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
-  void StateSendSlotAt(int slot);
+  void StateSend(WiiMixObjective objective, std::string state_path);
+  void ShowStateSendMenu(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
   void ResetCurrentObjective();
@@ -275,6 +277,7 @@ private:
   std::unique_ptr<BootParameters> m_pending_boot;
 
   WiiMixSettingsWindow* m_wiimix_window = nullptr;
+  WiiMixStateSendMenu* m_state_send_menu = nullptr;
   WiiMixScreenSaver* m_screen_saver = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;

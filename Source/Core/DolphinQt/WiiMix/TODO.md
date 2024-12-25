@@ -15,6 +15,8 @@
 - [] Streamline keyboard shortcuts to be user friendly
 - [] New Trailer
 - [] Significantly more testing of starting games with state and saving to previous state
+- [] Add Dev Notes to the ReadMe
+  - git submodule add --init --recursive
 
 ## NOTES
 

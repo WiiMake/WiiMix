@@ -315,7 +315,10 @@ else()
 
   # gcc uses some optimizations which might break stuff without this flag
   check_and_add_flag(NO_STRICT_ALIASING -fno-strict-aliasing)
-  check_and_add_flag(NO_EXCEPTIONS -fno-exceptions)
+  # check_and_add_flag(NO_EXCEPTIONS -fno-exceptions)
+
+  # Removed -fno-exceptions and added -fexceptions for libpqxx
+  check_and_add_flag(NO_EXCEPTIONS -fexceptions)
 
   check_and_add_flag(VISIBILITY_INLINES_HIDDEN -fvisibility-inlines-hidden)
   check_and_add_flag(VISIBILITY_HIDDEN -fvisibility=hidden)
@@ -763,6 +766,8 @@ endif()
 include_directories(Externals/picojson)
 
 add_subdirectory(Externals/dotenv-cpp)
+
+add_subdirectory(Externals/libpqxx)
 
 add_subdirectory(Externals/expr)
 

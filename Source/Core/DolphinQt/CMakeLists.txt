@@ -339,6 +339,8 @@ add_executable(dolphin-emu
   WiiMix/CommonSettings.h
   WiiMix/ConfigWidget.cpp
   WiiMix/ConfigWidget.h
+  WiiMix/DBApi.cpp
+  WiiMix/DBApi.h
   WiiMix/Enums.cpp
   WiiMix/Enums.h
   WiiMix/GlobalSettings.cpp
@@ -357,6 +359,8 @@ add_executable(dolphin-emu
   WiiMix/SettingsWindow.h
   WiiMix/ShuffleSettings.cpp
   WiiMix/ShuffleSettings.h
+  WiiMix/StateSendMenu.cpp
+  WiiMix/StateSendMenu.h
   RenderWidget.cpp
   RenderWidget.h
   ResourcePackManager.cpp
@@ -514,21 +518,30 @@ PRIVATE
 
 # target_link_libraries(dolphin-emu PRIVATE nlohmann_json::nlohmann_json)
 
-# target_include_directories(dolphin-emu PRIVATE ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src)
+# target_include_directories(dolphin-emu SYSTEM PRIVATE ${LIBPQXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src)
 
 target_link_libraries(dolphin-emu
-PRIVATE
-  Qt6::Core
-  Qt6::Widgets
-  Qt6::Network
-  Qt6::Core5Compat
-        Qt6::Multimedia
-        Qt6::MultimediaWidgets
-  uicommon
-  imgui
-  implot
-  dotenv
+  PRIVATE
+    Qt6::Core
+    Qt6::Widgets
+    Qt6::Network
+    Qt6::Core5Compat
+    Qt6::Multimedia
+    Qt6::MultimediaWidgets
+    uicommon
+    imgui
+    implot
+    dotenv
+    pqxx
 )
+
+# Supress warnings from external libraries
+target_include_directories(dolphin-emu
+  SYSTEM PRIVATE
+    ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src
+    ${LIBPQXX_INCLUDE_DIRS}
+)
+
 
 if (WIN32)
   target_link_libraries(dolphin-emu

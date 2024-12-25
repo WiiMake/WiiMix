@@ -98,7 +98,7 @@ void MappingWindow::CreateDevicesLayout()
   m_devices_layout = new QHBoxLayout();
   m_devices_box = new QGroupBox(tr("Devices"));
   m_devices_combo = new QComboBox();
-  m_device_two_combo = new QComboBox();
+  // m_device_two_combo = new QComboBox();
 
   auto* const options = new QToolButton();
   // Make it more apparent that this is a menu with more options.
@@ -115,11 +115,11 @@ void MappingWindow::CreateDevicesLayout()
   options->setDefaultAction(refresh_action);
 
   m_devices_combo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-  m_device_two_combo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+  // m_device_two_combo->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
   options->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   m_devices_layout->addWidget(m_devices_combo);
-  m_devices_layout->addWidget(m_device_two_combo);
+  // m_devices_layout->addWidget(m_device_two_combo);
   m_devices_layout->addWidget(options);
 
   m_devices_box->setLayout(m_devices_layout);
@@ -155,10 +155,12 @@ void MappingWindow::CreateResetLayout()
   m_reset_box = new QGroupBox(tr("Reset"));
   m_reset_clear = new NonDefaultQPushButton(tr("Clear"));
   m_reset_default = new NonDefaultQPushButton(tr("Default"));
+  m_reset_default_controller = new NonDefaultQPushButton(tr("Default (Controller)"));
 
   m_reset_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   m_reset_layout->addWidget(m_reset_default);
+  m_reset_layout->addWidget(m_reset_default_controller);
   m_reset_layout->addWidget(m_reset_clear);
 
   m_reset_box->setLayout(m_reset_layout);
@@ -348,15 +350,15 @@ void MappingWindow::OnSelectDevice(int)
   m_controller->UpdateReferences(g_controller_interface);
 }
 
-void MappingWindow::OnSelectDeviceTwo(int)
-{
-  // Original string is stored in the "user-data".
-  const auto device = m_device_two_combo->currentData().toString().toStdString();
+// void MappingWindow::OnSelectDeviceTwo(int)
+// {
+//   // Original string is stored in the "user-data".
+//   const auto device = m_device_two_combo->currentData().toString().toStdString();
 
-  // TODOx: need to update m_controller to support multiple devices
-  // m_controller->SetDefaultDevice(device);
-  // m_controller->UpdateReferences(g_controller_interface);
-}
+//   // TODOx: need to update m_controller to support multiple devices
+//   // m_controller->SetDefaultDevice(device);
+//   // m_controller->UpdateReferences(g_controller_interface);
+// }
 
 bool MappingWindow::IsMappingAllDevices() const
 {

@@ -58,7 +58,7 @@ bool WiiMixClient::SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action a
     // connect_json[QStringLiteral(ACTION)] = static_cast<int>(action);
     QJsonObject connect_json_obj = connect_json.object();
 
-    connect_json_obj[QStringLiteral(ACTION)] = static_cast<int>(action);
+    connect_json_obj[QStringLiteral(SERVER_ACTION)] = static_cast<int>(action);
 
     qDebug() << connect_json;
     // qDebug() << connect_json_obj;

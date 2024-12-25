@@ -366,6 +366,7 @@ public:
   int FindGroupByID(int id) const;
   int GetIndexForGroup(int group, int id) const;
   void LoadDefaults(const ControllerInterface& ciface) override;
+  void LoadDefaultsController(const ControllerInterface& ciface);
 
 private:
   std::array<ControllerEmu::Buttons*, NUM_HOTKEY_GROUPS> m_keys{};

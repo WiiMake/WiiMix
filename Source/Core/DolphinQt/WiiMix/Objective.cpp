@@ -13,13 +13,13 @@
 
 WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroachievements_game_id,
                                  std::string game_id, uint16_t achievement_id,
-                                 WiiMixEnums::ObjectiveType objective_type,
+                                 std::vector<WiiMixEnums::ObjectiveType> objective_type,
                                  std::string objective_description,
                                  std::vector<WiiMixEnums::GameGenre> game_genres,
                                  WiiMixEnums::Difficulty difficulty, uint64_t time)
     : m_id(id), m_title(std::move(title)), m_retroachievements_game_id(retroachievements_game_id),
       m_game_id(std::move(game_id)), m_achievement_id(achievement_id),
-      m_objective_type(objective_type), m_objective_description(std::move(objective_description)),
+      m_objective_types(objective_type), m_objective_description(std::move(objective_description)),
       m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time)
 {
 }
@@ -49,9 +49,9 @@ uint16_t WiiMixObjective::GetAchievementId()
   return m_achievement_id;
 }
 
-WiiMixEnums::ObjectiveType WiiMixObjective::GetObjectiveType()
+std::vector<WiiMixEnums::ObjectiveType> WiiMixObjective::GetObjectiveTypes()
 {
-  return m_objective_type;
+  return m_objective_types;
 }
 
 std::string WiiMixObjective::GetObjectiveDescription()
@@ -82,7 +82,12 @@ QJsonObject WiiMixObjective::ToJson()
   obj[QStringLiteral("retroachievements_game_id")] = m_retroachievements_game_id;
   obj[QStringLiteral("game_id")] = QString::fromStdString(m_game_id);
   obj[QStringLiteral("achievement_id")] = m_achievement_id;
-  obj[QStringLiteral("objective_type")] = QString::fromStdString(WiiMixEnums::ObjectiveTypeToString(m_objective_type));
+  QJsonArray objective_types;
+  for (const auto& type : m_objective_types)
+  {
+    objective_types.append(QString::fromStdString(WiiMixEnums::ObjectiveTypeToString(type)));
+  }
+  obj[QStringLiteral("objective_types")] = objective_types;
   obj[QStringLiteral("objective_description")] = QString::fromStdString(m_objective_description);
   QJsonArray game_genres;
   for (const auto& genre : m_game_genres)
@@ -102,8 +107,9 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
   uint16_t retro_id = static_cast<uint16_t>(obj[QStringLiteral("retroachievements_game_id")].toInt());
   std::string game_id = obj[QStringLiteral("game_id")].toString().toStdString();
   uint16_t achievement_id = static_cast<uint16_t>(obj[QStringLiteral("achievement_id")].toInt());
-  auto objective_type = WiiMixEnums::ObjectiveTypeFromString(
-    obj[QStringLiteral("objective_type")].toString().toStdString());
+  std::vector<WiiMixEnums::ObjectiveType> objective_types;
+  for (const auto& objective_type : obj[QStringLiteral("objective_types")].toArray())
+    objective_types.push_back(WiiMixEnums::ObjectiveTypeFromString(objective_type.toString().toStdString()));
   std::string description = obj[QStringLiteral("objective_description")].toString().toStdString();
   std::vector<WiiMixEnums::GameGenre> game_genres;
   for (const auto& genre : obj[QStringLiteral("game_genres")].toArray())
@@ -113,7 +119,7 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
   uint64_t time = static_cast<uint64_t>(obj[QStringLiteral("time")].toInt());
 
   return WiiMixObjective(
-    id, title, retro_id, game_id, achievement_id, objective_type, description,
+    id, title, retro_id, game_id, achievement_id, objective_types, description,
     game_genres, difficulty, time);
 }
 

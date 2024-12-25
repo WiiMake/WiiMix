@@ -338,7 +338,7 @@ InputConfig* GetConfig()
 
 void GetStatus(bool ignore_focus)
 {
-  // Get input
+  // Get input from controller
   static_cast<HotkeyManager*>(s_config.GetController(0))->GetInput(&s_hotkey, ignore_focus);
 }
 
@@ -412,6 +412,7 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
 void Initialize()
 {
   if (s_config.ControllersNeedToBeCreated()) {
+    // Create controllers
     s_config.CreateController<HotkeyManager>();
   }
 
@@ -423,6 +424,8 @@ void Initialize()
   s_hotkey_down = {};
 
   s_enabled = true;
+
+  // TODOx: Save two default profiles - one for keyboard and one for gamepad
 }
 
 void LoadConfig()
@@ -479,7 +482,7 @@ constexpr std::array<HotkeyGroupInfo, NUM_HOTKEY_GROUPS> s_groups_info = {
      {_trans("3D Depth"), HK_DECREASE_DEPTH, HK_INCREASE_CONVERGENCE},
      {_trans("Load State"), HK_LOAD_STATE_SLOT_1, HK_LOAD_STATE_SLOT_SELECTED},
      {_trans("Save State"), HK_SAVE_STATE_SLOT_1, HK_SAVE_STATE_SLOT_SELECTED},
-     {_trans("Bingo"), HK_BINGO_BOARD, HK_RESET_OBJECTIVE},
+     {_trans("WiiMix"), HK_BINGO_BOARD, HK_RESET_OBJECTIVE},
     //  {_trans("Send State"), HK_SWAP_GAME_SLOT_1, HK_SWAP_GAME_SLOT_SELECTED},
      {_trans("Select State"), HK_SELECT_STATE_SLOT_1, HK_SELECT_STATE_SLOT_10},
      {_trans("Load Last State"), HK_LOAD_LAST_STATE_1, HK_LOAD_LAST_STATE_10},
@@ -508,6 +511,7 @@ HotkeyManager::HotkeyManager()
 
 HotkeyManager::~HotkeyManager()
 {
+
 }
 
 std::string HotkeyManager::GetName() const
@@ -570,9 +574,12 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
     return fmt::format("@({})", fmt::join(inputs, "+"));
   };
 
+  // Default keyboard hotkeys
+  // Default for controller hotkeys are also included
+
   // WiiMix hotkeys
-  set_key_expression(HK_BINGO_BOARD, "B");
-  set_key_expression(HK_RESET_OBJECTIVE, "R");
+  set_key_expression(HK_BINGO_BOARD, hotkey_string({"Ctrl", "B"}));
+  set_key_expression(HK_RESET_OBJECTIVE, hotkey_string({"Ctrl", "R"}));
 
   // General hotkeys
   set_key_expression(HK_OPEN, hotkey_string({"Ctrl", "O"}));
@@ -655,4 +662,108 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
 
   set_key_expression(HK_SKYLANDERS_PORTAL, hotkey_string({"Ctrl", "P"}));
   set_key_expression(HK_INFINITY_BASE, hotkey_string({"Ctrl", "I"}));
+}
+
+
+void HotkeyManager::LoadDefaultsController(const ControllerInterface& ciface)
+{
+  EmulatedController::LoadDefaults(ciface);
+
+  auto set_key_expression = [this](int index, const std::string& expression) {
+    m_keys[FindGroupByID(index)]
+        ->controls[GetIndexForGroup(FindGroupByID(index), index)]
+        ->control_ref->SetExpression(expression);
+  };
+
+  auto hotkey_string = [](std::vector<std::string> inputs) {
+    return fmt::format("@({})", fmt::join(inputs, "+"));
+  };
+
+  // Default controller hotkeys
+
+  // WiiMix hotkeys
+  set_key_expression(HK_BINGO_BOARD, "SELECT");
+  set_key_expression(HK_RESET_OBJECTIVE, "LB");
+
+  // General hotkeys
+//   set_key_expression(HK_OPEN, hotkey_string({"Ctrl", "O"}));
+//   set_key_expression(HK_PLAY_PAUSE, "F10");
+// #ifdef _WIN32
+//   set_key_expression(HK_STOP, "ESCAPE");
+//   set_key_expression(HK_FULLSCREEN, hotkey_string({"Alt", "RETURN"}));
+// #else
+//   set_key_expression(HK_STOP, "Escape");
+//   set_key_expression(HK_FULLSCREEN, hotkey_string({"Alt", "Return"}));
+// #endif
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   set_key_expression(HK_OPEN_ACHIEVEMENTS, hotkey_string({"Alt", "A"}));
+// #endif  // USE_RETRO_ACHIEVEMENTS
+//   set_key_expression(HK_STEP, "F11");
+//   set_key_expression(HK_STEP_OVER, hotkey_string({"Shift", "F10"}));
+//   set_key_expression(HK_STEP_OUT, hotkey_string({"Shift", "F11"}));
+//   set_key_expression(HK_BP_TOGGLE, hotkey_string({"Shift", "F9"}));
+//   set_key_expression(HK_SCREENSHOT, "F9");
+//   set_key_expression(HK_WIIMOTE1_CONNECT, hotkey_string({"Alt", "F5"}));
+//   set_key_expression(HK_WIIMOTE2_CONNECT, hotkey_string({"Alt", "F6"}));
+//   set_key_expression(HK_WIIMOTE3_CONNECT, hotkey_string({"Alt", "F7"}));
+//   set_key_expression(HK_WIIMOTE4_CONNECT, hotkey_string({"Alt", "F8"}));
+//   set_key_expression(HK_BALANCEBOARD_CONNECT, hotkey_string({"Alt", "F9"}));
+// #ifdef _WIN32
+//   set_key_expression(HK_TOGGLE_THROTTLE, "TAB");
+// #else
+//   set_key_expression(HK_TOGGLE_THROTTLE, "Tab");
+// #endif
+
+//   // Savestates
+//   for (int i = 0; i < 8; i++)
+//   {
+//     set_key_expression(HK_LOAD_STATE_SLOT_1 + i, hotkey_string({"`Ctrl`", fmt::format("{}", i + 1)}));
+//     set_key_expression(HK_SAVE_STATE_SLOT_1 + i,
+//                        hotkey_string({"Shift", fmt::format("{}", i + 1)}));
+//   }
+//   // // Load objective
+//   // for (int i = 0; i < 9; i++) {
+//   //   set_key_expression(HK_LOAD_OBJECTIVE_SLOT_1 + i, fmt::format("{}", i + 1));
+//   // }
+
+//   // // Reset objective
+//   // for (int i = 0; i < 9; i++) {
+//   //   set_key_expression(HK_RESET_OBJECTIVE_SLOT_1 + i, hotkey_string({"`Shift`", fmt::format("{}", i + 1)}));
+//   // }
+//   // set_key_expression(HK_RESET_CURRENT_OBJECTIVE, hotkey_string({"`Ctrl`", "`R`"}));
+
+//   // Ready for bingo
+//   // set_key_expression(HK_BINGO_READY, "X");
+
+//   set_key_expression(HK_UNDO_LOAD_STATE, "F12");
+//   set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"`Shift`", "`F12`"}));
+
+//   // GBA
+//   set_key_expression(HK_GBA_LOAD, hotkey_string({"`Ctrl`", "`Shift`", "`O`"}));
+//   set_key_expression(HK_GBA_UNLOAD, hotkey_string({"`Ctrl`", "`Shift`", "`W`"}));
+//   set_key_expression(HK_GBA_RESET, hotkey_string({"`Ctrl`", "`Shift`", "`R`"}));
+
+// #ifdef _WIN32
+//   set_key_expression(HK_GBA_VOLUME_DOWN, "`SUBTRACT`");
+//   set_key_expression(HK_GBA_VOLUME_UP, "`ADD`");
+// #else
+//   set_key_expression(HK_GBA_VOLUME_DOWN, "`KP_Subtract`");
+//   set_key_expression(HK_GBA_VOLUME_UP, "`KP_Add`");
+// #endif
+//   set_key_expression(HK_GBA_TOGGLE_MUTE, "`M`");
+
+// #ifdef _WIN32
+//   set_key_expression(HK_GBA_1X, "`NUMPAD1`");
+//   set_key_expression(HK_GBA_2X, "`NUMPAD2`");
+//   set_key_expression(HK_GBA_3X, "`NUMPAD3`");
+//   set_key_expression(HK_GBA_4X, "`NUMPAD4`");
+// #else
+//   set_key_expression(HK_GBA_1X, "`KP_1`");
+//   set_key_expression(HK_GBA_2X, "`KP_2`");
+//   set_key_expression(HK_GBA_3X, "`KP_3`");
+//   set_key_expression(HK_GBA_4X, "`KP_4`");
+// #endif
+
+//   set_key_expression(HK_SKYLANDERS_PORTAL, hotkey_string({"Ctrl", "P"}));
+//   set_key_expression(HK_INFINITY_BASE, hotkey_string({"Ctrl", "I"}));
 }
