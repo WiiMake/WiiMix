@@ -4,7 +4,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QLabel>
-#include <QRegExp>
+// #include <QRegExp> //TODOx: @gyoder figure out why this will not build on windows qt stuff
 #include <QRegularExpressionValidator>
 #include <QListWidgetItem>
 

@@ -533,6 +533,7 @@ target_link_libraries(dolphin-emu
     implot
     dotenv
     pqxx
+    curl
 )
 
 # Supress warnings from external libraries
