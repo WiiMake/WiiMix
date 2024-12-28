@@ -24,24 +24,22 @@ if (BUILD_WIIMIX_SERVER_ONLY)
   find_package(CURL REQUIRED)
 
   # Define libraries to link for the server
-  set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl)
+  set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl dotenv pqxx)
 
   # Add the executable
   add_executable(wiimix-server
-    WiiMix/Server/BingoSettings.cpp
-    WiiMix/Server/BingoSettings.h
     WiiMix/CommonSettings.cpp
     WiiMix/CommonSettings.h
     WiiMix/Enums.cpp
     WiiMix/Enums.h
     WiiMix/Objective.h
     WiiMix/Objective.cpp
+    WiiMix/Server/BingoSettings.cpp
+    WiiMix/Server/BingoSettings.h
+    WiiMix/Server/DBApi.cpp
+    WiiMix/Server/DBApi.h
     WiiMix/Server/Server.cpp
     WiiMix/Server/Server.h
-  )
-
-  target_include_directories(wiimix-server PRIVATE
-    ${CMAKE_SOURCE_DIR}/Source/Core
   )
 
   # Set target properties for the executable
@@ -50,6 +48,15 @@ if (BUILD_WIIMIX_SERVER_ONLY)
   # Link the static libraries to the executable
   target_link_libraries(wiimix-server PRIVATE ${SERVER_LIBS})
 
+  target_include_directories(wiimix-server PRIVATE
+    ${CMAKE_SOURCE_DIR}/Source/Core
+    ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src
+    ${LIBPQXX_INCLUDE_DIRS}
+  )
+
+  # The wiimix-server should be built with exceptions (for pqxx)
+  # target_compile_options(wiimix-server PRIVATE -fexceptions)
+  
   # Install properties
   install(TARGETS wiimix-server RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 else()
@@ -374,8 +381,6 @@ else()
     WiiMix/CommonSettings.h
     WiiMix/ConfigWidget.cpp
     WiiMix/ConfigWidget.h
-    WiiMix/DBApi.cpp
-    WiiMix/DBApi.h
     WiiMix/Enums.cpp
     WiiMix/Enums.h
     WiiMix/GlobalSettings.cpp
@@ -481,18 +486,20 @@ else()
     find_package(CURL REQUIRED)
   
     # Define libraries to link for the server
-    set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl)
+    set(SERVER_LIBS Qt6::Core Qt6::Network CURL::libcurl pqxx dotenv)
   
     # Add the executable
     add_executable(wiimix-server
-      WiiMix/Server/BingoSettings.cpp
-      WiiMix/Server/BingoSettings.h
       WiiMix/CommonSettings.cpp
       WiiMix/CommonSettings.h
       WiiMix/Enums.cpp
       WiiMix/Enums.h
       WiiMix/Objective.h
       WiiMix/Objective.cpp
+      WiiMix/Server/BingoSettings.cpp
+      WiiMix/Server/BingoSettings.h
+      WiiMix/Server/DBApi.cpp
+      WiiMix/Server/DBApi.h
       WiiMix/Server/Server.cpp
       WiiMix/Server/Server.h
     )
@@ -502,15 +509,24 @@ else()
   
     # Link the static libraries to the executable
     target_link_libraries(wiimix-server PRIVATE ${SERVER_LIBS})
+
+    target_include_directories(wiimix-server
+      SYSTEM PRIVATE
+        ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src
+        ${LIBPQXX_INCLUDE_DIRS}
+        # ${CMAKE_SOURCE_DIR}/Externals/soci/include
+    )
   
+
+    # The wiimix-server should be built with exceptions (for pqxx)
+    # target_compile_options(wiimix-server PRIVATE -fexceptions)
+
     # Install properties
     install(TARGETS wiimix-server RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   
   else()
     message(STATUS "Skipping building WiiMix Bingo Server; ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.cpp or ${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/WiiMix/Server/Server.h not found")
   endif()
-  
-  
   
   # Ensure the resource path doesn't get overridden
   # set(DOLPHIN_RESOURCE_PATH "${PROJECT_SOURCE_DIR}/Data/Sys/Resources")
@@ -563,7 +579,7 @@ else()
       imgui
       implot
       dotenv
-      pqxx
+      # pqxx
       # soci
   )
   
@@ -571,7 +587,7 @@ else()
   target_include_directories(dolphin-emu
     SYSTEM PRIVATE
       ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src
-      ${LIBPQXX_INCLUDE_DIRS}
+      # ${LIBPQXX_INCLUDE_DIRS}
       # ${CMAKE_SOURCE_DIR}/Externals/soci/include
   )
   

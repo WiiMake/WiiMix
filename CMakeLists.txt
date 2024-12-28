@@ -108,7 +108,8 @@ option(USE_RETRO_ACHIEVEMENTS "Enables integration with retroachievements.org" O
 
 # Note: BUILD_WIIMIX_SERVER_ONLY overrides BUILD_WIIMIX_SERVER
 option(BUILD_WIIMIX_SERVER "Builds the WiiMix Server in addition to all of the other build targets" ON)
-option(BUILD_WIIMIX_SERVER_ONLY "Builds the WiiMix Server EXCLUSIVELY" OFF)
+# Do NOT set this using the CLI, just change the option here if you want to change the value
+set(BUILD_WIIMIX_SERVER_ONLY "Builds the WiiMix Server EXCLUSIVELY" OFF)
 message(STATUS "BUILD_WIIMIX_SERVER_ONLY: ${BUILD_WIIMIX_SERVER_ONLY}")
 
 # Maintainers: if you consider blanket disabling this for your users, please
@@ -854,6 +855,10 @@ if (NOT BUILD_WIIMIX_SERVER_ONLY)
   else()
     message(STATUS "Unit tests are disabled")
   endif()
+else()
+  # Server only dependencies
+  add_subdirectory(Externals/dotenv-cpp)
+  add_subdirectory(Externals/libpqxx)
 endif()
 
 ########################################
