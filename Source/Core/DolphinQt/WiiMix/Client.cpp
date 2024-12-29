@@ -4,23 +4,35 @@
 #include <QTcpSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkInformation>
 
 #include <assert.h>
 
 WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent), m_socket(socket) {}
 
+// bool WiiMixClient::HasNetworkConnection() {
+//     auto networkInfo = QNetworkInformation::instance();
+//     QNetworkInformation::Reachability reachability = networkInfo->reachability();
+//     if (reachability != QNetworkInformation::Reachability::Online) {
+//         qCritical() << "No internet connection available!";
+//         return false; // No internet connection available, return early
+//     }
+//     return true;
+// }
+
 bool WiiMixClient::ConnectToServer() {
-    // Use the loopback address for network testing
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
         assert (PORT != -1);
         assert (IP != "");
+        // Use the loopback address for network testing
         m_socket->connectToHost(QString::fromStdString(IP), PORT);
         qDebug() << QStringLiteral("Connecting client to server");
         if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
             qCritical() << "Failed to connect to server:" << m_socket->errorString();
             // Emit a signal to the UI to display an error message
             emit onError(QStringLiteral("Could not connect to the WiiMix server."));
+            return false;
         }
         else {
             qDebug() << m_socket->state();
@@ -35,8 +47,7 @@ bool WiiMixClient::ConnectToServer() {
         ReceiveData(doc);
     });
 
-
-    return false; //TODOx: temp to build
+    return true;
 }
 
 bool WiiMixClient::IsConnected() const {

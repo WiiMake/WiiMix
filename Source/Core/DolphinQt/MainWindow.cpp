@@ -386,7 +386,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // Since two requests are being
   // This should double as a connection if the lobby does exist
   // TODOx: may need to move this into ready
-  // WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_LOBBY);
+  // WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_BINGO_LOBBY);
 
   // Load ScreenSaver
   // printf("screensaver tries to load\n");
@@ -1854,7 +1854,7 @@ void MainWindow::BingoReady() {
   WiiMixBingoSettings::instance()->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
   if (WiiMixClient::instance()->IsConnected()) {
-    WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE);
+    WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
   }
   return;
 }

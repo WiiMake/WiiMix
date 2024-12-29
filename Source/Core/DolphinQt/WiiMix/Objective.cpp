@@ -16,11 +16,15 @@ WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroa
                                  std::vector<WiiMixEnums::ObjectiveType> objective_type,
                                  std::string objective_description,
                                  std::vector<WiiMixEnums::GameGenre> game_genres,
-                                 WiiMixEnums::Difficulty difficulty, uint64_t time)
+                                 WiiMixEnums::Difficulty difficulty, uint64_t time, uint64_t creator_id,
+                                 WiiMixEnums::ObjectiveStatus status, int num_times_completed,
+                                 int num_times_attempted, std::chrono::system_clock::time_point last_attempted)
     : m_id(id), m_title(std::move(title)), m_retroachievements_game_id(retroachievements_game_id),
       m_game_id(std::move(game_id)), m_achievement_id(achievement_id),
       m_objective_types(objective_type), m_objective_description(std::move(objective_description)),
-      m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time)
+      m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time), m_creator_id(creator_id),
+      m_status(status), m_num_times_completed(num_times_completed), m_num_times_attempted(num_times_attempted),
+      m_last_attempted(last_attempted)
 {
 }
 
@@ -72,6 +76,11 @@ WiiMixEnums::Difficulty WiiMixObjective::GetDifficulty()
 uint64_t WiiMixObjective::GetTime()
 {
   return m_time;
+}
+
+uint64_t WiiMixObjective::GetCreatorId()
+{
+  return m_creator_id;
 }
 
 QJsonObject WiiMixObjective::ToJson()
@@ -131,4 +140,44 @@ WiiMixEnums::Player WiiMixObjective::GetCompleted()
 void WiiMixObjective::SetCompleted(WiiMixEnums::Player player)
 {
   m_player_completed = player;
+}
+
+WiiMixEnums::ObjectiveStatus WiiMixObjective::GetStatus()
+{
+  return m_status;
+}
+
+int WiiMixObjective::GetNumTimesCompleted()
+{
+  return m_num_times_completed;
+}
+
+int WiiMixObjective::GetNumTimesAttempted()
+{
+  return m_num_times_attempted;
+}
+
+std::chrono::system_clock::time_point WiiMixObjective::GetLastAttempted()
+{
+  return m_last_attempted;
+}
+
+void WiiMixObjective::SetStatus(WiiMixEnums::ObjectiveStatus status)
+{
+  m_status = status;
+}
+
+void WiiMixObjective::SetNumTimesCompleted(int num_times_completed)
+{
+  m_num_times_completed = num_times_completed;
+}
+
+void WiiMixObjective::SetNumTimesAttempted(int num_times_attempted)
+{
+  m_num_times_attempted = num_times_attempted;
+}
+
+void WiiMixObjective::SetLastAttempted(std::chrono::system_clock::time_point last_attempted)
+{
+  m_last_attempted = last_attempted;
 }

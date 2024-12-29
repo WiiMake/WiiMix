@@ -44,6 +44,7 @@ public:
 
   // Note: these methods and signals could be overloaded to handle netplay for other modes
   // Bingo is the only one that has netplay currently implemented
+  // bool HasNetworkConnection();
   bool IsConnected() const;
   bool SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);

@@ -6,6 +6,8 @@ namespace WiiMixEnums {
 
     std::string DifficultyToString(Difficulty difficulty) {
         switch (difficulty) {
+            case Difficulty::EASY:
+                return DIFFICULTY_EASY;
             case Difficulty::NORMAL:
                 return DIFFICULTY_NORMAL;
             case Difficulty::HARD:
@@ -18,7 +20,10 @@ namespace WiiMixEnums {
     }
 
     Difficulty DifficultyFromString(const std::string& str) {
-        if (str == DIFFICULTY_NORMAL) {
+        if (str == DIFFICULTY_EASY) {
+            return Difficulty::EASY;
+        }
+        else if (str == DIFFICULTY_NORMAL) {
             return Difficulty::NORMAL;
         } else if (str == DIFFICULTY_HARD) {
             return Difficulty::HARD;
@@ -306,4 +311,53 @@ namespace WiiMixEnums {
         }
     }
 
+    Role RoleFromString(const std::string& str) {
+        if (str == ROLES_ADMIN) {
+            return Role::ADMIN;
+        } else if (str == ROLES_MODERATOR) {
+            return Role::MODERATOR;
+        } else if (str == ROLES_USER) {
+            return Role::USER;
+        } else {
+            return Role::END;
+        }
+    }
+
+    std::string RoleToString(Role role) {
+        switch (role) {
+            case Role::ADMIN:
+                return ROLES_ADMIN;
+            case Role::MODERATOR:
+                return ROLES_MODERATOR;
+            case Role::USER:
+                return ROLES_USER;
+            case Role::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    std::string ObjectiveStatusToString(ObjectiveStatus status) {
+        switch (status) {
+            case ObjectiveStatus::COMPLETED:
+                return OBJECTIVE_STATUS_COMPLETED;
+            case ObjectiveStatus::UNCOMPLETED:
+                return OBJECTIVE_STATUS_UNCOMPLETED;
+            case ObjectiveStatus::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    ObjectiveStatus ObjectiveStatusFromString(const std::string& str) {
+        if (str == OBJECTIVE_STATUS_COMPLETED) {
+            return ObjectiveStatus::COMPLETED;
+        } else if (str == OBJECTIVE_STATUS_UNCOMPLETED) {
+            return ObjectiveStatus::UNCOMPLETED;
+        } else {
+            return ObjectiveStatus::END;
+        }
+    }
 };

@@ -4,12 +4,14 @@
 
 namespace WiiMixEnums {
     enum class Difficulty {
+        EASY,
         NORMAL,
         HARD,
         WIISANITY,
         END // Default/size value
     };
 
+    #define DIFFICULTY_EASY "EASY"
     #define DIFFICULTY_NORMAL "NORMAL"
     #define DIFFICULTY_HARD "HARD"
     #define DIFFICULTY_WIISANITY "WIISANITY"
@@ -139,13 +141,46 @@ namespace WiiMixEnums {
 
     // Bingo Networking Enums
     enum class Action {
-        CREATE_LOBBY,
-        CONNECT,
-        UPDATE,
+        CREATE_BINGO_LOBBY,
+        CONNECT_TO_BINGO_LOBBY,
+        UPDATE_BINGO_LOBBY,
+        UPDATE_OBJECTIVE_DB,
+        ADD_OBJECTIVE_DB,
+        DELETE_OBJECTIVE_DB,
+        GET_OBJECTIVE_DB,
+        REMOVE_GENRE_FROM_OBJECTIVE_DB,
+        ADD_GENRE_TO_OBJECTIVE_DB,
+        REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
+        ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
+        GET_PLAYERS,
+        GET_OBJECTIVE_HISTORY,
+        GET_COMPLETED_OBJECTIVES_BY_PLAYER,
+        GET_FAILED_OBJECTIVES_BY_PLAYER,
+        ADD_PLAYER,
+        DELETE_PLAYER,
+        MARK_OBJECTIVE_AS_COMPLETED,
+        MARK_OBJECTIVE_AS_UNCOMPLETED,
+        GET_OBJECTIVE_BY_ID,
+        GET_OBJECTIVES_BY_GAME_ID,
+        GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID,
+        GET_OBJECTIVES_BY_ACHIEVEMENT_ID,
+        GET_OBJECTIVES_BY_PLAYER_ID,
+        GET_OBJECTIVES_BY_GENRE,
+        GET_OBJECTIVES_BY_TYPE,
+        GET_OBJECTIVES_BY_DIFFICULTY,
+        GET_OBJECTIVES_BY_TIME,
+        GET_OBJECTIVES_BY_CREATOR,
         END // Default/size value
     };
 
     #define SERVER_ACTION "ACTION"
+
+    enum class DBData {
+        OBJECTIVE,
+        PLAYER,
+        OBJECTIVE_HISTORY,
+        END // Default/size value
+    }
 
     enum class BingoNetplaySettings {
         BINGO_TYPE,
@@ -154,8 +189,11 @@ namespace WiiMixEnums {
         PLAYERS,
         LOBBY_ID,
         LOBBY_PASSWORD,
+        SEED,
         COLOR,
         NAME,
+        CURRENT_OBJECTIVES,
+        PLAYERS_READY,
         END // Default/size value
     };
 
@@ -238,6 +276,32 @@ namespace WiiMixEnums {
 
     std::string GameGenreToString(GameGenre genre);
     GameGenre GameGenreFromString(const std::string& str);
+
+    enum class Role {
+        ADMIN, // Can create objectives, delete objectives, and update objectives. Can edit users (permissions/deletion).
+        MODERATOR, // Can create objectives, delete objectives, and update objectives
+        USER, // Can create objectives
+        END
+    };
+
+    #define ROLES_ADMIN "ADMIN"
+    #define ROLES_MODERATOR "MODERATOR"
+    #define ROLES_USER "USER"
+
+    std::string RoleToString(Role role);
+    Role RoleFromString(const std::string& str);
+
+    enum class ObjectiveStatus {
+        COMPLETED,
+        UNCOMPLETED,
+        END
+    };
+
+    #define OBJECTIVE_STATUS_COMPLETED "COMPLETED"
+    #define OBJECTIVE_STATUS_UNCOMPLETED "UNCOMPLETED"
+
+    std::string ObjectiveStatusToString(ObjectiveStatus status);
+    ObjectiveStatus ObjectiveStatusFromString(const std::string& str);
 }
 
 // Retroachievements currently (2024) supports around 400000 achievements

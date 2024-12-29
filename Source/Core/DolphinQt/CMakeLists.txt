@@ -34,6 +34,8 @@ if (BUILD_WIIMIX_SERVER_ONLY)
     WiiMix/Enums.h
     WiiMix/Objective.h
     WiiMix/Objective.cpp
+    WiiMix/Player.cpp
+    WiiMix/Player.h
     WiiMix/Server/BingoSettings.cpp
     WiiMix/Server/BingoSettings.h
     WiiMix/Server/DBApi.cpp
@@ -48,7 +50,7 @@ if (BUILD_WIIMIX_SERVER_ONLY)
   # Link the static libraries to the executable
   target_link_libraries(wiimix-server PRIVATE ${SERVER_LIBS})
 
-  target_include_directories(wiimix-server PRIVATE
+  target_include_directories(wiimix-server SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/Source/Core
     ${CMAKE_SOURCE_DIR}/Externals/dotenv-c/src
     ${LIBPQXX_INCLUDE_DIRS}
@@ -391,6 +393,8 @@ else()
     WiiMix/NetworkUtils.h
     WiiMix/Objective.cpp
     WiiMix/Objective.h
+    WiiMix/Player.cpp
+    WiiMix/Player.h
     WiiMix/RogueSettings.cpp
     WiiMix/RogueSettings.h
     WiiMix/RogueWindow.cpp
@@ -496,6 +500,8 @@ else()
       WiiMix/Enums.h
       WiiMix/Objective.h
       WiiMix/Objective.cpp
+      WiiMix/Player.cpp
+      WiiMix/Player.h
       WiiMix/Server/BingoSettings.cpp
       WiiMix/Server/BingoSettings.h
       WiiMix/Server/DBApi.cpp

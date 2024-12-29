@@ -209,7 +209,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                     m_player_name = GetPlayerName();
                     
                     // Creates a lobby with the given settings
-                    WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::CREATE_LOBBY), WiiMixEnums::Action::CREATE_LOBBY);
+                    WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::CREATE_BINGO_LOBBY), WiiMixEnums::Action::CREATE_BINGO_LOBBY);
                 }
                 else {
                     qDebug() << "Updating lobby settings";
@@ -226,7 +226,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                     }
                     WiiMixEnums::Player player = static_cast<WiiMixEnums::Player>(m_player_num);
                     m_players[player] = QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(player), m_player_name);
-                    WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+                    WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
                 }
                 // try {
                 //     // You should ONLY be able to access the server through sending requests...
@@ -409,7 +409,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                 // Just use player one as a placeholder; the server will assign the player index
                 m_players.insert(WiiMixEnums::Player::ONE, QPair<WiiMixEnums::Color, QString>(WiiMixEnums::PlayerToColor(WiiMixEnums::Player::ONE), m_player_name));
                 // Providing the connect action should prevent you from sending settings that you don't have
-                WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::CONNECT), WiiMixEnums::Action::CONNECT);
+                WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::CONNECT_TO_BINGO_LOBBY), WiiMixEnums::Action::CONNECT_TO_BINGO_LOBBY);
             });
         }
         else {
@@ -754,7 +754,7 @@ void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
         m_difficulty->setCurrentIndex(index);
     }
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
     // else {
     //     emit onSettingsChanged(GetBingoSettings());
@@ -767,7 +767,7 @@ void WiiMixConfigWidget::SetSaveStateBank(QString bank) {
         m_save_state_bank->setCurrentIndex(index);
     }
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
    // else {
    //     emit onSettingsChanged(GetBingoSettings());
@@ -806,7 +806,7 @@ void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {
             break;
     }
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
     else {
         qDebug() << "Emitting local settings changed";
@@ -819,7 +819,7 @@ void WiiMixConfigWidget::SetCardSize(int index) {
         m_card_size->setCurrentIndex(index);
     }
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
    // else {
    //     emit onSettingsChanged(GetBingoSettings());
@@ -843,7 +843,7 @@ void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
 void WiiMixConfigWidget::SetLobbyPassword(QString password) {
     m_bingo_lobby_password->setText(password);
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
    // else {
    //     emit onSettingsChanged(GetBingoSettings());
@@ -875,7 +875,7 @@ void WiiMixConfigWidget::SetTeams(bool enabled) {
         }
     }
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
    // else {
    //     emit onSettingsChanged(GetBingoSettings());
@@ -896,7 +896,7 @@ void WiiMixConfigWidget::SetTeamSelectors(int index) {
     }
     // If not teams, just use the default colors associated with the players
     if (WiiMixClient::instance()->IsConnected()) {
-        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE), WiiMixEnums::Action::UPDATE);
+        WiiMixClient::instance()->SendData(GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
     }
    // else {
    //     emit onSettingsChanged(GetBingoSettings());
@@ -919,7 +919,7 @@ void WiiMixConfigWidget::SetTeamSelectors(int index) {
 /// and sends it to the Bingo server
 WiiMixBingoSettings* WiiMixConfigWidget::GetBingoSettings(WiiMixEnums::Action action) {
     // Create a settings instance from the current configuration
-    if (action == WiiMixEnums::Action::CONNECT) {
+    if (action == WiiMixEnums::Action::CONNECT_TO_BINGO_LOBBY) {
         qDebug() << QStringLiteral("Connecting to lobby: %1").arg(GetLobbyID());
         // WiiMixBingoSettings::instance()->SetDifficulty(WiiMixSettings::StringToDifficulty(GetDifficulty()));
         // WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixSettings::StringToSaveStateBank(GetSaveStateBank()));
