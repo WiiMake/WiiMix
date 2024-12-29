@@ -25,7 +25,7 @@
 #include "Core/Core.h"
 #include "Core/System.h"
 
-#include "DolphinQt/Config/SettingsWindow.h"
+#include "DolphinQt/Config/CSettingsWindow.h"
 #include "DolphinQt/Settings.h"
 
 AudioPane::AudioPane()

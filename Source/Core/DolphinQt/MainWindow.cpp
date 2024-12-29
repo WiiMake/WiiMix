@@ -86,7 +86,7 @@
 #include "DolphinQt/Config/LogConfigWidget.h"
 #include "DolphinQt/Config/LogWidget.h"
 #include "DolphinQt/Config/Mapping/MappingWindow.h"
-#include "DolphinQt/Config/SettingsWindow.h"
+#include "DolphinQt/Config/CSettingsWindow.h"
 #include "DolphinQt/Debugger/AssemblerWidget.h"
 #include "DolphinQt/Debugger/BreakpointWidget.h"
 #include "DolphinQt/Debugger/CodeViewWidget.h"
