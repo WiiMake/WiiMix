@@ -145,42 +145,49 @@ namespace WiiMixEnums {
         CONNECT_TO_BINGO_LOBBY,
         UPDATE_BINGO_LOBBY,
         UPDATE_OBJECTIVE_DB,
-        ADD_OBJECTIVE_DB,
+        ADD_OBJECTIVE, // Also adds the state
         DELETE_OBJECTIVE_DB,
-        GET_OBJECTIVE_DB,
         REMOVE_GENRE_FROM_OBJECTIVE_DB,
         ADD_GENRE_TO_OBJECTIVE_DB,
         REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
         ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
-        GET_PLAYERS,
-        GET_OBJECTIVE_HISTORY,
-        GET_COMPLETED_OBJECTIVES_BY_PLAYER,
-        GET_FAILED_OBJECTIVES_BY_PLAYER,
+        GET_PLAYERS, // you can search by username
+        GET_OBJECTIVE_HISTORY, // you can provide any of the objective history fields
+        // GET_COMPLETED_OBJECTIVES_BY_PLAYER,
+        // GET_FAILED_OBJECTIVES_BY_PLAYER,
         ADD_PLAYER,
         DELETE_PLAYER,
         MARK_OBJECTIVE_AS_COMPLETED,
         MARK_OBJECTIVE_AS_UNCOMPLETED,
-        GET_OBJECTIVE_BY_ID,
-        GET_OBJECTIVES_BY_GAME_ID,
-        GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID,
-        GET_OBJECTIVES_BY_ACHIEVEMENT_ID,
-        GET_OBJECTIVES_BY_PLAYER_ID,
-        GET_OBJECTIVES_BY_GENRE,
-        GET_OBJECTIVES_BY_TYPE,
-        GET_OBJECTIVES_BY_DIFFICULTY,
-        GET_OBJECTIVES_BY_TIME,
-        GET_OBJECTIVES_BY_CREATOR,
+        // GET_OBJECTIVE_BY_ID,
+        // GET_OBJECTIVES_BY_GAME_ID,
+        // GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID,
+        // GET_OBJECTIVES_BY_ACHIEVEMENT_ID,
+        // GET_OBJECTIVES_BY_PLAYER_ID,
+        // GET_OBJECTIVES_BY_GENRE,
+        // GET_OBJECTIVES_BY_TYPE,
+        // GET_OBJECTIVES_BY_DIFFICULTY,
+        // GET_OBJECTIVES_BY_TIME,
+        // GET_OBJECTIVES_BY_CREATOR,
+        GET_OBJECTIVES, // you can provide any of the objective fields
+        GET_OBJECTIVES_STATES, // returns the json plus the save states
         END // Default/size value
     };
 
     #define SERVER_ACTION "ACTION"
+    
+    // So the server can tell how to process the message
+    #define JSON "JSON"
+    #define FILE "FILE"
 
-    enum class DBData {
-        OBJECTIVE,
-        PLAYER,
-        OBJECTIVE_HISTORY,
-        END // Default/size value
-    }
+    // enum class DBData {
+    //     OBJECTIVE,
+    //     PLAYER,
+    //     OBJECTIVE_HISTORY,
+    //     END // Default/size value
+    // };
+
+
 
     enum class BingoNetplaySettings {
         BINGO_TYPE,

@@ -169,4 +169,7 @@
       <UniqueIdentifier>{f84516ac-36c5-446d-a33f-58b78ba358f6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\dotenv-cpp\CMakeLists.txt" />
+  </ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ void WiiMixRogueSettings::SetSeed(QString seed) {
 
 QList<WiiMixEnums::RogueEvent> WiiMixRogueSettings::GetEvents()
 {
-
+    return m_events; // TODOx: temp to build
 }
 
 void WiiMixRogueSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {

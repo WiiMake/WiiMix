@@ -46,12 +46,17 @@ public:
   // Bingo is the only one that has netplay currently implemented
   // bool HasNetworkConnection();
   bool IsConnected() const;
-  bool SendData(WiiMixBingoSettings* settings, WiiMixEnums::Action action);
+  bool SendData(QJsonObject obj, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
+  bool ReceiveData(QJsonDocument doc, QByteArray file);
   bool ConnectToServer();
 
 signals:
   void onSettingsChanged(WiiMixBingoSettings* settings);
+  void onGetObjectiveDBReceived(QJsonDocument json);
+  void onGetPlayersReceived(QJsonDocument json);
+  void onGetObjectiveHistoryReceived(QJsonDocument json);
+  
   void onError(QString error);
 
 protected:
