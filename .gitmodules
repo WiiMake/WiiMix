@@ -96,3 +96,6 @@
 [submodule "Externals/libpqxx"]
 	path = Externals/libpqxx
 	url = https://github.com/jtv/libpqxx.git
+[submodule "Externals/soci"]
+	path = Externals/soci
+	url = https://github.com/SOCI/soci.git

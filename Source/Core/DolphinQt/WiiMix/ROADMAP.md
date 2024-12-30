@@ -7,3 +7,4 @@
 [] - Time Attack Bingo Mode
 [] - Support multiple devices for hotkeys so you can play with controller but also have a reset button while maintaining all of your other hotkeys
 [] - Figure out access; DB API? Does the server REALLY need to be a PRIVATE submodule if everything's abstracted already?
+[] - Since we only need exception handling for the server, can we enable it exclusively for that build target?
