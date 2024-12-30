@@ -186,7 +186,7 @@ add_executable(dolphin-emu
   Config/PatchesWidget.h
   Config/PropertiesDialog.cpp
   Config/PropertiesDialog.h
-  Config/SettingsWindow.cpp
+  Config/CSettingsWindow.cpp
   Config/CSettingsWindow.h
   Config/ToolTipControls/BalloonTip.cpp
   Config/ToolTipControls/BalloonTip.h
@@ -429,8 +429,6 @@ add_executable(dolphin-emu
   WiiMix/WiiMixButton.h
   WiiMix/BingoGame.cpp
   WiiMix/BingoGame.h
-  WiiMix/ScreenSaver.cpp
-  WiiMix/ScreenSaver.h
   WiiMix/RogueWindow.cpp
   WiiMix/RogueWindow.h
 )
@@ -461,7 +459,7 @@ if(BUILD_WIIMIX_SERVER AND EXISTS "${CMAKE_SOURCE_DIR}/Source/Core/DolphinQt/Wii
     WiiMix/Server/Server.cpp
     WiiMix/Server/Server.h
     # If you want to add netplay support for shuffle or rogue, add the files here
-    
+
     # How to get these files to include in the binary?
     # ../Common/Config/Config.cpp
     # ../Common/Config/Config.h
