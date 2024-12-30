@@ -17,7 +17,6 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
-#include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/StateSendMenu.h"
 
 class QMenu;
@@ -276,7 +275,6 @@ private:
 
   WiiMixSettingsWindow* m_wiimix_window = nullptr;
   WiiMixStateSendMenu* m_state_send_menu = nullptr;
-  WiiMixScreenSaver* m_screen_saver = nullptr;
   ControllersWindow* m_controllers_window = nullptr;
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;
@@ -290,7 +288,7 @@ private:
   QString m_player_name = QStringLiteral("");
   int m_player_num = 0;
   bool m_player_ready = false;
-  QGraphicsTextItem* m_ready_text = nullptr;
+  // QGraphicsTextItem* m_ready_text = nullptr; // TODOx: visual studio was very mad with me about this. not quite sure what it is used for but you can ask @gyoder to help debug on windows
   // bool m_bingo_started = false;
   WiiMixClient* m_wiimix_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;

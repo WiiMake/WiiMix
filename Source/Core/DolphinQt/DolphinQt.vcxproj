@@ -17,6 +17,12 @@
     <Import Project="$(VSPropsDir)QtCompile.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>WiiMix</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>WiiMix</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)Config\Graphics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -48,9 +54,11 @@
     </Manifest>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Qt6Core$(QtLibSuffix).lib;Qt6Gui$(QtLibSuffix).lib;Qt6Widgets$(QtLibSuffix).lib;Qt6Network$(QtLibSuffix).lib;Qt6Concurrent$(QtLibSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TreatLinkerWarningAsErrors Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatLinkerWarningAsErrors>
     </Link>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Qt6Core$(QtLibSuffix).lib;Qt6Gui$(QtLibSuffix).lib;Qt6Widgets$(QtLibSuffix).lib;Qt6Network$(QtLibSuffix).lib;Qt6Concurrent$(QtLibSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TreatLinkerWarningAsErrors Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatLinkerWarningAsErrors>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -118,6 +126,7 @@
     <ClCompile Include="Config\Mapping\HotkeyTAS.cpp" />
     <ClCompile Include="Config\Mapping\HotkeyUSBEmu.cpp" />
     <ClCompile Include="Config\Mapping\HotkeyWii.cpp" />
+    <ClCompile Include="Config\Mapping\HotkeyWiiMix.cpp" />
     <ClCompile Include="Config\Mapping\IOWindow.cpp" />
     <ClCompile Include="Config\Mapping\MappingButton.cpp" />
     <ClCompile Include="Config\Mapping\MappingCommon.cpp" />
@@ -134,7 +143,7 @@
     <ClCompile Include="Config\NewPatchDialog.cpp" />
     <ClCompile Include="Config\PatchesWidget.cpp" />
     <ClCompile Include="Config\PropertiesDialog.cpp" />
-    <ClCompile Include="Config\SettingsWindow.cpp" />
+    <ClCompile Include="Config\CSettingsWindow.cpp" />
     <ClCompile Include="Config\ToolTipControls\BalloonTip.cpp" />
     <ClCompile Include="Config\ToolTipControls\ToolTipCheckBox.cpp" />
     <ClCompile Include="Config\ToolTipControls\ToolTipComboBox.cpp" />
@@ -240,10 +249,16 @@
     <ClCompile Include="ToolBar.cpp" />
     <ClCompile Include="Translation.cpp" />
     <ClCompile Include="Updater.cpp" />
+    <ClCompile Include="WiiMix\BingoGame.cpp" />
+    <ClCompile Include="WiiMix\Client.cpp" />
+    <ClCompile Include="WiiMix\CommonSettings.cpp" />
+    <ClCompile Include="WiiMix\DBApi.cpp" />
+    <ClCompile Include="WiiMix\GlobalSettings.cpp" />
+    <ClCompile Include="WiiMix\Overlay.cpp" />
+    <ClCompile Include="WiiMix\StateSendMenu.cpp" />
     <ClCompile Include="WiiMix\WebAPI.cpp" />
     <ClCompile Include="WiiMix\WiiMixButton.cpp" />
     <ClCompile Include="WiiUpdate.cpp" />
-    <ClCompile Include="WiiMix/BingoClient.cpp" />
     <ClCompile Include="WiiMix/BingoSettings.cpp" />
     <ClCompile Include="WiiMix/ConfigWidget.cpp" />
     <ClCompile Include="WiiMix/Enums.cpp" />
@@ -252,7 +267,6 @@
     <ClCompile Include="WiiMix/Objective.cpp" />
     <ClCompile Include="WiiMix/RogueSettings.cpp" />
     <ClCompile Include="WiiMix/RogueWindow.cpp" />
-    <ClCompile Include="WiiMix/Settings.cpp" />
     <ClCompile Include="WiiMix/SettingsWindow.cpp" />
     <ClCompile Include="WiiMix/ShuffleSettings.cpp" />
   </ItemGroup>
@@ -287,6 +301,8 @@
     <ClInclude Include="TAS\TASControlState.h" />
     <ClInclude Include="TAS\TASSlider.h" />
     <ClInclude Include="Translation.h" />
+    <ClInclude Include="WiiMix\Server\BingoSettings.h" />
+    <ClInclude Include="WiiMix\Server\Server.h" />
     <ClInclude Include="WiiMix\WebAPI.h" />
     <ClInclude Include="WiiMix\WiiMixButton.h" />
     <ClInclude Include="WiiUpdate.h" />
@@ -352,6 +368,7 @@
     <QtMoc Include="Config\Mapping\HotkeyTAS.h" />
     <QtMoc Include="Config\Mapping\HotkeyUSBEmu.h" />
     <QtMoc Include="Config\Mapping\HotkeyWii.h" />
+    <QtMoc Include="Config\Mapping\HotkeyWiiMix.h" />
     <QtMoc Include="Config\Mapping\IOWindow.h" />
     <QtMoc Include="Config\Mapping\MappingButton.h" />
     <QtMoc Include="Config\Mapping\MappingWidget.h" />
@@ -363,7 +380,7 @@
     <QtMoc Include="Config\Mapping\WiimoteEmuMotionControl.h" />
     <QtMoc Include="Config\Mapping\WiimoteEmuMotionControlIMU.h" />
     <QtMoc Include="Config\PropertiesDialog.h" />
-    <QtMoc Include="Config\SettingsWindow.h" />
+    <QtMoc Include="Config\CSettingsWindow.h" />
     <QtMoc Include="Config\ToolTipControls\BalloonTip.h" />
     <ClInclude Include="Config\ToolTipControls\ToolTipCheckBox.h" />
     <ClInclude Include="Config\ToolTipControls\ToolTipComboBox.h" />
@@ -454,20 +471,19 @@
     <QtMoc Include="TAS\WiiTASInputWindow.h" />
     <QtMoc Include="ToolBar.h" />
     <QtMoc Include="Updater.h" />
+    <QtMoc Include="WiiMix/Client.h" />
+    <QtMoc Include="WiiMix/StateSendMenu.h" />
+    <QtMoc Include="WiiMix/SettingsWindow.h" />
+    <QtMoc Include="WiiMix/RogueWindow.h" />
+    <QtMoc Include="WiiMix/ModesWidget.h" />
+    <QtMoc Include="WiiMix/GlobalSettings.h" />
+    <QtMoc Include="WiiMix/ConfigWidget.h" />
+    <QtMoc Include="WiiMix/CommonSettings.h" />
     <ClInclude Include="WiiMix/BingoClient.h" />
-    <ClInclude Include="WiiMix/BingoSettings.h" />
-    <ClInclude Include="WiiMix/ConfigWidget.h" />
-    <ClInclude Include="WiiMix/Enums.h" />
-    <ClInclude Include="WiiMix/ModesWidget.h" />
-    <ClInclude Include="WiiMix/NetworkUtils.h" />
-    <ClInclude Include="WiiMix/Objective.h" />
-    <ClInclude Include="WiiMix/RogueSettings.h" />
-    <ClInclude Include="WiiMix/RogueWindow.h" />
     <ClInclude Include="WiiMix/Settings.h" />
-    <ClInclude Include="WiiMix/SettingsWindow.h" />
-    <ClInclude Include="WiiMix/ShuffleSettings.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\..\..\Externals\libpqxx\CMakeLists.txt" />
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -517,6 +533,7 @@
   <Import Project="$(ExternalsDir)soundtouch\exports.props" />
   <Import Project="$(ExternalsDir)xxhash\exports.props" />
   <Import Project="$(ExternalsDir)zstd\exports.props" />
+  <Import Project="$(ExternalsDir)curl\exports.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
   <!--Copy Exe, Data directory and DLLs which should be located in the executable directory-->

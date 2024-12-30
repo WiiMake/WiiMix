@@ -111,7 +111,7 @@
 
   <!--Copy the needed dlls-->
   <ItemGroup>
-    <QtDllNames_ Include="Qt6Core;Qt6Gui;Qt6Widgets;Qt6Svg" />
+    <QtDllNames_ Include="Qt6Core;Qt6Gui;Qt6Widgets;Qt6Svg;Qt6Concurrent;Qt6Network" />
     <QtDllNames Include="@(QtDllNames_ -> '%(Identity)$(QtLibSuffix).dll')" />
     <QtDllsSrc Include="@(QtDllNames -> '$(QtBinDir)%(Identity)')" />
     <QtDllsDst Include="@(QtDllNames -> '$(BinaryOutputDir)%(Identity)')" />

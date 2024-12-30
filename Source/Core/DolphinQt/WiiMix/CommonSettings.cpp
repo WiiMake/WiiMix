@@ -123,15 +123,11 @@ QJsonObject WiiMixCommonSettings::ToJsonCommon() {
     std::vector<WiiMixObjective> objectives = GetObjectives();
     if (objectives.size() > 0) {
         QJsonArray selected_objectives;
-        #ifndef WIN32   
-            qDebug() << "Win32";
-            std::random_device rd;
-            std::mt19937 g(rd());
-            std::shuffle(objectives.begin(), objectives.end(), g);
-        #else
-            qDebug() << "random_shuffle";
-            std::random_shuffle(objectives.begin(), objectives.end());
-        #endif
+         
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(objectives.begin(), objectives.end(), g);
+        
         qDebug() << "append objectives";
         for (int i = 0; i < 9; i++) {
             selected_objectives.append(objectives[i].ToJson());

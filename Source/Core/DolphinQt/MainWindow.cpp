@@ -86,7 +86,7 @@
 #include "DolphinQt/Config/LogConfigWidget.h"
 #include "DolphinQt/Config/LogWidget.h"
 #include "DolphinQt/Config/Mapping/MappingWindow.h"
-#include "DolphinQt/Config/SettingsWindow.h"
+#include "DolphinQt/Config/CSettingsWindow.h"
 #include "DolphinQt/Debugger/AssemblerWidget.h"
 #include "DolphinQt/Debugger/BreakpointWidget.h"
 #include "DolphinQt/Debugger/CodeViewWidget.h"
@@ -865,15 +865,10 @@ void MainWindow::RefreshGameList()
 {
   Settings::Instance().ReloadTitleDB();
   Settings::Instance().RefreshGameList();
-  WiiMixScreenSaver *screenSaver = new WiiMixScreenSaver();
-  screenSaver->CreateLayout();
   QWidget* wItem;
   //while ((wItem = m_stack->widget(0)) != 0) delete wItem;
   m_stack->removeWidget(m_render_widget);
   m_render_widget->setParent(nullptr);
-  m_stack->addWidget(screenSaver);
-  m_stack->setCurrentWidget(screenSaver);
-  screenSaver->showFullScreen();
   m_stack->repaint();
   //Host::GetInstance()->SetRenderFocus(isActiveWindow());
 }
@@ -1847,9 +1842,9 @@ void MainWindow::BingoReady() {
   qDebug() << "Bingo ready";
   m_player_ready = !m_player_ready;
   if (m_player_ready) {
-    m_screen_saver->SetTextItemText(QStringLiteral("Player ") + QString::number(m_player_num) + QStringLiteral(" Ready"));
+    // m_screen_saver->SetTextItemText(QStringLiteral("Player ") + QString::number(m_player_num) + QStringLiteral(" Ready"));
   } else {
-    m_screen_saver->SetTextItemText(QStringLiteral("Press Start"));
+    // m_screen_saver->SetTextItemText(QStringLiteral("Press Start"));
   }
   WiiMixBingoSettings::instance()->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
