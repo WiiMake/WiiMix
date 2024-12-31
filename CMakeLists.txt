@@ -109,7 +109,7 @@ option(USE_RETRO_ACHIEVEMENTS "Enables integration with retroachievements.org" O
 # Note: BUILD_WIIMIX_SERVER_ONLY overrides BUILD_WIIMIX_SERVER
 option(BUILD_WIIMIX_SERVER "Builds the WiiMix Server in addition to all of the other build targets" ON)
 # Do NOT set this using the CLI, just change the option here if you want to change the value
-set(BUILD_WIIMIX_SERVER_ONLY "Builds the WiiMix Server EXCLUSIVELY" OFF)
+set(BUILD_WIIMIX_SERVER_ONLY OFF) # Builds the WiiMix Server EXCLUSIVELY
 message(STATUS "BUILD_WIIMIX_SERVER_ONLY: ${BUILD_WIIMIX_SERVER_ONLY}")
 
 # Maintainers: if you consider blanket disabling this for your users, please
@@ -781,7 +781,7 @@ if (NOT BUILD_WIIMIX_SERVER_ONLY)
   # set(SOCI_BACKEND "postgresql" CACHE STRING "SOCI backend")
   # set(SOCI_TESTS OFF)
   # set(SOCI_LTO ON) // Recommended for release builds
-  # set(SOCI_POSTGRESQL_TEST_CONNSTR "dbname=mydb user=scott" CACHE STRING "SOCI PostgreSQL test connection string") 
+  # set(SOCI_POSTGRESQL_TEST_CONNSTR "dbname=mydb user=scott" CACHE STRING "SOCI PostgreSQL test connection string")
 
   # add_subdirectory(Externals/soci)
 
