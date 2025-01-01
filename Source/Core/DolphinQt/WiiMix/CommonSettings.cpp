@@ -119,7 +119,7 @@ void WiiMixCommonSettings::AddObjective(WiiMixObjective objective) {
 
 QJsonObject WiiMixCommonSettings::ToJsonCommon() {
     QJsonObject json;
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(GetSaveStateBank());
+    json[QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(GetSaveStateBank());
     std::vector<WiiMixObjective> objectives = GetObjectives();
     if (objectives.size() > 0) {
         QJsonArray selected_objectives;
@@ -132,24 +132,24 @@ QJsonObject WiiMixCommonSettings::ToJsonCommon() {
         for (int i = 0; i < 9; i++) {
             selected_objectives.append(objectives[i].ToJson());
         }
-        json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = selected_objectives;
+        json[QStringLiteral(COMMON_SETTINGS_OBJECTIVES)] = selected_objectives;
     }
     else {
-        json[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)] = {};
+        json[QStringLiteral(COMMON_SETTINGS_OBJECTIVES)] = {};
     }
-    json[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
+    json[QStringLiteral(COMMON_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
     return json;
 }
 
 WiiMixCommonSettings WiiMixCommonSettings::FromJsonCommon(QJsonDocument settings_json) {
     QJsonObject obj = settings_json.object();
-    WiiMixEnums::SaveStateBank bank = static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK)].toInt());
+    WiiMixEnums::SaveStateBank bank = static_cast<WiiMixEnums::SaveStateBank>(obj[QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK)].toInt());
     std::vector<WiiMixObjective> objectives;
-    QJsonArray objectives_array = obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_OBJECTIVES)].toArray();
+    QJsonArray objectives_array = obj[QStringLiteral(COMMON_SETTINGS_OBJECTIVES)].toArray();
     for (const QJsonValue& value : objectives_array) {
         objectives.push_back(WiiMixObjective::FromJson(value.toObject()));
     }
-    WiiMixEnums::Difficulty difficulty = static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_NETPLAY_SETTINGS_DIFFICULTY)].toInt());
+    WiiMixEnums::Difficulty difficulty = static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_SETTINGS_DIFFICULTY)].toInt());
     return WiiMixCommonSettings(difficulty, bank, objectives);
 }
 

@@ -20,6 +20,7 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/Player.h"
 
 // This is a file for syncing bingo cards between players
 // This is also a singleton; you can only be connected to ONE lobby at a time
@@ -48,15 +49,19 @@ public:
   bool IsConnected() const;
   bool SendData(QJsonObject obj, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
-  bool ReceiveData(QJsonDocument doc, QByteArray file);
+  bool ReceiveData(QJsonDocument doc, std::vector<QByteArray> files);
   bool ConnectToServer();
 
 signals:
-  void onSettingsChanged(WiiMixBingoSettings* settings);
-  void onGetObjectiveDBReceived(QJsonDocument json);
-  void onGetPlayersReceived(QJsonDocument json);
-  void onGetObjectiveHistoryReceived(QJsonDocument json);
-  
+  // Update the bingo settings as they are changed for all players
+  void onUpdateBingoConfig(WiiMixBingoSettings* settings);
+  void onUpdateBingoObjectives(WiiMixBingoSettings* settings);
+  void onUpdateRogueObjectives(WiiMixRogueSettings* settings);
+  void onGetPlayers(std::vector<WiiMixPlayer> players);
+  void onGetPlayer(WiiMixPlayer player);
+  void onGetObjectiveHistory(std::vector<WiiMixObjective> objectives);
+  void onGetObjectives(std::vector<WiiMixObjective> objectives);
+
   void onError(QString error);
 
 protected:

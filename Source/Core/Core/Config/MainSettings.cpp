@@ -533,6 +533,10 @@ const Info<std::string> MAIN_USB_PASSTHROUGH_DEVICES{{System::Main, "USBPassthro
 // WiiMix (base)
 // const Info<WiiMixEnums::Difficulty> WIIMIX_DIFFICULTY{{System::Main, "WiiMix", "Difficulty"}, DEFAULT_DIFFICULTY};
 const Info<WiiMixEnums::Mode> WIIMIX_MODE{{System::Main, "WiiMix", "Mode"}, DEFAULT_MODE};
+const Info<std::string> WIIMIX_PLAYER_USERNAME{{System::Main, "WiiMix", "PlayerUsername"}, ""};
+const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED{{System::Main, "WiiMix", "NumObjectivesCompleted"}, 0};
+const Info<int> WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED{{System::Main, "WiiMix", "NumUniqueObjectivesCompleted"}, 0};
+const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED{{System::Main, "WiiMix", "NumObjectivesAttempted"}, 0};
 // Comma separated list of objective ids and game ids respectively that can be parsed into the desired information
 // Games and Objectives are getting cut from the settings file; these both get loaded dynamically based on seeds 
 // const Info<std::string> WIIMIX_OBJECTIVE_IDS{{System::Main, "WiiMix", "Objectives"}, ""};

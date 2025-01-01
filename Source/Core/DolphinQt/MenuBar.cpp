@@ -275,6 +275,8 @@ void MenuBar::AddToolsMenu()
   tools_menu->addSeparator();
 #endif  // USE_RETRO_ACHIEVEMENTS
 
+  tools_menu->addAction(tr("WiiMix Account"), this, [this] { emit ShowWiiMixAccountWindow(); });
+
   QMenu* gc_ipl = tools_menu->addMenu(tr("Load GameCube Main Menu"));
 
   m_ntscj_ipl = gc_ipl->addAction(tr("NTSC-J"), this,
@@ -672,10 +674,13 @@ void MenuBar::AddHelpMenu()
 {
   QMenu* help_menu = addMenu(tr("&Help"));
 
-  QAction* website = help_menu->addAction(tr("&Website"));
+  QAction* wiimix_website = help_menu->addAction(tr("&WiiMix Website"));
+  connect(wiimix_website, &QAction::triggered, this,
+          []() { QDesktopServices::openUrl(QUrl(QStringLiteral("https://wiimix.vulcan.moe/"))); });
+  QAction* website = help_menu->addAction(tr("&Dolphin Website"));
   connect(website, &QAction::triggered, this,
           []() { QDesktopServices::openUrl(QUrl(QStringLiteral("https://dolphin-emu.org/"))); });
-  QAction* documentation = help_menu->addAction(tr("Online &Documentation"));
+  QAction* documentation = help_menu->addAction(tr("Dolphin &Documentation"));
   connect(documentation, &QAction::triggered, this, []() {
     QDesktopServices::openUrl(QUrl(QStringLiteral("https://dolphin-emu.org/docs/guides")));
   });

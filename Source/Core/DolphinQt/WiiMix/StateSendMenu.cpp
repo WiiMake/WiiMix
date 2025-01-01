@@ -8,7 +8,9 @@
 #include <QRegularExpressionValidator>
 #include <QListWidgetItem>
 
+#include "Core/ConfigManager.h"
 #include "DolphinQt/WiiMix/CommonSettings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 
 WiiMixStateSendMenu::WiiMixStateSendMenu(std::string state_path) : m_state_path(state_path) {
     CreateLayout();
@@ -80,20 +82,20 @@ void WiiMixStateSendMenu::CreateLayout() {
 
 void WiiMixStateSendMenu::ConnectWidgets() {
     connect(m_send_button, &QPushButton::clicked, this, [this]() {
-        // emit SendObjective(WiiMixObjective(
-        //     // TODOx: get the next available objective ID
-        //     -1,
-        //     m_title->text().toStdString(),
-        //     // TODOx: get the retroachievements game id using the achievement id
-        //     -1,
-        //     // TODOx: get the game id? There's gotta be a way of getting the id of the current game
-        //     -1,
-        //     m_achievement_id->value(),
-        //     std::vector<WiiMixEnums::ObjectiveType>(), // TODOx: get the selected objective types
-        //     m_description->toPlainText().toStdString(),
-        //     std::vector<WiiMixEnums::GameGenre>(), // TODOx: get the selected game genres
-        //     static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
-        //     m_time_length->value(),
-        // ), m_state_path);
+        emit SendObjective(WiiMixObjective(
+            // Use -1 as a placeholder; for addObjective, the server will populate the objective id
+            -1,
+            m_title->text().toStdString(),
+            // TODOx: get the retroachievements game id using the achievement id
+            -1,
+            SConfig::GetInstance().GetGameID(),
+            m_achievement_id->value(),
+            std::vector<WiiMixEnums::ObjectiveType>(), // TODOx: get the selected objective types
+            m_description->toPlainText().toStdString(),
+            std::vector<WiiMixEnums::GameGenre>(), // TODOx: get the selected game genres
+            static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
+            m_time_length->value(),
+            WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetId() : -1
+        ), m_state_path);
     });
 }

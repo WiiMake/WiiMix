@@ -1,5 +1,6 @@
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
+#include "DolphinQt/WiiMix/RogueSettings.h"
 
 #include <QTcpSocket>
 #include <QJsonDocument>
@@ -45,7 +46,7 @@ bool WiiMixClient::ConnectToServer() {
         QByteArray data = m_socket->readAll();
 
         // Split header and content (json and file)
-        // Header format: [json size]|[file size]|{json}<file>
+        // Header format: [number of files]|[json size]|[file 1 size]|[file 2 size]|[file n size]{json}<file 1><file 2><file n>
         int firstDelimiter = data.indexOf('|');
         int secondDelimiter = data.indexOf('|', firstDelimiter + 1);
 
@@ -53,39 +54,62 @@ bool WiiMixClient::ConnectToServer() {
             qWarning() << "Invalid message format";
             return;
         }
-        
-        QByteArray jsonSizeStr = data.left(firstDelimiter);
-        QByteArray fileSizeStr = data.mid(firstDelimiter + 1, secondDelimiter - firstDelimiter - 1);
 
-        bool ok1 = false, ok2 = false;
+        int numFiles = data.left(firstDelimiter).toInt();
+        
+        QByteArray jsonSizeStr = data.mid(firstDelimiter + 1, secondDelimiter - firstDelimiter - 1);
+
+        bool ok1 = false;
         int jsonSize = jsonSizeStr.toInt(&ok1);
-        int fileSize = fileSizeStr.toInt(&ok2);
 
-        if (!ok1 || !ok2) {
-            qWarning() << "Json or file size is not a number";
+        if (!ok1) {
+            qWarning() << "Json size is not a number";
             return;
         }
 
-        if (jsonSize + fileSize + secondDelimiter + 1 != data.size()) {
-            qWarning() << "Invalid message size";
-            return;
-        }
+        if (numFiles > 0) {
+            int fileSizes[numFiles];
+            std::vector<QByteArray> files;
 
-        QByteArray json = {};
-        if (jsonSize > 0) {
-            json = data.mid(secondDelimiter + 1, jsonSize);
-        }
+            int currentPos = secondDelimiter + 1;
+            for (int i = 0; i < numFiles; ++i) {
+                int nextDelimiter = data.indexOf('|', currentPos);
+                if (nextDelimiter == -1) {
+                    qWarning() << "Invalid message format for file sizes";
+                    return;
+                }
+                QByteArray fileSizeStr = data.mid(currentPos, nextDelimiter - currentPos);
+                bool ok2 = false;
+                fileSizes[i] = fileSizeStr.toInt(&ok2);
+                if (!ok2) {
+                    qWarning() << "File size is not a number";
+                    return;
+                }
+                currentPos = nextDelimiter + 1;
+            }
 
-        QByteArray file = {};
-        if (fileSize > 0) {
-            file = data.mid(secondDelimiter + 1 + jsonSize, fileSize);
-        }
-        
-        // Process the message according to the data sent
-        if (!json.isEmpty() && !file.isEmpty()) {
-            ReceiveData(QJsonDocument::fromJson(json), file);
+            for (int i = 0; i < numFiles; ++i) {
+                files.push_back(data.mid(currentPos, fileSizes[i]));
+                currentPos += fileSizes[i];
+            }
+
+            QByteArray json = data.mid(currentPos, jsonSize);
+            if (json.isEmpty()) {
+                qWarning() << "Json is empty";
+                return;
+            }
+
+            ReceiveData(QJsonDocument::fromJson(json), files);
         }
         else {
+            QByteArray json = {};
+            if (jsonSize > 0) {
+                json = data.mid(secondDelimiter + 1, jsonSize);
+            }
+            if (json.isEmpty()) {
+                qWarning() << "Json is empty";
+                return;
+            }
             ReceiveData(QJsonDocument::fromJson(json));
         }
     });
@@ -105,6 +129,16 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     
     QJsonDocument json(obj);
     QByteArray data = {};
+    
+    if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
+        data.append('1');
+        data.append('|');
+    }
+    else {
+        data.append('0');
+        data.append('|');
+    }
+    
     // Json size
     data.append(static_cast<int>(json.toJson().size()));
     data.append('|');
@@ -112,8 +146,8 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
         // Load the data for the corresponding file
-        int slot = obj[QStringLiteral("slot")].toInt();
-        QString game_id = obj[QStringLiteral("game_id")].toString();
+        int slot = obj[QStringLiteral(SLOT)].toInt();
+        QString game_id = obj[QStringLiteral(OBJECTIVE_GAME_ID)].toString();
         char buffer[4];
         sprintf(buffer, "%02d", slot);
         QString savestate_path = QString::fromStdString(File::GetUserPath(D_STATESAVES_IDX)) + game_id + buffer + ".sav";
@@ -125,8 +159,6 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         data.append(file.readAll());
     }
     else {
-        data.append('0');
-        data.append('|');
         data.append(json.toJson());
     }
 
@@ -155,61 +187,82 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
 }
 
 bool WiiMixClient::ReceiveData(QJsonDocument json) {
-    WiiMixEnums::Action action = static_cast<WiiMixEnums::Action>(json.object()[QStringLiteral(SERVER_ACTION)].toInt());
+    WiiMixEnums::Response response = static_cast<WiiMixEnums::Response>(json.object()[QStringLiteral(CLIENT_RESPONSE)].toInt());
 
-    if (action == WiiMixEnums::Action::CREATE_BINGO_LOBBY || action == WiiMixEnums::Action::UPDATE_BINGO_LOBBY || action == WiiMixEnums::Action::CONNECT_TO_BINGO_LOBBY) {
+    if (response == WiiMixEnums::Response::UPDATE_BINGO_CONFIG) {
         // Update the settings
         WiiMixBingoSettings::instance()->FromJson(json);
         // Update the UI
-        qDebug() << QStringLiteral("Emitting onSettingsChanged");
-        emit onSettingsChanged(WiiMixBingoSettings::instance());
+        qDebug() << QStringLiteral("Emitting onUpdateBingoConfig");
+        emit onUpdateBingoConfig(WiiMixBingoSettings::instance());
     }
-    else if (action == WiiMixEnums::Action::GET_OBJECTIVE_DB) {
-        emit onGetObjectiveDBReceived(json);
+    else if (response == WiiMixEnums::Response::GET_PLAYERS) {
+        // TODOx: not implemented
+        emit onGetPlayers({});
     }
-    else if (action == WiiMixEnums::Action::GET_PLAYERS) {
-        emit onGetPlayersReceived(json);
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVE_HISTORY) {
-        emit onObjectiveHistoryReceived(json);
-    } else if (action == WiiMixEnums::Action::GET_COMPLETED_OBJECTIVES_BY_PLAYER) {
-        emit onCompletedObjectivesReceived(json);
-    } else if (action == WiiMixEnums::Action::GET_FAILED_OBJECTIVES_BY_PLAYER) {
-        emit onFailedObjectivesReceived(json);
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVE_BY_ID) {
-        emit onObjectiveByIDReceived(json);
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_GAME_ID) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_ACHIEVEMENT_ID) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_PLAYER_ID) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_GENRE) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_TYPE) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_DIFFICULTY) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_TIME) {
-
-    } else if (action == WiiMixEnums::Action::GET_OBJECTIVES_BY_CREATOR) {
-
+    else if (response == WiiMixEnums::Response::GET_PLAYER) {
+        QJsonObject obj = json.object();
+        WiiMixPlayer player = WiiMixPlayer::FromJson(obj);
+        emit onGetPlayer(player);
+    }
+    else if (response == WiiMixEnums::Response::GET_OBJECTIVE_HISTORY) {
+        // TODOx: not implemented
+        emit onGetObjectiveHistory({});
+    }
+    else if (response == WiiMixEnums::Response::GET_OBJECTIVES) {
+        // Iterate over each json objective and create an array of WiiMixObjectives
+        std::vector<WiiMixObjective> objectives;
+        for (int i = 0; i < json.array().size(); ++i) {
+            QJsonObject obj = json.array()[i].toObject();
+            WiiMixObjective objective = WiiMixObjective::FromJson(obj);
+            objectives.push_back(objective);
+        }
+        emit onGetObjectives(objectives);
     }
     return true;
 }
 
-bool WiiMixClient::ReceiveData(QJsonDocument json, QByteArray file) {
-    WiiMixEnums::Action action = static_cast<WiiMixEnums::Action>(json.object()[QStringLiteral(SERVER_ACTION)].toInt());
-    if (action == ) {
+bool WiiMixClient::ReceiveData(QJsonDocument json, std::vector<QByteArray> files) {
+    WiiMixEnums::Response response = static_cast<WiiMixEnums::Response>(json.object()[QStringLiteral(CLIENT_RESPONSE)].toInt());
 
+    if (response == WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES) {
+        // For each objective in the json array, convert it to a wiimix objective
+        // and then save the savestate to the correct location [path] + id + ".sav"
+        std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+        std::vector<WiiMixObjective> objectives;
+        for (int i = 0; i < json.array().size(); ++i) {
+            QJsonObject obj = json.array()[i].toObject();
+            WiiMixObjective objective = WiiMixObjective::FromJson(obj);
+            // Save the savestate
+            QFile file(QString::fromStdString(savestate_path + std::to_string(objective.GetId()) + ".sav"));
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(files[i]);
+                file.close();
+            }
+            objectives.push_back(objective);
+        }
+        WiiMixBingoSettings::instance()->SetObjectives(objectives);
+        emit onUpdateBingoObjectives(WiiMixBingoSettings::instance());
     }
-    // Update the settings
-    WiiMixBingoSettings::instance()->FromJson(doc);
-    // Update the UI
-    qDebug() << QStringLiteral("Emitting onSettingsChanged");
-    emit onSettingsChanged(WiiMixBingoSettings::instance());
-    return true;
+    else if (response == WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES) {
+        // For each objective in the json array, convert it to a wiimix objective
+        // and then save the savestate to the correct location [path] + id + ".sav"
+        std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+        std::vector<WiiMixObjective> objectives;
+        for (int i = 0; i < json.array().size(); ++i) {
+            QJsonObject obj = json.array()[i].toObject();
+            WiiMixObjective objective = WiiMixObjective::FromJson(obj);
+            // Save the savestate
+            QFile file(QString::fromStdString(savestate_path + std::to_string(objective.GetId()) + ".sav"));
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(files[i]);
+                file.close();
+            }
+            objectives.push_back(objective);
+        }
+        WiiMixRogueSettings::instance()->SetObjectives(objectives);
+        emit onUpdateRogueObjectives(WiiMixRogueSettings::instance());
+    }
 }
 
 // Getters (retrieves values from server)

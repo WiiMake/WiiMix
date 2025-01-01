@@ -8,6 +8,7 @@
 #include "DolphinQt/WiiMix/GlobalSettings.h"
 
 #include "DolphinQt/WiiMix/Enums.h"
+#include "DolphinQt/WiiMix/Player.h"
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
@@ -19,7 +20,7 @@
 #include "Common/IniFile.h"
 #include "Core/ConfigManager.h"
 
-WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games, int current_objective) : m_mode(mode), m_games(games), m_current_objective(current_objective) {
+WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games, int current_objective, WiiMixPlayer *player) : m_mode(mode), m_games(games), m_current_objective(current_objective), m_player(player) {
     WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
     if (mode != DEFAULT_MODE) {
         m_mode = mode;
@@ -32,6 +33,19 @@ WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<s
     }
     m_games = DEFAULT_GAMES;
     m_current_objective = 0;
+    std::string player_username = Config::Get(Config::WIIMIX_PLAYER_USERNAME);
+    if (player_username != "") {
+        // Password is not stored in the config file
+        // It is only required for the initial login
+        // Id also does not need to be stored in the config file, as usernames are unique
+        int num_objectives_completed = Config::Get(Config::WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED);
+        int num_unique_objectives_completed = Config::Get(Config::WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED);
+        int num_objectives_attempted = Config::Get(Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED);
+        m_player = new WiiMixPlayer(-1, player_username, "", WiiMixEnums::Role::USER, num_objectives_completed, num_unique_objectives_completed, num_objectives_attempted);
+    }
+    else {
+        m_player = nullptr;
+    }
 }
 
 QIcon WiiMixGlobalSettings::ModeToIcon(WiiMixEnums::Mode mode) {
@@ -221,4 +235,16 @@ void WiiMixGlobalSettings::SetCurrentObjective(int objective) {
 
 int WiiMixGlobalSettings::GetCurrentObjective() {
     return m_current_objective;
+}
+
+void WiiMixGlobalSettings::SetPlayer(WiiMixPlayer *player) {
+    m_player = player;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_USERNAME, player->GetUsername());
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED, player->GetNumObjectivesCompleted());
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED, player->GetNumUniqueObjectivesCompleted());
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED, player->GetNumObjectivesAttempted());
+}
+
+WiiMixPlayer *WiiMixGlobalSettings::GetPlayer() {
+    return m_player;
 }

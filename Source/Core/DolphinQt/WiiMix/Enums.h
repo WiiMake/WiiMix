@@ -139,7 +139,8 @@ namespace WiiMixEnums {
 
     std::string ColorToHex(Color color);
 
-    // Bingo Networking Enums
+    // Action is an enum class that represents the different actions that can be taken by the server
+    // This is included in the client request json to instruct the server what to do
     enum class Action {
         CREATE_BINGO_LOBBY,
         CONNECT_TO_BINGO_LOBBY,
@@ -159,7 +160,7 @@ namespace WiiMixEnums {
         DELETE_PLAYER,
         MARK_OBJECTIVE_AS_COMPLETED,
         MARK_OBJECTIVE_AS_UNCOMPLETED,
-        // GET_OBJECTIVE_BY_ID,
+        GET_OBJECTIVE_BY_ID,
         // GET_OBJECTIVES_BY_GAME_ID,
         // GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID,
         // GET_OBJECTIVES_BY_ACHIEVEMENT_ID,
@@ -170,74 +171,79 @@ namespace WiiMixEnums {
         // GET_OBJECTIVES_BY_TIME,
         // GET_OBJECTIVES_BY_CREATOR,
         GET_OBJECTIVES, // you can provide any of the objective fields
-        GET_OBJECTIVES_STATES, // returns the json plus the save states
+        GET_OBJECTIVES_AND_STATES, // returns the json plus the save states; supports any objective field specifiers
         END // Default/size value
     };
 
     #define SERVER_ACTION "ACTION"
+    #define CLIENT_RESPONSE "RESPONSE"
     
-    // So the server can tell how to process the message
-    #define JSON "JSON"
-    #define FILE "FILE"
+    // DBOps is used by the client to dictate which operation to perform on the database
+    // An operation is associated with a column (or columns) in the json which is then parsed and acted out by the server
 
-    // enum class DBData {
-    //     OBJECTIVE,
-    //     PLAYER,
-    //     OBJECTIVE_HISTORY,
+    // NOTE that filtering based on seeds is ALL handled server side, so the client doesn't need to worry about it
+
+    // enum class DBOps {
+    //     SORT_ASC,
+    //     SORT_DESC,
+    //     FILTER_GREATER_THAN,
+    //     FILTER_LESS_THAN,
+    //     SELECT,
+    //     NUM_ROWS,
+    //     END
+    // };
+    #define SORT_ASC "SORT_ASC"
+    #define SORT_DESC "SORT_DESC"
+    #define FILTER_GREATER_THAN "FILTER_GREATER_THAN"
+    #define FILTER_LESS_THAN "FILTER_LESS_THAN"
+    #define SELECT "SELECT"
+    #define NUM_ROWS "NUM_ROWS"
+    #define COUNT "COUNT"
+
+    // Response is an enum class that represents the different responses that can be sent by the server
+    // This is included in the server response json to instruct the client what to do
+    enum class Response {
+        UPDATE_BINGO_CONFIG, // This needs to update the lobby; update bingo settings should be a signal chain
+        UPDATE_ROGUE_OBJECTIVES,
+        UPDATE_BINGO_OBJECTIVES,
+        GET_OBJECTIVES, // NOTE: this ONLY returns json; if you want to get the save states, you need to use either update bingo or update rogue
+        GET_PLAYERS, // Retrieve a list of all wiimix players (not implemented yet)
+        GET_PLAYER,
+        GET_OBJECTIVE_HISTORY, // Retrieve a list of all objective history (not implemented yet)
+        END
+    };
+
+    // Counter for the number of rows to retrieve
+
+    // enum class BingoNetplaySettings {
+    //     BINGO_TYPE,
+    //     TEAMS,
+    //     CARD_SIZE,
+    //     PLAYERS,
+    //     LOBBY_ID,
+    //     LOBBY_PASSWORD,
+    //     SEED,
+    //     COLOR,
+    //     NAME,
+    //     CURRENT_OBJECTIVES,
+    //     PLAYERS_READY,
     //     END // Default/size value
     // };
 
+    // std::string BingoNetplaySettingsToString(BingoNetplaySettings setting);
+    // BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);
 
-
-    enum class BingoNetplaySettings {
-        BINGO_TYPE,
-        TEAMS,
-        CARD_SIZE,
-        PLAYERS,
-        LOBBY_ID,
-        LOBBY_PASSWORD,
-        SEED,
-        COLOR,
-        NAME,
-        CURRENT_OBJECTIVES,
-        PLAYERS_READY,
-        END // Default/size value
-    };
-
-    // For API json
-    #define BINGO_NETPLAY_SETTINGS_BINGO_TYPE "BINGO_TYPE"
-    #define BINGO_NETPLAY_SETTINGS_TEAMS "TEAMS"
-    #define BINGO_NETPLAY_SETTINGS_CARD_SIZE "CARD_SIZE"
-    #define BINGO_NETPLAY_SETTINGS_PLAYERS "PLAYERS"
-    #define BINGO_NETPLAY_SETTINGS_LOBBY_ID "LOBBY_ID"
-    #define BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD "LOBBY_PASSWORD"
-    #define BINGO_NETPLAY_SETTINGS_SEED "SEED"
-    #define BINGO_NETPLAY_SETTINGS_COLOR "COLOR"
-    #define BINGO_NETPLAY_SETTINGS_NAME "NAME"
-    #define BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
-    #define BINGO_NETPLAY_SETTINGS_PLAYERS_READY "PLAYERS_READY"
-
-    std::string BingoNetplaySettingsToString(BingoNetplaySettings setting);
-    BingoNetplaySettings BingoNetplaySettingsFromString(const std::string& str);
-
-    enum class CommonNetplaySettings {
-        MODE,
-        SAVE_STATE_BANK,
-        OBJECTIVES,
-        DIFFICULTY,
-        GAMES_LIST,
-        END // Default/size value
-    };
-
-    // For API json
-    #define COMMON_NETPLAY_SETTINGS_MODE "MODE"
-    #define COMMON_NETPLAY_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
-    #define COMMON_NETPLAY_SETTINGS_OBJECTIVES "OBJECTIVES"
-    #define COMMON_NETPLAY_SETTINGS_DIFFICULTY "DIFFICULTY"
-    #define COMMON_NETPLAY_SETTINGS_GAMES_LIST "GAMES_LIST"
-
-    std::string CommonNetplaySettingsToString(CommonNetplaySettings setting);
-    CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
+    // enum class CommonNetplaySettings {
+    //     MODE,
+    //     SAVE_STATE_BANK,
+    //     OBJECTIVES,
+    //     DIFFICULTY,
+    //     GAMES_LIST,
+    //     END // Default/size value
+    // };
+    
+    // std::string CommonNetplaySettingsToString(CommonNetplaySettings setting);
+    // CommonNetplaySettings CommonNetplaySettingsFromString(const std::string& str);    
 
     // Rogue Settings
     enum class RogueItem {

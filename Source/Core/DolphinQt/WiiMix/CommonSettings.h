@@ -30,6 +30,11 @@ public:
     std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES);
   WiiMixCommonSettings(const WiiMixCommonSettings& other) = default;
 
+  #define COMMON_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
+  #define COMMON_SETTINGS_OBJECTIVES "OBJECTIVES"
+  #define COMMON_SETTINGS_DIFFICULTY "DIFFICULTY"
+  #define COMMON_SETTINGS_GAMES_LIST "GAMES_LIST"
+
   virtual void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
   virtual void SetDifficulty(WiiMixEnums::Difficulty difficulty);
   // Time will be an optional parameter that the user can set in case they only have a certain amount of time

@@ -9,3 +9,8 @@
 [] - Figure out access; DB API? Does the server REALLY need to be a PRIVATE submodule if everything's abstracted already?
 [] - Since we only need exception handling for the server, can we enable it exclusively for that build target?
 [] - Database snapshots (for recovery/backup)
+[] - Tests!
+[] - Optimize pulling objectives or waiting screen or something
+[] - Build in a UI in account window for objective history
+[] - Polish player account windows (i.e. support for profile pics)
+[] - Leaderboard on the WiiMix website

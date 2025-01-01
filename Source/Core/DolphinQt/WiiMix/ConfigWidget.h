@@ -98,7 +98,7 @@ public:
   WiiMixBingoSettings* GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
 
 signals:
-  void onSettingsChanged(WiiMixBingoSettings* settings); // This signal is for local one player
+  void onUpdateBingoConfig(WiiMixBingoSettings* settings); // This signal is for local one player
   // The network client has its own signal for when it receives data that it will emit
   // The corresponding signal is emitted based on whether bingo client exists or not
 

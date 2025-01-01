@@ -125,7 +125,7 @@ private:
   // void GameSwapSlot();
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
-  void StateSend(WiiMixObjective objective, std::string state_path);
+  void StateSend(WiiMixObjective objective);
   void ShowStateSendMenu(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
@@ -183,6 +183,8 @@ private:
   void StartGame(std::unique_ptr<BootParameters>&& parameters);
   void StartGame(std::unique_ptr<BootParameters>&& parameters,
                  std::string save_path);
+  void PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings);
+  void PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings);
   void StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
@@ -213,6 +215,7 @@ private:
   void ShowAchievementsWindow();
   void ShowAchievementSettings();
 #endif  // USE_RETRO_ACHIEVEMENTS
+  void ShowWiiMixAccountWindow();
 
   void NetPlayInit();
   bool NetPlayJoin();
@@ -307,6 +310,9 @@ private:
 #ifdef USE_RETRO_ACHIEVEMENTS
   AchievementsWindow* m_achievements_window = nullptr;
 #endif  // USE_RETRO_ACHIEVEMENTS
+
+  WiiMixAccountWindow* m_wiimix_account_window = nullptr;
+  WiiMixAccountLoginWindow* m_wiimix_account_login_window = nullptr;
 
   AssemblerWidget* m_assembler_widget;
   BreakpointWidget* m_breakpoint_widget;

@@ -367,16 +367,15 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // m_bingo_settings->SetPlayers(players);
   // // Initialize bingo client
   // qDebug() << "Initializing client";
-  // m_wiimix_client = new WiiMixClient();
   // // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
   // m_player_num = 0;
 
   // TODOx: Connect signal to bingo UI
   // TODOx: Connect signal to bingo client ONLY when ready
   // @vlad
-  // connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &MainWindow::WiiMixShowcase);
-  // connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
-  //connect(m_wiimix_client, &WiiMixClient::onSettingsChanged, this, &WiiMixConfigWidget::OnSettingsChanged);
+  // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &MainWindow::WiiMixShowcase);
+  // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &WiiMixConfigWidget::OnSettingsChanged);
+  //connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &WiiMixConfigWidget::OnSettingsChanged);
   // connect(m_wiimix_client, &WiiMixClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
 
   // Connect client to server
@@ -590,9 +589,12 @@ void MainWindow::CreateComponents()
 
 void MainWindow::ConnectWiiMix() {
   // Starts the wiimix
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::StartWiiMixBingo);
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::StartWiiMixRogue);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::StartWiiMixShuffle);
+  m_wiimix_client = WiiMixClient::instance();
+  connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
+  connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
 }
 
 void MainWindow::ConnectMenuBar()
@@ -656,6 +658,7 @@ void MainWindow::ConnectMenuBar()
 #ifdef USE_RETRO_ACHIEVEMENTS
   connect(m_menu_bar, &MenuBar::ShowAchievementsWindow, this, &MainWindow::ShowAchievementsWindow);
 #endif  // USE_RETRO_ACHIEVEMENTS
+  connect(m_menu_bar, &MenuBar::ShowWiiMixAccountWindow, this, &MainWindow::ShowWiiMixAccountWindow);
 
   // Movie
   connect(m_menu_bar, &MenuBar::PlayRecording, this, &MainWindow::OnPlayRecording);
@@ -1002,10 +1005,26 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObj
   WiiMixRestartObjective(new_objective);
 }
 
+void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
+  // Start the wiimix
+  qDebug() << "Populating bingo objectives";
+  QJsonObject obj = settings->ToJson().object();
+  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES);
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES);
+}
+
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client) {
   // Start the wiimix
   qDebug() << "Bingo calls";
-  // m_bingo_settings = settings;
+}
+
+void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
+  // Start the wiimix
+  qDebug() << "Populating rogue objectives";
+  // Populate the objectives
+  QJsonObject obj = settings->ToJson().object();
+  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES);
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES);
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
@@ -1848,7 +1867,9 @@ void MainWindow::BingoReady() {
   WiiMixBingoSettings::instance()->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
   if (WiiMixClient::instance()->IsConnected()) {
-    WiiMixClient::instance()->SendData(WiiMixBingoSettings::instance(), WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+    QJsonObject obj = WiiMixBingoSettings::instance()->ToJson().object();
+    obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
+    WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
   }
   return;
 }
@@ -1903,8 +1924,11 @@ void MainWindow::ShowStateSendMenu(int slot)
   return;
 }
 
-void MainWindow::StateSend(WiiMixObjective objective, std::string state_path) {
-  // TODOx: send the state to the server, update the objective
+void MainWindow::StateSend(WiiMixObjective objective) {
+  // Send the objective + state to the server
+  qDebug() << "Sending objective and state to the server";
+  QJsonObject obj = objective.ToJson();
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
   return;
 }
 
@@ -2459,6 +2483,31 @@ void MainWindow::OnConnectWiiRemote(int id)
   {
     const auto wm = bt->AccessWiimoteByIndex(id);
     wm->Activate(!wm->IsConnected());
+  }
+}
+
+void MainWindow::ShowWiiMixAccountWindow() {
+  // Check if the player is already logged in
+  WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
+  if (player != nullptr) {
+    if (!m_wiimix_account_window) {
+      m_wiimix_account_window = new WiiMixAccountWindow(this, player->GetUsername());
+    }
+    // Connect logout signal to this function so it will close and open the logout window on logout
+    connect(m_wiimix_account_window, &WiiMixAccountWindow::onLogout, this, &MainWindow::ShowWiiMixAccountWindow);
+    m_wiimix_account_window->show();
+    m_wiimix_account_window->raise();
+    m_wiimix_account_window->activateWindow();
+  }
+  else {
+    // If the player is not logged in, show the login window 
+    if (!m_wiimix_account_login_window) {
+      m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);
+    }
+    connect(m_wiimix_account_login_window, &WiiMixAccountLoginWindow::onLogin, this, &MainWindow::ShowWiiMixAccountWindow);
+    m_wiimix_account_login_window->show();
+    m_wiimix_account_login_window->raise();
+    m_wiimix_account_login_window->activateWindow();
   }
 }
 

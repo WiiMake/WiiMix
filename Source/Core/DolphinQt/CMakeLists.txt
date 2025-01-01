@@ -334,6 +334,10 @@ add_executable(dolphin-emu
   QtUtils/WindowActivationEventFilter.h
   QtUtils/WrapInScrollArea.cpp
   QtUtils/WrapInScrollArea.h
+  WiiMix/AccountLoginWindow.cpp
+  WiiMix/AccountLoginWindow.h
+  WiiMix/AccountWindow.cpp
+  WiiMix/AccountWindow.h
   WiiMix/BingoSettings.cpp
   WiiMix/BingoSettings.h
   WiiMix/Client.cpp

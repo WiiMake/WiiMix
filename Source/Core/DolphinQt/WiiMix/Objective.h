@@ -22,12 +22,40 @@ public:
     std::vector<WiiMixEnums::GameGenre> game_genres,
     WiiMixEnums::Difficulty difficulty,
     uint64_t time,
-    uint64_t creator_id = NULL,
+    std::string creator_username = NULL,
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
     int num_times_attempted = 0,
     std::chrono::system_clock::time_point last_attempted = std::chrono::system_clock::now()
   );
+
+  #define OBJECTIVE_ID "id"
+  #define OBJECTIVE_TITLE "title"
+  #define OBJECTIVE_RETROACHIEVEMENTS_GAME_ID "retroachievements_game_id"
+  #define OBJECTIVE_GAME_ID "game_id"
+  #define OBJECTIVE_ACHIEVEMENT_ID "achievement_id"
+  #define OBJECTIVE_OBJECTIVE_TYPES "objective_types"
+  #define OBJECTIVE_OBJECTIVE_DESCRIPTION "objective_description"
+  #define OBJECTIVE_GAME_GENRES "game_genres"
+  #define OBJECTIVE_DIFFICULTY "difficulty"
+  #define OBJECTIVE_TIME "time"
+  #define OBJECTIVE_CREATOR_USERNAME "creator_username"
+
+  // Objective history extension; these have default values so aren't necessary to be set,
+  // but offer extra data if you want it :)
+  #define OBJECTIVE_HISTORY_ID "id"
+  #define OBJECTIVE_HISTORY_NUM_TIMES_COMPLETED "num_times_completed"
+  #define OBJECTIVE_HISTORY_NUM_TIMES_ATTEMPTED "num_times_attempted"
+  #define OBJECTIVE_HISTORY_MOST_RECENT_STATUS "most_recent_status"
+  #define OBJECTIVE_HISTORY_MOST_RECENT_ATTEMPT "most_recent_attempt"
+  // Not used directly in json conversion, but used for db queries for objective_history
+  #define OBJECTIVE_HISTORY_PLAYER_ID "player_id"
+  #define OBJECTIVE_HISTORY_OBJECTIVE_ID "objective_id"
+
+  // Extras; used for selecting individual objectives
+  #define GAME_GENRE "game_genre"
+  #define OBJECTIVE_TYPE "objective_type"
+  #define SLOT "slot"
 
   uint16_t GetId();
   std::string GetTitle();
@@ -39,7 +67,7 @@ public:
   std::vector<WiiMixEnums::GameGenre> GetGameGenres();
   WiiMixEnums::Difficulty GetDifficulty();
   uint64_t GetTime();
-  uint64_t GetCreatorId();
+  std::string GetCreatorUsername();
   WiiMixEnums::ObjectiveStatus GetStatus();
   int GetNumTimesCompleted();
   int GetNumTimesAttempted();
@@ -68,7 +96,7 @@ private:
   std::vector<WiiMixEnums::GameGenre> m_game_genres;
   WiiMixEnums::Difficulty m_difficulty;
   uint64_t m_time;
-  uint64_t m_creator_id;
+  std::string m_creator_username;
 
   // For bingo -> might refactor
   WiiMixEnums::Player m_player_completed;

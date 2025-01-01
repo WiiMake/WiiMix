@@ -34,6 +34,18 @@ public:
     return s_instance;
   }
 
+  #define BINGO_SETTINGS_BINGO_TYPE "BINGO_TYPE"
+  #define BINGO_SETTINGS_TEAMS "TEAMS"
+  #define BINGO_SETTINGS_CARD_SIZE "CARD_SIZE"
+  #define BINGO_SETTINGS_PLAYERS "PLAYERS"
+  #define BINGO_SETTINGS_LOBBY_ID "LOBBY_ID"
+  #define BINGO_SETTINGS_LOBBY_PASSWORD "LOBBY_PASSWORD"
+  #define BINGO_SETTINGS_SEED "SEED"
+  #define BINGO_SETTINGS_COLOR "COLOR"
+  #define BINGO_SETTINGS_NAME "NAME"
+  #define BINGO_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
+  #define BINGO_SETTINGS_PLAYERS_READY "PLAYERS_READY"
+
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
   // Options are 3x3, 5x5, 7x7, but they correspond to 9, 25, 49
@@ -83,6 +95,10 @@ public:
   QMap<WiiMixEnums::Player, bool> GetPlayersReady();
   void SetPlayersReady(QMap<WiiMixEnums::Player, bool> value);
   void UpdatePlayerReady(WiiMixEnums::Player player, bool value);
+
+  static std::vector<int> SeedToObjectives(QString seed);
+  static std::string ObjectivesToSeed(std::vector<WiiMixObjective*> objectives);
+  static bool VerifySeed(std::string seed);
   
   QJsonDocument ToJson();
   void FromJson(QJsonDocument json);

@@ -102,6 +102,7 @@ signals:
 #ifdef USE_RETRO_ACHIEVEMENTS
   void ShowAchievementsWindow();
 #endif  // USE_RETRO_ACHIEVEMENTS
+  void ShowWiiMixAccountWindow();
 
   // Options
   void Configure();

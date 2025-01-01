@@ -20,6 +20,7 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/Player.h"
 
 #include "UICommon/GameFile.h"
 
@@ -71,6 +72,9 @@ public:
   void SetCurrentObjective(int objective);
   int GetCurrentObjective();
 
+  void SetPlayer(WiiMixPlayer *player);
+  WiiMixPlayer* GetPlayer();
+
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
 
@@ -91,7 +95,7 @@ protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings
   // It should only be called within the classes that extend it
 
-  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES, int current_objective = 0);
+  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES, int current_objective = 0, WiiMixPlayer *player = nullptr);
 
   inline static WiiMixGlobalSettings* s_instance = nullptr; // Singleton instance
 
@@ -99,4 +103,5 @@ private:
   WiiMixEnums::Mode m_mode;
   std::vector<std::shared_ptr<const UICommon::GameFile>> m_games;
   int m_current_objective;
+  WiiMixPlayer *m_player;
 };

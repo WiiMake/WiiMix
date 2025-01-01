@@ -142,17 +142,17 @@ QJsonDocument WiiMixBingoSettings::ToJson()
 {
     // Take care of the common settings first
     QJsonObject json = ToJsonCommon();
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)] = static_cast<int>(m_bingo_type);
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)] = m_teams;
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)] = m_card_size;
+    json[QStringLiteral(BINGO_SETTINGS_BINGO_TYPE)] = static_cast<int>(m_bingo_type);
+    json[QStringLiteral(BINGO_SETTINGS_TEAMS)] = m_teams;
+    json[QStringLiteral(BINGO_SETTINGS_CARD_SIZE)] = m_card_size;
     QVariantMap players_variant;
     QVariantMap current_objectives_variant;
     QVariantMap players_ready_variant;
     for (auto it = m_players.begin(); it != m_players.end(); ++it)
     {
         QVariantMap player_info;
-        player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)] = static_cast<int>(std::get<0>(it.value()));
-        player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)] = std::get<1>(it.value());
+        player_info[QStringLiteral(BINGO_SETTINGS_COLOR)] = static_cast<int>(std::get<0>(it.value()));
+        player_info[QStringLiteral(BINGO_SETTINGS_NAME)] = std::get<1>(it.value());
         qDebug() << "players_variant";
         players_variant[QString::number(static_cast<int>(it.key()))] = player_info;
         qDebug() << "players_ready_variant";
@@ -160,11 +160,12 @@ QJsonDocument WiiMixBingoSettings::ToJson()
         qDebug() << "curr_obj_variant";
         current_objectives_variant[QString::number(static_cast<int>(it.key()))] = m_current_objectives[it.key()];
     }
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)] = QJsonDocument::fromVariant(current_objectives_variant).object();
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)] = QJsonDocument::fromVariant(players_ready_variant).object();
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)] = m_lobby_id;
-    json[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
+    json[QStringLiteral(BINGO_SETTINGS_PLAYERS)] = QJsonDocument::fromVariant(players_variant).object();
+    json[QStringLiteral(BINGO_SETTINGS_CURRENT_OBJECTIVES)] = QJsonDocument::fromVariant(current_objectives_variant).object();
+    json[QStringLiteral(BINGO_SETTINGS_PLAYERS_READY)] = QJsonDocument::fromVariant(players_ready_variant).object();
+    json[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)] = m_lobby_id;
+    json[QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
+    json[QStringLiteral(BINGO_SETTINGS_SEED)] = m_seed;
 
     return QJsonDocument(json);
 }
@@ -174,31 +175,32 @@ void WiiMixBingoSettings::FromJson(QJsonDocument json)
     // Take care of the common settings first
     FromJsonCommon(json);
     QJsonObject obj = json.object();
-    SetBingoType(static_cast<WiiMixEnums::BingoType>(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_BINGO_TYPE)].toInt()));
-    SetTeams(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_TEAMS)].toBool());
-    SetCardSize(obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CARD_SIZE)].toInt());
+    SetBingoType(static_cast<WiiMixEnums::BingoType>(obj[QStringLiteral(BINGO_SETTINGS_BINGO_TYPE)].toInt()));
+    SetTeams(obj[QStringLiteral(BINGO_SETTINGS_TEAMS)].toBool());
+    SetCardSize(obj[QStringLiteral(BINGO_SETTINGS_CARD_SIZE)].toInt());
 
-    QJsonObject players_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS)].toObject();
+    QJsonObject players_variant = obj[QStringLiteral(BINGO_SETTINGS_PLAYERS)].toObject();
     for (auto it = players_variant.begin(); it != players_variant.end(); ++it)
     {
         QJsonObject player_info = it.value().toObject();
-        WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_COLOR)].toInt());
-        QString name = player_info[QStringLiteral(BINGO_NETPLAY_SETTINGS_NAME)].toString();
+        WiiMixEnums::Color color = static_cast<WiiMixEnums::Color>(player_info[QStringLiteral(BINGO_SETTINGS_COLOR)].toInt());
+        QString name = player_info[QStringLiteral(BINGO_SETTINGS_NAME)].toString();
         m_players[static_cast<WiiMixEnums::Player>(it.key().toInt())] = QPair<WiiMixEnums::Color, QString>(color, name);
     }
     qDebug() << "current_objectives_variant";
-    QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_CURRENT_OBJECTIVES)].toObject();
+    QJsonObject current_objectives_variant = obj[QStringLiteral(BINGO_SETTINGS_CURRENT_OBJECTIVES)].toObject();
     for (auto it = current_objectives_variant.begin(); it != current_objectives_variant.end(); ++it) {
         m_current_objectives[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toInt();
     }
     qDebug() << "players_ready_variant";
-    QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_PLAYERS_READY)].toObject();
+    QJsonObject players_ready_variant = obj[QStringLiteral(BINGO_SETTINGS_PLAYERS_READY)].toObject();
     for (auto it = players_ready_variant.begin(); it != players_ready_variant.end(); ++it) {
         m_players_ready[static_cast<WiiMixEnums::Player>(it.key().toInt())] = it.value().toBool();
     }
 
-    m_lobby_id = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_ID)].toString();
-    m_lobby_password = obj[QStringLiteral(BINGO_NETPLAY_SETTINGS_LOBBY_PASSWORD)].toString();
+    m_lobby_id = obj[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)].toString();
+    m_lobby_password = obj[QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD)].toString();
+    m_seed = obj[QStringLiteral(BINGO_SETTINGS_SEED)].toString();
 }
 
 QString WiiMixBingoSettings::GetSeed() {
@@ -252,4 +254,53 @@ int WiiMixBingoSettings::StringToCardSize(QString size) {
         num = size[0].digitValue();
     }
     return num * num;
+}
+
+// seed structure for bingo:
+// number of objectives (always 2-digit), objective id's (check zeros) in order left-right top-bottom
+std::vector<int> WiiMixBingoSettings::SeedToObjectives(QString seed) {
+    std::vector<int> objectives;
+    std::string str_seed = seed.toStdString();
+    int num_objectives = std::stoi(str_seed.substr(0, 2));
+    objectives.reserve(num_objectives);
+    for (int i = 0; i < num_objectives; i++) {
+        int achievement_id = std::stoi(str_seed.substr(2 + i * 6, 6));
+        objectives.push_back(achievement_id);
+    }
+    return objectives;
+}
+std::string WiiMixBingoSettings::ObjectivesToSeed(std::vector<WiiMixObjective *> objectives) {
+    if (pow((int) sqrt(objectives.size()), 2) != objectives.size()) {
+        return "-1";
+    }
+    std::string seed;
+    if (objectives.size() >= 10) {
+        seed = std::to_string(objectives.size());
+    } else {
+        seed = "0" + std::to_string(objectives.size());
+    }
+    for (auto objective : objectives) {
+        char temp_str[7];
+        snprintf(temp_str, 7, "%06d", objective->GetAchievementId());
+        seed += temp_str;
+    }
+    return seed;
+}
+// returns true if seed is correct
+bool WiiMixBingoSettings::VerifySeed(std::string seed) {
+    int num_objectives;
+    try {
+        num_objectives = std::stoi(seed.substr(0, 2));
+    } catch (std::invalid_argument e){
+        return false;
+    }
+    if (seed.length() != num_objectives * 6 + 2) {
+        return false;
+    }
+    for (char c : seed) {
+        if (not (48 <= c  && c <= 57)) { // check if in bound for ascii
+            return false;
+        }
+    }
+    return true;
 }

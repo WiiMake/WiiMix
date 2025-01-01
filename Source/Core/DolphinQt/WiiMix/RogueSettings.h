@@ -35,6 +35,10 @@ public:
 
   explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::RogueLength length);
 
+  #define ROGUE_SETTINGS_SEED "SEED"
+  #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
+  #define ROGUE_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
+
   // Seeds will be encoded and decoded using Qt
   QString GetSeed();
   // Example seed: 50402523039501042031012343722364155 (34 digits long)
@@ -56,6 +60,12 @@ public:
   // 5: 2nd item
   // 5: 3rd item
   void SetSeed(QString string);
+  struct RogueTile;
+
+  static std::vector<int> SeedToObjectives(QString seed);
+  static std::vector<int> SeedToBossObjectives(QString seed);
+  static bool VerifyRogueSeed(std::string seed);
+  static std::string RogueTilesToSeed(std::vector<RogueTile> tiles);
 
   static QString LengthToString(WiiMixEnums::RogueLength length);
   static WiiMixEnums::RogueLength StringToLength(QString length);
@@ -75,6 +85,8 @@ public:
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
 
+  QJsonDocument ToJson();
+  void FromJson(QJsonDocument json);
 
 private:
   inline static WiiMixRogueSettings* s_instance = nullptr; // Singleton instance
