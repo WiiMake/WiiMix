@@ -75,6 +75,10 @@ public:
   void SetPlayer(WiiMixPlayer *player);
   WiiMixPlayer* GetPlayer();
 
+  void SetNumObjectivesCompleted(int num_objectives_completed);
+  void SetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
+  void SetNumObjectivesAttempted(int num_objectives_attempted);
+
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
 
@@ -90,6 +94,10 @@ signals:
 //   void SettingsChanged(std::vector<WiiMixObjective> objectives);
 //   // For if connecting to a lobby and accepting the prompt regarding changes to your game list
   void SettingsChanged(std::vector<std::shared_ptr<const UICommon::GameFile>> games);
+  void onSetNumObjectivesCompleted(int num_objectives_completed);
+  void onSetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
+  void onSetNumObjectivesAttempted(int num_objectives_attempted);
+
 
 protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings

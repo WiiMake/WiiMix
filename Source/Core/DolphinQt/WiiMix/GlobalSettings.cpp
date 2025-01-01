@@ -248,3 +248,24 @@ void WiiMixGlobalSettings::SetPlayer(WiiMixPlayer *player) {
 WiiMixPlayer *WiiMixGlobalSettings::GetPlayer() {
     return m_player;
 }
+
+void WiiMixGlobalSettings::SetNumObjectivesCompleted(int num_objectives_completed) {
+    if (m_player) {
+        m_player->SetNumObjectivesCompleted(num_objectives_completed);
+        emit onSetNumObjectivesCompleted(num_objectives_completed);
+    }
+}
+
+void WiiMixGlobalSettings::SetNumUniqueObjectivesCompleted(int num_unique_objectives_completed) {
+    if (m_player) {
+        m_player->SetNumUniqueObjectivesCompleted(num_unique_objectives_completed);
+        emit onSetNumUniqueObjectivesCompleted(num_unique_objectives_completed);
+    }
+}
+
+void WiiMixGlobalSettings::SetNumObjectivesAttempted(int num_objectives_attempted) {
+    if (m_player) {
+        m_player->SetNumObjectivesAttempted(num_objectives_attempted);
+        emit onSetNumObjectivesAttempted(num_objectives_attempted);
+    }
+}

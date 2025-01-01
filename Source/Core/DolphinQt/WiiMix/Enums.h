@@ -198,7 +198,6 @@ namespace WiiMixEnums {
     #define FILTER_LESS_THAN "FILTER_LESS_THAN"
     #define SELECT "SELECT"
     #define NUM_ROWS "NUM_ROWS"
-    #define COUNT "COUNT"
 
     // Response is an enum class that represents the different responses that can be sent by the server
     // This is included in the server response json to instruct the client what to do

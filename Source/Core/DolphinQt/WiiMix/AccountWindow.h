@@ -1,6 +1,6 @@
 #include <QLabel>
 #include <QPushButton>
-
+#include "DolphinQt/WiiMix/Player.h"
 
 class WiiMixAccountWindow : public QWidget
 {
@@ -8,7 +8,6 @@ class WiiMixAccountWindow : public QWidget
 
 public:
     explicit WiiMixAccountWindow(QWidget* parent = nullptr, WiiMixPlayer* player = nullptr);
-    ~WiiMixAccountWindow() override;
 
     void CreateLayout();
     void ConnectWidgets();

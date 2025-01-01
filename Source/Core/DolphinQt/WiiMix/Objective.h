@@ -55,7 +55,7 @@ public:
   // Extras; used for selecting individual objectives
   #define GAME_GENRE "game_genre"
   #define OBJECTIVE_TYPE "objective_type"
-  #define SLOT "slot"
+  #define STATE_SLOT "slot"
 
   uint16_t GetId();
   std::string GetTitle();

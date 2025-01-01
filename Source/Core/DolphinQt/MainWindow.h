@@ -12,12 +12,12 @@
 #include <string>
 
 #include "Core/Boot/Boot.h"
+
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
-#include "DolphinQt/WiiMix/StateSendMenu.h"
 
 class QMenu;
 class QStackedWidget;
@@ -58,6 +58,9 @@ class ThreadWidget;
 class ToolBar;
 class WatchWidget;
 class WiiMixSettingsWindow;
+class WiiMixAccountLoginWindow;
+class WiiMixAccountWindow;
+class WiiMixStateSendMenu;
 class WiiTASInputWindow;
 struct WindowSystemInfo;
 
@@ -185,7 +188,7 @@ private:
                  std::string save_path);
   void PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings);
   void PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings);
-  void StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client);
+  void StartWiiMixBingo(WiiMixBingoSettings* settings);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
   void WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);

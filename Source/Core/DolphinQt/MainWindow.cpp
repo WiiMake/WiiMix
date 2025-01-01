@@ -130,9 +130,10 @@
 #include "DolphinQt/TAS/WiiTASInputWindow.h"
 #include "DolphinQt/ToolBar.h"
 #include "DolphinQt/WiiUpdate.h"
+#include "DolphinQt/WiiMix/AccountLoginWindow.h"
+#include "DolphinQt/WiiMix/AccountWindow.h"
 #include "DolphinQt/WiiMix/SettingsWindow.h"
-#include "DolphinQt/WiiMix/Client.h"
-#include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/StateSendMenu.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
 
@@ -1013,7 +1014,7 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES);
 }
 
-void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings, WiiMixClient* client) {
+void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
   // Start the wiimix
   qDebug() << "Bingo calls";
 }
@@ -2491,7 +2492,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
   WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
   if (player != nullptr) {
     if (!m_wiimix_account_window) {
-      m_wiimix_account_window = new WiiMixAccountWindow(this, player->GetUsername());
+      m_wiimix_account_window = new WiiMixAccountWindow(this, player);
     }
     // Connect logout signal to this function so it will close and open the logout window on logout
     connect(m_wiimix_account_window, &WiiMixAccountWindow::onLogout, this, &MainWindow::ShowWiiMixAccountWindow);

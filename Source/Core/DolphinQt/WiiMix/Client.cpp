@@ -7,6 +7,8 @@
 #include <QJsonObject>
 #include <QNetworkInformation>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include <assert.h>
 #include <Common/FileUtil.h>
@@ -146,11 +148,10 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
         // Load the data for the corresponding file
-        int slot = obj[QStringLiteral(SLOT)].toInt();
+        int slot = obj[QStringLiteral(STATE_SLOT)].toInt();
         QString game_id = obj[QStringLiteral(OBJECTIVE_GAME_ID)].toString();
-        char buffer[4];
-        sprintf(buffer, "%02d", slot);
-        QString savestate_path = QString::fromStdString(File::GetUserPath(D_STATESAVES_IDX)) + game_id + buffer + ".sav";
+        QString buffer = QString::number(slot).rightJustified(2, QLatin1Char('0'));
+        QString savestate_path = QString::fromStdString(File::GetUserPath(D_STATESAVES_IDX)) + game_id + buffer + QStringLiteral(".sav");
         QFile file(savestate_path);
         
         data.append(static_cast<int>(file.size()));

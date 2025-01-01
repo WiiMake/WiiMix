@@ -46,11 +46,7 @@ WiiMixPlayer WiiMixPlayer::FromJson(const QJsonObject& obj)
 
 void WiiMixPlayer::SetNumObjectivesCompleted(int num_objectives_completed)
 {
-    if (m_num_objectives_completed != num_objectives_completed)
-    {
-        m_num_objectives_completed = num_objectives_completed;
-        emit NumObjectivesCompletedChanged(m_num_objectives_completed);
-    }
+    m_num_objectives_completed = num_objectives_completed;
 }
 
 int WiiMixPlayer::GetNumObjectivesCompleted()
@@ -60,11 +56,7 @@ int WiiMixPlayer::GetNumObjectivesCompleted()
 
 void WiiMixPlayer::SetNumUniqueObjectivesCompleted(int num_unique_objectives_completed)
 {
-    if (m_num_unique_objectives_completed != num_unique_objectives_completed)
-    {
-        m_num_unique_objectives_completed = num_unique_objectives_completed;
-        emit NumUniqueObjectivesCompletedChanged(m_num_unique_objectives_completed);
-    }
+    m_num_unique_objectives_completed = num_unique_objectives_completed;
 }
 
 int WiiMixPlayer::GetNumUniqueObjectivesCompleted()
@@ -74,11 +66,7 @@ int WiiMixPlayer::GetNumUniqueObjectivesCompleted()
 
 void WiiMixPlayer::SetNumObjectivesAttempted(int num_objectives_attempted)
 {
-    if (m_num_objectives_attempted != num_objectives_attempted)
-    {
-        m_num_objectives_attempted = num_objectives_attempted;
-        emit NumObjectivesAttemptedChanged(m_num_objectives_attempted);
-    }
+    m_num_objectives_attempted = num_objectives_attempted;
 }
 
 int WiiMixPlayer::GetNumObjectivesAttempted()

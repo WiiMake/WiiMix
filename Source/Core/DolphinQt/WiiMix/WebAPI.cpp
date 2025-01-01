@@ -74,3 +74,33 @@ std::map<std::string, uint16_t> WiiMixWebAPI::getGameList(uint16_t console_id) {
   }
   return game_list;
 }
+
+uint16_t WiiMixWebAPI::getGameID(uint32_t achievement_id) {
+  uint16_t game_id = 0;
+  CURL* curl = curl_easy_init();
+  CURLcode res;
+  std::string readBuffer;
+  if (curl)
+  {
+    std::string url = "https://retroachievements.org/API/API_GetAchievementUnlocks.php?z=" + m_username +
+          "&y=" + m_token + "&a=" + std::to_string(achievement_id);
+    // qDebug() << url.c_str();
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    if (res == CURLE_OK)
+    {
+      QJsonDocument doc = QJsonDocument::fromJson(QString::fromStdString(readBuffer).toUtf8());
+      qDebug() << doc;
+      if (!doc.isNull() && doc.isObject())
+      {
+        QJsonObject root = doc.object();
+        game_id = root.value(QStringLiteral("Game")).toObject().value(QStringLiteral("ID")).toInt();
+      }
+    }
+  }
+  return game_id;
+}

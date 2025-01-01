@@ -1,7 +1,9 @@
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include <QList>
-#include "Common/Config/Config.h"
-#include "Core/Config/MainSettings.h"
+#ifdef QT_GUI_LIB
+    #include "Common/Config/Config.h"
+    #include "Core/Config/MainSettings.h"
+#endif
 
 #include <QJsonObject>
 #include <QJsonArray>
@@ -14,9 +16,11 @@ WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, Wii
     if (length != DEFAULT_ROGUE_LENGTH) {
         m_length = length;
     }
-    else if (Config::Get(Config::WIIMIX_ROGUE_LENGTH) != DEFAULT_ROGUE_LENGTH) {
-        m_length = Config::Get(Config::WIIMIX_ROGUE_LENGTH);
-    }
+    #ifdef QT_GUI_LIB
+        else if (Config::Get(Config::WIIMIX_ROGUE_LENGTH) != DEFAULT_ROGUE_LENGTH) {
+            m_length = Config::Get(Config::WIIMIX_ROGUE_LENGTH);
+        }
+    #endif
     else {
         m_length = DEFAULT_ROGUE_LENGTH;
     }
@@ -40,13 +44,17 @@ QList<WiiMixEnums::RogueEvent> WiiMixRogueSettings::GetEvents()
 
 void WiiMixRogueSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
     m_difficulty = difficulty;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_DIFFICULTY, difficulty);
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_DIFFICULTY, difficulty);
+    #endif
     // emit SettingsChanged(difficulty);
 }
 
 void WiiMixRogueSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
     m_save_state_bank = save_state_bank;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SAVE_STATE_BANK, save_state_bank);
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SAVE_STATE_BANK, save_state_bank);
+    #endif
     // emit SettingsChanged(save_state_bank);
 }
 
@@ -213,12 +221,12 @@ std::string WiiMixRogueSettings::RogueTilesToSeed(std::vector<WiiMixRogueSetting
         if (tile.type == '%') {
             seed += "%";
             char temp_str[9];
-            snprintf(temp_str, 9, "%06d%02d", tile.objectiveId, tile.event);
+            snprintf(temp_str, 9, "%06d%02d", tile.objectiveId, static_cast<int>(tile.event));
             seed += temp_str;
         } else if (tile.type == '$') {
             seed += "$";
             char temp_str[3];
-            snprintf(temp_str, 3, "%02d", tile.item);
+            snprintf(temp_str, 3, "%02d", static_cast<int>(tile.item));
             seed += temp_str;
         } else {
             seed += "@";

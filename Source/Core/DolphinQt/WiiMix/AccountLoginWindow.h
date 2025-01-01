@@ -1,17 +1,19 @@
+#include <QString>
+#include <QLineEdit>
+#include <QPushButton>
 class WiiMixAccountLoginWindow : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit WiiMixAccountLoginWindow(QWidget* parent = nullptr);
-    ~WiiMixAccountLoginWindow() override;
 
     void CreateLayout();
     void ConnectWidgets();
     void OnLogin(QString username, QString password);
 
 signals:
-    void onLogin(QString username, QString password);
+    void onLogin();
 
 private:
     QLineEdit* m_username;

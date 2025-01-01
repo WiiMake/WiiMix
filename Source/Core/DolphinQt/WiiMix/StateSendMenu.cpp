@@ -95,7 +95,7 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             std::vector<WiiMixEnums::GameGenre>(), // TODOx: get the selected game genres
             static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
             m_time_length->value(),
-            WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetId() : -1
+            WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetUsername() : ""
         ), m_state_path);
     });
 }

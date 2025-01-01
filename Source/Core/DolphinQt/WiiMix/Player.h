@@ -47,11 +47,6 @@ public:
   QJsonObject ToJson();
   static WiiMixPlayer FromJson(const QJsonObject& obj);
 
-signals:
-  void onSetNumObjectivesCompleted(int num_objectives_completed);
-  void onSetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
-  void onSetNumObjectivesAttempted(int num_objectives_attempted);
-
 private:
   uint16_t m_id;
   std::string m_username;

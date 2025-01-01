@@ -1,6 +1,11 @@
 #include "DolphinQt/WiiMix/AccountLoginWindow.h"
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Player.h"
+#include "DolphinQt/WiiMix/Enums.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
+
+#include <QVBoxLayout>
+#include <QLabel>
 
 WiiMixAccountLoginWindow::WiiMixAccountLoginWindow(QWidget* parent) : QWidget(parent) {
     CreateLayout();
@@ -9,7 +14,7 @@ WiiMixAccountLoginWindow::WiiMixAccountLoginWindow(QWidget* parent) : QWidget(pa
 
 void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
     // Make a request to the server to add the player (fails if the player already exists, which is ok because nothing needs to be returned)
-    WiiMixPlayer player = WiiMixPlayer(-1, username, password);
+    WiiMixPlayer player = WiiMixPlayer(-1, username.toStdString(), password.toStdString());
     QJsonObject player_json = player.ToJson();
     WiiMixClient::instance()->SendData(player_json, WiiMixEnums::Action::ADD_PLAYER);
     // Make a request to retrieve the player and all the player data
@@ -20,9 +25,9 @@ void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
         WiiMixGlobalSettings::instance()->SetPlayer(&player);
         // Close the login window
         close();
-        emit onLogin();
+        emit WiiMixAccountLoginWindow::onLogin();
     });
-    WiiMixClient::instance()->SendData(player.ToJson(), WiiMixEnums::Action::GET_PLAYER);
+    WiiMixClient::instance()->SendData(player_json, WiiMixEnums::Action::GET_PLAYERS);
     return;
 }
 
@@ -36,7 +41,7 @@ void WiiMixAccountLoginWindow::CreateLayout() {
 
     QLabel* password_label = new QLabel(tr("Password:"));
     QLineEdit* m_password = new QLineEdit();
-    password_edit->setEchoMode(QLineEdit::Password);
+    m_password->setEchoMode(QLineEdit::Password);
     layout->addWidget(password_label);
     layout->addWidget(m_password);
 
@@ -52,6 +57,6 @@ void WiiMixAccountLoginWindow::ConnectWidgets() {
         QString username = m_username->text();
         QString password = m_password->text();
         OnLogin(username, password);
-        emit onLogin(m_username->text(), m_password->text());
+        emit WiiMixAccountLoginWindow::onLogin();
     });
 }

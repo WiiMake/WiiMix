@@ -14,3 +14,4 @@
 [] - Build in a UI in account window for objective history
 [] - Polish player account windows (i.e. support for profile pics)
 [] - Leaderboard on the WiiMix website
+[] - Integrate bingo board

@@ -20,6 +20,7 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
+#include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/Player.h"
 
 // This is a file for syncing bingo cards between players
