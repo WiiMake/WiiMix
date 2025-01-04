@@ -23,6 +23,7 @@ void WiiMixAccountWindow::CreateLayout() {
     m_num_objectives_completed = new QLabel(QStringLiteral("Objectives Completed: %1").arg(m_player->GetNumObjectivesCompleted()), this);
     m_num_unique_objectives_completed = new QLabel(QStringLiteral("Unique Objectives Completed: %1").arg(m_player->GetNumUniqueObjectivesCompleted()), this);
     m_num_objectives_attempted = new QLabel(QStringLiteral("Objectives Attempted: %1").arg(m_player->GetNumObjectivesAttempted()), this);
+    m_num_objectives_created = new QLabel(QStringLiteral("Objectives Created: %1").arg(m_player->GetNumObjectivesCreated()), this);
 
     auto* layout = new QVBoxLayout(this);
 
@@ -31,6 +32,7 @@ void WiiMixAccountWindow::CreateLayout() {
     layout->addWidget(m_num_objectives_completed);
     layout->addWidget(m_num_unique_objectives_completed);
     layout->addWidget(m_num_objectives_attempted);
+    layout->addWidget(m_num_objectives_created);
 
     setLayout(layout);
 }
@@ -49,6 +51,10 @@ void WiiMixAccountWindow::ConnectWidgets() {
         m_num_objectives_attempted->setText(QStringLiteral("Objectives Attempted: %1").arg(num_objectives_attempted));
         Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED, num_objectives_attempted);
     });
+    connect(WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::onSetNumObjectivesCreated, this, [this](int num_objectives_created) {
+        m_num_objectives_created->setText(QStringLiteral("Objectives Created: %1").arg(num_objectives_created));
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_CREATED, num_objectives_created);
+    });
     // connect the logout button
     connect(m_logout_button, &QPushButton::clicked, this, &WiiMixAccountWindow::OnLogout);
 }
@@ -59,6 +65,7 @@ void WiiMixAccountWindow::OnLogout() {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED, 0);
     Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED, 0);
     Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED, 0);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_CREATED, 0);
     WiiMixGlobalSettings::instance()->SetPlayer(nullptr);
     // Close the window
     close();

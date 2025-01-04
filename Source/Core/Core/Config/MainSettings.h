@@ -365,6 +365,7 @@ extern const Info<std::string> WIIMIX_PLAYER_USERNAME;
 extern const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED;
 extern const Info<int> WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED;
 extern const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED;
+extern const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_CREATED;
 extern const Info<std::string> WIIMIX_OBJECTIVE_IDS;
 extern const Info<std::string> WIIMIX_GAME_IDS;
 

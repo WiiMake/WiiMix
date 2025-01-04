@@ -78,6 +78,7 @@ public:
   void SetNumObjectivesCompleted(int num_objectives_completed);
   void SetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
   void SetNumObjectivesAttempted(int num_objectives_attempted);
+  void SetNumObjectivesCreated(int num_objectives_created);
 
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
@@ -97,7 +98,7 @@ signals:
   void onSetNumObjectivesCompleted(int num_objectives_completed);
   void onSetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
   void onSetNumObjectivesAttempted(int num_objectives_attempted);
-
+  void onSetNumObjectivesCreated(int num_objectives_created);
 
 protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings

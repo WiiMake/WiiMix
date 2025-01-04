@@ -20,7 +20,8 @@ public:
     // to avoid having to request the server for them every time
     int num_objectives_completed = 0,
     int num_unique_objectives_completed = 0,
-    int num_objectives_attempted = 0
+    int num_objectives_attempted = 0,
+    int num_objectives_created = 0
   );
 
   #define PLAYER_ID "id"
@@ -30,6 +31,7 @@ public:
   #define PLAYER_NUM_OBJECTIVES_COMPLETED "num_objectives_completed"
   #define PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED "num_unique_objectives_completed"
   #define PLAYER_NUM_OBJECTIVES_ATTEMPTED "num_objectives_attempted"
+  #define PLAYER_NUM_OBJECTIVES_CREATED "num_objectives_created"
 
   uint16_t GetId();
   std::string GetUsername();
@@ -44,6 +46,11 @@ public:
   void SetNumObjectivesAttempted(int num_objectives_attempted);
   int GetNumObjectivesAttempted();
 
+  // There is NO method to set role, as this is a manual operation that can only done by current admins
+
+  void SetNumObjectivesCreated(int num_objectives_created);
+  int GetNumObjectivesCreated();
+
   QJsonObject ToJson();
   static WiiMixPlayer FromJson(const QJsonObject& obj);
 
@@ -55,4 +62,5 @@ private:
   int m_num_objectives_completed;
   int m_num_unique_objectives_completed;
   int m_num_objectives_attempted;
+  int m_num_objectives_created;
 };

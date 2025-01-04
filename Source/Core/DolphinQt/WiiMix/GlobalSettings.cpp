@@ -269,3 +269,10 @@ void WiiMixGlobalSettings::SetNumObjectivesAttempted(int num_objectives_attempte
         emit onSetNumObjectivesAttempted(num_objectives_attempted);
     }
 }
+
+void WiiMixGlobalSettings::SetNumObjectivesCreated(int num_objectives_created) {
+    if (m_player) {
+        m_player->SetNumObjectivesCreated(num_objectives_created);
+        emit onSetNumObjectivesCreated(num_objectives_created);
+    }
+}

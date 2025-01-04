@@ -537,6 +537,7 @@ const Info<std::string> WIIMIX_PLAYER_USERNAME{{System::Main, "WiiMix", "PlayerU
 const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED{{System::Main, "WiiMix", "NumObjectivesCompleted"}, 0};
 const Info<int> WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED{{System::Main, "WiiMix", "NumUniqueObjectivesCompleted"}, 0};
 const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED{{System::Main, "WiiMix", "NumObjectivesAttempted"}, 0};
+const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_CREATED{{System::Main, "WiiMix", "NumObjectivesCreated"}, 0};
 // Comma separated list of objective ids and game ids respectively that can be parsed into the desired information
 // Games and Objectives are getting cut from the settings file; these both get loaded dynamically based on seeds 
 // const Info<std::string> WIIMIX_OBJECTIVE_IDS{{System::Main, "WiiMix", "Objectives"}, ""};

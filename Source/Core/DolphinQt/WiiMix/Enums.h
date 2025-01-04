@@ -152,7 +152,9 @@ namespace WiiMixEnums {
         ADD_GENRE_TO_OBJECTIVE_DB,
         REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
         ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
+        UPDATE_PLAYER,
         GET_PLAYERS, // you can search by username
+        INCREMENT_PLAYER_STATS,
         GET_OBJECTIVE_HISTORY, // you can provide any of the objective history fields
         // GET_COMPLETED_OBJECTIVES_BY_PLAYER,
         // GET_FAILED_OBJECTIVES_BY_PLAYER,

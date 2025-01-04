@@ -1,7 +1,7 @@
 #include "DolphinQt/WiiMix/Player.h"
 
-WiiMixPlayer::WiiMixPlayer(uint16_t id, std::string username, std::string password_hash, WiiMixEnums::Role role, int num_objectives_completed, int num_unique_objectives_completed, int num_objectives_attempted)
-    : m_id(id), m_username(std::move(username)), m_password_hash(std::move(password_hash)), m_role(role), m_num_objectives_completed(num_objectives_completed), m_num_unique_objectives_completed(num_unique_objectives_completed), m_num_objectives_attempted(num_objectives_attempted)
+WiiMixPlayer::WiiMixPlayer(uint16_t id, std::string username, std::string password_hash, WiiMixEnums::Role role, int num_objectives_completed, int num_unique_objectives_completed, int num_objectives_attempted, int num_objectives_created)
+    : m_id(id), m_username(std::move(username)), m_password_hash(std::move(password_hash)), m_role(role), m_num_objectives_completed(num_objectives_completed), m_num_unique_objectives_completed(num_unique_objectives_completed), m_num_objectives_attempted(num_objectives_attempted), m_num_objectives_created(num_objectives_created)
 {}
 
 uint16_t WiiMixPlayer::GetId()
@@ -29,6 +29,7 @@ QJsonObject WiiMixPlayer::ToJson()
     obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_COMPLETED)] = m_num_objectives_completed;
     obj[QStringLiteral(PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED)] = m_num_unique_objectives_completed;
     obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_ATTEMPTED)] = m_num_objectives_attempted;
+    obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_CREATED)] = m_num_objectives_created;
     return obj;
 }
 
@@ -41,7 +42,8 @@ WiiMixPlayer WiiMixPlayer::FromJson(const QJsonObject& obj)
     int num_objectives_completed = obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_COMPLETED)].toInt();
     int num_unique_objectives_completed = obj[QStringLiteral(PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED)].toInt();
     int num_objectives_attempted = obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_ATTEMPTED)].toInt();
-    return WiiMixPlayer(id, username, password_hash, role, num_objectives_completed, num_unique_objectives_completed, num_objectives_attempted);
+    int num_objectives_created = obj[QStringLiteral(PLAYER_NUM_OBJECTIVES_CREATED)].toInt();
+    return WiiMixPlayer(id, username, password_hash, role, num_objectives_completed, num_unique_objectives_completed, num_objectives_attempted, num_objectives_created);
 }
 
 void WiiMixPlayer::SetNumObjectivesCompleted(int num_objectives_completed)
@@ -72,4 +74,14 @@ void WiiMixPlayer::SetNumObjectivesAttempted(int num_objectives_attempted)
 int WiiMixPlayer::GetNumObjectivesAttempted()
 {
     return m_num_objectives_attempted;
+}
+
+void WiiMixPlayer::SetNumObjectivesCreated(int num_objectives_created)
+{
+    m_num_objectives_created = num_objectives_created;
+}
+
+int WiiMixPlayer::GetNumObjectivesCreated()
+{
+    return m_num_objectives_created;
 }
