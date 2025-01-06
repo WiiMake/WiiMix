@@ -159,6 +159,11 @@ if(UNIX)
   option(LINUX_LOCAL_DEV "Enable relocatable binary" OFF)
 endif()
 
+# Set where the binary files will be built.  The program will not execute from
+# here.  You must run "make install" to install these to the proper location
+# as defined above.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
+
 # Ignore setup if ONLY building the server
 if (NOT BUILD_WIIMIX_SERVER_ONLY)
 
@@ -187,11 +192,6 @@ if (NOT BUILD_WIIMIX_SERVER_ONLY)
     set(ENV{PKG_CONFIG_LIBDIR} "${CMAKE_SYSROOT}/usr/lib/pkgconfig:${CMAKE_SYSROOT}/usr/share/pkgconfig")
     set(ENV{PKG_CONFIG_SYSROOT_DIR} "${CMAKE_SYSROOT}")
   endif()
-
-  # Set where the binary files will be built.  The program will not execute from
-  # here.  You must run "make install" to install these to the proper location
-  # as defined above.
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
 
   if (WIN32)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Binary)
