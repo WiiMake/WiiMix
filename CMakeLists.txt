@@ -109,7 +109,7 @@ option(USE_RETRO_ACHIEVEMENTS "Enables integration with retroachievements.org" O
 # Note: BUILD_WIIMIX_SERVER_ONLY overrides BUILD_WIIMIX_SERVER
 option(BUILD_WIIMIX_SERVER "Builds the WiiMix Server in addition to all of the other build targets" ON)
 # Do NOT set this using the CLI, just change the option here if you want to change the value
-set(BUILD_WIIMIX_SERVER_ONLY OFF) # Builds the WiiMix Server EXCLUSIVELY
+option(BUILD_WIIMIX_SERVER_ONLY "Builds only the WiiMix Server, ignoring all other build targets" OFF)
 message(STATUS "BUILD_WIIMIX_SERVER_ONLY: ${BUILD_WIIMIX_SERVER_ONLY}")
 
 # Maintainers: if you consider blanket disabling this for your users, please
