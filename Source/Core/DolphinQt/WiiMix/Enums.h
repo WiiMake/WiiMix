@@ -355,8 +355,8 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_CURRENT_OBJECTIVES {}
 
 // BINGO NETWORKING
-inline int PORT = std::getenv("PORT") != nullptr ? std::stoi(std::getenv("PORT")) : -1;
-inline std::string IP = std::getenv("IP") ? std::getenv("IP") : "";
+// inline int PORT = std::getenv("PORT") != nullptr ? std::stoi(std::getenv("PORT")) : -1;
+// inline std::string IP = std::getenv("IP") ? std::getenv("IP") : "";
 
 // ROGUE
 #define DEFAULT_ROGUE_DIFFICULTY WiiMixEnums::Difficulty::NORMAL

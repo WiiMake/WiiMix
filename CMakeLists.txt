@@ -164,6 +164,23 @@ endif()
 # as defined above.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries)
 
+# Load environment variables from .env file
+file(STRINGS .env ENV_VARS)
+foreach(line IN LISTS ENV_VARS)
+  string(FIND "${line}" "=" idx)
+  if(NOT idx LESS 0)
+    string(SUBSTRING "${line}" 0 ${idx} VAR_NAME)
+    math(EXPR value_start "${idx} + 1")
+    string(SUBSTRING "${line}" ${value_start} -1 VAR_VALUE)
+    string(STRIP "${VAR_NAME}" VAR_NAME)
+    string(STRIP "${VAR_VALUE}" VAR_VALUE)
+
+    # Set system-level environment variable
+    add_compile_definitions("${VAR_NAME}=${VAR_VALUE}")
+    message("SettingClient ${VAR_NAME}=${VAR_VALUE}") 
+  endif()
+endforeach()
+
 # Ignore setup if ONLY building the server
 if (NOT BUILD_WIIMIX_SERVER_ONLY)
 

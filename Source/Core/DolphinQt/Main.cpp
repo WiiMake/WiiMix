@@ -20,7 +20,7 @@
 #include <QPushButton>
 #include <QWidget>
 
-#include <dotenv.h>
+// #include <dotenv.h>
 
 #include "Common/Config/Config.h"
 #include "Common/MsgHandler.h"
@@ -158,7 +158,15 @@ int main(int argc, char* argv[])
 #endif
 
   // Load WiiMix env vars (if a .env file exists)
-  dotenv::init("./WiiMix/.env");
+  // dotenv::init("./WiiMix/.env");
+  #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
+    qDebug() << WIIMIX_PORT;
+    qDebug() << WIIMIX_IP;
+    qDebug() << WIIMIX_PORT;
+    qDebug() << WIIMIX_IP;
+    qDebug() << WIIMIX_PORT;
+    qDebug() << WIIMIX_IP;
+  #endif
 
   QCoreApplication::setOrganizationName(QStringLiteral("WiiMake"));
   QCoreApplication::setOrganizationDomain(QStringLiteral("https://github.com/WiiMake/WiiMix"));

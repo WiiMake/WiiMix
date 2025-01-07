@@ -185,7 +185,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             m_connect_button->setText(tr("Update"));
         }
 
-        if (PORT != -1 && IP != "") {
+        #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
             connect(m_connect_button, &QPushButton::clicked, this, [this]() {
                 // Set the bingo lobby ID
                 if (m_bingo_lobby_id->text().isEmpty()) {
@@ -240,10 +240,10 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                 //     QMessageBox::critical(this, tr("Error"), tr("Failed to create lobby: %1").arg(e.what()));
                 // }
             });
-        }
-        else {
+        #else
             qWarning() << "No server settings found; cannot run the server";
-        }
+            qDebug() << "1";
+        #endif
 
         connection_layout->addWidget(m_connect_button);
 
@@ -400,7 +400,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
 
         m_connect_button = new QPushButton();
         m_connect_button->setText(tr("Connect"));
-        if (PORT != -1 && IP != "") {
+        #if WIIMIX_PORT && defined(WIIMIX_IP)
             connect(m_connect_button, &QPushButton::clicked, this, [this]() {
                 // Attempt to connect
                 if (!WiiMixClient::instance()->IsConnected()) {
@@ -417,10 +417,10 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
                 obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
                 WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::CONNECT_TO_BINGO_LOBBY);
             });
-        }
-        else {
+        #else
             qWarning() << "No server settings found; cannot run the server";
-        }
+            qDebug() << "2";
+        #endif
 
         connection_layout->addWidget(m_connect_button);
 

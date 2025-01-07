@@ -28,10 +28,12 @@ WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent
 bool WiiMixClient::ConnectToServer() {
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
-        assert (PORT != -1);
-        assert (IP != "");
+        #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
         // Use the loopback address for network testing
-        m_socket->connectToHost(QString::fromStdString(IP), PORT);
+            m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
+        #else
+            assert(false);
+        #endif
         qDebug() << QStringLiteral("Connecting client to server");
         if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
             qCritical() << "Failed to connect to server:" << m_socket->errorString();
