@@ -395,6 +395,8 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // //todox: please change this so it's a child of render widget for games
   // m_screen_saver->CreateLayout();
   // //m_screen_saver->show();
+  m_wiimix_client = WiiMixClient::instance();
+  m_wiimix_client->ConnectToServer();
 }
 
 MainWindow::~MainWindow()
@@ -593,7 +595,6 @@ void MainWindow::ConnectWiiMix() {
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::StartWiiMixShuffle);
-  m_wiimix_client = WiiMixClient::instance();
   connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
 }
@@ -1312,6 +1313,7 @@ bool MainWindow::RequestStop()
 void MainWindow::ForceStop()
 {
   Core::Stop(Core::System::GetInstance());
+  HideRenderWidget(true, true);
 }
 
 void MainWindow::Reset()
@@ -1424,7 +1426,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   // If we're running, only start a new game once we've stopped the last.
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
-
     qDebug() << "saveas";
     std::cout << save_path << std::endl;
     if (!save_path.empty() && safe_to_quit == true) {
@@ -1497,10 +1498,9 @@ void MainWindow::ShowRenderWidget()
 {
   SetFullScreenResolution(true);
   Host::GetInstance()->SetRenderFullscreen(true);
+  // return;
 
-  return;
-
-  if (true || Config::Get(Config::MAIN_RENDER_TO_MAIN))
+  if (Config::Get(Config::MAIN_RENDER_TO_MAIN))
   {
     // If we're rendering to main, add it to the stack and update our title when necessary.
     m_rendering_to_main = true;
@@ -1926,7 +1926,19 @@ void MainWindow::ShowStateSendMenu(int slot)
 }
 
 void MainWindow::StateSend(WiiMixObjective objective) {
-  // Send the objective + state to the server
+  // Send the objective + state to the server if the file type for the game is not .nkit.iso
+  // Find the current game based on the game id
+  UICommon::GameFile game;
+  for (auto& g : WiiMixGlobalSettings::instance()->GetGamesList()) {
+    if (g->GetGameID() == objective.GetGameId()) {
+      game = *g;
+      break;
+    }
+  }
+  if (game.GetFileFormatName().find("Nkit") != std::string::npos) {
+    QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("States for Nkit file types are not supported for compatibility reasons"));
+    return;
+  }
   qDebug() << "Sending objective and state to the server";
   QJsonObject obj = objective.ToJson();
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);

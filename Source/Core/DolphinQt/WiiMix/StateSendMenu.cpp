@@ -25,6 +25,7 @@ void WiiMixStateSendMenu::CreateLayout() {
 
     m_achievement_id = new QSpinBox();
     m_achievement_id->setMinimum(1); // Ensure a valid achievement ID
+    m_achievement_id->setMaximum(999999); // Arbitrary upper bound
 
     m_objective_types = new QListWidget();
     m_objective_types->setSelectionMode(QAbstractItemView::MultiSelection);

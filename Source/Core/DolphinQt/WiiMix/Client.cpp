@@ -150,22 +150,30 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
         // Load the data for the corresponding file
-        int slot = obj[QStringLiteral(STATE_SLOT)].toInt();
+        int slot = obj[QStringLiteral(STATE_SLOT)].toInt() + 1;
         QString game_id = obj[QStringLiteral(OBJECTIVE_GAME_ID)].toString();
         QString buffer = QString::number(slot).rightJustified(2, QLatin1Char('0'));
-        QString savestate_path = QString::fromStdString(File::GetUserPath(D_STATESAVES_IDX)) + game_id + buffer + QStringLiteral(".sav");
+        QString savestate_path = QString::fromStdString(File::GetUserPath(D_STATESAVES_IDX)) + game_id + QStringLiteral(".s") + buffer;
         QFile file(savestate_path);
+        qDebug() << QStringLiteral("Opening file:") << savestate_path;
+        if (!file.open(QIODevice::ReadOnly)) {
+            qCritical() << "Failed to open file:" << file.errorString();
+            return false;
+        }
         
         data.append(static_cast<int>(file.size()));
         data.append('|');
         data.append(json.toJson());
+        qDebug() << QStringLiteral("Reading file:") << savestate_path;
         data.append(file.readAll());
+        qDebug() << QStringLiteral("File read successfully");
     }
     else {
         data.append(json.toJson());
     }
 
     bool success = false;
+    qDebug() << QStringLiteral("Socket state") << m_socket->state();
     if (m_socket->state() == QAbstractSocket::ConnectedState) {
         qDebug() << QStringLiteral("Sending data to server");
         qDebug() << json.toJson();

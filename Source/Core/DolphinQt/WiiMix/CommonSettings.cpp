@@ -47,6 +47,8 @@ WiiMixCommonSettings::WiiMixCommonSettings(WiiMixEnums::Difficulty difficulty, W
 QString WiiMixCommonSettings::DifficultyToString(WiiMixEnums::Difficulty difficulty) {
     switch (difficulty)
     {
+        case WiiMixEnums::Difficulty::EASY:
+            return QStringLiteral("Easy");
         case WiiMixEnums::Difficulty::NORMAL:
             return QStringLiteral("Normal");
         case WiiMixEnums::Difficulty::HARD:
