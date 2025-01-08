@@ -12,7 +12,7 @@
 #include "DolphinQt/WiiMix/CommonSettings.h"
 #include "DolphinQt/WiiMix/GlobalSettings.h"
 
-WiiMixStateSendMenu::WiiMixStateSendMenu(std::string state_path) : m_state_path(state_path) {
+WiiMixStateSendMenu::WiiMixStateSendMenu() {
     CreateLayout();
     ConnectWidgets();
 }
@@ -97,6 +97,6 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
             m_time_length->value(),
             WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetUsername() : ""
-        ), m_state_path);
+        ));
     });
 }

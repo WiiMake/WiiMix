@@ -20,13 +20,13 @@ class WiiMixStateSendMenu : public QDialog
     Q_OBJECT
 
 public:
-    explicit WiiMixStateSendMenu(std::string state_path);
+    explicit WiiMixStateSendMenu();
 
     void ConnectWidgets();
     void CreateLayout();
 
 signals:
-    void SendObjective(WiiMixObjective objective, std::string state_path);
+    void SendObjective(WiiMixObjective objective);
 
 private:
     QLineEdit* m_title;
@@ -37,6 +37,4 @@ private:
     QComboBox* m_difficulty;
     QSpinBox* m_time_length;
     QPushButton* m_send_button;
-
-    std::string m_state_path;
 };

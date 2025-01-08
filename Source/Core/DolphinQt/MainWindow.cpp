@@ -1914,8 +1914,7 @@ void MainWindow::ToggleBingoBoard() {
 
 void MainWindow::ShowStateSendMenu(int slot)
 {
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(slot) + ".sav";
-  m_state_send_menu = new WiiMixStateSendMenu(savestate_file);
+  m_state_send_menu = new WiiMixStateSendMenu();
   connect(m_state_send_menu, &WiiMixStateSendMenu::SendObjective, this, &MainWindow::StateSend);
   m_state_send_menu->setWindowTitle(QStringLiteral("State Send Menu"));
   SetQWidgetWindowDecorations(m_state_send_menu);

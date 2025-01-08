@@ -147,6 +147,8 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     data.append(static_cast<int>(json.toJson().size()));
     data.append('|');
 
+    qDebug() << data;
+
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
         // Load the data for the corresponding file
