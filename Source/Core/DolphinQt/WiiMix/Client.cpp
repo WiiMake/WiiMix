@@ -142,12 +142,13 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         data.append('0');
         data.append('|');
     }
+    qDebug() << "Data: " << data;
     
     // Json size
     data.append(static_cast<int>(json.toJson().size()));
     data.append('|');
 
-    qDebug() << data;
+    qDebug() << "Data: " << data;
 
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
@@ -165,6 +166,7 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         
         data.append(static_cast<int>(file.size()));
         data.append('|');
+        qDebug() << "Data: " << data;
         data.append(json.toJson());
         qDebug() << QStringLiteral("Reading file:") << savestate_path;
         data.append(file.readAll());
