@@ -142,13 +142,10 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         data.append('0');
         data.append('|');
     }
-    qDebug() << "Data: " << data;
     
     // Json size
     data.append(static_cast<int>(json.toJson().size()));
     data.append('|');
-
-    qDebug() << "Data: " << data;
 
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
@@ -166,7 +163,6 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         
         data.append(static_cast<int>(file.size()));
         data.append('|');
-        qDebug() << "Data: " << data;
         data.append(json.toJson());
         qDebug() << QStringLiteral("Reading file:") << savestate_path;
         data.append(file.readAll());
@@ -176,12 +172,13 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         data.append(json.toJson());
     }
 
+    qDebug() << data.left(20);
+
     bool success = false;
     qDebug() << QStringLiteral("Socket state") << m_socket->state();
     if (m_socket->state() == QAbstractSocket::ConnectedState) {
         qDebug() << QStringLiteral("Sending data to server");
-        qDebug() << json.toJson();
-        m_socket->write(json.toJson());
+        m_socket->write(data);
         success = m_socket->waitForBytesWritten();
         if (!success) {
             qCritical() << "Failed to send data to server:" << m_socket->errorString();
