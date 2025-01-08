@@ -11,6 +11,7 @@
 #include <QJsonObject>
 
 #include <assert.h>
+#include <algorithm>
 #include <Common/FileUtil.h>
 
 WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent), m_socket(socket) {}
@@ -28,6 +29,8 @@ WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent
 bool WiiMixClient::ConnectToServer() {
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
+        m_socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, 512 * 1024); // Set send buffer size to 512 KB
+        m_socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024); // Set receive buffer size to 64 KB
         #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
         // Use the loopback address for network testing
             m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
@@ -132,20 +135,20 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     obj[QStringLiteral(SERVER_ACTION)] = static_cast<int>(action);
     
     QJsonDocument json(obj);
-    QByteArray data = {};
+    m_data = {};
     
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
-        data.append('1');
-        data.append('|');
+        m_data.append('1');
+        m_data.append('|');
     }
     else {
-        data.append('0');
-        data.append('|');
+        m_data.append('0');
+        m_data.append('|');
     }
     
     // Json size
-    data.append(static_cast<int>(json.toJson().size()));
-    data.append('|');
+    m_data.append(QString::number(json.toJson().size()).toUtf8());
+    m_data.append('|');
 
     // File size
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
@@ -161,41 +164,107 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
             return false;
         }
         
-        data.append(static_cast<int>(file.size()));
-        data.append('|');
-        data.append(json.toJson());
+        m_data.append(QString::number(file.size()).toUtf8());
+        m_data.append('|');
+        m_data.append(json.toJson());
         qDebug() << QStringLiteral("Reading file:") << savestate_path;
-        data.append(file.readAll());
+        m_data.append(file.readAll());
         qDebug() << QStringLiteral("File read successfully");
     }
     else {
-        data.append(json.toJson());
+        m_data.append(json.toJson());
     }
 
-    qDebug() << data.left(20);
+    qDebug() << m_data.left(20);
 
-    bool success = false;
+    // bool success = false;
     qDebug() << QStringLiteral("Socket state") << m_socket->state();
     if (m_socket->state() == QAbstractSocket::ConnectedState) {
         qDebug() << QStringLiteral("Sending data to server");
-        m_socket->write(data);
-        success = m_socket->waitForBytesWritten();
-        if (!success) {
-            qCritical() << "Failed to send data to server:" << m_socket->errorString();
-        }
-        else {
-            qDebug() << "Data sent successfully";
-        }
+        m_bytes_written = 0;
+        connect(m_socket, &QTcpSocket::bytesWritten, this, &WiiMixClient::BytesWritten, Qt::QueuedConnection);
+        BytesWritten();
+        // emit writeBytes();
+        // Start the first chunk write
+        // const qint64 kbSize = 1024;
+        // qint64 written = m_socket->write(m_data.mid(m_bytes_written, qMin(64 * kbSize, m_data.size())));
+        // if (written == -1) {
+        //     qCritical() << "Failed to write data to socket:" << m_socket->errorString();
+        //     ModalMessageBox::critical(nullptr, tr("Error"), tr("Failed to write data to socket: %1").arg(m_socket->errorString()));
+        //     return false;
+        // }
+        // qDebug() << QStringLiteral("Bytes to write: ") << m_socket->bytesToWrite();
+
+        // // // Update bytes written
+        // m_bytes_written += written;
+        // qDebug() << "Initial bytes written:" << m_bytes_written;
+        // while (bytesWritten < data.size()) {
+        //     qint64 chunkSize = m_socket->write(data.mid(m_bytes_written, 16384)); // Write in 16kb chunks
+        //     if (chunkSize == -1) {
+        //         qCritical() << "Failed to write data to socket:" << m_socket->errorString();
+        //         success = false;
+        //         break;
+        //     }
+        //     bytesWritten += chunkSize;
+        //     while (m_socket->bytesToWrite() > 0) {
+        //         if (!m_socket->waitForBytesWritten(10000)) {  // 10 seconds timeout
+        //             qCritical() << "Failed to send data to server:" << m_socket->errorString();
+        //             break;
+        //         }
+        //     }
+        //     // qDebug() << QStringLiteral("Bytes to write: ") << data.size() - bytesWritten;
+        //     if (bytesWritten % (16384 * 10) == 0) {
+        //         emit onBytesWritten(bytesWritten, data.size());
+        //     }
+        // success = (m_bytes_written == std::min(m_data.size(), static_cast<qint64>(16384)));
+        // if (success) {
+        //     qDebug() << "First chunk of data sent successfully";
+        // }
+        // else {
+        //     if (m_socket->error() != QAbstractSocket::UnknownSocketError) {
+        //         qDebug() << "Socket error:" << m_socket->errorString();
+        //     }
+        //     else {
+        //         qCritical() << "Socket is not connected. Cannot send data to server.";
+        //     }
+        // }
     }
-    else {
-        if (m_socket->error() != QAbstractSocket::UnknownSocketError) {
-            qDebug() << "Socket error:" << m_socket->errorString();
-        }
-        else {
-            qCritical() << "Socket is not connected. Cannot send data to server.";
-        }
+    return true;
+}
+
+void WiiMixClient::BytesWritten() {
+    // Check if all data has been sent
+    if (m_bytes_written >= m_data.size()) {
+        qDebug() << "All data sent successfully!";
+        emit onBytesWritten(m_bytes_written, m_data.size());
+        return;
     }
-    return success;
+
+    // Write the next chunk
+    const qint64 kbSize = 1024;
+    qint64 remaining = m_data.size() - m_bytes_written;
+    qint64 written = m_socket->write(m_data.mid(m_bytes_written, qMin(64 * kbSize, remaining)));
+    if (written == -1) {
+        qCritical() << "Failed to write data to socket:" << m_socket->errorString();
+        ModalMessageBox::critical(nullptr, tr("Error"), tr("Failed to write data to socket: %1").arg(m_socket->errorString()));
+        return;
+    }
+
+    // while (m_socket->bytesToWrite() > 0) {
+    //     if (!m_socket->waitForBytesWritten(10000)) {  // 10 seconds timeout
+    //         qCritical() << "Failed to send data to server:" << m_socket->errorString();
+    //         break;
+    //     }
+    // }
+
+    // Update the total bytes written
+    m_bytes_written += written;
+    qDebug() << QStringLiteral("Bytes written: ") << m_bytes_written << "/" << m_data.size();
+
+    // Notify progress
+    if (m_bytes_written % (64 * kbSize * 10) == 0) {
+        emit onBytesWritten(m_bytes_written, m_data.size());
+    }
 }
 
 bool WiiMixClient::ReceiveData(QJsonDocument json) {
@@ -289,3 +358,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json, std::vector<QByteArray> files
 // std::list<WiiMixObjective> WiiMixClient::GetBingoCard() const {
 //     return std::list<WiiMixObjective>();
 // }
+
+QTcpSocket* WiiMixClient::GetSocket() {
+    return m_socket;
+}

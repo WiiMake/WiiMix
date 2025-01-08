@@ -23,7 +23,9 @@ public:
     explicit WiiMixStateSendMenu();
 
     void ConnectWidgets();
+    QPushButton* GetSendButton();
     void CreateLayout();
+    void SetProgressText(QString progress_text);
 
 signals:
     void SendObjective(WiiMixObjective objective);

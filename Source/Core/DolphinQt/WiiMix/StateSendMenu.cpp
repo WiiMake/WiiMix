@@ -11,6 +11,7 @@
 #include "Core/ConfigManager.h"
 #include "DolphinQt/WiiMix/CommonSettings.h"
 #include "DolphinQt/WiiMix/GlobalSettings.h"
+#include "DolphinQt/WiiMix/Client.h"
 
 WiiMixStateSendMenu::WiiMixStateSendMenu() {
     CreateLayout();
@@ -26,6 +27,7 @@ void WiiMixStateSendMenu::CreateLayout() {
     m_achievement_id = new QSpinBox();
     m_achievement_id->setMinimum(1); // Ensure a valid achievement ID
     m_achievement_id->setMaximum(999999); // Arbitrary upper bound
+    m_achievement_id->setValue(1); // Default to 1
 
     m_objective_types = new QListWidget();
     m_objective_types->setSelectionMode(QAbstractItemView::MultiSelection);
@@ -83,6 +85,10 @@ void WiiMixStateSendMenu::CreateLayout() {
 
 void WiiMixStateSendMenu::ConnectWidgets() {
     connect(m_send_button, &QPushButton::clicked, this, [this]() {
+        // Turn the send button into a progress bar
+        m_send_button->setEnabled(false);
+        m_send_button->setText(QStringLiteral("Sending 0% complete"));
+
         emit SendObjective(WiiMixObjective(
             // Use -1 as a placeholder; for addObjective, the server will populate the objective id
             -1,
@@ -99,4 +105,12 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetUsername() : ""
         ));
     });
+}
+
+QPushButton* WiiMixStateSendMenu::GetSendButton() {
+    return m_send_button;
+}
+
+void WiiMixStateSendMenu::SetProgressText(QString progress_text) {
+    m_send_button->setText(progress_text);
 }

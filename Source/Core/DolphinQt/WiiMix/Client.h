@@ -7,6 +7,8 @@
 #include <QTcpSocket>
 #include <QDebug>
 #include <QJsonDocument>
+#include <QByteArray>
+#include <QTimer>
 
 #include <iostream>
 #ifdef _WIN32
@@ -52,6 +54,7 @@ public:
   bool ReceiveData(QJsonDocument doc);
   bool ReceiveData(QJsonDocument doc, std::vector<QByteArray> files);
   bool ConnectToServer();
+  QTcpSocket* GetSocket();
 
 signals:
   // Update the bingo settings as they are changed for all players
@@ -62,8 +65,13 @@ signals:
   void onGetPlayer(WiiMixPlayer player);
   void onGetObjectiveHistory(std::vector<WiiMixObjective> objectives);
   void onGetObjectives(std::vector<WiiMixObjective> objectives);
+  // void onCalculatedTotalSize(int totalSize);
+  void onBytesWritten(int bytesWritten, int totalBytes);
 
   void onError(QString error);
+
+public slots:
+  void BytesWritten();
 
 protected:
   explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
@@ -74,6 +82,8 @@ protected:
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time
 private:
   QTcpSocket* m_socket;
+  int m_bytes_written = 0;
+  QByteArray m_data = {};
   //     std::list<WiiMixEnums::Player> m_players;
   //     std::list<WiiMixObjective> m_bingo_card;
   //     WiiMixEnums::BingoType m_bingo_type;

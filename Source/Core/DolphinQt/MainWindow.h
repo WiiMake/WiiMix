@@ -97,6 +97,7 @@ public:
 signals:
   void ReadOnlyModeChanged(bool read_only);
   void RecordingStatusChanged(bool recording);
+  void onStateSendProgressUpdate(QString progress_text);
 
 public slots:
   void WiiMixStartObjective(WiiMixObjective new_objective);
@@ -129,6 +130,7 @@ private:
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
   void StateSend(WiiMixObjective objective);
+  void TrackStateSendProgress(int bytesWritten, int totalBytes);
   void ShowStateSendMenu(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);

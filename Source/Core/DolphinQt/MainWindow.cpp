@@ -1938,10 +1938,45 @@ void MainWindow::StateSend(WiiMixObjective objective) {
     QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("States for Nkit file types are not supported for compatibility reasons"));
     return;
   }
-  qDebug() << "Sending objective and state to the server";
   QJsonObject obj = objective.ToJson();
+
+  qDebug() << "Sending objective and state to the server";
+  connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
+  // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
+
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
   return;
+}
+
+void MainWindow::TrackStateSendProgress(int bytesWritten, int totalBytes) {
+  // Connect to the `bytesWritten` signal to track progress
+  // qDebug() << "Tracking progress";
+  // QTcpSocket* socket = WiiMixClient::instance()->GetSocket();
+
+  // connect(socket, &QTcpSocket::bytesWritten, m_state_send_menu->GetSendButton(), [this, totalBytes](qint64 bytes) mutable {
+      // static qint64 bytesWritten = 0;
+      // bytesWritten += bytes;
+  int progress = static_cast<int>((bytesWritten * 100) / totalBytes);
+
+      // percentage complete
+      m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
+
+      // bytes complete
+  // Update button text safely in the GUI thread
+  // emit onStateSendProgressUpdate(QStringLiteral("Sending %1% complete").arg(progress));
+
+  // QMetaObject::invokeMethod(m_state_send_menu->GetSendButton(), 
+  //                            [this, progress]() {
+  //                              this->m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress)); 
+  //                            }, 
+  //                            Qt::QueuedConnection); 
+
+  if (progress >= 100) {
+      m_state_send_menu->close();
+  }
+
+  // qDebug() << "Progress: " << progress;
+  // });
 }
 
 // Using ObjectiveLoadSlot instead
