@@ -43,6 +43,8 @@ To make it easy for people to filter and sort objectives, we recommend that you 
 
 **PLEASE before you upload an objective, make sure the objective (same achievement, same state) DOES NOT ALREADY EXIST!**
 
+Once you've created your objective, view it and other's objectives on the [website](https:://wiimix.vulcan.moe).
+
 ## Support
 
 Our goal is to eventually support Windows, Mac, and Linux systems; currently, linux and mac are best supported, but we're pushing for Windows support as well. If you want support for something that is currently supported, feel free to open a feature request, or better yet, [contribute](https://github.com/WiiMake/WiiMix/blob/master/README.md#contributing)!
