@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkInformation>
+#include <QCoreApplication>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -251,12 +252,21 @@ void WiiMixClient::BytesWritten() {
         qDebug() << "Buffer is full; waiting before sending more data.";
         // Flush the buffer
         m_socket->flush();
+        // Don't immediately exit; allow some time for the buffer to clear up
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);  // This prevents UI freezing
         return;  // Early exit; we'll retry when `bytesWritten` is emitted again
+    }
+
+    if (m_socket->bytesAvailable() < m_socket->bytesToWrite()) {
+        m_socket->flush();
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
     qint64 maxChunkSize = 8 * kbSize;  // Default 8 KB
     if (m_socket->bytesToWrite() > 16 * kbSize) {  // Large queue, reduce chunk size
-        maxChunkSize = 2 * 1024;
+        // Don't immediately exit; allow some time for the buffer to clear up
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);  // This prevents UI freezing
+        maxChunkSize = 1024;
     }
     qint64 remaining = m_data.size() - m_bytes_written;
     qint64 written = m_socket->write(m_data.mid(m_bytes_written, qMin(maxChunkSize, remaining)));
@@ -267,12 +277,11 @@ void WiiMixClient::BytesWritten() {
     }
     else {
         m_bytes_written += written;
-        m_socket->flush();
     }
 
     // while (m_socket->bytesToWrite() > 0) {
-    //     if (!m_socket->waitForBytesWritten(10000)) {  // 10 seconds timeout
-    //         qCritical() << "Failed to send data to server:" << m_socket->errorString();
+    //     if (!m_socket->waitForBytesWritten(2000)) {  // 2 second timeout
+    //         qWarning() << "Could not send chunk to server after 1 second:" << m_socket->errorString();
     //         break;
     //     }
     // }
@@ -283,6 +292,8 @@ void WiiMixClient::BytesWritten() {
     // Notify progress
     // if (m_bytes_written % 3 == 0) {
     emit onBytesWritten(m_bytes_written, m_data.size());
+    // Don't immediately exit; allow some time for the buffer to clear up
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);  // This prevents UI freezing
     // }
 }
 
