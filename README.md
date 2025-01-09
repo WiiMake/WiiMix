@@ -34,7 +34,7 @@ Objectives are the core behind every WiiMix. That's why we have a system in plac
 From there, you'll see the following menu:
 
 <p align="center">
-  <img src="https://github.com/WiiMake/WiiMix/blob/master/Data/state-send-menu.png?raw=true" height="128">
+  <img src="https://github.com/WiiMake/WiiMix/blob/master/Data/state-send-menu.png?raw=true" height="512">
 </p>
 
 To make it easy for people to filter and sort objectives, we recommend that you follow a couple guidelines when filling out this information:
