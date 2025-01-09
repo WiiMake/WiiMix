@@ -20,10 +20,6 @@ By combining objectives with extra functionality such as game swapping, WiiMix t
 - Shuffle: swap between games with randomized time intervals in between
 - Roguelike: the console has gone rogue! Can you complete a series of achievements while the console attempts to stop you?
 
-## Contributing
-
-The project is still in it's early stages. As such, we appreciate any help that you can provide, whether it's documenting a bug on the [Issues](https://github.com/WiiMake/WiiMix/issues) tab, [creating objectives](#creating-objectives), or [adding new features/fixing bugs in line with our contribution guidelines](https://github.com/WiiMake/WiiMix/blob/master/Contributing.md). If you are contributing or using the project, please follow the [code of conduct](https://github.com/WiiMake/WiiMix/blob/master/CODE_OF_CONDUCT.md); we follow the exact same policies as Dolphin Emulator and encourage people to be respectful and make positive contributions to our efforts to relive our favorite games and experience hidden gems through WiiMix.
-
 ### Creating Objectives
 
 Objectives are the core behind every WiiMix. That's why we have a system in place so anyone can easily create them! There's just a couple simple steps:
@@ -45,17 +41,14 @@ To make it easy for people to filter and sort objectives, we recommend that you 
 - Difficulty: how difficult you believe the objective would be for the average player
 - Time: how much time, in minutes, you believe it would take the average player to complete the objective
 
-PLEASE before you upload an objective, make sure the objective (same achievement, same state) DOES NOT ALREADY EXIST!
-=======
+**PLEASE before you upload an objective, make sure the objective (same achievement, same state) DOES NOT ALREADY EXIST!**
 
 ## Support
 
-Our goal is to eventually support Windows, Mac, and Linux systems; TODO finish write up on the current state of each platform before release  
+Our goal is to eventually support Windows, Mac, and Linux systems; currently, linux and mac are best supported, but we're pushing for Windows support as well. If you want support for something that is currently supported, feel free to open a feature request, or better yet, [contribute](https://github.com/WiiMake/WiiMix/blob/master/README.md#contributing)!
+
+To keep up with the latest and greatest in WiiMix development, join the [Discord](https://discord.gg/ZvHMaqBZpB)!
 
 ## Contributing
 
 The project is still in it's early stages. As such, we appreciate any help that you can provide, whether it's documenting a bug on the [Issues](https://github.com/WiiMake/WiiMix/issues) tab, [creating objectives](#creating-objectives), or [adding new features/fixing bugs in line with our contribution guidelines](https://github.com/WiiMake/WiiMix/blob/master/Contributing.md). If you are contributing or using the project, please follow the [code of conduct](https://github.com/WiiMake/WiiMix/blob/master/CODE_OF_CONDUCT.md); we follow the exact same policies as Dolphin Emulator and encourage people to be respectful and make positive contributions to our efforts to relive our favorite games and experience hidden gems through WiiMix.
-
-### Creating Objectives
-
-TODO: finish documenting this once this system is finished. Use pics.
