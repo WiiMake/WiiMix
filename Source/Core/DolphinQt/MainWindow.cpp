@@ -1965,11 +1965,11 @@ void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) 
   // Update button text safely in the GUI thread
   // emit onStateSendProgressUpdate(QStringLiteral("Sending %1% complete").arg(progress));
 
-  // QMetaObject::invokeMethod(m_state_send_menu->GetSendButton(), 
+  // QMetaObject::invokeMethod(m_state_send_menu->GetSendButton(),
   //                            [this, progress]() {
-  //                              this->m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress)); 
-  //                            }, 
-  //                            Qt::QueuedConnection); 
+  //                              this->m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
+  //                            },
+  //                            Qt::QueuedConnection);
 
   if (progress >= 100) {
       m_state_send_menu->close();
@@ -2537,7 +2537,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
   // Check if the player is already logged in
   WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
   if (player != nullptr) {
-    if (!m_wiimix_account_window) {
+    if (!m_wiimix_account_window || m_wiimix_account_window == nullptr) {
       m_wiimix_account_window = new WiiMixAccountWindow(this, player);
     }
     // Connect logout signal to this function so it will close and open the logout window on logout
@@ -2547,8 +2547,8 @@ void MainWindow::ShowWiiMixAccountWindow() {
     m_wiimix_account_window->activateWindow();
   }
   else {
-    // If the player is not logged in, show the login window 
-    if (!m_wiimix_account_login_window) {
+    // If the player is not logged in, show the login window
+    if (!m_wiimix_account_login_window || m_wiimix_account_window == nullptr) {
       m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);
     }
     connect(m_wiimix_account_login_window, &WiiMixAccountLoginWindow::onLogin, this, &MainWindow::ShowWiiMixAccountWindow);

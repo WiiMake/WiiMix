@@ -6,10 +6,17 @@
 
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QDebug>
+#include <QMainWindow>
 
-WiiMixAccountLoginWindow::WiiMixAccountLoginWindow(QWidget* parent) : QWidget(parent) {
+WiiMixAccountLoginWindow::WiiMixAccountLoginWindow(QWidget* parent) : QMainWindow(parent) {
+    QWidget* centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+
     CreateLayout();
     ConnectWidgets();
+    // Ensure the window is shown
+    this->show();
 }
 
 void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
@@ -35,23 +42,28 @@ void WiiMixAccountLoginWindow::CreateLayout() {
     QVBoxLayout* layout = new QVBoxLayout;
 
     QLabel* username_label = new QLabel(tr("Username:"));
-    QLineEdit* m_username = new QLineEdit();
+    m_username = new QLineEdit();
     layout->addWidget(username_label);
     layout->addWidget(m_username);
 
     QLabel* password_label = new QLabel(tr("Password:"));
-    QLineEdit* m_password = new QLineEdit();
+    m_password = new QLineEdit();
     m_password->setEchoMode(QLineEdit::Password);
     layout->addWidget(password_label);
     layout->addWidget(m_password);
 
-    QPushButton* m_login_button = new QPushButton(tr("Login/Register"));
+    m_login_button = new QPushButton(tr("Login/Register"));
     layout->addWidget(m_login_button);
 
-    setLayout(layout);
+    centralWidget()->setLayout(layout);
 }
 
 void WiiMixAccountLoginWindow::ConnectWidgets() {
+    if (!m_login_button) {
+        qDebug() << "m_login_button is nullptr";
+        return;
+    }
+
     // Connect the login button
     connect(m_login_button, &QPushButton::clicked, this, [this]() {
         QString username = m_username->text();

@@ -1,7 +1,9 @@
+#include <QMainWindow>
 #include <QString>
 #include <QLineEdit>
 #include <QPushButton>
-class WiiMixAccountLoginWindow : public QWidget
+
+class WiiMixAccountLoginWindow : public QMainWindow
 {
     Q_OBJECT
 
