@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://wiimake.github.io/static-site/">
+  <a href="https://wiimix.vulcan.moe">
     <img src="https://github.com/WiiMake/WiiMix/blob/master/Data/dolphin-emu.png?raw=true" height="128">
   </a>
   <h1 align="center">WiiMix</h1>
@@ -26,9 +26,26 @@ The project is still in it's early stages. As such, we appreciate any help that 
 
 ### Creating Objectives
 
-TODO: finish documenting this once this system is finished. Use pics.
+Objectives are the core behind every WiiMix. That's why we have a system in place so anyone can easily create them! There's just a couple simple steps:
+1. Determine the achievement that you want to target on [Retroachievements](https://retroachievements.org/).
+2. Create the save state for the achievement. The slot that you save it to doesn't matter, just make sure that you note which slot you save it to!
+3. Click ```Emulation -> Send State -> Send Slot X```, where X is the slot that you saved your state to
 
-PLEASE before you upload an objective, make sure the objective DOES NOT ALREADY EXIST!
+From there, you'll see the following menu:
+
+<p align="center">
+  <img src="https://github.com/WiiMake/WiiMix/blob/master/Data/state-send-menu.png?raw=true" height="128">
+</p>
+
+To make it easy for people to filter and sort objectives, we recommend that you follow a couple guidelines when filling out this information:
+- Title: copy the achievement title
+- Description: copy the achievement description and append information about the state
+- Achievement id: copy the achievement id (you can find it in the corresponding url, for example for https://retroachievements.org/achievement/460837, the achievement id would be 460837)
+- Objective Types and Game Genres: select all that apply; these are useful for people who only want to focus on objectives of specific types or with specific genres
+- Difficulty: how difficult you believe the objective would be for the average player
+- Time: how much time, in minutes, you believe it would take the average player to complete the objective
+
+PLEASE before you upload an objective, make sure the objective (same achievement, same state) DOES NOT ALREADY EXIST!
 =======
 
 ## Support
