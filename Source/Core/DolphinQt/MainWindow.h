@@ -130,7 +130,7 @@ private:
   void StateLoadSlotAt(int slot);
   void StateSaveSlotAt(int slot);
   void StateSend(WiiMixObjective objective);
-  void TrackStateSendProgress(int bytesWritten, int totalBytes);
+  void TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes);
   void ShowStateSendMenu(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);

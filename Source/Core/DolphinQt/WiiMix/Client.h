@@ -82,7 +82,7 @@ protected:
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time
 private:
   QTcpSocket* m_socket;
-  int m_bytes_written = 0;
+  qint64 m_bytes_written = 0;
   QByteArray m_data = {};
   //     std::list<WiiMixEnums::Player> m_players;
   //     std::list<WiiMixObjective> m_bingo_card;

@@ -1948,7 +1948,7 @@ void MainWindow::StateSend(WiiMixObjective objective) {
   return;
 }
 
-void MainWindow::TrackStateSendProgress(int bytesWritten, int totalBytes) {
+void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) {
   // Connect to the `bytesWritten` signal to track progress
   // qDebug() << "Tracking progress";
   // QTcpSocket* socket = WiiMixClient::instance()->GetSocket();
@@ -1956,10 +1956,10 @@ void MainWindow::TrackStateSendProgress(int bytesWritten, int totalBytes) {
   // connect(socket, &QTcpSocket::bytesWritten, m_state_send_menu->GetSendButton(), [this, totalBytes](qint64 bytes) mutable {
       // static qint64 bytesWritten = 0;
       // bytesWritten += bytes;
-  int progress = static_cast<int>((bytesWritten * 100) / totalBytes);
+  qint64 progress = static_cast<qint64>((bytesWritten * 100) / totalBytes);
 
-      // percentage complete
-      m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
+  // percentage complete
+  m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
 
       // bytes complete
   // Update button text safely in the GUI thread

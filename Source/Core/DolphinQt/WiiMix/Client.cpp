@@ -233,6 +233,8 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
 }
 
 void WiiMixClient::BytesWritten() {
+    // qDebug() << "Bytes to write: " << m_socket->bytesToWrite();
+    // qDebug() << "Bytes available: " << m_socket->bytesAvailable();
     // Check if all data has been sent
     if (m_bytes_written >= m_data.size()) {
         qDebug() << "All data sent successfully!";
@@ -242,12 +244,30 @@ void WiiMixClient::BytesWritten() {
 
     // Write the next chunk
     const qint64 kbSize = 1024;
+    const qint64 maxSafeBuffer = 32 * kbSize;  // Adjust this based on socket behavior
+
+    // If the buffer is too full, wait before writing more
+    if (m_socket->bytesToWrite() > maxSafeBuffer) {
+        qDebug() << "Buffer is full; waiting before sending more data.";
+        // Flush the buffer
+        m_socket->flush();
+        return;  // Early exit; we'll retry when `bytesWritten` is emitted again
+    }
+
+    qint64 maxChunkSize = 8 * kbSize;  // Default 8 KB
+    if (m_socket->bytesToWrite() > 16 * kbSize) {  // Large queue, reduce chunk size
+        maxChunkSize = 2 * 1024;
+    }
     qint64 remaining = m_data.size() - m_bytes_written;
-    qint64 written = m_socket->write(m_data.mid(m_bytes_written, qMin(64 * kbSize, remaining)));
+    qint64 written = m_socket->write(m_data.mid(m_bytes_written, qMin(maxChunkSize, remaining)));
     if (written == -1) {
         qCritical() << "Failed to write data to socket:" << m_socket->errorString();
         ModalMessageBox::critical(nullptr, tr("Error"), tr("Failed to write data to socket: %1").arg(m_socket->errorString()));
         return;
+    }
+    else {
+        m_bytes_written += written;
+        m_socket->flush();
     }
 
     // while (m_socket->bytesToWrite() > 0) {
@@ -258,13 +278,12 @@ void WiiMixClient::BytesWritten() {
     // }
 
     // Update the total bytes written
-    m_bytes_written += written;
-    qDebug() << QStringLiteral("Bytes written: ") << m_bytes_written << "/" << m_data.size();
+    // qDebug() << QStringLiteral("Bytes written: ") << m_bytes_written << "/" << m_data.size();
 
     // Notify progress
-    if (m_bytes_written % (64 * kbSize * 10) == 0) {
-        emit onBytesWritten(m_bytes_written, m_data.size());
-    }
+    // if (m_bytes_written % 3 == 0) {
+    emit onBytesWritten(m_bytes_written, m_data.size());
+    // }
 }
 
 bool WiiMixClient::ReceiveData(QJsonDocument json) {
