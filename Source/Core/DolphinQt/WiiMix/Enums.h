@@ -207,6 +207,7 @@ namespace WiiMixEnums {
         UPDATE_BINGO_CONFIG, // This needs to update the lobby; update bingo settings should be a signal chain
         UPDATE_ROGUE_OBJECTIVES,
         UPDATE_BINGO_OBJECTIVES,
+        UPDATE_SHUFFLE_OBJECTIVES,
         GET_OBJECTIVES, // NOTE: this ONLY returns json; if you want to get the save states, you need to use either update bingo or update rogue
         GET_PLAYERS, // Retrieve a list of all wiimix players (not implemented yet)
         GET_PLAYER,

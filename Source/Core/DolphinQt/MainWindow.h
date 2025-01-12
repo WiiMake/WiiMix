@@ -190,6 +190,7 @@ private:
                  std::string save_path);
   void PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings);
   void PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings);
+  void PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings);
   void StartWiiMixBingo(WiiMixBingoSettings* settings);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);

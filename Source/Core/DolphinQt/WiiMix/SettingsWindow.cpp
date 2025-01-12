@@ -47,6 +47,7 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   effect->setBlurRadius(25);
   m_load_button_box->setGraphicsEffect(effect);
   m_load_button_box->setText(QStringLiteral("Load"));
+  m_load_button_box->setCursor(Qt::PointingHandCursor);
   // m_load_button_box->button(QDialogButtonBox::Open)->setText(tr("Load"));
   // m_save_button_box = new QDialogButtonBox(QDialogButtonBox::Save);
   m_save_button_box = new QPushButton();
@@ -58,15 +59,31 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   effect2->setBlurRadius(25);
   m_save_button_box->setGraphicsEffect(effect2);
   m_save_button_box->setText(QStringLiteral("Save"));
+  m_save_button_box->setCursor(Qt::PointingHandCursor);
   m_wii_mix_button = new QToolButton();
   // m_wii_mix_button->setAttribute(Qt::WA_TranslucentBackground);
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
   m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
   m_wii_mix_button->setIconSize(QSize(150,100));
+  // m_wii_mix_button->installEventFilter(this); // capture mouse events
+  m_wii_mix_button->setCursor(Qt::PointingHandCursor);
   //m_wii_mix_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   CreateMainLayout();
   ConnectWidgets();
   return;
+}
+
+bool WiiMixSettingsWindow::eventFilter(QObject* obj, QEvent* event) {
+  if ((event->type() == QEvent::HoverLeave)) {
+    m_wii_mix_button->setGraphicsEffect(nullptr);
+  }
+  if (event->type() == QEvent::HoverEnter) {
+    auto* hoverEffect = new QGraphicsDropShadowEffect;
+    hoverEffect->setOffset(0, 0);
+    hoverEffect->setBlurRadius(25);
+    m_wii_mix_button->setGraphicsEffect(hoverEffect);
+  }
+  return true;
 }
 
 // TODO: Maybe will want this in case there's a settings mismatch between people

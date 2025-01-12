@@ -594,9 +594,10 @@ void MainWindow::ConnectWiiMix() {
   // Starts the wiimix
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
   connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::StartWiiMixShuffle);
+  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
   connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
+  connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
 }
 
 void MainWindow::ConnectMenuBar()
@@ -1012,7 +1013,7 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
   qDebug() << "Populating bingo objectives";
   QJsonObject obj = settings->ToJson().object();
   obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES);
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
 }
 
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
@@ -1026,12 +1027,21 @@ void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
   // Populate the objectives
   QJsonObject obj = settings->ToJson().object();
   obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES);
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
   // Start the wiimix
   qDebug() << "Rogue calls";
+}
+
+void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings) {
+  // Start the wiimix
+  qDebug() << "Populating rogue objectives";
+  // Populate the objectives
+  QJsonObject obj = settings->ToJson().object();
+  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {

@@ -1,6 +1,7 @@
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
 
 #include <QTcpSocket>
 #include <QJsonDocument>
@@ -373,6 +374,25 @@ bool WiiMixClient::ReceiveData(QJsonDocument json, std::vector<QByteArray> files
         }
         WiiMixRogueSettings::instance()->SetObjectives(objectives);
         emit onUpdateRogueObjectives(WiiMixRogueSettings::instance());
+    }
+    else if (response == WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES) {
+        // For each objective in the json array, convert it to a wiimix objective
+        // and then save the savestate to the correct location [path] + id + ".sav"
+        std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+        std::vector<WiiMixObjective> objectives;
+        for (int i = 0; i < json.array().size(); ++i) {
+            QJsonObject obj = json.array()[i].toObject();
+            WiiMixObjective objective = WiiMixObjective::FromJson(obj);
+            // Save the savestate
+            QFile file(QString::fromStdString(savestate_path + std::to_string(objective.GetId()) + ".sav"));
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(files[i]);
+                file.close();
+            }
+            objectives.push_back(objective);
+        }
+        WiiMixShuffleSettings::instance()->SetObjectives(objectives);
+        emit onUpdateShuffleObjectives(WiiMixShuffleSettings::instance());
     }
 }
 

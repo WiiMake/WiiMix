@@ -61,6 +61,7 @@ signals:
   void onUpdateBingoConfig(WiiMixBingoSettings* settings);
   void onUpdateBingoObjectives(WiiMixBingoSettings* settings);
   void onUpdateRogueObjectives(WiiMixRogueSettings* settings);
+  void onUpdateShuffleObjectives(WiiMixShuffleSettings* settings);
   void onGetPlayers(std::vector<WiiMixPlayer> players);
   void onGetPlayer(WiiMixPlayer player);
   void onGetObjectiveHistory(std::vector<WiiMixObjective> objectives);

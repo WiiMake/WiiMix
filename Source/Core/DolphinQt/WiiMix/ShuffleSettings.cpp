@@ -105,3 +105,21 @@ void WiiMixShuffleSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_sta
     Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, save_state_bank);
     // emit SettingsChanged(save_state_bank);
 }
+
+QJsonDocument WiiMixShuffleSettings::ToJson() {
+    QJsonObject obj = ToJsonCommon();
+    obj[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)] = m_number_of_switches;
+    obj[QStringLiteral(SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH)] = m_min_time_between_switch;
+    obj[QStringLiteral(SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH)] = m_max_time_between_switch;
+    obj[QStringLiteral(SHUFFLE_SETTINGS_IS_ENDLESS)] = m_endless;
+    return QJsonDocument(obj);
+}
+
+void WiiMixShuffleSettings::FromJson(QJsonDocument json) {
+    FromJsonCommon(json);
+    QJsonObject obj = json.object();
+    m_number_of_switches = obj[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt();
+    m_min_time_between_switch = obj[QStringLiteral(SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH)].toInt();
+    m_max_time_between_switch = obj[QStringLiteral(SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH)].toInt();
+    m_endless = obj[QStringLiteral(SHUFFLE_SETTINGS_IS_ENDLESS)].toBool();
+}

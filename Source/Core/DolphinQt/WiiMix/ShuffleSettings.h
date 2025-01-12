@@ -36,6 +36,11 @@ public:
     return s_instance;
   }
 
+  #define SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES "NUMBER_OF_SWITCHES"
+  #define SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH "MIN_TIME_BETWEEN_SWITCH"
+  #define SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH "MAX_TIME_BETWEEN_SWITCH"
+  #define SHUFFLE_SETTINGS_IS_ENDLESS "IS_ENDLESS"
+
   explicit WiiMixShuffleSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_SHUFFLE_DIFFICULTY,
       WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_SHUFFLE_SAVE_STATE_BANK,
       std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
@@ -54,6 +59,9 @@ public:
   bool GetEndless() const; // The user(s) can play as long as they want
   void SetEndless(bool value);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+
+  QJsonDocument ToJson();
+  void FromJson(QJsonDocument json);
 
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
 

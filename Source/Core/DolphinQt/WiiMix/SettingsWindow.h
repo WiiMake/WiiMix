@@ -37,6 +37,7 @@ signals:
 //   void showEvent(QShowEvent* event) override;
 
 private:
+  bool eventFilter(QObject* obj, QEvent* event) override;
   void LoadSettings();
   void SaveSettings();
 
