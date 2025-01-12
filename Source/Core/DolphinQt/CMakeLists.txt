@@ -16,7 +16,7 @@ foreach(line IN LISTS ENV_VARS)
 
     # Set system-level environment variable
     add_compile_definitions("${VAR_NAME}=${VAR_VALUE}")
-    message("SettingServer ${VAR_NAME}=${VAR_VALUE}") 
+    message("SettingServer ${VAR_NAME}=${VAR_VALUE}")
   endif()
 endforeach()
 
@@ -79,7 +79,7 @@ if (BUILD_WIIMIX_SERVER_ONLY)
 
   # The wiimix-server should be built with exceptions (for pqxx)
   # target_compile_options(wiimix-server PRIVATE -fexceptions)
-  
+
   # Install properties
   install(TARGETS wiimix-server RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 else()
@@ -424,6 +424,8 @@ else()
     WiiMix/RogueSettings.h
     WiiMix/RogueWindow.cpp
     WiiMix/RogueWindow.h
+		WiiMix/ShuffleGame.cpp
+		WiiMix/ShuffleGame.h
     WiiMix/SettingsWindow.cpp
     WiiMix/SettingsWindow.h
     WiiMix/ShuffleSettings.cpp
