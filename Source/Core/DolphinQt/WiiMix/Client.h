@@ -22,6 +22,7 @@
 
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
@@ -44,7 +45,7 @@ public:
   }
 
   // explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
-  
+
   // Simplified it to just sending and receiving settings and an action
   // The settings are encoded and decoded to and from json
 
