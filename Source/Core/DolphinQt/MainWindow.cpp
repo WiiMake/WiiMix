@@ -1035,32 +1035,15 @@ void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
 }
 
 void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings) {
-  // Start the wiimix
+   // Start the wiimix
   qDebug() << "Populating shuffle objectives";
   // Populate the objectives
   QJsonObject obj = settings->ToJson().object();
   obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
-  // m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES); TODOx: undo comment
-  qDebug() << "Populated shuffle objectives";
-  std::vector<WiiMixObjective> objectives = std::vector<WiiMixObjective>();
-  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
-  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
-  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
-  qDebug() << "Objectives size " << objectives.size();
-  settings->SetObjectives(objectives);
-  qDebug() << "Objectives set";
-  // connect swap and start objectives from shuffle game
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::StartObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective)>(&MainWindow::WiiMixStartObjective));
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::SwapObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective, WiiMixObjective)>(&MainWindow::WiiMixSwapObjective));
-  // connect achievements get
-  if (!m_achievements_window)
-  {
-    m_achievements_window = new AchievementsWindow(this);
-  }
-  qDebug() << "is nulptr " << !m_achievements_window;
-  connect(m_achievements_window, &AchievementsWindow::AchievementGet, WiiMixShuffleGame::instance(), &WiiMixShuffleGame::OnAchievementGet);
-  qDebug() << "Achievements connected";
-  WiiMixShuffleGame::instance()->StartShuffle();
+
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
