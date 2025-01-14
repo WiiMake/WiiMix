@@ -242,6 +242,8 @@ bool WiiMixClient::ConnectToServer() {
                 m_current_file++;
                 // Add the amount written to the total file size
                 m_files_size += m_file.size();
+                qDebug() << "Total file size: " << m_files_size;
+                qDebug() << "Data size - json size: " << m_data_size - m_json_size;
                 // Clear the file buffer in preparation for the new file
                 m_file = {};
             }
@@ -251,6 +253,19 @@ bool WiiMixClient::ConnectToServer() {
             }
         }
     });
+
+    // Check if all data has been read in AFTER the new file has been read in
+    if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
+        // Reset all data
+        qDebug() << "All data read in by client";
+        m_json_size = 0;
+        m_files_size = 0;
+        m_data_size = 0;
+        m_current_file = 0;
+        // if (m_files_size == 0) {
+        ReceiveData(m_json);
+        // }
+    }
 
     return true;
 }
@@ -303,6 +318,7 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         qDebug() << QStringLiteral("File read successfully");
     }
     else {
+        QJsonObject obj = json.object();
         m_data.append(json.toJson());
     }
 
