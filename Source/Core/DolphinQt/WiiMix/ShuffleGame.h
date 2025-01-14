@@ -12,33 +12,34 @@
 
 class WiiMixShuffleGame : public QObject
 {
-    Q_OBJECT
-public:
-    static WiiMixShuffleGame* instance() {
-        if (!m_instance) {
-            m_instance = new WiiMixShuffleGame();
+        Q_OBJECT
+    public:
+        static WiiMixShuffleGame* instance() {
+            if (!m_instance) {
+                m_instance = new WiiMixShuffleGame();
+            }
+            return m_instance;
         }
-        return m_instance;
-    }
-    void StartShuffle();
-    void StopShuffle();
-    void CreateShuffleConnections();
+        void StartShuffle();
+        void StopShuffle();
 
-signals:
-    void StartObjective(WiiMixObjective new_objective);
-    void SwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
-    void RestartObjective(WiiMixObjective new_objective);
-    void RestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+    signals:
+        void StartObjective(WiiMixObjective new_objective);
+        void SwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+        void RestartObjective(WiiMixObjective new_objective);
+        void RestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
 
-public slots:
-    void OnAchievementGet(std::set<uint32_t> achievements);
+    public slots:
+        void OnAchievementGet(std::set<uint32_t> achievements);
 
-private:
-    void NextRandomObjective();
-    void UpdateShuffle();
+    private:
+        void NextRandomObjective();
 
-    int32_t m_current_objective = -1;
-    QTimer* m_timer;
+        int32_t m_current_objective = -1;
+        QTimer* m_timer;
 
-    static WiiMixShuffleGame* m_instance;
+        static WiiMixShuffleGame* m_instance;
+    private slots:
+        void UpdateShuffle();
+
 };

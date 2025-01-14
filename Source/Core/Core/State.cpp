@@ -480,6 +480,7 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
   Core::RunOnCPUThread(
       system,
       [&] {
+        Core::safe_to_quit = false;
         {
           std::lock_guard lk_(s_state_writes_in_queue_mutex);
           ++s_state_writes_in_queue;
@@ -529,9 +530,10 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
           }
           Core::DisplayMessage("Unable to save: Internal DoState Error", 4000);
         }
+        Core::safe_to_quit = true;
       },
       true);
-  safe_to_quit = true;
+  // safe_to_quit = true;
 }
 
 static bool GetVersionFromLZO(StateHeader& header, File::IOFile& f)

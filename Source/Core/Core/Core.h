@@ -147,6 +147,8 @@ void SetState(Core::System& system, State state, bool report_state_change = true
               bool initial_execution_state = false);
 State GetState(Core::System& system);
 
+static bool safe_to_quit = true;
+
 void SaveScreenShot();
 void SaveScreenShot(std::string_view name);
 

@@ -549,6 +549,8 @@ void MainWindow::CreateComponents()
   m_cheats_manager = new CheatsManager(Core::System::GetInstance(), this);
   m_assembler_widget = new AssemblerWidget(this);
 
+  m_achievements_window = new AchievementsWindow(this); // i think this should fix the issue of achievements window not existing
+
   const auto request_watch = [this](QString name, u32 addr) {
     m_watch_widget->AddWatch(name, addr);
   };
@@ -929,12 +931,12 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective) {
 }
 
 void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string save_path) {
-  char buf[6];
-  sprintf(buf, "%d", new_objective.GetId());
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
+  // char buf[6];
+  // sprintf(buf, "%d", new_objective.GetId());
+  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
 
   if (!File::Exists(savestate_file)) {
-    savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
+    savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::to_string(new_objective.GetId())+ ".sav";
     if (!File::Exists(savestate_file)) {
       return;
     }
@@ -951,19 +953,16 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
 }
 
 void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
-  qDebug() << "Swap Objective";
-  char buf[6];
-  sprintf(buf, "%d", current_objective.GetId());
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
+  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(current_objective.GetId()) + ".sav";
   // dont stop the game if its the same game
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
-    State::SaveAs(Core::System::GetInstance(), savestate_file);
-    while (safe_to_quit == false)
-       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-    sprintf(buf, "%05d", new_objective.GetId());
-    savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
+    if (Core::safe_to_quit)
+      State::SaveAs(Core::System::GetInstance(), savestate_file);
+    while (Core::safe_to_quit == false)
+      QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
     if (!File::Exists(savestate_file)) {
-      savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
+      savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
       if (!File::Exists(savestate_file)) {
         return;
       }
@@ -998,7 +997,7 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObj
   std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
   if (Core::IsRunning(Core::System::GetInstance())) {
     State::SaveAs(Core::System::GetInstance(), savestate_file);
-    while (safe_to_quit == false)
+    while (Core::safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
   }
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
@@ -1041,10 +1040,26 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   // Populate the objectives
   QJsonObject obj = settings->ToJson().object();
   obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
+  // m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES); TODOx: undo comment
+  qDebug() << "Populated shuffle objectives";
+  std::vector<WiiMixObjective> objectives = std::vector<WiiMixObjective>();
+  objectives.push_back(WiiMixObjective(1337, "title", 2827, "GT4E52", 423522, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
+  objectives.push_back(WiiMixObjective(1338, "title", 9602, "GALE01", 427418, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
+  objectives.push_back(WiiMixObjective(1339, "title", 9602, "GALE01", 434618, std::vector<WiiMixEnums::ObjectiveType>(), "desc", std::vector<WiiMixEnums::GameGenre>(), WiiMixEnums::Difficulty::END, 0, "creator", WiiMixEnums::ObjectiveStatus::UNCOMPLETED, 0, 0, std::chrono::system_clock::now()));
+  qDebug() << "Objectives size " << objectives.size();
+  settings->SetObjectives(objectives);
+  qDebug() << "Objectives set";
+  // connect swap and start objectives from shuffle game
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::StartObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective)>(&MainWindow::WiiMixStartObjective));
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::SwapObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective, WiiMixObjective)>(&MainWindow::WiiMixSwapObjective));
-
+  // connect achievements get
+  if (!m_achievements_window)
+  {
+    m_achievements_window = new AchievementsWindow(this);
+  }
+  qDebug() << "is nulptr " << !m_achievements_window;
+  connect(m_achievements_window, &AchievementsWindow::AchievementGet, WiiMixShuffleGame::instance(), &WiiMixShuffleGame::OnAchievementGet);
+  qDebug() << "Achievements connected";
   WiiMixShuffleGame::instance()->StartShuffle();
 }
 
@@ -1442,16 +1457,17 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   {
     qDebug() << "saveas";
     std::cout << save_path << std::endl;
-    if (!save_path.empty() && safe_to_quit == true) {
+    if (!save_path.empty() && Core::safe_to_quit == true) {
       qDebug() << "saving state now";
       State::SaveAs(Core::System::GetInstance(), save_path);
     }
     qDebug() << "safe to quit";
-    while (safe_to_quit == false)
+    while (Core::safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     // ForceStop();
     RequestStop(); // for some reason (probably because its a stupid idea) force stop wasnt working. A custom stop function should be added in the future for speed.
     // As long as the shutdown isn't complete, we can't boot, so let's boot later
+    qDebug() << "AAAAAAAAAA STOPPING";
     m_pending_boot = std::move(parameters);
     return;
   }
@@ -1510,8 +1526,12 @@ void MainWindow::SetFullScreenResolution(bool fullscreen)
 
 void MainWindow::ShowRenderWidget()
 {
-  SetFullScreenResolution(true);
-  Host::GetInstance()->SetRenderFullscreen(true);
+  if (!m_render_widget->isFullScreen()) {
+      qDebug() << "showing render widget fullscreen stuff";
+      SetFullScreenResolution(true);
+      Host::GetInstance()->SetRenderFullscreen(true);
+      m_render_widget->showFullScreen();
+  }
   // return;
 
   if (Config::Get(Config::MAIN_RENDER_TO_MAIN))

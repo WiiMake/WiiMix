@@ -5,12 +5,20 @@ WiiMixShuffleGame* WiiMixShuffleGame::m_instance = nullptr;
 void WiiMixShuffleGame::StartShuffle()
 {
   // TODOx: not quite sure what else needs to be implimented here ~@gyoder
-  CreateShuffleConnections();
+  // CreateShuffleConnections();
+  if (WiiMixShuffleSettings::instance()->GetObjectives().empty()) {
+    qDebug() << "No objectives to shuffle";
+    return;
+  }
+  if (m_timer != nullptr) {
+    StopShuffle();
+  }
   UpdateShuffle();
 }
 
 void WiiMixShuffleGame::UpdateShuffle()
 {
+  qDebug() << "Updating shuffle";
   NextRandomObjective();
   int min_time_between_switch = WiiMixShuffleSettings::instance()->GetMinTimeBetweenSwitch();
   int max_time_between_switch = WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch();
@@ -28,11 +36,6 @@ void WiiMixShuffleGame::StopShuffle()
   m_timer->stop();
   delete m_timer;
   m_timer = nullptr;
-}
-
-void WiiMixShuffleGame::CreateShuffleConnections()
-{
-  connect(this, SIGNAL(AchievementGet(std::set<uint32_t>)), this, SLOT(OnAchievementGet(std::set<uint32_t>)));
 }
 
 void WiiMixShuffleGame::OnAchievementGet(std::set<uint32_t> achievements)
@@ -79,4 +82,5 @@ void WiiMixShuffleGame::NextRandomObjective()
             WiiMixShuffleSettings::instance()->GetObjectives()[m_current_objective]);
   }
   m_current_objective = next_objective_index;
+  // qDebug() << "Current objective: " << WiiMixShuffleSettings::instance()->GetObjectives()[m_current_objective].GetId();
 }
