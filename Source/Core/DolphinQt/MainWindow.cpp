@@ -549,7 +549,7 @@ void MainWindow::CreateComponents()
   m_cheats_manager = new CheatsManager(Core::System::GetInstance(), this);
   m_assembler_widget = new AssemblerWidget(this);
 
-  m_achievements_window = new AchievementsWindow(this); // i think this should fix the issue of achievements window not existing
+  // m_achievements_window = new AchievementsWindow(this); // i think this should fix the issue of achievements window not existing
 
   const auto request_watch = [this](QString name, u32 addr) {
     m_watch_widget->AddWatch(name, addr);
@@ -1047,67 +1047,73 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
-  // TODOx: this should probably be reviewed before release: @gyoder
   // Start the wiimix
   qDebug() << "Shuffle calls";
 
-  // get the game list from wiimixsettings
-  std::vector<UICommon::GameFile> m_game_list = m_wiimix_window->GetGamesList();
+  // get the objective list from wiimixsettings
+  std::vector<WiiMixObjective> objectives = settings->GetObjectives();
 
-  // if game is running safely shut it down
-  if (Core::GetState(Core::System::GetInstance()) == Core::State::Running)
-  {
-    RequestStop();
+  // launch a random game
+  if (Core::GetState(Core::System::GetInstance()) == Core::State::Uninitialized || Core::GetState(Core::System::GetInstance()) == Core::State::Paused) {
+    const std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
+    auto selection = games.at(rand() % games.size());
+    StartGame(selection->GetFilePath(), ScanForSecondDisc::No, std::make_unique<BootSessionData>());
   }
 
-  if (m_game_list.empty()) {
-    // if no games are selected, show a message box
-    ModalMessageBox::critical(this, tr("Error"), tr("No games selected"));
-    return;
-  }
+  // qDebug() << "Starting game: " << selection.GetGameID().c_str();
 
-  // get a random game from the list
-  UICommon::GameFile selection = m_game_list[rand() % m_game_list.size()];
-  UICommon::GameFile prev = selection;
-
-  qDebug() << "Starting game: " << selection.GetGameID().c_str();
-
-  //StartGame(selection.GetFilePath(), ScanForSecondDisc::No, std::make_unique<BootSessionData>());
-  StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
-                std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
-  qDebug() << "Started: " << selection.GetGameID().c_str();
-  int sleep_time = rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000) + settings->GetMinTimeBetweenSwitch() * 1000;
-  QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, m_game_list]() {
-    WiiMixShuffleUpdate(settings, selection, m_game_list);
+  // StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
+  //               std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
+  // qDebug() << "Started: " << selection.GetGameID().c_str();
+  int sleep_time = settings->GetMinTimeBetweenSwitch() * 1000 + (rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000));
+  int selection = rand() % objectives.size();
+  QTimer::singleShot(sleep_time, this, [this, settings, selection, objectives]() {
+    WiiMixShuffleUpdate(settings, selection, objectives);
   });
 }
 
-void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList) {
+void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, int selection, std::vector<WiiMixObjective> objectives) {
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Running)
   {
     return;
   }
-  UICommon::GameFile prev = selection;
-  selection = gameList[rand() % gameList.size()];
-  std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
-  BootSessionData boot_data;
-  if (selection.GetFilePath() == prev.GetFilePath()) {
-    State::SaveAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
-    State::LoadAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
+  // UICommon::GameFile prev = selection;
+  // selection = gameList[rand() % gameList.size()];
+  // std::string savestate_path = File::GetUserPath(D_WIIMIX_STATESAVES_IDX);
+  // BootSessionData boot_data;
+  // if (selection.GetFilePath() == prev.GetFilePath()) {
+  //   State::SaveAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
+  //   State::LoadAs(Core::System::GetInstance(), savestate_path + selection.GetGameID() + ".sav");
 
-  } else {
-    if (File::Exists(savestate_path + selection.GetGameID() + ".sav")) {
-      boot_data = BootSessionData(savestate_path + selection.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
-    } else {
-      boot_data = BootSessionData();
+  // } else {
+  //   if (File::Exists(savestate_path + selection.GetGameID() + ".sav")) {
+  //     boot_data = BootSessionData(savestate_path + selection.GetGameID() + ".sav", DeleteSavestateAfterBoot::No);
+  //   } else {
+  //     boot_data = BootSessionData();
+  //   }
+  //   StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
+  // }
+  WiiMixStartObjective(objectives[selection]);
+  int new_selection;
+  if (objectives.size() == 1) {
+    // Don't shuffle at all; this is the final objective
+    return;
+  }
+  else if (objectives.size() == 2) {
+    new_selection = selection == 0 ? 1 : 0;
+  }
+  else if (objectives.size() > 2) {
+    // Don't select the same objective twice in a row
+    new_selection = rand() % objectives.size();
+    // Technically this means that there's a higher likelihood of getting objectives one after the other, but that's ok
+    if (new_selection == selection) {
+      new_selection = (new_selection + 1) % objectives.size();
     }
-    StartGame(BootParameters::GenerateFromFile(selection.GetFilePath(), std::move(boot_data)), savestate_path + prev.GetGameID() + ".sav");
   }
   int sleep_time = rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000 + 1) + settings->GetMinTimeBetweenSwitch() * 1000;
-  QTimer::singleShot(sleep_time, this, [this, settings, selection, prev, gameList]() {
-    WiiMixShuffleUpdate(settings, selection, gameList);
+  QTimer::singleShot(sleep_time, this, [this, settings, new_selection, objectives]() {
+    WiiMixShuffleUpdate(settings, new_selection, objectives);
   });
-
 }
 
 void MainWindow::ShowWiiMixWindow() {

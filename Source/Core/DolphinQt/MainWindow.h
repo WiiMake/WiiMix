@@ -196,7 +196,7 @@ private:
   void StartWiiMixBingo(WiiMixBingoSettings* settings);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
-  void WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, UICommon::GameFile selection, std::vector<UICommon::GameFile> gameList);
+  void WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, int selection, std::vector<WiiMixObjective> objectives);
   // void WiiMixShowcase(WiiMixBingoSettings settings);
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);
