@@ -131,7 +131,7 @@ QJsonDocument WiiMixRogueSettings::ToJson()
     json[QStringLiteral(ROGUE_SETTINGS_SEED)] = m_seed;
     json[QStringLiteral(ROGUE_SETTINGS_DIFFICULTY)] = static_cast<int>(m_difficulty);
     json[QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(m_save_state_bank);
-
+    json[QStringLiteral(ROGUE_SETTINGS_LENGTH)] = static_cast<int>(m_length);
     return QJsonDocument(json);
 }
 
@@ -146,6 +146,9 @@ void WiiMixRogueSettings::FromJson(QJsonDocument json)
     }
     if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK))) {
         m_save_state_bank = static_cast<WiiMixEnums::SaveStateBank>(jsonObject[QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK)].toInt());
+    }
+    if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_LENGTH))) {
+        m_length = static_cast<WiiMixEnums::RogueLength>(jsonObject[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt());
     }
 }
 
@@ -277,4 +280,17 @@ std::vector<int> WiiMixRogueSettings::SeedToBossObjectives(QString seed) {
         }
     }
     return bossObjectives;
+}
+
+int WiiMixRogueSettings::LengthToNumObjectives(WiiMixEnums::RogueLength length) {
+    switch (length) {
+        case WiiMixEnums::RogueLength::SHORT:
+            return 5;
+        case WiiMixEnums::RogueLength::MEDIUM:
+            return 7;
+        case WiiMixEnums::RogueLength::MARATHON:
+            return 10;
+        default:
+            return -1;
+    }
 }

@@ -19,36 +19,66 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
       m_max_time_between_switch(max_time_between_switch),
       m_endless(endless)
 {
+    #ifdef QT_GUI_LIB
+        if (number_of_switches != DEFAULT_NUMBER_OF_SWITCHES) {
+            m_number_of_switches = number_of_switches;
+        } else if (Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES) != DEFAULT_NUMBER_OF_SWITCHES) {
+            m_number_of_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
+        } else {
+            m_number_of_switches = DEFAULT_NUMBER_OF_SWITCHES;
+        }
+    #endif
     if (number_of_switches != DEFAULT_NUMBER_OF_SWITCHES) {
         m_number_of_switches = number_of_switches;
-    } else if (Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES) != DEFAULT_NUMBER_OF_SWITCHES) {
-        m_number_of_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     } else {
         m_number_of_switches = DEFAULT_NUMBER_OF_SWITCHES;
     }
 
+    #ifdef QT_GUI_LIB
+        if (min_time_between_switch != DEFAULT_MIN_SWITCH_TIME) {
+            m_min_time_between_switch = min_time_between_switch;
+        } else if (Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH) != DEFAULT_MIN_SWITCH_TIME) {
+            m_min_time_between_switch = Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);
+        } else {
+            m_min_time_between_switch = DEFAULT_MIN_SWITCH_TIME;
+        }
+    #endif
     if (min_time_between_switch != DEFAULT_MIN_SWITCH_TIME) {
         m_min_time_between_switch = min_time_between_switch;
-    } else if (Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH) != DEFAULT_MIN_SWITCH_TIME) {
-        m_min_time_between_switch = Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);
     } else {
         m_min_time_between_switch = DEFAULT_MIN_SWITCH_TIME;
     }
     qDebug() << "min_time_between_switch: " << m_min_time_between_switch;
 
+    #ifdef QT_GUI_LIB
+        if (max_time_between_switch != DEFAULT_MAX_SWITCH_TIME) {
+            m_max_time_between_switch = max_time_between_switch;
+        } else if (Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH) != DEFAULT_MAX_SWITCH_TIME) {
+            m_max_time_between_switch = Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH);
+        } else {
+            m_max_time_between_switch = DEFAULT_MAX_SWITCH_TIME;
+        }
+    #endif
+
     if (max_time_between_switch != DEFAULT_MAX_SWITCH_TIME) {
         m_max_time_between_switch = max_time_between_switch;
-    } else if (Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH) != DEFAULT_MAX_SWITCH_TIME) {
-        m_max_time_between_switch = Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH);
     } else {
         m_max_time_between_switch = DEFAULT_MAX_SWITCH_TIME;
     }
     qDebug() << "max_time_between_switch: " << m_max_time_between_switch;
 
+    #ifdef QT_GUI_LIB
+        if (endless != DEFAULT_IS_ENDLESS) {
+            m_endless = endless;
+        } else if (Config::Get(Config::WIIMIX_IS_ENDLESS) != DEFAULT_IS_ENDLESS) {
+            m_endless = Config::Get(Config::WIIMIX_IS_ENDLESS);
+        } else {
+            m_endless = DEFAULT_IS_ENDLESS;
+        }
+    #endif
+
     if (endless != DEFAULT_IS_ENDLESS) {
         m_endless = endless;
-    } else if (Config::Get(Config::WIIMIX_IS_ENDLESS) != DEFAULT_IS_ENDLESS) {
-        m_endless = Config::Get(Config::WIIMIX_IS_ENDLESS);
     } else {
         m_endless = DEFAULT_IS_ENDLESS;
     }
@@ -96,13 +126,17 @@ void WiiMixShuffleSettings::SetEndless(bool value)
 
 void WiiMixShuffleSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
     m_difficulty = difficulty;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_DIFFICULTY, difficulty);
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_DIFFICULTY, difficulty);
+    #endif
     // emit SettingsChanged(difficulty);
 }
 
 void WiiMixShuffleSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) {
     m_save_state_bank = save_state_bank;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, save_state_bank);
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, save_state_bank);
+    #endif
     // emit SettingsChanged(save_state_bank);
 }
 

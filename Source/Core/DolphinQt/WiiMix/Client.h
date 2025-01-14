@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QByteArray>
 #include <QTimer>
+#include <QList>
 
 #include <iostream>
 #ifdef _WIN32
@@ -24,6 +25,7 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
+#include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/Player.h"
 
 // This is a file for syncing bingo cards between players
@@ -53,7 +55,7 @@ public:
   bool IsConnected() const;
   bool SendData(QJsonObject obj, WiiMixEnums::Action action);
   bool ReceiveData(QJsonDocument doc);
-  bool ReceiveData(QJsonDocument doc, std::vector<QByteArray> files);
+  // bool ReceiveData(QJsonDocument doc, std::vector<QByteArray> files);
   bool ConnectToServer();
   QTcpSocket* GetSocket();
 
@@ -69,6 +71,7 @@ signals:
   void onGetObjectives(std::vector<WiiMixObjective> objectives);
   // void onCalculatedTotalSize(int totalSize);
   void onBytesWritten(int bytesWritten, int totalBytes);
+  void onBytesRead(int bytesRead, int totalBytes);
 
   void onError(QString error);
 
@@ -85,7 +88,18 @@ protected:
 private:
   QTcpSocket* m_socket;
   qint64 m_bytes_written = 0;
+  // For writing
   QByteArray m_data = {};
+  // For reading
+  QJsonDocument m_json = {};
+  QByteArray m_json_buffer = {};
+  int m_data_size = 0;
+  int m_json_size = 0;
+  int m_files_size = 0;
+  QList<int> m_file_sizes = QList<int>();
+  QByteArray m_file = {};
+  int m_current_file = 0; 
+  std::vector<WiiMixObjective> m_objectives;
   //     std::list<WiiMixEnums::Player> m_players;
   //     std::list<WiiMixObjective> m_bingo_card;
   //     WiiMixEnums::BingoType m_bingo_type;

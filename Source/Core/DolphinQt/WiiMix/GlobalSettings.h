@@ -68,6 +68,7 @@ public:
   static std::vector<std::shared_ptr<const UICommon::GameFile>> GameIdsToGameFiles(std::string game_ids_list);
   static std::string GameFilesToGameIds(std::vector<std::shared_ptr<const UICommon::GameFile>> games);
   const std::vector<std::shared_ptr<const UICommon::GameFile>> GetGamesList() const;
+  const std::vector<std::shared_ptr<const UICommon::GameFile>> GetWiiMixGamesList() const;
 
   void SetCurrentObjective(int objective);
   int GetCurrentObjective();

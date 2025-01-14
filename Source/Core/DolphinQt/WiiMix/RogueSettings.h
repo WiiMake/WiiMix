@@ -38,6 +38,7 @@ public:
   #define ROGUE_SETTINGS_SEED "SEED"
   #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
   #define ROGUE_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
+  #define ROGUE_SETTINGS_LENGTH "LENGTH"
 
   // Seeds will be encoded and decoded using Qt
   QString GetSeed();
@@ -69,6 +70,7 @@ public:
 
   static QString LengthToString(WiiMixEnums::RogueLength length);
   static WiiMixEnums::RogueLength StringToLength(QString length);
+  static int LengthToNumObjectives(WiiMixEnums::RogueLength length);
 
   QList<WiiMixEnums::RogueEvent> GetEvents();
   WiiMixEnums::RogueEvent GetEvent();

@@ -166,6 +166,7 @@ QJsonDocument WiiMixBingoSettings::ToJson()
     json[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)] = m_lobby_id;
     json[QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
     json[QStringLiteral(BINGO_SETTINGS_SEED)] = m_seed;
+    json[QStringLiteral(BINGO_SETTINGS_PLAYER_NUM)] = static_cast<int>(m_player_num);
 
     return QJsonDocument(json);
 }
@@ -201,6 +202,7 @@ void WiiMixBingoSettings::FromJson(QJsonDocument json)
     m_lobby_id = obj[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)].toString();
     m_lobby_password = obj[QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD)].toString();
     m_seed = obj[QStringLiteral(BINGO_SETTINGS_SEED)].toString();
+    m_player_num = static_cast<WiiMixEnums::Player>(obj[QStringLiteral(BINGO_SETTINGS_PLAYER_NUM)].toInt());
 }
 
 QString WiiMixBingoSettings::GetSeed() {
@@ -303,4 +305,12 @@ bool WiiMixBingoSettings::VerifySeed(std::string seed) {
         }
     }
     return true;
+}
+
+void WiiMixBingoSettings::SetPlayerNum(WiiMixEnums::Player player) {
+    m_player_num = player;
+}
+
+WiiMixEnums::Player WiiMixBingoSettings::GetPlayerNum() {
+    return m_player_num;
 }
