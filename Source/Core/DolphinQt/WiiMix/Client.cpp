@@ -2,6 +2,7 @@
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 
 #include <QTcpSocket>
 #include <QJsonDocument>
@@ -258,6 +259,7 @@ bool WiiMixClient::ConnectToServer() {
     if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
         // Reset all data
         qDebug() << "All data read in by client";
+        emit onBytesRead(m_bytes_written, m_data_size);
         m_json_size = 0;
         m_files_size = 0;
         m_data_size = 0;
@@ -266,7 +268,7 @@ bool WiiMixClient::ConnectToServer() {
         ReceiveData(m_json);
         // }
     }
-
+    emit onBytesRead(m_bytes_written, m_data_size);
     return true;
 }
 
@@ -319,6 +321,11 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     }
     else {
         QJsonObject obj = json.object();
+        std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
+        qDebug() << "Games:";
+        for (const auto& game : games) {
+            qDebug() << QString::fromStdString(game->GetFileName());
+        }
         m_data.append(json.toJson());
     }
 

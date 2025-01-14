@@ -180,6 +180,10 @@ const std::vector<std::shared_ptr<const UICommon::GameFile>> WiiMixGlobalSetting
     return m_games;
 }
 
+const std::vector<std::shared_ptr<const UICommon::GameFile>> WiiMixGlobalSettings::GetWiiMixGamesList() const {
+    return m_wiimix_games;
+}
+
 QString WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode mode) {
     switch (mode)
     {
