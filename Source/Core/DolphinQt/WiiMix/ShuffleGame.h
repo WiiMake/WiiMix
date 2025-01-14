@@ -29,6 +29,7 @@ signals:
     void SwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
     void RestartObjective(WiiMixObjective new_objective);
     void RestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+    
 
 public slots:
     void OnAchievementGet(std::set<uint32_t> achievements);

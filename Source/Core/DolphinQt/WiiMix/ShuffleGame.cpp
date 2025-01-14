@@ -32,7 +32,7 @@ void WiiMixShuffleGame::StopShuffle()
 
 void WiiMixShuffleGame::CreateShuffleConnections()
 {
-  connect(this, SIGNAL(AchievementGet(std::set<uint32_t>)), this, SLOT(OnAchievementGet(std::set<uint32_t>)));
+  // connect(this, SIGNAL(AchievementGet(std::set<uint32_t>)), this, SLOT(OnAchievementGet(std::set<uint32_t>)));
 }
 
 void WiiMixShuffleGame::OnAchievementGet(std::set<uint32_t> achievements)

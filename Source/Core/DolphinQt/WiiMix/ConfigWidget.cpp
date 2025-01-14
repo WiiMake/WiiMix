@@ -73,6 +73,7 @@ void WiiMixConfigWidget::OnSettingsChanged(WiiMixBingoSettings *settings) {
     for (int i = 0; i < MAX_PLAYERS; i++) {
         if (m_players[static_cast<WiiMixEnums::Player>(i)].second == m_player_name) {
             m_player_num = i;
+            WiiMixBingoSettings::instance()->SetPlayerNum(static_cast<WiiMixEnums::Player>(m_player_num));
             break;
         }
     }
@@ -441,7 +442,7 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
-    QLabel*num_switches_label = new QLabel(tr("Number of Switches:"));
+    QLabel*num_switches_label = new QLabel(tr("Number of Objectives:"));
     m_num_switches = new QLineEdit();
     m_num_switches->setText(QString::number(num_switches));
     QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
@@ -843,14 +844,14 @@ void WiiMixConfigWidget::SetCardSize(int index) {
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
 void WiiMixConfigWidget::SetMinTimeBetweenSwitch(int min_time) {
     m_min_time_between_switch->setValue(min_time);
-    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(min_time));
+    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Shuffles: ") + QString::number(min_time));
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH, min_time);
 }
 
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
 void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
     m_max_time_between_switch->setValue(max_time);
-    m_min_switch_time_label->setText(QStringLiteral("Min Time Between Switches: ") + QString::number(max_time));
+    m_max_switch_time_label->setText(QStringLiteral("Max Time Between Shuffles: ") + QString::number(max_time));
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
 }
 

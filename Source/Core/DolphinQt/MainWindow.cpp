@@ -1045,7 +1045,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::StartObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective)>(&MainWindow::WiiMixStartObjective));
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::SwapObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective, WiiMixObjective)>(&MainWindow::WiiMixSwapObjective));
 
-  WiiMixShuffleGame::instance()->StartShuffle();
+  // WiiMixShuffleGame::instance()->StartShuffle();
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {

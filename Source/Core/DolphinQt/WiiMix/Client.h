@@ -92,10 +92,10 @@ private:
   QByteArray m_data = {};
   // For reading
   QJsonDocument m_json = {};
+  QByteArray m_json_buffer = {};
   int m_data_size = 0;
   int m_json_size = 0;
   int m_files_size = 0;
-  int m_current_pos = 0;
   QList<int> m_file_sizes = QList<int>();
   QByteArray m_file = {};
   int m_current_file = 0; 

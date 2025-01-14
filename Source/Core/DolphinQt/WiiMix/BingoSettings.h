@@ -46,6 +46,8 @@ public:
   #define BINGO_SETTINGS_CURRENT_OBJECTIVES "CURRENT_OBJECTIVES"
   #define BINGO_SETTINGS_PLAYERS_READY "PLAYERS_READY"
 
+  #define BINGO_SETTINGS_PLAYER_NUM "PLAYER_NUM"
+
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
   // Options are 3x3, 5x5, 7x7, but they correspond to 9, 25, 49
@@ -111,6 +113,9 @@ public:
 
   static int StringToCardSize(QString size);
 
+  void SetPlayerNum(WiiMixEnums::Player player);
+  WiiMixEnums::Player GetPlayerNum();
+
   // Bingo only really works over the internet, so when a settings file is shared
   // others can load it, and if they have a network connection plus the corresponding versions
   // of games satisfied by the objectives, they will be eligible to join. Otherwise, 
@@ -124,6 +129,7 @@ private:
   // TODOx: teams hasn't been tested at all
   bool m_teams;
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players = {};
+  WiiMixEnums::Player m_player_num = WiiMixEnums::Player::ONE;
   QMap<WiiMixEnums::Player, int> m_current_objectives = {};
   QMap<WiiMixEnums::Player, bool> m_players_ready = {};
   QString m_lobby_id = QStringLiteral("");

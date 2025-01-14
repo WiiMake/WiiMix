@@ -51,6 +51,26 @@ bool WiiMixClient::ConnectToServer() {
             qDebug() << m_socket->state();
         }
     }
+    connect(m_socket, &QTcpSocket::disconnected, this, [this]() {
+        qWarning() << "Disconnected from server";
+        // Try to reconnect
+        #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
+        // Use the loopback address for network testing
+            m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
+        #else
+            assert(false);
+        #endif
+        qDebug() << QStringLiteral("Attempting to reconnect client to server");
+        if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
+            qCritical() << "Failed to connect to server:" << m_socket->errorString();
+            // Emit a signal to the UI to display an error message
+            emit onError(QStringLiteral("Could not connect to the WiiMix server; WiiMix functionality will not work unless you are connected."));
+            return;
+        }
+        else {
+            qDebug() << m_socket->state();
+        }
+    }, Qt::UniqueConnection);
     connect(m_socket, &QTcpSocket::readyRead, this, [this]() {
         QByteArray data = m_socket->readAll();
 
@@ -65,7 +85,8 @@ bool WiiMixClient::ConnectToServer() {
         // Header format: [number of files]|[json size]|[file 1 size]|[file 2 size]|[file n size]{json}<file 1><file 2><file n>
         // This initializes the number of read bytes, as well as the significant delimiters
         // No files are read in this initial reading for convenience
-        if (m_json.isEmpty()) {
+        int current_pos = 0;
+        if (m_json_buffer.isEmpty() && m_json.isEmpty()) {
             int firstDelimiter = data.indexOf('|');
             int secondDelimiter = data.indexOf('|', firstDelimiter + 1);
 
@@ -77,10 +98,14 @@ bool WiiMixClient::ConnectToServer() {
             else {
                 qDebug() << "Parsing initial data";
                 qDebug() << data.left(100);
-                return;
             }
 
-            int numFiles = data.left(firstDelimiter).toInt();
+            bool ok0 = false;
+            int numFiles = data.left(firstDelimiter).toInt(&ok0);
+            if (!ok0) {
+                qWarning() << "Number of files is not a number";
+                return;
+            }
             
             QByteArray jsonSizeStr = data.mid(firstDelimiter + 1, secondDelimiter - firstDelimiter - 1);
 
@@ -93,16 +118,17 @@ bool WiiMixClient::ConnectToServer() {
             }
             m_json_size = jsonSize;
             m_data_size = jsonSize;
-        
+
             if (numFiles > 0) {
-                m_current_pos = secondDelimiter + 1;
+                qDebug() << "Starting to read in files";
+                current_pos = secondDelimiter + 1;
                 for (int i = 0; i < numFiles; ++i) {
-                    int nextDelimiter = data.indexOf('|', m_current_pos);
+                    int nextDelimiter = data.indexOf('|', current_pos);
                     if (nextDelimiter == -1) {
                         qWarning() << "Invalid message format for file sizes";
                         return;
                     }
-                    QByteArray fileSizeStr = data.mid(m_current_pos, nextDelimiter - m_current_pos);
+                    QByteArray fileSizeStr = data.mid(current_pos, nextDelimiter - current_pos);
                     bool ok2 = false;
                     int fileSize = fileSizeStr.toInt(&ok2);
                     if (!ok2) {
@@ -110,20 +136,19 @@ bool WiiMixClient::ConnectToServer() {
                         return;
                     }
                     m_file_sizes.append(fileSize);
-                    m_data_size += m_file_sizes[i];
-                    m_current_pos = nextDelimiter + 1;
+                    m_data_size += fileSize;
+                    current_pos = nextDelimiter + 1;
                 }
             }
 
-            // Read in the json
-            if (m_json_size > data.size()) {
-                // Need to reimplement this if this ever ends up being the case
-                qWarning() << "Json size is larger than the data; could not read in all of the data";
-                assert(false);
-            }
-            else {
-                QByteArray json = data.mid(m_current_pos, m_json_size);
-                m_json = QJsonDocument::fromJson(json);
+            // Read in as much of the json as possible
+            qDebug() << "starting to read in json";
+            m_json_buffer = data.mid(current_pos, m_json_size);
+
+            // If all the json was read in
+            // There's something off, but I'm not sure what it is
+            if (m_json_buffer.size() == m_json_size) {
+                m_json = QJsonDocument::fromJson(m_json_buffer);
                 // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
                 // As achievement ids should only be paired with objectives
                 for (int i = 0; i < m_json.array().size(); ++i) {
@@ -137,15 +162,50 @@ bool WiiMixClient::ConnectToServer() {
                     }
                 }
             }
+            // Increment by the amount read into the json buffer
+            current_pos += m_json_buffer.size();
+        }
+        
+        if (current_pos >= data.size()) {
+            return;
+        }
+        
+        if (m_json.isEmpty()) {
+            // Read in the remaining json
+            int remaining_bytes = data.size() - current_pos;
+            int remaining_json_size = m_json_size - m_json_buffer.size();
+            if (remaining_json_size > remaining_bytes) {
+                m_json_buffer.append(data.mid(current_pos, remaining_json_size));
+                return;
+            }
+            else {
+                m_json_buffer.append(data.mid(current_pos, remaining_json_size));
+                current_pos += remaining_json_size;
+                m_json = QJsonDocument::fromJson(m_json_buffer);
+                // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
+                // As achievement ids should only be paired with objectives
+                for (int i = 0; i < m_json.array().size(); ++i) {
+                    QJsonObject obj = m_json.array()[i].toObject();
+                    if (obj.contains(QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID))) {
+                        WiiMixObjective objective = WiiMixObjective::FromJson(obj);
+                        m_objectives.push_back(objective);
+                    }
+                    else {
+                        break;
+                    }
+                }
+                qDebug() << "Number of objectives" << m_objectives.size();
+                assert(m_objectives.size() > 0);
+            }
         }
         // Check if all data has been read in
         if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
             // Reset all data
             qDebug() << "All data read in by client";
             m_json_size = 0;
-            m_current_pos = 0;
             m_files_size = 0;
             m_data_size = 0;
+            m_current_file = 0;
             // if (m_files_size == 0) {
             ReceiveData(m_json);
             // }
@@ -154,27 +214,36 @@ bool WiiMixClient::ConnectToServer() {
             // read in for the current file
             // keeping track of m_current_pos and m_file_sizes to know which file is currently being read
             // If the file is completely read in, save it, increment the file counter, and clear the file buffer 
+            
+            // TODO: m_file_sizes is not correct
+            // m_file is not being reset correctly?
             int remaining_file_size = m_file_sizes[m_current_file] - m_file.size();
             if (remaining_file_size < 0) {
                 qWarning() << "File size is negative";
                 return;
             }
             int bytes_to_read = remaining_file_size;
-            if (bytes_to_read > data.size() - m_current_pos) {
-                bytes_to_read = data.size() - m_current_pos;
+            if (bytes_to_read > data.size() - current_pos) {
+                bytes_to_read = data.size() - current_pos;
             }
-            m_file.append(data.mid(m_current_pos, bytes_to_read));
-            m_current_pos += bytes_to_read;
+            m_file.append(data.mid(current_pos, bytes_to_read));
+            current_pos += bytes_to_read;
 
             if (m_file.size() == m_file_sizes[m_current_file]) {
                 // File completely read, save it
+                qDebug() << "Saving file";
                 QString file_path = QString::fromStdString(File::GetUserPath(D_WIIMIX_STATESAVES_IDX)) + QString::number(m_objectives[m_current_file].GetId()) + QStringLiteral(".sav");
+                qDebug() << "Saving file to " << file_path;
                 QFile file(file_path);
                 if (file.open(QIODevice::WriteOnly)) {
                     file.write(m_file);
                     file.close();
                 }
                 m_current_file++;
+                // Add the amount written to the total file size
+                m_files_size += m_file.size();
+                // Clear the file buffer in preparation for the new file
+                m_file = {};
             }
             else if (m_file.size() > m_file_sizes[m_current_file]) {
                 qWarning() << "File size is larger than expected";
@@ -392,6 +461,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         emit onGetObjectives(m_objectives);
     }
     else if (response == WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES) {
+        qDebug() << "Updating bingo objectives";
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
@@ -399,9 +469,17 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         //     objectives.push_back(objective);
         // }
         WiiMixBingoSettings::instance()->SetObjectives(m_objectives);
+        // onUpdateBingoObjectives only gets emitted by the last player, and so once all the players are ready
+        // the bingo will start
+        QMap<WiiMixEnums::Player, bool> players_ready = WiiMixBingoSettings::instance()->GetPlayersReady(); 
+        for (int player = 0; player < static_cast<int>(WiiMixEnums::Player::END); ++player) {
+            if (players_ready[static_cast<WiiMixEnums::Player>(player)] != true) return true;
+        }
+        // If all the players are ready, the bingos will start
         emit onUpdateBingoObjectives(WiiMixBingoSettings::instance());
     }
     else if (response == WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES) {
+        qDebug() << "Updating rogue objectives";
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
@@ -412,6 +490,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         emit onUpdateRogueObjectives(WiiMixRogueSettings::instance());
     }
     else if (response == WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES) {
+        qDebug() << "Updating shuffle objectives";
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
@@ -420,6 +499,9 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         // 
         WiiMixShuffleSettings::instance()->SetObjectives(m_objectives);
         emit onUpdateShuffleObjectives(WiiMixShuffleSettings::instance());
+    }
+    else {
+        qWarning() << "Invalid response from server " << static_cast<int>(response);
     }
     return true;
 }

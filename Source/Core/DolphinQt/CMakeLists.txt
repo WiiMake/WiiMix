@@ -63,6 +63,8 @@ if (BUILD_WIIMIX_SERVER_ONLY)
     WiiMix/Server/DBApi.h
     WiiMix/Server/Server.cpp
     WiiMix/Server/Server.h
+    WiiMix/ShuffleSettings.cpp
+    WiiMix/ShuffleSettings.h
   )
 
   # Set target properties for the executable
@@ -537,6 +539,8 @@ else()
       WiiMix/Server/DBApi.h
       WiiMix/Server/Server.cpp
       WiiMix/Server/Server.h
+      WiiMix/ShuffleSettings.cpp
+      WiiMix/ShuffleSettings.h
     )
 
     # Set target properties for the executable
