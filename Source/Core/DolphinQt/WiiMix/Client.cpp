@@ -73,6 +73,10 @@ bool WiiMixClient::ConnectToServer() {
         }
     });
     connect(m_socket, &QTcpSocket::readyRead, this, [this]() {
+        if (m_socket->state() == QAbstractSocket::UnconnectedState) {
+            qWarning() << "Client socket is not connected, not reading";
+            return;
+        }
         QByteArray data = m_socket->readAll();
 
         // The problem is the client resources are not consistent
@@ -399,6 +403,10 @@ void WiiMixClient::BytesWritten() {
     // qDebug() << "Bytes to write: " << m_socket->bytesToWrite();
     // qDebug() << "Bytes available: " << m_socket->bytesAvailable();
     // Check if all data has been sent
+    if (m_socket->state() == QAbstractSocket::UnconnectedState) {
+        qWarning() << "Client socket is not connected, not writing";
+        return;
+    }
     if (m_bytes_written >= m_data.size()) {
         qDebug() << "All data sent successfully!";
         emit onBytesWritten(m_bytes_written, m_data.size());
