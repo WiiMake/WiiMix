@@ -175,13 +175,8 @@ int WiiMixGlobalSettings::FindGameIndex(const std::string& path) const
     return -1;
 }
 
-
 const std::vector<std::shared_ptr<const UICommon::GameFile>> WiiMixGlobalSettings::GetGamesList() const {
     return m_games;
-}
-
-const std::vector<std::shared_ptr<const UICommon::GameFile>> WiiMixGlobalSettings::GetWiiMixGamesList() const {
-    return m_wiimix_games;
 }
 
 QString WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode mode) {

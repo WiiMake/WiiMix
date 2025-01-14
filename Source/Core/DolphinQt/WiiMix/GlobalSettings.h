@@ -112,7 +112,6 @@ protected:
 private:
   WiiMixEnums::Mode m_mode;
   std::vector<std::shared_ptr<const UICommon::GameFile>> m_games;
-  std::vector<std::shared_ptr<const UICommon::GameFile>> m_wiimix_games;
   int m_current_objective;
   WiiMixPlayer *m_player;
 };

@@ -322,11 +322,14 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     else {
         QJsonObject obj = json.object();
         std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
-        qDebug() << "Games:";
+        std::vector<std::shared_ptr<const UICommon::GameFile>> wiimix_games = {};
         for (const auto& game : games) {
-            qDebug() << QString::fromStdString(game->GetFileName());
+            if (game->GetWiiMix()) {
+                wiimix_games.push_back(game);
+            }
         }
-        m_data.append(json.toJson());
+        obj[QStringLiteral(COMMON_SETTINGS_GAMES_LIST)] = QString::fromStdString(WiiMixGlobalSettings::GameFilesToGameIds(wiimix_games));
+        m_data.append(QJsonDocument(obj).toJson());
     }
 
     qDebug() << m_data.left(20);
@@ -491,6 +494,10 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         //     WiiMixObjective objective = WiiMixObjective::FromJson(obj);
         //     objectives.push_back(objective);
         // }
+        if (m_objectives.size() < json[QStringLiteral(BINGO_SETTINGS_CARD_SIZE)].toInt()) {
+            ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
+            return false;
+        }
         WiiMixBingoSettings::instance()->SetObjectives(m_objectives);
         // onUpdateBingoObjectives only gets emitted by the last player, and so once all the players are ready
         // the bingo will start
@@ -503,6 +510,10 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     }
     else if (response == WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES) {
         qDebug() << "Updating rogue objectives";
+        if (m_objectives.size() < json[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt()) {
+            ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
+            return false;
+        }
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
@@ -514,6 +525,10 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     }
     else if (response == WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES) {
         qDebug() << "Updating shuffle objectives";
+        if (m_objectives.size() < json[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt()) {
+            ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
+            return false;
+        }
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
