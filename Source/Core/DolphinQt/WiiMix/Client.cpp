@@ -88,6 +88,7 @@ bool WiiMixClient::ConnectToServer() {
         // No files are read in this initial reading for convenience
         int current_pos = 0;
         if (m_json_buffer.isEmpty() && m_json.isEmpty()) {
+            qDebug() << "Reading initial data";
             int firstDelimiter = data.indexOf('|');
             int secondDelimiter = data.indexOf('|', firstDelimiter + 1);
 
@@ -147,9 +148,9 @@ bool WiiMixClient::ConnectToServer() {
             m_json_buffer = data.mid(current_pos, m_json_size);
 
             // If all the json was read in
-            // There's something off, but I'm not sure what it is
             if (m_json_buffer.size() == m_json_size) {
                 m_json = QJsonDocument::fromJson(m_json_buffer);
+                qDebug() << "Json array size: " << m_json.array().size();
                 // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
                 // As achievement ids should only be paired with objectives
                 for (int i = 0; i < m_json.array().size(); ++i) {
@@ -157,6 +158,9 @@ bool WiiMixClient::ConnectToServer() {
                     if (obj.contains(QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID))) {
                         WiiMixObjective objective = WiiMixObjective::FromJson(obj);
                         m_objectives.push_back(objective);
+                        if (i == 0) {
+                            qDebug() << "Response " << m_json.array()[0][QStringLiteral(CLIENT_RESPONSE)].toInt(); 
+                        }
                     }
                     else {
                         break;
@@ -190,6 +194,9 @@ bool WiiMixClient::ConnectToServer() {
                     if (obj.contains(QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID))) {
                         WiiMixObjective objective = WiiMixObjective::FromJson(obj);
                         m_objectives.push_back(objective);
+                        if (i == 0) {
+                            qDebug() << "Responser " << m_json.array()[0][QStringLiteral(CLIENT_RESPONSE)].toInt(); 
+                        }
                     }
                     else {
                         break;
@@ -253,22 +260,21 @@ bool WiiMixClient::ConnectToServer() {
                 assert(false);
             }
         }
-    });
-
-    // Check if all data has been read in AFTER the new file has been read in
-    if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
-        // Reset all data
-        qDebug() << "All data read in by client";
+        // Check if all data has been read in AFTER the new file has been read in
+        if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
+            // Reset all data
+            qDebug() << "All data read in by client";
+            emit onBytesRead(m_bytes_written, m_data_size);
+            m_json_size = 0;
+            m_files_size = 0;
+            m_data_size = 0;
+            m_current_file = 0;
+            // if (m_files_size == 0) {
+            ReceiveData(m_json);
+            // }
+        }
         emit onBytesRead(m_bytes_written, m_data_size);
-        m_json_size = 0;
-        m_files_size = 0;
-        m_data_size = 0;
-        m_current_file = 0;
-        // if (m_files_size == 0) {
-        ReceiveData(m_json);
-        // }
-    }
-    emit onBytesRead(m_bytes_written, m_data_size);
+    });
     return true;
 }
 
@@ -454,8 +460,14 @@ void WiiMixClient::BytesWritten() {
 }
 
 bool WiiMixClient::ReceiveData(QJsonDocument json) {
-    WiiMixEnums::Response response = static_cast<WiiMixEnums::Response>(json.object()[QStringLiteral(CLIENT_RESPONSE)].toInt());
-
+    WiiMixEnums::Response response;
+    if (json.object().contains(QStringLiteral(CLIENT_RESPONSE))) {
+        response = static_cast<WiiMixEnums::Response>(json.object()[QStringLiteral(CLIENT_RESPONSE)].toInt());
+    }
+    else {
+        response = static_cast<WiiMixEnums::Response>(json.array()[0].toObject()[QStringLiteral(CLIENT_RESPONSE)].toInt());
+    }
+    qDebug() << QStringLiteral("Received response ") << QString::number(static_cast<int>(response));
     if (response == WiiMixEnums::Response::UPDATE_BINGO_CONFIG) {
         // Update the settings
         WiiMixBingoSettings::instance()->FromJson(json);
