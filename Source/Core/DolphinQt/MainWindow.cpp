@@ -600,6 +600,7 @@ void MainWindow::ConnectWiiMix() {
   connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
   connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
+  connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
 }
 
 void MainWindow::ConnectMenuBar()
@@ -1965,7 +1966,6 @@ void MainWindow::StateSend(WiiMixObjective objective) {
 
   qDebug() << "Sending objective and state to the server";
   connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
-  connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
   // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
 
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
@@ -2004,7 +2004,7 @@ void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) 
 }
 
 void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-    printf("track state read progress in main window\n");
+    qDebug() << "track state read progress in main window";
     m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(bytesWritten, totalBytes);
     return;
 }

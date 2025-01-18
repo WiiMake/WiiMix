@@ -33,14 +33,19 @@ void FreeLookWidget::CreateLayout()
 {
   auto* layout = new QVBoxLayout();
 
+  // Disabled for save state compatibility reasons
   m_enable_freelook = new ToolTipCheckBox(tr("Enable"));
-  m_enable_freelook->setChecked(Config::Get(Config::FREE_LOOK_ENABLED));
-  m_enable_freelook->SetDescription(
-      tr("Allows manipulation of the in-game camera.<br><br><dolphin_emphasis>If unsure, "
-         "leave this unchecked.</dolphin_emphasis>"));
+  m_enable_freelook->setCheckable(false);
+  m_enable_freelook->setEnabled(false);
+  m_enable_freelook->SetDescription(tr("Disabled for save state compatibility reasons"));
+  // m_enable_freelook->setChecked(Config::Get(Config::FREE_LOOK_ENABLED));
+  // m_enable_freelook->SetDescription(
+  //     tr("Allows manipulation of the in-game camera.<br><br><dolphin_emphasis>If unsure, "
+  //        "leave this unchecked.</dolphin_emphasis>"));
 #ifdef USE_RETRO_ACHIEVEMENTS
   const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
-  m_enable_freelook->setEnabled(!hardcore);
+  // m_enable_freelook->setEnabled(!hardcore);
+  m_enable_freelook->setEnabled(false);
 #endif  // USE_RETRO_ACHIEVEMENTS
   m_freelook_controller_configure_button = new NonDefaultQPushButton(tr("Configure Controller"));
 
@@ -110,15 +115,15 @@ void FreeLookWidget::OnFreeLookControllerConfigured()
 
 void FreeLookWidget::LoadSettings()
 {
-  const bool checked = Config::Get(Config::FREE_LOOK_ENABLED);
-  m_enable_freelook->setChecked(checked);
+  // const bool checked = Config::Get(Config::FREE_LOOK_ENABLED);
+  m_enable_freelook->setChecked(false);
 #ifdef USE_RETRO_ACHIEVEMENTS
   const bool hardcore = AchievementManager::GetInstance().IsHardcoreModeActive();
-  m_enable_freelook->setEnabled(!hardcore);
+  m_enable_freelook->setEnabled(false);
 #endif  // USE_RETRO_ACHIEVEMENTS
-  m_freelook_control_type->setEnabled(checked);
-  m_freelook_controller_configure_button->setEnabled(checked);
-  m_freelook_background_input->setEnabled(checked);
+  m_freelook_control_type->setEnabled(false);
+  m_freelook_controller_configure_button->setEnabled(false);
+  m_freelook_background_input->setEnabled(false);
 }
 
 void FreeLookWidget::SaveSettings()
