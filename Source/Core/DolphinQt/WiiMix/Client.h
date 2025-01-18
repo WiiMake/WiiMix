@@ -72,10 +72,10 @@ signals:
   // void onCalculatedTotalSize(int totalSize);
   void onBytesWritten(int bytesWritten, int totalBytes);
   void onBytesRead(int bytesRead, int totalBytes);
-
   void onError(QString error);
 
 public slots:
+  void BytesRead();
   void BytesWritten();
 
 protected:

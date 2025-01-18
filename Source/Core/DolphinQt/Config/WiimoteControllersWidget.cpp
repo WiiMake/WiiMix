@@ -104,6 +104,9 @@ void WiimoteControllersWidget::CreateLayout()
   m_wiimote_box->setLayout(m_wiimote_layout);
 
   m_wiimote_passthrough = new QRadioButton(tr("Passthrough a Bluetooth adapter"));
+  m_wiimote_passthrough->setEnabled(false);
+  m_wiimote_passthrough->setToolTip(tr("Disabled for save state compatibility"));
+  m_wiimote_passthrough->setCheckable(false);
   m_wiimote_sync = new NonDefaultQPushButton(tr("Sync"));
   m_wiimote_reset = new NonDefaultQPushButton(tr("Reset"));
   m_wiimote_refresh = new NonDefaultQPushButton(tr("Refresh"));
@@ -283,10 +286,11 @@ void WiimoteControllersWidget::LoadSettings(Core::State state)
   SignalBlocking(m_wiimote_continuous_scanning)
       ->setChecked(Config::Get(Config::MAIN_WIIMOTE_CONTINUOUS_SCANNING));
 
-  if (Config::Get(Config::MAIN_BLUETOOTH_PASSTHROUGH_ENABLED))
-    SignalBlocking(m_wiimote_passthrough)->setChecked(true);
-  else
-    SignalBlocking(m_wiimote_emu)->setChecked(true);
+  // Disabled for save state compatibility
+  // if (Config::Get(Config::MAIN_BLUETOOTH_PASSTHROUGH_ENABLED))
+    // SignalBlocking(m_wiimote_passthrough)->setChecked(true);
+  // else
+  SignalBlocking(m_wiimote_emu)->setChecked(false);
 
   // Make sure continuous scanning setting is applied.
   WiimoteReal::Initialize(::Wiimote::InitializeMode::DO_NOT_WAIT_FOR_WIIMOTES);
@@ -294,7 +298,7 @@ void WiimoteControllersWidget::LoadSettings(Core::State state)
   const bool running = state != Core::State::Uninitialized;
 
   m_wiimote_emu->setEnabled(!running);
-  m_wiimote_passthrough->setEnabled(!running);
+  m_wiimote_passthrough->setEnabled(false);
 
   const bool running_gc = running && !Core::System::GetInstance().IsWii();
   const bool enable_passthrough = m_wiimote_passthrough->isChecked() && !running_gc;
@@ -339,8 +343,9 @@ void WiimoteControllersWidget::SaveSettings()
                              m_wiimote_ciface->isChecked());
     Config::SetBaseOrCurrent(Config::MAIN_WIIMOTE_CONTINUOUS_SCANNING,
                              m_wiimote_continuous_scanning->isChecked());
+    // Disabled for save state compatibility
     Config::SetBaseOrCurrent(Config::MAIN_BLUETOOTH_PASSTHROUGH_ENABLED,
-                             m_wiimote_passthrough->isChecked());
+                             false);
 
     const WiimoteSource bb_source =
         m_wiimote_real_balance_board->isChecked() ? WiimoteSource::Real : WiimoteSource::None;

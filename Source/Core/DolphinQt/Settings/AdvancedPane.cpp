@@ -66,10 +66,14 @@ void AdvancedPane::CreateLayout()
     m_cpu_emulation_engine_combobox->addItem(tr(CPU_CORE_NAMES.at(cpu_core)));
   }
 
+  // Disabled for save state compatibility
   m_enable_mmu_checkbox = new ConfigBool(tr("Enable MMU"), Config::MAIN_MMU);
-  m_enable_mmu_checkbox->SetDescription(
-      tr("Enables the Memory Management Unit, needed for some games. (ON = Compatible, OFF = "
-         "Fast)<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
+  m_enable_mmu_checkbox->setEnabled(false);
+  m_enable_mmu_checkbox->setCheckable(false);
+  m_enable_mmu_checkbox->SetDescription(tr("Disabled for save state compatibility"));
+  // m_enable_mmu_checkbox->SetDescription(
+  //     tr("Enables the Memory Management Unit, needed for some games. (ON = Compatible, OFF = "
+  //        "Fast)<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
   cpu_options_group_layout->addWidget(m_enable_mmu_checkbox);
 
   m_pause_on_panic_checkbox = new ConfigBool(tr("Pause on Panic"), Config::MAIN_PAUSE_ON_PANIC);
@@ -252,7 +256,8 @@ void AdvancedPane::Update()
       m_cpu_emulation_engine_combobox->setCurrentIndex(int(i));
   }
   m_cpu_emulation_engine_combobox->setEnabled(!running);
-  m_enable_mmu_checkbox->setEnabled(!running);
+  // Disabled for save state compatibility
+  m_enable_mmu_checkbox->setEnabled(false);
   m_pause_on_panic_checkbox->setEnabled(!running);
 
   {

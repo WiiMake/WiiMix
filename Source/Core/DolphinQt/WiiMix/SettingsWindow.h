@@ -9,6 +9,7 @@
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include "DolphinQt/WiiMix/Client.h"
+#include "WiiMixButton.h"
 
 
 class WiiMixModesWidget;
@@ -24,6 +25,7 @@ public:
   explicit WiiMixSettingsWindow(QWidget* parent);
   void CreateLayout(WiiMixEnums::Mode mode);
   void ClearLayout(QLayout *layout);
+  WiiMixLogoButton* getWiiMixLogoButton();
 
   std::vector<UICommon::GameFile> GetGamesList();
 
@@ -48,7 +50,7 @@ private:
   // QDialogButtonBox* m_save_button_box;
   QPushButton* m_load_button_box;
   QPushButton* m_save_button_box;
-  QToolButton* m_wii_mix_button;
+  WiiMixLogoButton* m_wii_mix_button;
 
   WiiMixModesWidget *m_modes;
   WiiMixConfigWidget* m_config;

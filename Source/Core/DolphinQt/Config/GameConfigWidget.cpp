@@ -94,6 +94,9 @@ void GameConfigWidget::CreateWidgets()
 
   m_enable_dual_core = new QCheckBox(tr("Enable Dual Core"));
   m_enable_mmu = new QCheckBox(tr("Enable MMU"));
+  m_enable_mmu->setEnabled(false);
+  m_enable_mmu->setCheckable(false);
+  m_enable_mmu->setToolTip(tr("Disabled for save state compatibility"));
   m_enable_fprf = new QCheckBox(tr("Enable FPRF"));
   m_sync_gpu = new QCheckBox(tr("Synchronize GPU thread"));
   m_emulate_disc_speed = new QCheckBox(tr("Emulate Disc Speed"));
@@ -104,9 +107,8 @@ void GameConfigWidget::CreateWidgets()
   for (const auto& item : {tr("Not Set"), tr("auto"), tr("none"), tr("fake-completion")})
     m_deterministic_dual_core->addItem(item);
 
-  m_enable_mmu->setToolTip(tr(
-      "Enables the Memory Management Unit, needed for some games. (ON = Compatible, OFF = Fast)"));
-
+  // m_enable_mmu->setToolTip(tr(
+  //     "Enables the Memory Management Unit, needed for some games. (ON = Compatible, OFF = Fast)"));
   m_enable_fprf->setToolTip(tr("Enables Floating Point Result Flag calculation, needed for a few "
                                "games. (ON = Compatible, OFF = Fast)"));
   m_sync_gpu->setToolTip(tr("Synchronizes the GPU and CPU threads to help prevent random freezes "
@@ -173,7 +175,7 @@ void GameConfigWidget::CreateWidgets()
   general_layout->addWidget(m_refresh_config, 1, 0, 1, -1);
 
   for (QCheckBox* item :
-       {m_enable_dual_core, m_enable_mmu, m_enable_fprf, m_sync_gpu, m_emulate_disc_speed,
+       {m_enable_dual_core, m_enable_fprf, m_sync_gpu, m_emulate_disc_speed,
         m_use_dsp_hle, m_manual_texture_sampling, m_use_monoscopic_shadows})
     item->setTristate(true);
 
@@ -246,6 +248,12 @@ void GameConfigWidget::LoadCheckBox(QCheckBox* checkbox, const std::string& sect
 void GameConfigWidget::SaveCheckBox(QCheckBox* checkbox, const std::string& section,
                                     const std::string& key, bool reverse)
 {
+  // Disabled MMU for save state compatibility
+  if (key == "MMU") {
+    m_gameini_local.GetOrCreateSection(section)->Set(key, false);
+    return;
+  }
+
   // Delete any existing entries from the local gameini if checkbox is undetermined.
   // Otherwise, write the current value to the local gameini if the value differs from the default
   // gameini values.

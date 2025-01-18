@@ -52,7 +52,13 @@ void AudioPane::CreateWidgets()
   dsp_box->setLayout(dsp_layout);
   m_dsp_hle = new QRadioButton(tr("DSP HLE (recommended)"));
   m_dsp_lle = new QRadioButton(tr("DSP LLE Recompiler (slow)"));
+  m_dsp_lle->setEnabled(false);
+  m_dsp_lle->setCheckable(false);
+  m_dsp_lle->setToolTip(tr("LLE Recompiler is disabled to ensure save state compatibility."));
   m_dsp_interpreter = new QRadioButton(tr("DSP LLE Interpreter (very slow)"));
+  m_dsp_interpreter->setEnabled(false);
+  m_dsp_interpreter->setCheckable(false);
+  m_dsp_interpreter->setToolTip(tr("LLE Interpreter is disabled to ensure save state compatibility."));
 
   dsp_layout->addStretch(1);
   dsp_layout->addWidget(m_dsp_hle);
@@ -203,11 +209,16 @@ void AudioPane::LoadSettings()
   {
     m_dsp_hle->setChecked(true);
   }
-  else
-  {
-    m_dsp_lle->setChecked(Config::Get(Config::MAIN_DSP_JIT));
-    m_dsp_interpreter->setChecked(!Config::Get(Config::MAIN_DSP_JIT));
-  }
+  // else
+  // {
+    // m_dsp_lle->setChecked(Config::Get(Config::MAIN_DSP_JIT));
+    m_dsp_lle->setChecked(false);
+    m_dsp_lle->setCheckable(false);
+    // m_dsp_interpreter->setChecked(!Config::Get(Config::MAIN_DSP_JIT));
+    m_dsp_interpreter->setChecked(false);
+    m_dsp_interpreter->setCheckable(false);
+
+  // }
 
   // Backend
   const auto current = Config::Get(Config::MAIN_AUDIO_BACKEND);
@@ -268,14 +279,17 @@ void AudioPane::SaveSettings()
 {
   auto& settings = Settings::Instance();
 
-  // DSP
-  if (Config::Get(Config::MAIN_DSP_HLE) != m_dsp_hle->isChecked() ||
-      Config::Get(Config::MAIN_DSP_JIT) != m_dsp_lle->isChecked())
-  {
-    OnDspChanged();
-  }
-  Config::SetBaseOrCurrent(Config::MAIN_DSP_HLE, m_dsp_hle->isChecked());
-  Config::SetBaseOrCurrent(Config::MAIN_DSP_JIT, m_dsp_lle->isChecked());
+  // DSP; commented out for save state compatibility
+  // HLE will always be true
+  // if (Config::Get(Config::MAIN_DSP_HLE) != m_dsp_hle->isChecked() ||
+  //     Config::Get(Config::MAIN_DSP_JIT) != m_dsp_lle->isChecked())
+  // {
+  //   OnDspChanged();
+  // }
+  // Config::SetBaseOrCurrent(Config::MAIN_DSP_HLE, m_dsp_hle->isChecked());
+  Config::SetBaseOrCurrent(Config::MAIN_DSP_HLE, true);
+  // Config::SetBaseOrCurrent(Config::MAIN_DSP_JIT, m_dsp_lle->isChecked());
+  Config::SetBaseOrCurrent(Config::MAIN_DSP_JIT, false);
 
   // Backend
   const auto selection =
@@ -378,8 +392,8 @@ void AudioPane::OnBackendChanged()
 void AudioPane::OnEmulationStateChanged(bool running)
 {
   m_dsp_hle->setEnabled(!running);
-  m_dsp_lle->setEnabled(!running);
-  m_dsp_interpreter->setEnabled(!running);
+  m_dsp_lle->setEnabled(false);
+  m_dsp_interpreter->setEnabled(false);
   m_backend_label->setEnabled(!running);
   m_backend_combo->setEnabled(!running);
   if (AudioCommon::SupportsDPL2Decoder(Config::Get(Config::MAIN_AUDIO_BACKEND)) &&

@@ -15,3 +15,6 @@
 [] - Polish player account windows (i.e. support for profile pics)
 [] - Leaderboard on the WiiMix website
 [] - Integrate bingo board
+[] - Multiplayer objectives
+[] - Investigate Save State/Retroachievement Compatibility perhaps? Probably unlikely that we'll be able to update retroachievements or Dolphin because of changes to save states breaking all objectives, but if there was a way to update them then that would be awesome
+[] - GBA roms save state compatibility

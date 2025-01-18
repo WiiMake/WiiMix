@@ -27,6 +27,10 @@
 #include <iostream>
 #include <QGraphicsDropShadowEffect>
 
+WiiMixLogoButton* WiiMixSettingsWindow::getWiiMixLogoButton() {
+    return m_wii_mix_button;
+}
+
 WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
 {
   setWindowTitle(tr("WiiMix"));
@@ -60,7 +64,7 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   m_save_button_box->setGraphicsEffect(effect2);
   m_save_button_box->setText(QStringLiteral("Save"));
   m_save_button_box->setCursor(Qt::PointingHandCursor);
-  m_wii_mix_button = new QToolButton();
+  m_wii_mix_button = new WiiMixLogoButton();
   // m_wii_mix_button->setAttribute(Qt::WA_TranslucentBackground);
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
   m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
