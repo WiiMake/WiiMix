@@ -218,7 +218,7 @@ void WiiMixClient::BytesRead() {
     if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
         // Reset all data
         qDebug() << "All data read in by client";
-        emit onBytesRead(m_bytes_written, m_data_size);
+        emit onBytesRead(m_files_size + m_json_size, m_data_size);
         m_json_size = 0;
         m_files_size = 0;
         m_data_size = 0;
@@ -274,7 +274,7 @@ void WiiMixClient::BytesRead() {
     if (!m_json.isEmpty() && m_files_size >= m_data_size - m_json_size) {
         // Reset all data
         qDebug() << "All data read in by client";
-        emit onBytesRead(m_bytes_written, m_data_size);
+        emit onBytesRead(m_files_size + m_json_size, m_data_size);
         m_json_size = 0;
         m_files_size = 0;
         m_data_size = 0;
@@ -284,7 +284,7 @@ void WiiMixClient::BytesRead() {
         return;
         // }
     }
-    emit onBytesRead(m_bytes_written, m_data_size);
+    emit onBytesRead(m_files_size + m_json_size, m_data_size);
 }
 
 bool WiiMixClient::IsConnected() const {
