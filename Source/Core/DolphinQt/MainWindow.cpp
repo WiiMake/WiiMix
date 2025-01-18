@@ -817,8 +817,8 @@ void MainWindow::ConnectRenderWidget()
   m_render_widget->hide();
   connect(m_render_widget, &RenderWidget::Closed, this, &MainWindow::ForceStop);
   connect(m_render_widget, &RenderWidget::FocusChanged, this, [this](bool focus) {
-    //if (m_render_widget->isFullScreen())
-    //  SetFullScreenResolution(focus);
+    if (m_render_widget->isFullScreen())
+     SetFullScreenResolution(focus);
   });
 }
 
@@ -941,7 +941,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       return;
     }
   }
-  ShowRenderWidget();
+  // ShowRenderWidget();
   std::vector<UICommon::GameFile> game_list = m_wiimix_window->GetGamesList();
   for (UICommon::GameFile game : game_list) {
     if (game.GetGameID() == new_objective.GetGameId()) {
@@ -956,8 +956,10 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
   std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(current_objective.GetId()) + ".sav";
   // dont stop the game if its the same game
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
-    if (Core::safe_to_quit)
+    if (Core::safe_to_quit) {
+      qDebug() << "Saving state to:" << QString::fromStdString(savestate_file);
       State::SaveAs(Core::System::GetInstance(), savestate_file);
+    }
     while (Core::safe_to_quit == false)
       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
@@ -1048,6 +1050,8 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
   // Start the wiimix
+  WiiMixShuffleGame::instance()->StartShuffle();
+  return;
   qDebug() << "Shuffle calls";
 
   // get the objective list from wiimixsettings
@@ -1331,7 +1335,7 @@ bool MainWindow::RequestStop()
 void MainWindow::ForceStop()
 {
   Core::Stop(Core::System::GetInstance());
-  HideRenderWidget(true, true);
+  // HideRenderWidget(true, true);
 }
 
 void MainWindow::Reset()
@@ -1445,12 +1449,12 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   if (Core::GetState(Core::System::GetInstance()) != Core::State::Uninitialized)
   {
     qDebug() << "saveas";
-    std::cout << save_path << std::endl;
+    // std::cout << save_path << std::endl;
     if (!save_path.empty() && Core::safe_to_quit == true) {
-      qDebug() << "saving state now";
+      qDebug() << "saving state now: " << save_path;
       State::SaveAs(Core::System::GetInstance(), save_path);
     }
-    qDebug() << "safe to quit";
+    qDebug() << "AAAAAAAAAAAAAA     just saved";
     while (Core::safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     // ForceStop();
@@ -1461,8 +1465,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     return;
   }
 
-  // We need the render widget before booting.
-  ShowRenderWidget();
 
   // Boot up, show an error if it fails to load the game.
   if (!BootManager::BootCore(Core::System::GetInstance(), std::move(parameters),
@@ -1482,6 +1484,21 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     m_fullscreen_requested = true;
 
   //StateLoadSlotAt(1);
+  // We need the render widget before booting.
+
+  QTimer::singleShot(10000, this, [this] {
+    // if (!m_render_widget->isFullScreen())
+    //   ShowRenderWidget();
+
+    // SetFullScreenResolution(false);
+    SetFullScreenResolution(true);
+    m_render_widget->showFullScreen();
+    // Host::GetInstance()->SetRenderFullscreen(false);
+    Host::GetInstance()->SetRenderFullscreen(true);
+    Config::Set(Config::LayerType::Base, Config::MAIN_FULLSCREEN_DISPLAY_RES, "FullscreenDisplayRes");
+    qDebug() << Config::Get(Config::MAIN_FULLSCREEN_DISPLAY_RES).c_str();
+  });
+
 
 }
 
@@ -1515,12 +1532,7 @@ void MainWindow::SetFullScreenResolution(bool fullscreen)
 
 void MainWindow::ShowRenderWidget()
 {
-  if (!m_render_widget->isFullScreen()) {
-      qDebug() << "showing render widget fullscreen stuff";
-      SetFullScreenResolution(true);
-      Host::GetInstance()->SetRenderFullscreen(true);
-      m_render_widget->showFullScreen();
-  }
+
   // return;
 
   if (Config::Get(Config::MAIN_RENDER_TO_MAIN))
@@ -1543,6 +1555,13 @@ void MainWindow::ShowRenderWidget()
     m_render_widget->showNormal();
     m_render_widget->restoreGeometry(m_render_widget_geometry);
   }
+
+  if (m_render_widget->isFullScreen());
+    m_render_widget_geometry = m_render_widget->saveGeometry();
+
+  SetFullScreenResolution(true);
+
+  m_render_widget->showFullScreen();
 }
 
 void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
@@ -1575,8 +1594,9 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
     m_render_widget->installEventFilter(this);
     connect(m_render_widget, &RenderWidget::Closed, this, &MainWindow::ForceStop);
     connect(m_render_widget, &RenderWidget::FocusChanged, this, [this](bool focus) {
-      //if (m_render_widget->isFullScreen())
-        //SetFullScreenResolution(focus);
+      qDebug() << Config::Get(Config::MAIN_FULLSCREEN_DISPLAY_RES).c_str();
+      if (m_render_widget->isFullScreen())
+        SetFullScreenResolution(focus);
     });
 
     // The controller interface will still be registered to the old render widget, if the core

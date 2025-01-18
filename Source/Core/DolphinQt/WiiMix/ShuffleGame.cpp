@@ -23,6 +23,7 @@ void WiiMixShuffleGame::UpdateShuffle()
   int min_time_between_switch = WiiMixShuffleSettings::instance()->GetMinTimeBetweenSwitch();
   int max_time_between_switch = WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch();
   m_timer = new QTimer(this);
+  m_timer->setSingleShot(true);
   connect(m_timer, SIGNAL(timeout()), this, SLOT(UpdateShuffle()));
   std::random_device rd;
   std::mt19937 g(rd());

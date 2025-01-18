@@ -53,8 +53,8 @@ RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
 
   connect(Host::GetInstance(), &Host::RequestTitle, this, &RenderWidget::setWindowTitle);
   connect(Host::GetInstance(), &Host::RequestRenderSize, this, [this](int w, int h) {
-    //if (!Config::Get(Config::MAIN_RENDER_WINDOW_AUTOSIZE) || isFullScreen() || isMaximized())
-    //  return;
+    if (!Config::Get(Config::MAIN_RENDER_WINDOW_AUTOSIZE) || isFullScreen() || isMaximized())
+     return;
 
     const auto dpr = window()->windowHandle()->screen()->devicePixelRatio();
 
@@ -215,7 +215,10 @@ void RenderWidget::showFullScreen()
   QScreen* screen = window()->windowHandle()->screen();
 
   const auto dpr = screen->devicePixelRatio();
-
+  resize(width(), height());
+  qDebug() << "dpr: " << dpr;
+  qDebug() << "width: " << width();
+  qDebug() << "height: " << height();
   emit SizeChanged(width() * dpr, height() * dpr);
 }
 

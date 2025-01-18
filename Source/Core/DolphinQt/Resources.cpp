@@ -24,7 +24,7 @@ QList<QIcon> Resources::m_misc;
 
 QIcon Resources::LoadNamedIcon(std::string_view name, const QString& dir)
 {
-  qDebug() << "Loading icon:" << QString::fromStdString(std::string(name)) << "from directory:" << dir;
+  // qDebug() << "Loading icon:" << QString::fromStdString(std::string(name)) << "from directory:" << dir;
   const QString base_path = dir + QLatin1Char{'/'} + QString::fromLatin1(name);
   const QString svg_path = base_path + QStringLiteral(".svg");
 
