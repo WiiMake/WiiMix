@@ -1,6 +1,14 @@
 #pragma once
 
 #include <QFrame>
+#include <QToolButton>
+
+class WiiMixLogoButton : public QToolButton {
+    int progress_width;
+    void paintEvent(QPaintEvent *event) override;
+public:
+    void trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes);
+};
 
 class WiiMixButton : public QFrame {
     typedef QFrame inherited;

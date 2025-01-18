@@ -2004,8 +2004,9 @@ void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) 
 }
 
 void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-  // VLADS FUNCTION
-  return;
+    printf("track state read progress in main window\n");
+    m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(bytesWritten, totalBytes);
+    return;
 }
 
 // Using ObjectiveLoadSlot instead
