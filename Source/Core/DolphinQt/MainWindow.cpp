@@ -2024,7 +2024,7 @@ void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) 
 }
 
 void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-    qDebug() << "track state read progress in main window";
+    //qDebug() << "track state read progress in main window";
     m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(bytesWritten, totalBytes);
     return;
 }
