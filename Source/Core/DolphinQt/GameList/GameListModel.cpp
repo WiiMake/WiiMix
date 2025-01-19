@@ -348,6 +348,9 @@ void GameListModel::setWiiMixData(std::vector<std::shared_ptr<const UICommon::Ga
     // Update the m_games list with the updated game
     m_games[i] = updated_game;
 
+    // Updated the global games list
+    emit m_tracker.GameUpdated(updated_game);
+
     // Emit dataChanged signal
     emit dataChanged(createIndex(i, static_cast<int>(Column::WiiMix)), createIndex(i, static_cast<int>(Column::WiiMix)), {Qt::CheckStateRole});
   }

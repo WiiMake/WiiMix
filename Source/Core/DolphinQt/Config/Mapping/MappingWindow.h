@@ -86,7 +86,7 @@ private:
   void OnDefaultFieldsPressed();
   void OnClearFieldsPressed();
   void OnSelectDevice(int index);
-  // void OnSelectDeviceTwo(int index);
+  void OnSelectWiiMixDevice(int index);
   void OnGlobalDevicesChanged();
 
   ControllerEmu::EmulatedController* m_controller = nullptr;
@@ -100,7 +100,7 @@ private:
   QGroupBox* m_devices_box;
   QHBoxLayout* m_devices_layout;
   QComboBox* m_devices_combo;
-  // QComboBox* m_device_two_combo;
+  QComboBox* m_wiimix_devices_combo;
   QAction* m_all_devices_action;
 
 

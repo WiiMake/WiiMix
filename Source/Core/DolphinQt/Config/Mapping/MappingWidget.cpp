@@ -313,6 +313,7 @@ void MappingWidget::CreateControl(const ControllerEmu::Control* control, QFormLa
                                   bool indicator)
 {
   auto* button = new MappingButton(this, control->control_ref.get(), indicator);
+  qDebug() << "Adding control: " << control->ui_name.c_str();
 
   button->setMinimumWidth(100);
   button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);

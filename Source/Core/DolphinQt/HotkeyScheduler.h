@@ -45,6 +45,7 @@ signals:
   void StateSaveSlotHotkey();
   void BingoBoardHotkey();
   void ResetCurrentObjectiveHotkey();
+  void StopWiiMixHotkey();
   // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
   void ObjectiveLoadSlot(int state);

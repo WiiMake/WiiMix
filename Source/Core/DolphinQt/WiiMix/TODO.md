@@ -2,6 +2,30 @@
 
 > So me and my goldfish memory can remember what I was working on
 
+## FIRST RELEASE
+
+TAKE CARE OF TOMORROW, IN ADDITION TO CS252
+
+- [untested] Fix game updating
+- [] Finish implementing handling completed bingo objectives on server
+  - [x] Update non-server bingo settings
+  - [x] Add a server side method for detecting a completed objective
+  - [x] Rework m_completed_objectives to include a value, i.e. score in the case of time attack
+- [most implemented, but still reliant on a lot; untested] Implement timer stuff for time attack; all the timer logic should be OUTSIDE of objectives; there should be an objective timer, sure, but it should be handled probably in main window and NOT in the objectives (although the objective should maintain completion_time); m_objective_timer in MainWindow
+- [] Figure out how to implement a stop wiimix function
+- [x] Track minimum completion time in psql
+
+- [x] Set up an extra event listener for gamepad input that ONLY runs during a wiimix
+  - Would need to also implement custom button selectors for the WiiMix hotkey window to make sure the right inputs are used
+- [x] Map keyboard shortcuts to controller
+
+- [untested] Checksum to check if the user has a file already so as to not download it
+
+- [] Make sure local directories initialize on all devices (i.e. objectives/ in save states directory)
+- [] Generalize ShuffleGame to just be a generic retroachievements completion handler
+  - [] Need to connect ShuffleGame to
+- [] End Screen?
+
 ## NEW YEARS RELEASE
 
 - [] Save State Client/Server Encryption/Decryption Validation System

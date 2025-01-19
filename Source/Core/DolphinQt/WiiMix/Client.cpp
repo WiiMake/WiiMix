@@ -337,22 +337,30 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     else {
         QJsonObject obj = json.object();
         std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
+        qDebug() << QStringLiteral("Size of games list") << games.size();
         std::vector<std::shared_ptr<const UICommon::GameFile>> wiimix_games = {};
+        qDebug() << "Printing games";
         for (const auto& game : games) {
+            qDebug() << QString::fromStdString(game->GetGameID());
+            qDebug() << game->GetWiiMix();
             if (game->GetWiiMix()) {
+                qDebug() << QString::fromStdString(game->GetGameID());
                 wiimix_games.push_back(game);
             }
         }
+        qDebug() << QString::fromStdString(WiiMixGlobalSettings::GameFilesToGameIds(wiimix_games));
         obj[QStringLiteral(COMMON_SETTINGS_GAMES_LIST)] = QString::fromStdString(WiiMixGlobalSettings::GameFilesToGameIds(wiimix_games));
         m_data.append(QJsonDocument(obj).toJson());
     }
 
     qDebug() << m_data.left(20);
+    obj[QStringLiteral(COMMON_SETTINGS_LOCAL_OBJECTIVES)] = QString::fromStdString(WiiMixObjective::GetLocalObjectiveString());
 
     // bool success = false;
     qDebug() << QStringLiteral("Socket state") << m_socket->state();
     if (m_socket->state() == QAbstractSocket::ConnectedState) {
         qDebug() << QStringLiteral("Sending data to server");
+        qDebug() << obj;
         m_bytes_written = 0;
         connect(m_socket, &QTcpSocket::bytesWritten, this, &WiiMixClient::BytesWritten, Qt::QueuedConnection);
         BytesWritten();

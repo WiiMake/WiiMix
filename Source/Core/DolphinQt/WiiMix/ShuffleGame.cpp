@@ -61,6 +61,7 @@ void WiiMixShuffleGame::OnAchievementGet(std::set<uint32_t> achievements)
   if (objectives[m_current_objective].GetAchievementId() != achievement) {
     return;
   }
+  emit onAchievementGet(achievements);
   objectives.erase(objectives.begin() + m_current_objective); // why are vectors weird lol
   WiiMixShuffleSettings::instance()->SetObjectives(objectives);
   m_current_objective = -1;

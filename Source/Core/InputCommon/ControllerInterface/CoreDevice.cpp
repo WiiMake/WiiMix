@@ -301,6 +301,18 @@ std::string DeviceContainer::GetDefaultDeviceString() const
   return device_qualifier.ToString();
 }
 
+// std::string DeviceContainer::GetDefaultWiiMixDeviceString() const
+// {
+//   std::lock_guard lk(m_devices_mutex);
+//   // Devices are already sorted by priority
+//   if (m_devices.empty() || m_devices[0]->GetSortPriority() < 0)
+//     return "";
+
+//   DeviceQualifier device_qualifier;
+//   device_qualifier.FromDevice(m_devices[0].get());
+//   return device_qualifier.ToString();
+// }
+
 Device::Input* DeviceContainer::FindInput(std::string_view name, const Device* def_dev) const
 {
   if (def_dev)

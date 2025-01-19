@@ -9,13 +9,13 @@
 
 void WiiMixLogoButton::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
-    printf("new WiiMixLogoButton paintEvent is called\n");
+    // printf("new WiiMixLogoButton paintEvent is called\n");
     painter.setBrush(*(new QBrush(QColor(245, 195, 203))));
     painter.drawRect(size().height() * 0.1, 0, progress_width, size().height() * 0.8);
     QToolButton::paintEvent(event);
 }
 void WiiMixLogoButton::trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-    printf("trackStateReadProgress is called\n");
+    // printf("trackStateReadProgress is called\n");
     progress_width = (int) (((double) bytesWritten / totalBytes) * size().width());
     repaint();
 }

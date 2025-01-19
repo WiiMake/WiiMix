@@ -18,7 +18,7 @@
 #include <QVBoxLayout>
 #include <QWindow>
 #include <QString>
-
+#include <QTime>
 
 #include <fmt/format.h>
 
@@ -134,6 +134,7 @@
 #include "DolphinQt/WiiMix/AccountWindow.h"
 #include "DolphinQt/WiiMix/SettingsWindow.h"
 #include "DolphinQt/WiiMix/StateSendMenu.h"
+#include "DolphinQt/WiiMix/ShuffleGame.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
 
@@ -347,6 +348,9 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
     StartGame(std::move(m_pending_boot));
     m_pending_boot.reset();
   }
+
+  m_objective_timer = new QTimer(this);
+  m_objective_timer->setSingleShot(true);
 
   // // Initialize bingo settings
   // // Add all games to the default bingo settings using the map
@@ -601,6 +605,8 @@ void MainWindow::ConnectWiiMix() {
   connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
   connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
   connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
+  // TODOx: connect this
+  // connect(m_shuffle_game, &WiiMixShuffleGame::onAchievementGet, this, &MainWindow::HandleAchievementGet);
 }
 
 void MainWindow::ConnectMenuBar()
@@ -718,6 +724,7 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveResetSlot, this, &MainWindow::ObjectiveResetSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ResetCurrentObjectiveHotkey, this, &MainWindow::ResetCurrentObjective);
   connect(m_hotkey_scheduler, &HotkeyScheduler::BingoBoardHotkey, this, &MainWindow::ToggleBingoBoard);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::StopWiiMixHotkey, this, &MainWindow::StopWiiMix);
   connect(m_hotkey_scheduler, &HotkeyScheduler::BingoReady, this, &MainWindow::BingoReady);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateSaveSlot, this, &MainWindow::StateSaveSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadLastSaved, this,
@@ -947,6 +954,14 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
   for (UICommon::GameFile game : game_list) {
     if (game.GetGameID() == new_objective.GetGameId()) {
       StartGame(BootParameters::GenerateFromFile(game.GetFilePath(), BootSessionData(savestate_file, DeleteSavestateAfterBoot::No)), save_path);
+      // Start a 24 hour timer, UNLESS the objective is a rogue objective
+      WiiMixEnums::Mode mode = WiiMixGlobalSettings::instance()->GetMode();
+      if (mode != WiiMixEnums::Mode::ROGUE) {
+        m_objective_timer->start(HOURS_24); // 24 hour timer; current time is checked against objective time
+      }
+      else {
+        m_objective_timer->start(new_objective.GetTime() + LOADING_TIME_OFFSET);
+      }
       return;
     }
   }
@@ -991,7 +1006,7 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
       return;
     }
   }
-
+  
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
@@ -1035,6 +1050,12 @@ void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
   // Start the wiimix
   qDebug() << "Rogue calls";
+  // Connect handler for rogue objectives
+  connect(m_objective_timer, &QTimer::timeout, this, [this]() {
+    // TODOx
+    // If the objective isn't completed within the time limit, timeout will call
+    // At which point, roguelike has been lost
+  }, Qt::UniqueConnection);
 }
 
 void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings) {
@@ -1046,35 +1067,34 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::StartObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective)>(&MainWindow::WiiMixStartObjective));
   connect(WiiMixShuffleGame::instance(), &WiiMixShuffleGame::SwapObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective, WiiMixObjective)>(&MainWindow::WiiMixSwapObjective));
-
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
   // Start the wiimix
   WiiMixShuffleGame::instance()->StartShuffle();
   return;
-  qDebug() << "Shuffle calls";
+  // qDebug() << "Shuffle calls";
 
-  // get the objective list from wiimixsettings
-  std::vector<WiiMixObjective> objectives = settings->GetObjectives();
+  // // get the objective list from wiimixsettings
+  // std::vector<WiiMixObjective> objectives = settings->GetObjectives();
 
-  // launch a random game
-  if (Core::GetState(Core::System::GetInstance()) == Core::State::Uninitialized || Core::GetState(Core::System::GetInstance()) == Core::State::Paused) {
-    const std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
-    auto selection = games.at(rand() % games.size());
-    StartGame(selection->GetFilePath(), ScanForSecondDisc::No, std::make_unique<BootSessionData>());
-  }
+  // // launch a random game
+  // if (Core::GetState(Core::System::GetInstance()) == Core::State::Uninitialized || Core::GetState(Core::System::GetInstance()) == Core::State::Paused) {
+  //   const std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
+  //   auto selection = games.at(rand() % games.size());
+  //   StartGame(selection->GetFilePath(), ScanForSecondDisc::No, std::make_unique<BootSessionData>());
+  // }
 
-  // qDebug() << "Starting game: " << selection.GetGameID().c_str();
+  // // qDebug() << "Starting game: " << selection.GetGameID().c_str();
 
-  // StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
-  //               std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
-  // qDebug() << "Started: " << selection.GetGameID().c_str();
-  int sleep_time = settings->GetMinTimeBetweenSwitch() * 1000 + (rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000));
-  int selection = rand() % objectives.size();
-  QTimer::singleShot(sleep_time, this, [this, settings, selection, objectives]() {
-    WiiMixShuffleUpdate(settings, selection, objectives);
-  });
+  // // StartGame(selection.GetFilePath(), ScanForSecondDisc::Yes,
+  // //               std::make_unique<BootSessionData>("", DeleteSavestateAfterBoot::No));
+  // // qDebug() << "Started: " << selection.GetGameID().c_str();
+  // int sleep_time = settings->GetMinTimeBetweenSwitch() * 1000 + (rand() % ((settings->GetMaxTimeBetweenSwitch() - settings->GetMinTimeBetweenSwitch()) * 1000));
+  // int selection = rand() % objectives.size();
+  // QTimer::singleShot(sleep_time, this, [this, settings, selection, objectives]() {
+  //   WiiMixShuffleUpdate(settings, selection, objectives);
+  // });
 }
 
 void MainWindow::WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, int selection, std::vector<WiiMixObjective> objectives) {
@@ -1452,7 +1472,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     qDebug() << "saveas";
     // std::cout << save_path << std::endl;
     if (!save_path.empty() && Core::safe_to_quit == true) {
-      qDebug() << "saving state now: " << save_path;
       State::SaveAs(Core::System::GetInstance(), save_path);
     }
     qDebug() << "AAAAAAAAAAAAAA     just saved";
@@ -1924,6 +1943,50 @@ void MainWindow::ToggleBingoBoard() {
   return;
 }
 
+// Wasn't immediately clear to me how to implement this
+void MainWindow::StopWiiMix() {
+  qDebug() << "Stopping WiiMix";
+  WiiMixGlobalSettings::instance()->SetCurrentObjective({});
+  // Confirm whether the user wants to stop the wiimix or not
+  auto response = ModalMessageBox::question(
+      this, tr("Confirm"),
+      tr("Are you sure you want to stop the current WiiMix session?"));
+
+  if (response == QMessageBox::No)
+    return;
+  else {
+    // Stop any games currently running
+    if (Core::GetState(Core::System::GetInstance()) == Core::State::Running) {
+      Core::Stop(Core::System::GetInstance());
+    }
+    // Disconnect the timer
+    m_objective_timer->disconnect();
+    // TODO: clearing objectives should be handled by the end screen
+    switch (WiiMixGlobalSettings::instance()->GetMode()) {
+      case WiiMixEnums::Mode::BINGO:
+        // Leave the bingo game
+        m_wiimix_client->SendData(WiiMixBingoSettings::instance()->ToJson().object(), WiiMixEnums::Action::LEAVE_BINGO_LOBBY);
+        // Clear bingo objectives
+        // WiiMixBingoSettings::instance()->SetObjectives({});
+        break;
+      case WiiMixEnums::Mode::ROGUE:
+        // TODO: Close any rogue windows currently open
+        // Show the rogue end screen
+
+        // Clear rogue objectives
+        // WiiMixRogueSettings::instance()->SetObjectives({});
+        break;
+      case WiiMixEnums::Mode::SHUFFLE:
+        // Show the shuffle end screen
+        
+        // Stop the shuffle
+        // WiiMixShuffleSettings::instance()->SetObjectives({});
+        break;
+    }
+  }
+  return;
+}
+
 // void MainWindow::WiiMixShowcase(WiiMixBingoSettings settings) {
 //   // Check if both players are ready
 //   // If bingo is not already started
@@ -2024,7 +2087,7 @@ void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) 
 }
 
 void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-    qDebug() << "track state read progress in main window";
+    // qDebug() << "track state read progress in main window";
     m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(bytesWritten, totalBytes);
     return;
 }
@@ -2035,6 +2098,42 @@ void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) 
 // {
 //   return;
 // }
+
+// When getting an achievement:
+// 1. Update the timer depending on the mode
+// 2. Send the data to the server to update objective history
+// 3. 
+void MainWindow::HandleAchievementGet(std::set<u32> achievements)
+{
+  WiiMixEnums::Mode mode = WiiMixGlobalSettings::instance()->GetMode();
+  // Stop the timer
+  m_objective_timer->stop();
+  // Get the time difference based on the mode; timer starts at 24 hours for bingo and shuffle
+  // and depends on the time of the objective for rogue
+  int time_to_complete = HOURS_24;
+  int current_objective = WiiMixGlobalSettings::instance()->GetCurrentObjective();
+  WiiMixObjective objective(0, "", 0, "", 0, {}, "", {}, WiiMixEnums::Difficulty::EASY, 0);
+  if (mode == WiiMixEnums::Mode::ROGUE) {
+    objective = WiiMixRogueSettings::instance()->GetObjectives()[current_objective];
+    time_to_complete = objective.GetTime();
+    time_to_complete -= m_objective_timer->remainingTime();
+  } else if (mode == WiiMixEnums::Mode::BINGO) {
+    objective = WiiMixBingoSettings::instance()->GetObjectives()[current_objective];
+    time_to_complete -= m_objective_timer->remainingTime();
+  }
+  else if (mode == WiiMixEnums::Mode::SHUFFLE) {
+    objective = WiiMixShuffleSettings::instance()->GetObjectives()[current_objective];
+    time_to_complete -= m_objective_timer->remainingTime();
+  }
+  else {
+    // If the mode is not set, return
+    qDebug() << "Error; mode not set but achievement received";
+    return;
+  }
+  objective.SetCompletionTime(time_to_complete);
+  // Update the objective history on the server
+  WiiMixClient::instance()->SendData(objective.ToJson(), WiiMixEnums::Action::ADD_OBJECTIVE_HISTORY);
+}
 
 void MainWindow::StateLoadUndo()
 {

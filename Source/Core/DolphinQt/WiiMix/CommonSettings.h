@@ -34,6 +34,7 @@ public:
   #define COMMON_SETTINGS_OBJECTIVES "OBJECTIVES"
   #define COMMON_SETTINGS_DIFFICULTY "DIFFICULTY"
   #define COMMON_SETTINGS_GAMES_LIST "GAMES_LIST"
+  #define COMMON_SETTINGS_LOCAL_OBJECTIVES "LOCAL_OBJECTIVES"
 
   virtual void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
   virtual void SetDifficulty(WiiMixEnums::Difficulty difficulty);
