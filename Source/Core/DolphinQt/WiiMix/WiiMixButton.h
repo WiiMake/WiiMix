@@ -4,10 +4,12 @@
 #include <QToolButton>
 
 class WiiMixLogoButton : public QToolButton {
-    int progress_width;
+    qint64 progress_width;
+    qint64 totalBytesWritten;
     void paintEvent(QPaintEvent *event) override;
 public:
     void trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes);
+    void refreshTotalBytesWritten();
 };
 
 class WiiMixButton : public QFrame {

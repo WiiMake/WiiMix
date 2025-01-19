@@ -5,19 +5,39 @@
 #include "WiiMixButton.h"
 #include <QEvent>
 #include <utility>
+#include <QPainterPath>
 #include <QtGui/qpainter.h>
 
 void WiiMixLogoButton::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
-    // printf("new WiiMixLogoButton paintEvent is called\n");
-    painter.setBrush(*(new QBrush(QColor(245, 195, 203))));
-    painter.drawRect(size().height() * 0.1, 0, progress_width, size().height() * 0.8);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPainterPath path;
+    int radius;
+    if (progress_width < size().width() * 0.01) {
+        radius = 0;
+    } else {
+        radius = 5;
+    }
+    path.addRoundedRect(QRectF(1, size().height() * 0.1, progress_width - 2, size().height() * 0.8), radius, radius);
+    QPen pen(Qt::black, (radius == 0) ? 0 : 1);
+    painter.setPen(pen);
+    if (radius != 0) {
+        painter.fillPath(path, QBrush(QColor(245, 195, 203)));
+        painter.drawPath(path);
+    }
+    //painter.setBrush(*(new QBrush(QColor(245, 195, 203))));
+    //painter.drawRect(0, size().height() * 0.1, progress_width, size().height() * 0.8);
     QToolButton::paintEvent(event);
 }
 void WiiMixLogoButton::trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
-    // printf("trackStateReadProgress is called\n");
-    progress_width = (int) (((double) bytesWritten / totalBytes) * size().width());
+    totalBytesWritten = bytesWritten;
+    printf("totalBytesWritten: %lld, totalBytes: %lld\n", totalBytesWritten, totalBytes);
+    progress_width = totalBytesWritten * size().width() / totalBytes;
     repaint();
+}
+
+void WiiMixLogoButton::refreshTotalBytesWritten() {
+    totalBytesWritten = 0;
 }
 
 void WiiMixButton::drawButton() {
