@@ -44,10 +44,13 @@ void EmulatedController::UpdateReferences(const ControllerInterface& devi)
   std::scoped_lock lk(s_get_state_mutex, devi.GetDevicesMutex());
 
   m_default_device_is_connected = devi.HasConnectedDevice(m_default_device);
+  m_default_wiimix_device_is_connected = devi.HasConnectedDevice(m_default_wiimix_device);
 
   ciface::ExpressionParser::ControlEnvironment env(devi, GetDefaultDevice(), m_expression_vars);
-
   UpdateReferences(env);
+
+  // ciface::ExpressionParser::ControlEnvironment wiimix_env(devi, GetDefaultWiiMixDevice(), m_expression_vars);
+  // UpdateReferences(wiimix_env);
 
   env.CleanUnusedVariables();
 }
@@ -81,6 +84,7 @@ void EmulatedController::UpdateSingleControlReference(const ControllerInterface&
                                                       ControlReference* ref)
 {
   ciface::ExpressionParser::ControlEnvironment env(devi, GetDefaultDevice(), m_expression_vars);
+  // ciface::ExpressionParser::ControlEnvironment env(devi, GetDefaultWiiMixDevice(), m_expression_vars);
 
   const auto lock = GetStateLock();
   ref->UpdateReference(env);
@@ -139,6 +143,40 @@ void EmulatedController::SetDefaultDevice(ciface::Core::DeviceQualifier devq)
   }
 }
 
+bool EmulatedController::IsDefaultWiiMixDeviceConnected() const
+{
+  return m_default_wiimix_device_is_connected;
+}
+
+const ciface::Core::DeviceQualifier& EmulatedController::GetDefaultWiiMixDevice() const
+{
+  return m_default_wiimix_device;
+}
+
+void EmulatedController::SetDefaultWiiMixDevice(const std::string& device)
+{
+  ciface::Core::DeviceQualifier devq;
+  devq.FromString(device);
+  SetDefaultWiiMixDevice(std::move(devq));
+}
+
+void EmulatedController::SetDefaultWiiMixDevice(ciface::Core::DeviceQualifier devq)
+{
+  m_default_wiimix_device = std::move(devq);
+
+  for (auto& ctrlGroup : groups)
+  {
+    // Attachments:
+    if (ctrlGroup->type == GroupType::Attachments)
+    {
+      for (auto& ai : static_cast<Attachments*>(ctrlGroup.get())->GetAttachmentList())
+      {
+        ai->SetDefaultWiiMixDevice(m_default_wiimix_device);
+      }
+    }
+  }
+}
+
 void EmulatedController::LoadConfig(Common::IniFile::Section* sec, const std::string& base)
 {
   const auto lock = GetStateLock();
@@ -147,6 +185,13 @@ void EmulatedController::LoadConfig(Common::IniFile::Section* sec, const std::st
   {
     sec->Get(base + "Device", &defdev, "");
     SetDefaultDevice(defdev);
+  }
+
+  std::string defdevwiimix = GetDefaultWiiMixDevice().ToString();
+  if (base.empty())
+  {
+    sec->Get(base + "WiiMixDevice", &defdev, "");
+    SetDefaultWiiMixDevice(defdev);
   }
 
   for (auto& cg : groups)
@@ -159,6 +204,10 @@ void EmulatedController::SaveConfig(Common::IniFile::Section* sec, const std::st
   const std::string defdev = GetDefaultDevice().ToString();
   if (base.empty())
     sec->Set(/*std::string(" ") +*/ base + "Device", defdev, "");
+
+  const std::string defdevwiimix = GetDefaultWiiMixDevice().ToString();
+  if (base.empty())
+    sec->Set(/*std::string(" ") +*/ base + "WiiMixDevice", defdev, "");
 
   for (auto& ctrlGroup : groups)
     ctrlGroup->SaveConfig(sec, defdev, base);
@@ -175,6 +224,7 @@ void EmulatedController::LoadDefaults(const ControllerInterface& ciface)
   if (!default_device_string.empty())
   {
     SetDefaultDevice(default_device_string);
+    SetDefaultWiiMixDevice(default_device_string);
   }
 }
 

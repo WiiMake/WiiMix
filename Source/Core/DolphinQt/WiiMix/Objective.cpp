@@ -9,7 +9,8 @@
 #include <curl/curl.h>
 #include <fstream>
 #include <string>
-#include "Objective.h"
+
+#include "Common/FileUtil.h"
 
 WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroachievements_game_id,
                                  std::string game_id, uint16_t achievement_id,
@@ -18,12 +19,12 @@ WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroa
                                  std::vector<WiiMixEnums::GameGenre> game_genres,
                                  WiiMixEnums::Difficulty difficulty, uint64_t time, std::string creator_username,
                                  WiiMixEnums::ObjectiveStatus status, int num_times_completed,
-                                 int num_times_attempted, std::chrono::system_clock::time_point last_attempted)
+                                 int num_times_attempted, WiiMixEnums::Player completed, int completion_time, std::chrono::system_clock::time_point last_attempted)
     : m_id(id), m_title(std::move(title)), m_retroachievements_game_id(retroachievements_game_id),
       m_game_id(std::move(game_id)), m_achievement_id(achievement_id),
       m_objective_types(objective_type), m_objective_description(std::move(objective_description)),
       m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time), m_creator_username(creator_username),
-      m_status(status), m_num_times_completed(num_times_completed), m_num_times_attempted(num_times_attempted),
+      m_status(status), m_num_times_completed(num_times_completed), m_num_times_attempted(num_times_attempted), m_player_completed(completed),
       m_last_attempted(last_attempted)
 {
 }
@@ -119,6 +120,8 @@ QJsonObject WiiMixObjective::ToJson()
   obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_ATTEMPTED)] = m_num_times_attempted;
   obj[QStringLiteral(OBJECTIVE_HISTORY_MOST_RECENT_ATTEMPT)] = static_cast<qint64>(std::chrono::duration_cast<std::chrono::seconds>(
     m_last_attempted.time_since_epoch()).count());
+  obj[QStringLiteral(BINGO_SETTINGS_COMPLETED)] = static_cast<int>(m_player_completed);
+  obj[QStringLiteral(BINGO_SETTINGS_COMPLETION_TIME)] = m_completion_time;
   return obj;
 }
 
@@ -145,10 +148,13 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
   int num_times_attempted = obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_ATTEMPTED)].toInt();
   std::chrono::system_clock::time_point last_attempted = std::chrono::system_clock::from_time_t(
     obj[QStringLiteral(OBJECTIVE_HISTORY_MOST_RECENT_ATTEMPT)].toInt());
+  WiiMixEnums::Player bingo_settings_completed = static_cast<WiiMixEnums::Player>(obj[QStringLiteral(BINGO_SETTINGS_COMPLETED)].toInt());
+  int bingo_settings_completion_time = CompletionTimeFromString(obj[QStringLiteral(BINGO_SETTINGS_COMPLETION_TIME)].toString());
 
   return WiiMixObjective(
     id, title, retro_id, game_id, achievement_id, objective_types, description,
-    game_genres, difficulty, time, creator_username);
+    game_genres, difficulty, time, creator_username, status, num_times_completed,
+    num_times_attempted, bingo_settings_completed, bingo_settings_completion_time, last_attempted);
 }
 
 WiiMixEnums::Player WiiMixObjective::GetCompleted()
@@ -199,4 +205,122 @@ void WiiMixObjective::SetNumTimesAttempted(int num_times_attempted)
 void WiiMixObjective::SetLastAttempted(std::chrono::system_clock::time_point last_attempted)
 {
   m_last_attempted = last_attempted;
+}
+
+int WiiMixObjective::GetCompletionTime()
+{
+  return m_completion_time;
+}
+
+void WiiMixObjective::SetCompletionTime(int completion_time)
+{
+  m_completion_time = completion_time;
+}
+
+// // -------- stopwatch -----------
+// void WiiMixObjective::StartCompletionTimer()
+// {
+//   m_completion_timer->start(86400000); // 24 hours in milliseconds
+// }
+
+// void WiiMixObjective::ResetCompletionTimer()
+// {
+//   QTime final_time_difference = QTime(24, 0, 0).addMSecs(-m_completion_timer->remainingTime());
+//   StopCompletionTimer();
+//   StartCompletionTimer();
+//   // Note that in bingo, the completion time is ignored if another player has a lower time
+//   m_completion_time = final_time_difference;
+// }
+
+// void WiiMixObjective::StopCompletionTimer() {
+//   m_completion_timer->stop();
+// }
+
+// void WiiMixObjective::DeleteCompletionTimer() {
+//   delete m_completion_timer;
+//   m_completion_timer = nullptr;
+// }
+
+// // ---------- countdown ------------
+// void WiiMixObjective::SetCompletionTimer(int time_to_complete) {
+//   StopCompletionTimer();
+//   m_completion_timer->start(time_to_complete);
+// }
+
+// // For connecting events to the timeout signal
+// QTimer *WiiMixObjective::GetCompletionTimer() {
+//   return m_completion_timer;
+// }
+QString WiiMixObjective::CompletionTimeToString(int ms)
+{
+    int seconds = (ms / 1000) % 60;
+    int minutes = (ms / (1000 * 60)) % 60;
+    int hours = (ms / (1000 * 60 * 60)) % 24;
+    int days = ms / (1000 * 60 * 60 * 24);
+
+    // Format the string as "days:hh:mm:ss" with leading zeros
+    return QStringLiteral("%1:%2:%3:%4")
+        .arg(days)
+        .arg(hours, 2, 10, QLatin1Char('0'))
+        .arg(minutes, 2, 10, QLatin1Char('0'))
+        .arg(seconds, 2, 10, QLatin1Char('0'));
+}
+
+int WiiMixObjective::CompletionTimeFromString(QString time)
+{
+    // Split the input time into days and "hh:mm:ss"
+    QStringList parts = time.split(QStringLiteral(":"));
+    if (parts.size() != 4)
+    {
+        qWarning("Invalid time format. Expected format: days:hh:mm:ss");
+        return -1; // Return error code
+    }
+
+    // Parse days
+    int days = parts[0].toInt();
+
+    // Use QTime for parsing the "hh:mm:ss" part
+    QTime qtime = QTime::fromString(parts[1] + QStringLiteral(":") + parts[2] + QStringLiteral(":") + parts[3], QStringLiteral("hh:mm:ss"));
+    if (!qtime.isValid())
+    {
+        qWarning("Invalid time format for hh:mm:ss");
+        return -1; // Return error code
+    }
+
+    // Convert days and time into milliseconds
+    return (days * 24 * 60 * 60 * 1000) + QTime(0, 0).msecsTo(qtime);
+}
+
+// Comma-separated list of local objectives
+#ifdef QT_GUI_LIB
+  std::string WiiMixObjective::GetLocalObjectiveString() {
+    std::string local_objectives;
+    std::string objectives_dir = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX);
+    for (const auto& entry : std::filesystem::directory_iterator(objectives_dir)) {
+      if (entry.is_regular_file()) {
+        std::string filename = entry.path().filename().string();
+        if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".sav") {
+          filename = filename.substr(0, filename.size() - 4); // Remove ".sav"
+        }
+        local_objectives += filename + ",";
+      }
+    }
+    if (!local_objectives.empty()) {
+      local_objectives.pop_back(); // Remove the trailing comma
+    }
+    return local_objectives;
+  }
+#else
+  std::string WiiMixObjective::GetLocalObjectiveString() {
+    return "";
+  }
+#endif
+
+QList<int> WiiMixObjective::GetLocalObjectiveList(QString local_objectives) {
+  QList<int> objectives;
+  QStringList objectives_list = QString::fromStdString(local_objectives.toStdString()).split(QStringLiteral(","));
+  for (const auto& objective : objectives_list) {
+    objectives.append(objective.toInt());
+  }
+  return objectives;
 }

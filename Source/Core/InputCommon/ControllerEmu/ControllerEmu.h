@@ -193,6 +193,11 @@ public:
   void SetDefaultDevice(const std::string& device);
   void SetDefaultDevice(ciface::Core::DeviceQualifier devq);
 
+  bool IsDefaultWiiMixDeviceConnected() const;
+  const ciface::Core::DeviceQualifier& GetDefaultWiiMixDevice() const;
+  void SetDefaultWiiMixDevice(const std::string& device);
+  void SetDefaultWiiMixDevice(ciface::Core::DeviceQualifier devq);
+
   void SetInputOverrideFunction(InputOverrideFunction override_func);
   void ClearInputOverrideFunction();
 
@@ -262,5 +267,8 @@ protected:
 private:
   ciface::Core::DeviceQualifier m_default_device;
   bool m_default_device_is_connected{false};
+
+  ciface::Core::DeviceQualifier m_default_wiimix_device;
+  bool m_default_wiimix_device_is_connected{false};
 };
 }  // namespace ControllerEmu

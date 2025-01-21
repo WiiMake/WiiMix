@@ -44,7 +44,7 @@ namespace WiiMixEnums {
     enum class BingoType {
         BINGO,
         LOCKOUT,
-        // TIME_ATTACK, // You can take achievements away from other people
+        TIME_ATTACK, // You can take achievements away from other people
         END, // Default/size value
     };
 
@@ -69,6 +69,8 @@ namespace WiiMixEnums {
         PACIFIST,
         NO_HIT,
         GLITCH,
+        MULTIPLAYER,
+        SPEEDRUN,
         END, // Default/size value
     };
 
@@ -83,7 +85,8 @@ namespace WiiMixEnums {
     #define OBJECTIVE_TYPE_COMPLETIONIST "COMPLETIONIST"
     #define OBJECTIVE_TYPE_PACIFIST "PACIFIST"
     #define OBJECTIVE_TYPE_NO_HIT "NO_HIT"
-    
+    #define OBJECTIVE_TYPE_MULTIPLAYER "MULTIPLAYER"
+    #define OBJECTIVE_TYPE_SPEEDRUN "SPEEDRUN"
 
     std::string ObjectiveTypeToString(ObjectiveType type);
     ObjectiveType ObjectiveTypeFromString(const std::string& str);
@@ -132,6 +135,9 @@ namespace WiiMixEnums {
     #define GAME_GENRE_SPORTS "SPORTS"
     #define GAME_GENRE_STRATEGY "STRATEGY"
 
+    #define HOURS_24 86400000
+    #define LOADING_TIME_OFFSET 2500
+
     // NOTE: instead of storing genres ourselves, we'll be pulling tags from the Retroachievements API
     // To populate genre
 
@@ -145,6 +151,7 @@ namespace WiiMixEnums {
         CREATE_BINGO_LOBBY,
         CONNECT_TO_BINGO_LOBBY,
         UPDATE_BINGO_LOBBY,
+        LEAVE_BINGO_LOBBY,
         UPDATE_OBJECTIVE_DB,
         ADD_OBJECTIVE, // Also adds the state
         DELETE_OBJECTIVE_DB,
@@ -152,6 +159,7 @@ namespace WiiMixEnums {
         ADD_GENRE_TO_OBJECTIVE_DB,
         REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
         ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
+        ADD_OBJECTIVE_HISTORY,
         UPDATE_PLAYER,
         GET_PLAYERS, // you can search by username
         INCREMENT_PLAYER_STATS,

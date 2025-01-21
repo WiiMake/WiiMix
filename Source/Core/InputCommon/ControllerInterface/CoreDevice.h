@@ -244,6 +244,7 @@ public:
   std::vector<std::string> GetAllDeviceStrings() const;
   bool HasDefaultDevice() const;
   std::string GetDefaultDeviceString() const;
+  // std::string GetDefaultWiiMixDeviceString() const;
   std::shared_ptr<Device> FindDevice(const DeviceQualifier& devq) const;
 
   bool HasConnectedDevice(const DeviceQualifier& qualifier) const;

@@ -167,7 +167,6 @@ QJsonDocument WiiMixBingoSettings::ToJson()
     json[QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD)] = m_lobby_password;
     json[QStringLiteral(BINGO_SETTINGS_SEED)] = m_seed;
     json[QStringLiteral(BINGO_SETTINGS_PLAYER_NUM)] = static_cast<int>(m_player_num);
-
     return QJsonDocument(json);
 }
 

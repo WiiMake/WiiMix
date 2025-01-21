@@ -7,6 +7,7 @@
 #include <map>
 #include <chrono>
 #include <QJsonObject>
+#include <QTimer>
 
 class WiiMixObjective
 {
@@ -26,6 +27,8 @@ public:
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
     int num_times_attempted = 0,
+    WiiMixEnums::Player completed = WiiMixEnums::Player::END,
+    int completion_time = 0,
     std::chrono::system_clock::time_point last_attempted = std::chrono::system_clock::now()
   );
 
@@ -48,9 +51,14 @@ public:
   #define OBJECTIVE_HISTORY_NUM_TIMES_ATTEMPTED "num_times_attempted"
   #define OBJECTIVE_HISTORY_MOST_RECENT_STATUS "most_recent_status"
   #define OBJECTIVE_HISTORY_MOST_RECENT_ATTEMPT "most_recent_attempt"
+  #define OBJECTIVE_HISTORY_MIN_COMPLETION_TIME "min_completion_time"
   // Not used directly in json conversion, but used for db queries for objective_history
   #define OBJECTIVE_HISTORY_PLAYER_ID "player_id"
   #define OBJECTIVE_HISTORY_OBJECTIVE_ID "objective_id"
+
+  // Bingo stuff
+  #define BINGO_SETTINGS_COMPLETED "completed"
+  #define BINGO_SETTINGS_COMPLETION_TIME "completion_time"
 
   // Extras; used for selecting individual objectives
   #define GAME_GENRE "game_genre"
@@ -72,18 +80,34 @@ public:
   int GetNumTimesCompleted();
   int GetNumTimesAttempted();
   std::chrono::system_clock::time_point GetLastAttempted();
-
+  
   QJsonObject ToJson();
   static WiiMixObjective FromJson(const QJsonObject& obj);
 
+  // Bingo stuff
   WiiMixEnums::Player GetCompleted();
   void SetCompleted(WiiMixEnums::Player player);
+  // void IncrementCompletionTime(int completion_time);
+  // void DecrementCompletionTime(int completion_time);
+  // void StartCompletionTimer();
+  // QTimer *GetCompletionTimer();
+  // void SetCompletionTimer(int time_to_complete);
+  // void ResetCompletionTimer();
+  // void StopCompletionTimer();
+  // void DeleteCompletionTimer();
 
   // DB stuff
   void SetStatus(WiiMixEnums::ObjectiveStatus status);
   void SetNumTimesCompleted(int num_times_completed);
   void SetNumTimesAttempted(int num_times_attempted);
   void SetLastAttempted(std::chrono::system_clock::time_point last_attempted);
+  int GetCompletionTime();
+  void SetCompletionTime(int completion_time);
+  static QString CompletionTimeToString(int ms);
+  static int CompletionTimeFromString(QString time);
+
+  static std::string GetLocalObjectiveString();
+  static QList<int> GetLocalObjectiveList(QString local_objectives);
 
 private:
   uint16_t m_id;
@@ -100,6 +124,7 @@ private:
 
   // For bingo -> might refactor
   WiiMixEnums::Player m_player_completed;
+  int m_completion_time;
 
   // Join in from objective history table; oftentimes set to null or defaults in the constructor
   WiiMixEnums::ObjectiveStatus m_status;

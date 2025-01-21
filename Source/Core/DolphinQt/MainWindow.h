@@ -133,12 +133,14 @@ private:
   void StateSend(WiiMixObjective objective);
   void TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes);
   void TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes);
+  void HandleAchievementGet(std::set<uint32_t> achievements);
   void ShowStateSendMenu(int slot);
   void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
   void ResetCurrentObjective();
   void BingoReady();
   void ToggleBingoBoard();
+  void StopWiiMix();
   // void GameSwapSlotAt(int slot);
   void StateLoadLastSavedAt(int slot);
   void StateLoadUndo();
@@ -304,6 +306,7 @@ private:
   WiiMixClient* m_wiimix_client = nullptr;
   WiiMixShuffleSettings* m_shuffle_settings = nullptr;
   WiiMixRogueSettings* m_rogue_settings = nullptr;
+  QTimer* m_objective_timer = nullptr;
 
   HotkeyScheduler* m_hotkey_scheduler;
   NetPlayDialog* m_netplay_dialog;

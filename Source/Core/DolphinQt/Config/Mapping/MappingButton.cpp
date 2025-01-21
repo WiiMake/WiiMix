@@ -107,6 +107,8 @@ void MappingButton::AdvancedPressed()
 
 void MappingButton::Clicked()
 {
+  // Handle gamepad input detection for wiimix options
+  qDebug() << "Clicked calls";
   if (!m_reference->IsInput())
   {
     AdvancedPressed();
@@ -114,6 +116,7 @@ void MappingButton::Clicked()
   }
 
   const auto default_device_qualifier = m_parent->GetController()->GetDefaultDevice();
+  const auto default_device_wiimix_qualifier = m_parent->GetController()->GetDefaultWiiMixDevice();
 
   QString expression;
 
@@ -125,15 +128,28 @@ void MappingButton::Clicked()
   }
   else
   {
+    qDebug() << "Detecting single device expression";
     expression = MappingCommon::DetectExpression(this, g_controller_interface,
-                                                 {default_device_qualifier.ToString()},
+                                                 {default_device_qualifier.ToString(), default_device_wiimix_qualifier.ToString()},
                                                  default_device_qualifier);
+    // expression_wiimix = MappingCommon::DetectExpression(this, g_controller_interface,
+    //                                              {default_device_wiimix_qualifier.ToString()},
+    //                                              default_device_wiimix_qualifier);
   }
 
-  if (expression.isEmpty())
+  if (expression.isEmpty()) {
+    qDebug() << "Expressions are empty";
     return;
+  }
+  else if (!expression.isEmpty()) {
+    qDebug() << "Setting device 1 expression";
+    m_reference->SetExpression(expression.toStdString());
+  } 
+  // else {
+    // qDebug() << "Setting wiimix device expression";
+    // m_reference->SetExpression(expression_wiimix.toStdString());
+  // }
 
-  m_reference->SetExpression(expression.toStdString());
   m_parent->GetController()->UpdateSingleControlReference(g_controller_interface, m_reference);
 
   ConfigChanged();

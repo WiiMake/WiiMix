@@ -72,6 +72,7 @@
 #include "DolphinQt/Resources.h"
 #include "DolphinQt/Settings.h"
 #include "DolphinQt/WiiUpdate.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
 
 #include "UICommon/GameFile.h"
 
@@ -121,7 +122,7 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
   // connect(&(m_list->find("WiiMix")), &QCheckBox::stateChanged, this, &GameList::WiiMixCheckboxClicked);
   connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
   connect(&m_model, &QAbstractItemModel::rowsRemoved, this, &GameList::ConsiderViewChange);
-
+  
   addWidget(m_list);
   addWidget(m_grid);
   addWidget(m_empty);
