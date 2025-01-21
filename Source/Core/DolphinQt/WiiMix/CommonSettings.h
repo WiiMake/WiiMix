@@ -49,10 +49,10 @@ public:
 
   void SetObjectives(std::vector<WiiMixObjective> objectives); // A list of objectives; bingo objectives are read from left to right on the bingo board
   void AddObjective(WiiMixObjective objective);
-  const WiiMixEnums::Difficulty GetDifficulty() const;
+  [[nodiscard]] WiiMixEnums::Difficulty GetDifficulty() const;
   // int GetTime();
-  const WiiMixEnums::SaveStateBank GetSaveStateBank() const;
-  const std::vector<WiiMixObjective> GetObjectives() const;
+  [[nodiscard]] WiiMixEnums::SaveStateBank GetSaveStateBank() const;
+  [[nodiscard]] std::vector<WiiMixObjective> GetObjectives() const;
 
   static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
   static WiiMixEnums::Difficulty StringToDifficulty(QString difficulty);

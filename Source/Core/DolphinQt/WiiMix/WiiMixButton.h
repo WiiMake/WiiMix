@@ -9,7 +9,6 @@ class WiiMixLogoButton : public QToolButton {
     void paintEvent(QPaintEvent *event) override;
 public:
     void trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes);
-    void refreshTotalBytesWritten();
 };
 
 class WiiMixButton : public QFrame {
@@ -20,7 +19,6 @@ class WiiMixButton : public QFrame {
     int border_radius = 0;
     bool hasBackgroundImage = false;
 public:
-    void drawButton();
     void setBackgroundImage(std::string path);
     void setBorderWidth(int width);
     void setBorderColor(std::string color);
@@ -31,4 +29,6 @@ public:
         border_color = "";
         inherited::~QFrame();
     };
+private:
+    void drawButton();
 };

@@ -21,7 +21,7 @@ public:
   static WiiMixBingoSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_BINGO_DIFFICULTY);
     if (difficulty == DEFAULT_BINGO_DIFFICULTY && config_difficulty != DEFAULT_BINGO_DIFFICULTY) {
-        difficulty = difficulty;
+        difficulty = config_difficulty;
     }
 
     WiiMixEnums::SaveStateBank config_save_state_bank = Config::Get(Config::WIIMIX_BINGO_SAVE_STATE_BANK);

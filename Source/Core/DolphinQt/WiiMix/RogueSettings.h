@@ -20,7 +20,7 @@ public:
     // Check if difficulty or save state bank are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_ROGUE_DIFFICULTY);
     if (difficulty == DEFAULT_ROGUE_DIFFICULTY && config_difficulty != DEFAULT_ROGUE_DIFFICULTY) {
-        difficulty = difficulty;
+        difficulty = config_difficulty;
     }
 
     WiiMixEnums::SaveStateBank config_save_state_bank = Config::Get(Config::WIIMIX_ROGUE_SAVE_STATE_BANK);

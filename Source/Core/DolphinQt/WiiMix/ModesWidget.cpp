@@ -98,41 +98,38 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
 
             if (theme == "Clean") {
                 shadow->setColor(Qt::black);
-                frame->setGraphicsEffect(shadow);
             }
             else if (theme == "Clean Blue") {
                 shadow->setColor(Qt::blue);
-                frame->setGraphicsEffect(shadow);
             }
             else if (theme == "Clean Emerald"){
                 shadow->setColor(Qt::green);
-                frame->setGraphicsEffect(shadow);
             }
             else if (theme == "Clean Lite"){
                 shadow->setColor(Qt::white);
-                frame->setGraphicsEffect(shadow);
             }
             else if (theme == "Clean Pink"){
                 shadow->setColor(QColor(255, 192, 203));
-                frame->setGraphicsEffect(shadow);
-                std::string name = "Hello";
-                std::string description = "HelloHelloHello";
-                std::string icon = File::GetSysDirectory() + "Resources/Flag_Russia@2x.png";
-                std::ifstream t(File::GetSysDirectory() + "Resources/toolTip.html");
-                //std::cout << t.is_open() << "\n";
-                std::stringstream buffer;
-                buffer << t.rdbuf();
-                //std::cout << (buffer.str()) << "\n";
-                char toolTipString[1000];
-                snprintf(toolTipString, 999, buffer.str().data(), icon.data(), name.data(), description.data());
-                //std::cout << toolTipString << "\n";
-                //snprintf(toolTipString, 999, "<style> @keyframes appearance {0%% {opacity: 0} 60%% {opacity: 0.6} 100%% {opacity: 1}} .container{display: flex;} img {max-width: 25%%; max-height:15%%; float: left;} .text {font-size: 20px; padding-left: 20px; padding-top: 20%%; float: left; } .div {animation-duration: 5s; animation-timing-function: ease-in; animation-name: appearance}</style> <div class='container'> <div class='image'> <img src='%s'> </div> <div class='text'> <h2>%s</h2> </div> </div>\n%s", icon.data(), name.data(), description.data());
 
-                //QToolTip::showText(QCursor::pos(), QString::fromStdString(toolTipString), this, QRect(), 10000);
             }
             else {
                 qDebug("invalid theme name");
             }
+            frame->setGraphicsEffect(shadow);
+            //std::string name = "Hello";
+            //std::string description = "HelloHelloHello";
+            //std::string icon = File::GetSysDirectory() + "Resources/Flag_Russia@2x.png";
+            //std::ifstream t(File::GetSysDirectory() + "Resources/toolTip.html");
+            //std::cout << t.is_open() << "\n";
+            //std::stringstream buffer;
+            //buffer << t.rdbuf();
+            //std::cout << (buffer.str()) << "\n";
+            //char toolTipString[1000];
+            //snprintf(toolTipString, 999, buffer.str().data(), icon.data(), name.data(), description.data());
+            //std::cout << toolTipString << "\n";
+            //snprintf(toolTipString, 999, "<style> @keyframes appearance {0%% {opacity: 0} 60%% {opacity: 0.6} 100%% {opacity: 1}} .container{display: flex;} img {max-width: 25%%; max-height:15%%; float: left;} .text {font-size: 20px; padding-left: 20px; padding-top: 20%%; float: left; } .div {animation-duration: 5s; animation-timing-function: ease-in; animation-name: appearance}</style> <div class='container'> <div class='image'> <img src='%s'> </div> <div class='text'> <h2>%s</h2> </div> </div>\n%s", icon.data(), name.data(), description.data());
+
+            //QToolTip::showText(QCursor::pos(), QString::fromStdString(toolTipString), this, QRect(), 10000);
             return true;
         }
     }
@@ -164,7 +161,7 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
             if (theme == "Clean") { frame->setBorderColor("black"); }
             else if (theme == "Clean Blue") { frame->setBorderColor("blue"); }
             else if (theme == "Clean Emerald") { frame->setBorderColor("green"); }
-            else if (theme == "Clean Lite"){ frame->setBorderColor("white"); }
+            else if (theme == "Clean Lite"){ frame->setBorderColor("transparent"); }
             else if (theme == "Clean Pink"){ frame->setBorderColor("rgb(255, 192, 203)"); }
             else {
                 qDebug("invalid theme name, applying default theme instead");

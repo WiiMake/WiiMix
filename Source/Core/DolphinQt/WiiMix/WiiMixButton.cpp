@@ -4,29 +4,40 @@
 
 #include "WiiMixButton.h"
 #include <QEvent>
+#include <QString>
 #include <utility>
 #include <QPainterPath>
 #include <QtGui/qpainter.h>
+#include "ConfigWidget.h"
 
 void WiiMixLogoButton::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     QPainterPath path;
     int radius;
-    if (progress_width < size().width() * 0.01) {
-        radius = 0;
-    } else {
-        radius = 5;
-    }
-    path.addRoundedRect(QRectF(1, size().height() * 0.1, progress_width - 2, size().height() * 0.8), radius, radius);
+    if (progress_width < size().width() * 0.01) radius = 0;
+    else radius = 2;
+    path.addRoundedRect(QRectF(1, size().height() * 0.8, progress_width - 2, size().height() * 0.05), radius, radius);
     QPen pen(Qt::black, (radius == 0) ? 0 : 1);
     painter.setPen(pen);
     if (radius != 0) {
-        painter.fillPath(path, QBrush(QColor(245, 195, 203)));
+        QColor color;
+        if (Config::Get(Config::MAIN_THEME_NAME) == "Clean") {
+            color = QColor(127, 127, 127);
+        } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
+            color = Qt::blue;
+        } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {
+            color = Qt::green;
+        } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
+            color = Qt::transparent;
+        } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
+            color = QColor(255, 192, 203);
+        } else {
+            qDebug() << "Wrong theme name";
+        }
+        painter.fillPath(path, QBrush(color));
         painter.drawPath(path);
     }
-    //painter.setBrush(*(new QBrush(QColor(245, 195, 203))));
-    //painter.drawRect(0, size().height() * 0.1, progress_width, size().height() * 0.8);
     QToolButton::paintEvent(event);
 }
 void WiiMixLogoButton::trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
@@ -34,10 +45,6 @@ void WiiMixLogoButton::trackStateReadProgress(qint64 bytesWritten, qint64 totalB
     printf("totalBytesWritten: %lld, totalBytes: %lld\n", totalBytesWritten, totalBytes);
     progress_width = totalBytesWritten * size().width() / totalBytes;
     repaint();
-}
-
-void WiiMixLogoButton::refreshTotalBytesWritten() {
-    totalBytesWritten = 0;
 }
 
 void WiiMixButton::drawButton() {

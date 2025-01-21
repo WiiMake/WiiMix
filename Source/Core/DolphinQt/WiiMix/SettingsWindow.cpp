@@ -45,19 +45,36 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   m_load_button_box = new QPushButton();
   m_load_button_box->setMaximumSize(QSize(60,60));
   m_load_button_box->setMinimumSize(QSize(60,60));
-  m_load_button_box->setStyleSheet(QStringLiteral("QPushButton {border-radius: 30px; border-width: 1px; border-style: solid; border-color: blue; background-color: LightGray; color: gray}"));
+  char styleSheet[1000];
+  std::string color = "blue";
+//  if (Config::Get(Config::MAIN_THEME_NAME) == "Clean") {
+//      color = "white";
+//      shadowColor = Qt::white;
+//  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
+//      color = "blue";
+//      shadowColor = Qt::blue;
+//  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald"){
+//      color = "green";
+//      shadowColor = Qt::green;
+//  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
+//      color = "transparent";
+//      shadowColor = Qt::transparent;
+//  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
+//      color = "rgb(255, 192, 203)";
+//      shadowColor = QColor(255, 192, 203);
+//  }
+  std::sprintf(styleSheet, "QPushButton {font-weight: bold; border-radius: 30px; border-width: 1px; border-style: solid; border-color: %s; background-color: LightGray; color: gray}", color.data());
+  m_load_button_box->setStyleSheet(QString::fromStdString(styleSheet));
   auto* effect = new QGraphicsDropShadowEffect;
   effect->setOffset(0,0);
   effect->setBlurRadius(25);
   m_load_button_box->setGraphicsEffect(effect);
   m_load_button_box->setText(QStringLiteral("Load"));
   m_load_button_box->setCursor(Qt::PointingHandCursor);
-  // m_load_button_box->button(QDialogButtonBox::Open)->setText(tr("Load"));
-  // m_save_button_box = new QDialogButtonBox(QDialogButtonBox::Save);
   m_save_button_box = new QPushButton();
   m_save_button_box->setMaximumSize(QSize(60,60));
   m_save_button_box->setMinimumSize(QSize(60,60));
-  m_save_button_box->setStyleSheet(QStringLiteral("QPushButton {border-radius: 30px; border-width: 1px; border-style: solid; border-color: blue; background-color: LightGray; color: gray}"));
+  m_save_button_box->setStyleSheet(QString::fromStdString(styleSheet));
   auto* effect2 = new QGraphicsDropShadowEffect;
   effect2->setOffset(0,0);
   effect2->setBlurRadius(25);
@@ -65,7 +82,6 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   m_save_button_box->setText(QStringLiteral("Save"));
   m_save_button_box->setCursor(Qt::PointingHandCursor);
   m_wii_mix_button = new WiiMixLogoButton();
-  // m_wii_mix_button->setAttribute(Qt::WA_TranslucentBackground);
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
   m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
   m_wii_mix_button->setIconSize(QSize(150,100));
@@ -150,7 +166,19 @@ void WiiMixSettingsWindow::CreateMainLayout()
   bottom_buttons->addStretch();
   bottom_buttons->addWidget(m_save_button_box, 0);
   bottom_buttons->addStretch(); // Add space after the buttons
-  QPixmap buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
+
+  QPixmap buttonBackground;
+  if (Config::Get(Config::MAIN_THEME_NAME) == "Clean" || Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_green").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_pink").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_clean").pixmap(1200,100));
+  } else {
+      qDebug() << "Incorrect theme name";
+  }
   buttonBackground.scaled(this->size());
   QPalette* palette = new QPalette();
   QBrush* buttonBackgroundBrush = new QBrush();
@@ -238,7 +266,7 @@ void WiiMixSettingsWindow::LoadSettings() {
       return;
     }
     Common::IniFile::Section *section = ini.GetSection("WiiMix");
-    std::string *val;
+    std::string *val = nullptr;
 
     // Cut saving and loading games
     // section->Get("Games", val, "");

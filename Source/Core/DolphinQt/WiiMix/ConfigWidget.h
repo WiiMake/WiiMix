@@ -15,6 +15,7 @@
 #include <QMenuBar>
 #include <QPair>
 #include <QRegularExpression>
+#include <QVBoxLayout>
 
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"

@@ -33,8 +33,8 @@ AchievementsWindow::AchievementsWindow(QWidget* parent) : QDialog(parent)
   ConnectWidgets();
   AchievementManager::GetInstance().SetUpdateCallback(
       [this](AchievementManager::UpdatedItems updated_items) {
-        QueueOnObject(this, [this, updated_items = std::move(updated_items)] {
-          AchievementsWindow::UpdateData(std::move(updated_items));
+        QueueOnObject(this, [this, updated_items] {
+          AchievementsWindow::UpdateData(updated_items);
         });
       });
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
