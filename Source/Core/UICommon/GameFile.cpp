@@ -427,7 +427,7 @@ bool GameFile::XMLMetadataChanged()
          m_pending.custom_description != m_custom_description;
 }
 
-const int GameFile::GetObjectives() const
+int GameFile::GetObjectives() const //TODO: why
 {
   // @gyoder
   return 1;

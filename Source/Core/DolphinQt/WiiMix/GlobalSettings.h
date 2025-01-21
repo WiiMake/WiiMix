@@ -58,7 +58,7 @@ public:
   void RemoveGame(const std::string& path);
   int FindGameIndex(const std::string& path) const;
 
-  const WiiMixEnums::Mode GetMode() const;
+  WiiMixEnums::Mode GetMode() const;
 
   static QString ModeToTitle(WiiMixEnums::Mode mode);
   static QIcon ModeToIcon(WiiMixEnums::Mode mode);

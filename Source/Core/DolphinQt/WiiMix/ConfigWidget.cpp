@@ -543,6 +543,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
             difficulty = WiiMixRogueSettings::instance()->GetDifficulty();
             break;
         default:
+            qDebug() << "Difficulty is uninitialized";
             break;
     }
     m_difficulty->setCurrentIndex(static_cast<int>(difficulty));
@@ -576,6 +577,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
             bank = WiiMixRogueSettings::instance()->GetSaveStateBank();
             break;
         default:
+            qDebug() << "bank is uninitialized";
             break;
     }
     m_save_state_bank->setCurrentIndex(static_cast<int>(bank));

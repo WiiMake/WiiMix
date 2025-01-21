@@ -155,7 +155,7 @@ WiiMixCommonSettings WiiMixCommonSettings::FromJsonCommon(QJsonDocument settings
     return WiiMixCommonSettings(difficulty, bank, objectives);
 }
 
-const WiiMixEnums::Difficulty WiiMixCommonSettings::GetDifficulty() const {
+WiiMixEnums::Difficulty WiiMixCommonSettings::GetDifficulty() const {
     return m_difficulty;
 }
 
@@ -163,10 +163,10 @@ const WiiMixEnums::Difficulty WiiMixCommonSettings::GetDifficulty() const {
 //     return m_time;
 // }
 
-const WiiMixEnums::SaveStateBank WiiMixCommonSettings::GetSaveStateBank() const {
+WiiMixEnums::SaveStateBank WiiMixCommonSettings::GetSaveStateBank() const {
     return m_save_state_bank;
 }
 
-const std::vector<WiiMixObjective> WiiMixCommonSettings::GetObjectives() const {
+std::vector<WiiMixObjective> WiiMixCommonSettings::GetObjectives() const {
     return m_objectives;
 }

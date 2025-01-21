@@ -224,7 +224,7 @@ void WiiMixGlobalSettings::SetMode(WiiMixEnums::Mode mode) {
     // emit SettingsChanged(mode);
 }
 
-const WiiMixEnums::Mode WiiMixGlobalSettings::GetMode() const {
+WiiMixEnums::Mode WiiMixGlobalSettings::GetMode() const {
     return m_mode;
 }
 
