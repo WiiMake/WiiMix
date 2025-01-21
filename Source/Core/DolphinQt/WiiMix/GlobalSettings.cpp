@@ -131,10 +131,11 @@ void WiiMixGlobalSettings::UpdateGame(const std::shared_ptr<const UICommon::Game
 {
     qDebug() << "Updating game: " << QString::fromStdString(game->GetGameID());
     // Only make changes if the system is not running or starting
-    if (!Core::IsRunning(Core::System::GetInstance()))
-        return;
+    // if (!Core::IsRunning(Core::System::GetInstance()))
+    //     return;
 
     int index = WiiMixGlobalSettings::FindGameIndex(game->GetFilePath());
+    qDebug() << "index: " << index;
     if (index < 0)
     {
         WiiMixGlobalSettings::AddGame(game);

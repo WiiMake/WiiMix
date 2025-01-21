@@ -426,8 +426,8 @@ else()
     WiiMix/RogueSettings.h
     WiiMix/RogueWindow.cpp
     WiiMix/RogueWindow.h
-		WiiMix/ShuffleGame.cpp
-		WiiMix/ShuffleGame.h
+		WiiMix/GameManager.cpp
+		WiiMix/GameManager.h
     WiiMix/SettingsWindow.cpp
     WiiMix/SettingsWindow.h
     WiiMix/ShuffleSettings.cpp

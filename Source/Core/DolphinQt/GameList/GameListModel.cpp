@@ -89,6 +89,9 @@ GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
 
       // Update the m_games list with the updated game
       m_games[i] = updated_game;
+      WiiMixGlobalSettings::instance()->UpdateGame(updated_game);
+      qDebug() << QString::fromStdString(game->GetGameID());
+      qDebug() << game->GetWiiMix();
   }
 
   connect(&Settings::Instance(), &Settings::ThemeChanged, [this] {

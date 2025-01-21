@@ -16,7 +16,7 @@
 #include "DolphinQt/WiiMix/BingoSettings.h"
 #include "DolphinQt/WiiMix/RogueSettings.h"
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
-#include "DolphinQt/WiiMix/ShuffleGame.h"
+#include "DolphinQt/WiiMix/GameManager.h"
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
 
@@ -198,7 +198,7 @@ private:
   void StartWiiMixBingo(WiiMixBingoSettings* settings);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
-  void WiiMixShuffleUpdate(WiiMixShuffleSettings* settings, int selection, std::vector<WiiMixObjective> objectives);
+  void WiiMixShuffleUpdate();
   // void WiiMixShowcase(WiiMixBingoSettings settings);
   void ShowRenderWidget();
   void HideRenderWidget(bool reinit = true, bool is_exit = false);

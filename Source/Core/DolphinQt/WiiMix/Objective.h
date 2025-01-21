@@ -7,7 +7,7 @@
 #include <map>
 #include <chrono>
 #include <QJsonObject>
-#include <QTimer>
+#include <QElapsedTimer>
 
 class WiiMixObjective
 {
@@ -80,6 +80,7 @@ public:
   int GetNumTimesCompleted();
   int GetNumTimesAttempted();
   std::chrono::system_clock::time_point GetLastAttempted();
+  QElapsedTimer *GetTimer();
   
   QJsonObject ToJson();
   static WiiMixObjective FromJson(const QJsonObject& obj);
@@ -125,6 +126,7 @@ private:
   // For bingo -> might refactor
   WiiMixEnums::Player m_player_completed;
   int m_completion_time;
+  QElapsedTimer *m_timer;
 
   // Join in from objective history table; oftentimes set to null or defaults in the constructor
   WiiMixEnums::ObjectiveStatus m_status;

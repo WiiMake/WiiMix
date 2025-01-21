@@ -27,6 +27,7 @@ WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroa
       m_status(status), m_num_times_completed(num_times_completed), m_num_times_attempted(num_times_attempted), m_player_completed(completed),
       m_last_attempted(last_attempted)
 {
+  m_timer = new QElapsedTimer();
 }
 
 uint16_t WiiMixObjective::GetId()
@@ -210,6 +211,7 @@ void WiiMixObjective::SetLastAttempted(std::chrono::system_clock::time_point las
 int WiiMixObjective::GetCompletionTime()
 {
   return m_completion_time;
+  // return m_timer->elapsed();
 }
 
 void WiiMixObjective::SetCompletionTime(int completion_time)
@@ -294,13 +296,21 @@ int WiiMixObjective::CompletionTimeFromString(QString time)
 // Comma-separated list of local objectives
 #ifdef QT_GUI_LIB
   std::string WiiMixObjective::GetLocalObjectiveString() {
+    qDebug() << "Get local objective string";
     std::string local_objectives;
-    std::string objectives_dir = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX);
+    std::string objectives_dir = File::GetUserPath(D_OBJECTIVES_IDX);
+    qDebug() << QString::fromStdString(objectives_dir);
+    qDebug() << "Size: " << std::distance(std::filesystem::directory_iterator(objectives_dir), std::filesystem::directory_iterator{});
     for (const auto& entry : std::filesystem::directory_iterator(objectives_dir)) {
       if (entry.is_regular_file()) {
         std::string filename = entry.path().filename().string();
+        qDebug() << QString::fromStdString(filename);
         if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".sav") {
           filename = filename.substr(0, filename.size() - 4); // Remove ".sav"
+          bool is_number = std::all_of(filename.begin(), filename.end(), ::isdigit);
+          if (!is_number) {
+            continue;
+          }
         }
         local_objectives += filename + ",";
       }
@@ -312,6 +322,7 @@ int WiiMixObjective::CompletionTimeFromString(QString time)
   }
 #else
   std::string WiiMixObjective::GetLocalObjectiveString() {
+    qDebug() << "No code local objective string";
     return "";
   }
 #endif
