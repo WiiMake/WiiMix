@@ -271,6 +271,7 @@ QString WiiMixObjective::CompletionTimeToString(int ms)
 int WiiMixObjective::CompletionTimeFromString(QString time)
 {
     // Split the input time into days and "hh:mm:ss"
+    qDebug() << "Time: " << time;
     QStringList parts = time.split(QStringLiteral(":"));
     if (parts.size() != 4)
     {

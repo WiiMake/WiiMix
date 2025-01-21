@@ -1085,7 +1085,7 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
 
   // Start the shuffle game
   game_manager->Reset();
-  connect(game_manager->GetTimer(), SIGNAL(timeout()), this, SLOT(WiiMixShuffleUpdate()), Qt::UniqueConnection);
+  connect(game_manager->GetTimer(), &QTimer::timeout, this, &MainWindow::WiiMixShuffleUpdate, Qt::UniqueConnection);
   WiiMixShuffleUpdate();
   return;
 }
@@ -1112,7 +1112,13 @@ void MainWindow::WiiMixShuffleUpdate() {
   int min_time_between_switch = WiiMixShuffleSettings::instance()->GetMinTimeBetweenSwitch();
   int max_time_between_switch = WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch();
 
-  int time_between_switch = g() % (max_time_between_switch - min_time_between_switch + 1) + min_time_between_switch;
+  qDebug() << "min_time " << min_time_between_switch;
+  qDebug() << "max_time " << max_time_between_switch;
+  if (max_time_between_switch < min_time_between_switch) {
+    max_time_between_switch = min_time_between_switch;
+  }
+  int time_between_switch = (g() % (max_time_between_switch - min_time_between_switch + 1)) + min_time_between_switch;
+  qDebug() << "Switch Time: " << time_between_switch;
   game_manager->GetTimer()->start(time_between_switch * 1000);
 }
 

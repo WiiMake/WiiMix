@@ -107,7 +107,7 @@ void WiiMixClient::BytesRead() {
         }
         else {
             qDebug() << "Parsing initial data";
-            qDebug() << data.left(100);
+            qDebug() << data.left(1000);
         }
 
         bool ok0 = false;
@@ -128,10 +128,10 @@ void WiiMixClient::BytesRead() {
         }
         m_json_size = jsonSize;
         m_data_size = jsonSize;
+        current_pos = secondDelimiter + 1;
 
         if (numFiles > 0) {
             qDebug() << "Starting to read in files";
-            current_pos = secondDelimiter + 1;
             for (int i = 0; i < numFiles; ++i) {
                 int nextDelimiter = data.indexOf('|', current_pos);
                 if (nextDelimiter == -1) {
@@ -158,6 +158,8 @@ void WiiMixClient::BytesRead() {
         // If all the json was read in
         if (m_json_buffer.size() == m_json_size) {
             m_json = QJsonDocument::fromJson(m_json_buffer);
+            qDebug() << "Json size: " << m_json_buffer;
+            qDebug() << m_json;
             qDebug() << "Json array size: " << m_json.array().size();
             // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
             // As achievement ids should only be paired with objectives
@@ -179,7 +181,21 @@ void WiiMixClient::BytesRead() {
         current_pos += m_json_buffer.size();
     }
 
+    if (!m_json.isEmpty() && current_pos >= m_data_size - m_json_size) {
+        // Reset all data
+        qDebug() << "All data read in by client";
+        m_json_size = 0;
+        m_files_size = 0;
+        m_data_size = 0;
+        m_current_file = 0;
+        // if (m_files_size == 0) {
+        ReceiveData(m_json);
+        return;
+        // }
+    }
+
     if (current_pos >= data.size()) {
+        qDebug() << "Current data read in, returning";
         return;
     }
 
