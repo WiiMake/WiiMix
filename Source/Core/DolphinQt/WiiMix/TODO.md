@@ -21,6 +21,8 @@ TAKE CARE OF TOMORROW, IN ADDITION TO CS252
 
 - [untested] Checksum to check if the user has a file already so as to not download it
 
+- [] Bingo server crashes
+
 - [] Make sure local directories initialize on all devices (i.e. objectives/ in save states directory)
 - [] Generalize ShuffleGame to just be a generic retroachievements completion handler
   - [] Need to connect ShuffleGame to

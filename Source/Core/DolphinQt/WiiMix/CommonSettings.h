@@ -30,6 +30,14 @@ public:
     std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES);
   WiiMixCommonSettings(const WiiMixCommonSettings& other) = default;
 
+  // // Delete the copy constructor and copy assignment operator
+  // WiiMixCommonSettings(const WiiMixCommonSettings&) = delete;
+  // WiiMixCommonSettings& operator=(const WiiMixCommonSettings&) = delete;
+
+  // // Optionally, you can provide a move constructor and move assignment operator if needed:
+  // WiiMixCommonSettings(WiiMixCommonSettings&&) noexcept = default;
+  // WiiMixCommonSettings& operator=(WiiMixCommonSettings&&) noexcept = default;
+
   #define COMMON_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
   #define COMMON_SETTINGS_OBJECTIVES "OBJECTIVES"
   #define COMMON_SETTINGS_DIFFICULTY "DIFFICULTY"
