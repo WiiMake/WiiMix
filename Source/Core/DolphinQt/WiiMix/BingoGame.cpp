@@ -4,9 +4,10 @@
 #include <QToolTip>
 #include <QGridLayout>
 #include "DolphinQt/Resources.h"
+#include "Objective.h"
 #include <QEvent>
 
-QFrame* BingoGame::createObjectiveWindow(std::vector<BingoItem> items) {
+QFrame* BingoGame::createObjectiveWindow(std::vector<WiiMixObjective> items) {
     double sqrtSize = round(sqrt(items.size()));
     if (sqrtSize * sqrtSize != items.size()) {
         printf("incorrect items size for bingo window, aborting drawing");
@@ -19,12 +20,12 @@ QFrame* BingoGame::createObjectiveWindow(std::vector<BingoItem> items) {
     for (int i = 0; i < sqrtSize; i++) {
         for (int j = 0; j < sqrtSize; j++) {
             BingoButton* button = new BingoButton();
-            button->setIcon(Resources::GetResourceIcon(items[i * sqrtSize + j].icon));
+            //button->setIcon(Resources::GetResourceIcon(items[i * sqrtSize + j].icon)); please get icon for this
             button->installEventFilter(gridLayout); // To capture mouse events
             button->setAttribute(Qt::WA_Hover, true);
-            button->icon = items[i * sqrtSize + j].iconFull;
-            button->name = items[i * sqrtSize + j].name;
-            button->description = items[i * sqrtSize + j].description;
+            //button->icon = items[i * sqrtSize + j].iconFull; please get icon
+            button->name = items[i * sqrtSize + j].GetTitle();
+            button->description = items[i * sqrtSize + j].GetObjectiveDescription();
             button->toolTip(frame); // TODO: set this to happen on hover
             gridLayout->addWidget(button, i, j);
         }

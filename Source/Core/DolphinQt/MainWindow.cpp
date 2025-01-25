@@ -151,6 +151,7 @@
 
 #include "VideoCommon/NetPlayChatUI.h"
 #include "VideoCommon/VideoConfig.h"
+#include "DolphinQt/WiiMix/BingoGame.h"
 
 #ifdef HAVE_XRANDR
 #include "UICommon/X11Utils.h"
@@ -1926,9 +1927,10 @@ void MainWindow::BingoReady() {
   return;
 }
 
-// @vlad TODOx
 void MainWindow::ToggleBingoBoard() {
-  return;
+    QFrame* bingoBoard = BingoGame::createObjectiveWindow(WiiMixBingoSettings::instance()->GetObjectives());
+    qDebug() << "displaying bingo board";
+    return;
 }
 
 // Wasn't immediately clear to me how to implement this

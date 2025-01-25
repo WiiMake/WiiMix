@@ -3,15 +3,10 @@
 #include <QObject>
 #include <QFrame>
 #include <QPushButton>
+#include "Objective.h"
 
 namespace BingoGame {
-    struct BingoItem {
-        std::string description;
-        std::string name;
-        std::string icon;
-        std::string iconFull;
-    };
-    QFrame *createObjectiveWindow(std::vector<BingoItem> items);
+    QFrame *createObjectiveWindow(std::vector<WiiMixObjective> items);
 }
 class BingoButton : public QPushButton{
     typedef QPushButton inherited;

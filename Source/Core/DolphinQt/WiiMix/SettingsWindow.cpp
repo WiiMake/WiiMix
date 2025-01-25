@@ -46,7 +46,7 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   m_load_button_box->setMaximumSize(QSize(60,60));
   m_load_button_box->setMinimumSize(QSize(60,60));
   char styleSheet[1000];
-  std::string color = "blue";
+  std::string color = "blue"; // it always uses blue because it's better
 //  if (Config::Get(Config::MAIN_THEME_NAME) == "Clean") {
 //      color = "white";
 //      shadowColor = Qt::white;
