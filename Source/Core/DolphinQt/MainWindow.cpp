@@ -1011,7 +1011,7 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
       return;
     }
   }
-  
+
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
@@ -1103,7 +1103,7 @@ void MainWindow::WiiMixShuffleUpdate() {
     g.seed(rd());
     next_objective_index = g() % WiiMixShuffleSettings::instance()->GetObjectives().size();
   }
-  
+
   if (WiiMixGlobalSettings::instance()->GetCurrentObjective() == -1) {
     WiiMixStartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[next_objective_index]);
   } else {
@@ -1902,7 +1902,7 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
 // TODOx @gyoder
 void MainWindow::ResetCurrentObjective() {
   // TODOx: which type of game is playing
-  WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixShuffleGame::instance()->GetCurrentObjective()]);
+  // WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixShuffleGame::instance()->GetCurrentObjective()]);
 
   return;
 }
@@ -1970,7 +1970,7 @@ void MainWindow::StopWiiMix() {
         break;
       case WiiMixEnums::Mode::SHUFFLE:
         // Show the shuffle end screen
-        
+
         // Stop the shuffle
         // WiiMixShuffleSettings::instance()->SetObjectives({});
         break;
@@ -2095,7 +2095,7 @@ void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) 
 // When getting an achievement:
 // 1. Update the timer depending on the mode
 // 2. Send the data to the server to update objective history
-// 3. 
+// 3.
 void MainWindow::HandleAchievementGet(std::set<u32> achievements)
 {
   WiiMixEnums::Mode mode = WiiMixGlobalSettings::instance()->GetMode();
