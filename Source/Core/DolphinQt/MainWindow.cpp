@@ -966,6 +966,11 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
     }
   }
   qDebug() << "Game does not exist";
+  // QTimer::singleShot(1000, this, [this, &new_objective]() {
+  //   OSD::AddMessage("Objective: " + new_objective.GetTitle(), 5000, OSD::Color::GREEN);
+  //   OSD::AddMessage("Description: " + new_objective.GetObjectiveDescription(), 5000, OSD::Color::GREEN);
+  //   OSD::DrawMessages();
+  // });
 }
 
 void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
@@ -1487,7 +1492,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
   //StateLoadSlotAt(1);
   // We need the render widget before booting.
 
-  QTimer::singleShot(10000, this, [this] {
+  QTimer::singleShot(1000, this, [this] { //TODOx: make this smarter
     // if (!m_render_widget->isFullScreen())
     //   ShowRenderWidget();
 
@@ -1896,7 +1901,9 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
 
 // TODOx @gyoder
 void MainWindow::ResetCurrentObjective() {
-  // WiiMixGlobalSettings::instance()->GetCurrentObjective();
+  // TODOx: which type of game is playing
+  WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixShuffleGame::instance()->GetCurrentObjective()]);
+
   return;
 }
 
