@@ -19,7 +19,7 @@ public:
         }
         return s_instance;
     }
-    
+    void ClearLiveStates();
     void Reset();
     void SetIsRunning(bool state);
     bool IsRunning();
