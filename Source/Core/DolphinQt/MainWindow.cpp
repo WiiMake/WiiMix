@@ -1038,6 +1038,7 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObj
 }
 
 void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
+  WiiMixGameManager::instance()->ClearLiveStates();
   // Start the wiimix
   qDebug() << "Populating bingo objectives";
   QJsonObject obj = settings->ToJson().object();
@@ -1051,6 +1052,7 @@ void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
 }
 
 void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
+  WiiMixGameManager::instance()->ClearLiveStates();
   // Start the wiimix
   qDebug() << "Populating rogue objectives";
   // Populate the objectives
@@ -1071,6 +1073,7 @@ void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
 }
 
 void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings) {
+  WiiMixGameManager::instance()->ClearLiveStates();
    // Start the wiimix
   qDebug() << "Populating shuffle objectives";
   // Populate the objectives
@@ -1084,6 +1087,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
   // Start the wiimix
   // WiiMixShuffleGame::instance()->StartShuffle();
+  m_mode = WiiMixEnums::Mode::SHUFFLE;
   if (WiiMixShuffleSettings::instance()->GetObjectives().empty()) {
     qDebug() << "No objectives to shuffle";
     return;
@@ -1909,14 +1913,20 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
 // TODOx @gyoder
 void MainWindow::ResetCurrentObjective() {
   // TODOx: which type of game is playing
-  // WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixShuffleGame::instance()->GetCurrentObjective()]);
-
+  if (m_mode == WiiMixEnums::Mode::BINGO) {
+    WiiMixRestartObjective(WiiMixBingoSettings::instance()->GetObjectives()[WiiMixBingoSettings::instance()->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(WiiMixBingoSettings::instance()->GetPlayerNum())]]);
+  } else if (m_mode == WiiMixEnums::Mode::ROGUE) {
+    // WiiMixRestartObjective(WiiMixRogueSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
+  } else if (m_mode == WiiMixEnums::Mode::SHUFFLE) {
+    WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
+  }
   return;
 }
 
 void MainWindow::BingoReady() {
   // TODOx: toggles ready on player player_num
   qDebug() << "Bingo ready";
+  m_mode = WiiMixEnums::Mode::BINGO;
   m_player_ready = !m_player_ready;
   if (m_player_ready) {
     // m_screen_saver->SetTextItemText(QStringLiteral("Player ") + QString::number(m_player_num) + QStringLiteral(" Ready"));

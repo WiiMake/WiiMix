@@ -14,8 +14,13 @@ WiiMixGameManager::WiiMixGameManager() {
   }
   if (!File::IsDirectory(File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX))) {
     qDebug() << "Creating directory live savestates";
-    File::CreateDir(File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX));  
+    File::CreateDir(File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX));
   }
+}
+
+void WiiMixGameManager::ClearLiveStates() {
+  File::DeleteDirRecursively(File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX));
+  File::CreateDir(File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX));
 }
 
 void WiiMixGameManager::Reset() {
