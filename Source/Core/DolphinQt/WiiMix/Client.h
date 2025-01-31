@@ -35,10 +35,9 @@ class WiiMixClient : public QObject
   Q_OBJECT
 
 public:
-  WiiMixClient(const WiiMixClient& client) = delete;
-
   static WiiMixClient* instance() {
     if (!s_instance) {
+      qDebug() << "Initializing WiiMixClient singleton";
       s_instance = new WiiMixClient();
     }
     return s_instance;
@@ -79,14 +78,14 @@ public slots:
   void BytesWritten();
 
 protected:
-  explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket *socket = nullptr);
+  explicit WiiMixClient(QObject *parent = nullptr, QTcpSocket* socket = nullptr);
 
   inline static WiiMixClient* s_instance = nullptr;
 
 // If desired, this can be optimized by storing in members and only sending the updated data
 // But for simplicity and to reduce desync issues, we're currently sending the entire card each time
 private:
-  QTcpSocket* m_socket;
+  QTcpSocket* m_socket = nullptr;
   qint64 m_bytes_written = 0;
   // For writing
   QByteArray m_data = {};
@@ -99,7 +98,7 @@ private:
   QList<int> m_file_sizes = QList<int>();
   QByteArray m_file = {};
   int m_current_file = 0; 
-  std::vector<WiiMixObjective> m_objectives;
+  std::vector<WiiMixObjective> m_objectives = {};
   //     std::list<WiiMixEnums::Player> m_players;
   //     std::list<WiiMixObjective> m_bingo_card;
   //     WiiMixEnums::BingoType m_bingo_type;

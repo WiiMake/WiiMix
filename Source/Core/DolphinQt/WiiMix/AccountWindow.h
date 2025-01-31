@@ -2,7 +2,9 @@
 #include <QPushButton>
 #include "DolphinQt/WiiMix/Player.h"
 
-class WiiMixAccountWindow : public QWidget
+#include <QMainWindow>
+
+class WiiMixAccountWindow : public QMainWindow
 {
     Q_OBJECT
 

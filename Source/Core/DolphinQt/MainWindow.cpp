@@ -401,8 +401,14 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // m_screen_saver->CreateLayout();
   // //m_screen_saver->show();
   m_wiimix_client = WiiMixClient::instance();
-  m_wiimix_client->ConnectToServer();
+  if (!m_wiimix_client->ConnectToServer()) {
+    QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
+  }
 }
+
+// void MainWindow::DisplayClientError(QString error) {
+//     QMessageBox::critical(this, QStringLiteral("Error"), error);
+// }
 
 MainWindow::~MainWindow()
 {
@@ -2685,6 +2691,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
   // Check if the player is already logged in
   WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
   if (player != nullptr) {
+    qDebug() << "Showing account window";
     if (!m_wiimix_account_window || m_wiimix_account_window == nullptr) {
       m_wiimix_account_window = new WiiMixAccountWindow(this, player);
     }
@@ -2695,6 +2702,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
     m_wiimix_account_window->activateWindow();
   }
   else {
+    qDebug() << "Player not logged in";
     // If the player is not logged in, show the login window
     if (!m_wiimix_account_login_window || m_wiimix_account_window == nullptr) {
       m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);

@@ -33,8 +33,11 @@ QJsonObject WiiMixPlayer::ToJson()
     return obj;
 }
 
-WiiMixPlayer WiiMixPlayer::FromJson(const QJsonObject& obj)
+WiiMixPlayer WiiMixPlayer::FromJson(QJsonDocument obj)
 {
+    qDebug() << "FromJson" << obj;
+    qDebug() << PLAYER_USERNAME;
+    qDebug() << "json username: " << obj[QStringLiteral(PLAYER_USERNAME)];
     uint16_t id = static_cast<uint16_t>(obj[QStringLiteral(PLAYER_ID)].toInt());
     std::string username = obj[QStringLiteral(PLAYER_USERNAME)].toString().toStdString();
     std::string password_hash = obj[QStringLiteral(PLAYER_PASSWORD_HASH)].toString().toStdString();\

@@ -1,6 +1,7 @@
 ########################################
 # General setup
 #
+
 cmake_minimum_required(VERSION 3.13)
 
 cmake_policy(SET CMP0079 NEW) # let target_link_libraries() link to a target defined in a different directory
@@ -448,6 +449,10 @@ if (NOT BUILD_WIIMIX_SERVER_ONLY)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
         "Build type (Release/Debug/RelWithDebInfo/MinSizeRel)" FORCE)
   endif()
+
+  message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+  message(STATUS "CMAKE FLAGS: ${CMAKE_CXX_FLAGS}")
+  message(STATUS "Compiler: " ${COMPILER})
 
   if(ENABLE_GPROF)
     check_and_add_flag(HAVE_PG -pg)

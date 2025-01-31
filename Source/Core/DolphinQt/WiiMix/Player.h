@@ -6,6 +6,7 @@
 #include "DolphinQt/WiiMix/Enums.h"
 #include <map>
 #include <QJsonObject>
+#include <QJsonDocument>
 #include <string>
 
 class WiiMixPlayer
@@ -52,7 +53,7 @@ public:
   int GetNumObjectivesCreated();
 
   QJsonObject ToJson();
-  static WiiMixPlayer FromJson(const QJsonObject& obj);
+  static WiiMixPlayer FromJson(QJsonDocument obj);
 
 private:
   uint16_t m_id;

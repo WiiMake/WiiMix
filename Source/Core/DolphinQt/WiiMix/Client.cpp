@@ -19,7 +19,17 @@
 #include <vector>
 #include <Common/FileUtil.h>
 
-WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent), m_socket(socket) {}
+WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket)
+    : QObject(parent), m_socket(socket), m_bytes_written(0), m_data(), m_json(),
+    m_json_buffer(), m_data_size(0), m_json_size(0), m_files_size(0),
+    m_file_sizes(), m_file(), m_current_file(0), m_objectives() {}
+
+// WiiMixClient::~WiiMixClient() {
+//     if (m_socket) {
+//         m_socket->disconnectFromHost();
+//         m_socket->deleteLater();
+//     }
+// }
 
 // bool WiiMixClient::HasNetworkConnection() {
 //     auto networkInfo = QNetworkInformation::instance();
@@ -31,49 +41,59 @@ WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket) : QObject(parent
 //     return true;
 // }
 
+// 
 bool WiiMixClient::ConnectToServer() {
     if (m_socket == nullptr) {
         m_socket = new QTcpSocket(this);
         m_socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, 512 * 1024); // Set send buffer size to 512 KB
         m_socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024); // Set receive buffer size to 64 KB
+        // qDebug() << "Port " << WIIMIX_PORT;
+        // qDebug() << "IP " << WIIMIX_IP;
+        
         #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
         // Use the loopback address for network testing
             m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
         #else
             assert(false);
         #endif
+        
         qDebug() << QStringLiteral("Connecting client to server");
         if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
             qCritical() << "Failed to connect to server:" << m_socket->errorString();
             // Emit a signal to the UI to display an error message
-            emit onError(QStringLiteral("Could not connect to the WiiMix server."));
+            // QMessageBox::critical(this, tr("Error"), tr("Player name must be unique"));
+            QStringLiteral("Could not connect");
+            QStringLiteral("Could not connect to the WiiMix server.");
+            // emit onError(QStringLiteral("Could not connect to the WiiMix server."));
             return false;
         }
         else {
             qDebug() << m_socket->state();
         }
+
+        connect(m_socket, &QTcpSocket::disconnected, this, [this]() {
+            qWarning() << "Disconnected from server";
+            // Try to reconnect
+            #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
+            // Use the loopback address for network testing
+                m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
+            #else
+                assert(false);
+            #endif
+            qDebug() << QStringLiteral("Attempting to reconnect client to server");
+            if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
+                qCritical() << "Failed to connect to server:" << m_socket->errorString();
+                // Emit a signal to the UI to display an error message
+                emit onError(QStringLiteral("Could not connect to the WiiMix server; WiiMix functionality will not work unless you are connected."));
+                return;
+            }
+            else {
+                qDebug() << m_socket->state();
+            }
+        }, Qt::UniqueConnection);
+        connect(m_socket, &QTcpSocket::readyRead, this, &WiiMixClient::BytesRead, Qt::UniqueConnection);
     }
-    connect(m_socket, &QTcpSocket::disconnected, this, [this]() {
-        qWarning() << "Disconnected from server";
-        // Try to reconnect
-        #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
-        // Use the loopback address for network testing
-            m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
-        #else
-            assert(false);
-        #endif
-        qDebug() << QStringLiteral("Attempting to reconnect client to server");
-        if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
-            qCritical() << "Failed to connect to server:" << m_socket->errorString();
-            // Emit a signal to the UI to display an error message
-            emit onError(QStringLiteral("Could not connect to the WiiMix server; WiiMix functionality will not work unless you are connected."));
-            return;
-        }
-        else {
-            qDebug() << m_socket->state();
-        }
-    });
-    connect(m_socket, &QTcpSocket::readyRead, this, &WiiMixClient::BytesRead, Qt::QueuedConnection);
+    return true;
 }
 
 void WiiMixClient::BytesRead() {
@@ -522,8 +542,8 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         emit onGetPlayers({});
     }
     else if (response == WiiMixEnums::Response::GET_PLAYER) {
-        QJsonObject obj = json.object();
-        WiiMixPlayer player = WiiMixPlayer::FromJson(obj);
+        QJsonDocument jsonDoc = QJsonDocument(json.array()[0].toObject());
+        WiiMixPlayer player = WiiMixPlayer::FromJson(jsonDoc);
         emit onGetPlayer(player);
     }
     else if (response == WiiMixEnums::Response::GET_OBJECTIVE_HISTORY) {

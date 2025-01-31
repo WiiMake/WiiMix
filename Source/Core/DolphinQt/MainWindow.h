@@ -107,6 +107,7 @@ public slots:
   void WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
   void WiiMixRestartObjective(WiiMixObjective new_objective);
   void WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective);
+  // void DisplayClientError(QString error);
 
 private:
   void ShowWiiMixWindow();

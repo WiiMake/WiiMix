@@ -28,6 +28,8 @@ void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
     player_json[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::GET_PLAYER);
     // connect the client for the response
     connect(WiiMixClient::instance(), &WiiMixClient::onGetPlayer, this, [this](WiiMixPlayer player) {
+        qDebug() << "Player received";
+        qDebug() << player.ToJson();
         // Set the player
         WiiMixGlobalSettings::instance()->SetPlayer(&player);
         // Close the login window

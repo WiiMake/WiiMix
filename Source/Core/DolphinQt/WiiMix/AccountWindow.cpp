@@ -8,13 +8,18 @@
 #include <QVBoxLayout>
 
 WiiMixAccountWindow::WiiMixAccountWindow(QWidget* parent, WiiMixPlayer *player)
-    : QWidget(parent), m_player(player)
+    : QMainWindow(parent), m_player(player)
 {
+  QWidget* centralWidget = new QWidget(this);
+  setCentralWidget(centralWidget);
+
   setWindowTitle(tr("WiiMix Account"));
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
   CreateLayout();
   ConnectWidgets();
+
+  this->show();
 }
 
 void WiiMixAccountWindow::CreateLayout() {
@@ -34,7 +39,8 @@ void WiiMixAccountWindow::CreateLayout() {
     layout->addWidget(m_num_objectives_attempted);
     layout->addWidget(m_num_objectives_created);
 
-    setLayout(layout);
+    centralWidget()->setLayout(layout);
+    qDebug() << "Account window created";
 }
 
 void WiiMixAccountWindow::ConnectWidgets() {

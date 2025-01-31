@@ -15,17 +15,18 @@ TAKE CARE OF TOMORROW, IN ADDITION TO CS252
 - [] Figure out how to implement a stop wiimix function
 - [x] Track minimum completion time in psql
 
+- [] Fix release build on the TODO list
+
 - [x] Set up an extra event listener for gamepad input that ONLY runs during a wiimix
   - Would need to also implement custom button selectors for the WiiMix hotkey window to make sure the right inputs are used
 - [x] Map keyboard shortcuts to controller
 
 - [untested] Checksum to check if the user has a file already so as to not download it
 
-- [] Bingo server crashes
+- [x] Bingo server crashes
 
 - [] Make sure local directories initialize on all devices (i.e. objectives/ in save states directory)
-- [] Generalize ShuffleGame to just be a generic retroachievements completion handler
-  - [] Need to connect ShuffleGame to
+- [x] Generalize ShuffleGame to just be a generic retroachievements completion handler
 - [] End Screen?
 
 ## NEW YEARS RELEASE
