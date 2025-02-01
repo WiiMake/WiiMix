@@ -543,8 +543,13 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     }
     else if (response == WiiMixEnums::Response::GET_PLAYER) {
         QJsonDocument jsonDoc = QJsonDocument(json.array()[0].toObject());
-        WiiMixPlayer player = WiiMixPlayer::FromJson(jsonDoc);
-        emit onGetPlayer(player);
+        if (!jsonDoc.toJson().contains(QStringLiteral(PLAYER_USERNAME).toUtf8())) {
+            emit onError(QStringLiteral("No players returned"));
+        }
+        else {
+            WiiMixPlayer player = WiiMixPlayer::FromJson(jsonDoc);
+            emit onGetPlayer(player);
+        }
     }
     else if (response == WiiMixEnums::Response::GET_OBJECTIVE_HISTORY) {
         // TODOx: not implemented
