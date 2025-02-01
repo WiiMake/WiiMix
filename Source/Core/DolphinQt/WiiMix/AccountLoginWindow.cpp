@@ -25,7 +25,9 @@ void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
     QJsonObject player_json = player.ToJson();
     WiiMixClient::instance()->SendData(player_json, WiiMixEnums::Action::ADD_PLAYER);
     // Make a request to retrieve the player and all the player data
-    player_json[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::GET_PLAYER);
+    player_json[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::GET_PLAYER);   
+    player_json[QStringLiteral(SELECT)] = QStringLiteral(PLAYER_USERNAME);
+    player_json[QStringLiteral(WHERE)] = username;
     // connect the client for the response
     connect(WiiMixClient::instance(), &WiiMixClient::onGetPlayer, this, [this](WiiMixPlayer player) {
         qDebug() << "Player received";

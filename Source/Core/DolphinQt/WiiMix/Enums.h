@@ -207,6 +207,7 @@ namespace WiiMixEnums {
     #define FILTER_GREATER_THAN "FILTER_GREATER_THAN"
     #define FILTER_LESS_THAN "FILTER_LESS_THAN"
     #define SELECT "SELECT"
+    #define WHERE "WHERE"
     #define NUM_ROWS "NUM_ROWS"
 
     // Response is an enum class that represents the different responses that can be sent by the server
