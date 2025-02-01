@@ -240,10 +240,12 @@ int WiiMixGlobalSettings::GetCurrentObjective() {
 
 void WiiMixGlobalSettings::SetPlayer(WiiMixPlayer *player) {
     m_player = player;
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_USERNAME, player->GetUsername());
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED, player->GetNumObjectivesCompleted());
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED, player->GetNumUniqueObjectivesCompleted());
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED, player->GetNumObjectivesAttempted());
+    if (player != nullptr) {
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_USERNAME, player->GetUsername());
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_COMPLETED, player->GetNumObjectivesCompleted());
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_UNIQUE_OBJECTIVES_COMPLETED, player->GetNumUniqueObjectivesCompleted());
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_PLAYER_NUM_OBJECTIVES_ATTEMPTED, player->GetNumObjectivesAttempted());
+    }
 }
 
 WiiMixPlayer *WiiMixGlobalSettings::GetPlayer() {
