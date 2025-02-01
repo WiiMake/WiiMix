@@ -34,11 +34,13 @@ GameListModel::GameListModel(QObject* parent) : QAbstractTableModel(parent)
   connect(&m_tracker, &GameTracker::GameUpdated, this, &GameListModel::UpdateGame);
   connect(&m_tracker, &GameTracker::GameRemoved, this, &GameListModel::RemoveGame);
   // Connect the game tracker to the WiiMixSettings singleton
-  connect(&m_tracker, &GameTracker::GameLoaded, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::AddGame);
-  connect(&m_tracker, &GameTracker::GameUpdated, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::UpdateGame);
-  connect(&m_tracker, &GameTracker::GameRemoved, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::RemoveGame);
+  
+  // NOTE: commented this out (potential race condition?)
+  // connect(&m_tracker, &GameTracker::GameLoaded, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::AddGame);
+  // connect(&m_tracker, &GameTracker::GameUpdated, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::UpdateGame);
+  // connect(&m_tracker, &GameTracker::GameRemoved, WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::RemoveGame);
 
-  connect(WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::SettingsChanged, this, &GameListModel::setWiiMixData);
+  // connect(WiiMixGlobalSettings::instance(), &WiiMixGlobalSettings::SettingsChanged, this, &GameListModel::setWiiMixData);
 
   connect(&Settings::Instance(), &Settings::PathAdded, &m_tracker, &GameTracker::AddDirectory);
   connect(&Settings::Instance(), &Settings::PathRemoved, &m_tracker, &GameTracker::RemoveDirectory);

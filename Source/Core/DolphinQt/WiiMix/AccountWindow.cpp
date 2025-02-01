@@ -23,7 +23,7 @@ WiiMixAccountWindow::WiiMixAccountWindow(QWidget* parent, WiiMixPlayer *player)
 }
 
 void WiiMixAccountWindow::CreateLayout() {
-    m_username = new QLabel(QStringLiteral("Username: %1").arg(QString::fromStdString(m_player->GetUsername())), this);
+    m_username = new QLabel(QStringLiteral("<b>Username: %1</b>").arg(QString::fromStdString(m_player->GetUsername())), this);
     m_logout_button = new QPushButton(tr("Logout"), this);
     m_num_objectives_completed = new QLabel(QStringLiteral("Objectives Completed: %1").arg(m_player->GetNumObjectivesCompleted()), this);
     m_num_unique_objectives_completed = new QLabel(QStringLiteral("Unique Objectives Completed: %1").arg(m_player->GetNumUniqueObjectivesCompleted()), this);
@@ -33,11 +33,11 @@ void WiiMixAccountWindow::CreateLayout() {
     auto* layout = new QVBoxLayout(this);
 
     layout->addWidget(m_username);
-    layout->addWidget(m_logout_button);
     layout->addWidget(m_num_objectives_completed);
     layout->addWidget(m_num_unique_objectives_completed);
     layout->addWidget(m_num_objectives_attempted);
     layout->addWidget(m_num_objectives_created);
+    layout->addWidget(m_logout_button);
 
     centralWidget()->setLayout(layout);
     qDebug() << "Account window created";
