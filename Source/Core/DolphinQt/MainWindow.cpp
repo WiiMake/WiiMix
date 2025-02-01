@@ -2702,7 +2702,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
   WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
   if (player != nullptr) {
     qDebug() << "Showing account window";
-    if (m_wiimix_account_window == nullptr) {
+    if (!m_wiimix_account_window || m_wiimix_account_window == nullptr) {
       m_wiimix_account_window = new WiiMixAccountWindow(this, player);
     }
     // Connect logout signal to this function so it will close and open the logout window on logout
@@ -2714,7 +2714,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
   else {
     qDebug() << "Player not logged in";
     // If the player is not logged in, show the login window
-    if (m_wiimix_account_window == nullptr) {
+    if (m_wiimix_account_login_window == nullptr) {
       m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);
     }
     connect(m_wiimix_account_login_window, &WiiMixAccountLoginWindow::onLogin, this, &MainWindow::ShowWiiMixAccountWindow, Qt::UniqueConnection);
