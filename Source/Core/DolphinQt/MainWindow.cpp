@@ -1912,13 +1912,14 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
 
 // TODOx @gyoder
 void MainWindow::ResetCurrentObjective() {
-  // TODOx: which type of game is playing
-  if (m_mode == WiiMixEnums::Mode::BINGO) {
-    WiiMixRestartObjective(WiiMixBingoSettings::instance()->GetObjectives()[WiiMixBingoSettings::instance()->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(WiiMixBingoSettings::instance()->GetPlayerNum())]]);
-  } else if (m_mode == WiiMixEnums::Mode::ROGUE) {
-    // WiiMixRestartObjective(WiiMixRogueSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
-  } else if (m_mode == WiiMixEnums::Mode::SHUFFLE) {
-    WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
+  if (WiiMixGameManager::instance()->IsRunning()) {
+    if (m_mode == WiiMixEnums::Mode::BINGO) {
+      WiiMixRestartObjective(WiiMixBingoSettings::instance()->GetObjectives()[WiiMixBingoSettings::instance()->GetCurrentObjectives()[static_cast<WiiMixEnums::Player>(WiiMixBingoSettings::instance()->GetPlayerNum())]]);
+    } else if (m_mode == WiiMixEnums::Mode::ROGUE) {
+      // WiiMixRestartObjective(WiiMixRogueSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
+    } else if (m_mode == WiiMixEnums::Mode::SHUFFLE) {
+      WiiMixRestartObjective(WiiMixShuffleSettings::instance()->GetObjectives()[WiiMixGlobalSettings::instance()->GetCurrentObjective()]);
+    }
   }
   return;
 }
@@ -1944,8 +1945,10 @@ void MainWindow::BingoReady() {
 }
 
 void MainWindow::ToggleBingoBoard() {
+  if (WiiMixGameManager::instance()->IsRunning() && WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
     QFrame* bingoBoard = BingoGame::createObjectiveWindow(WiiMixBingoSettings::instance()->GetObjectives());
     qDebug() << "displaying bingo board";
+  }
     return;
 }
 
