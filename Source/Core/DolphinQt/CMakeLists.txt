@@ -770,14 +770,14 @@ else()
 
   if(APPLE)
     include(BundleUtilities)
-    set(BUNDLE_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/DolphinQt.app)
+    set(BUNDLE_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/WiiMixQt.app)
 
     # Ask for an application bundle.
     set_target_properties(dolphin-emu PROPERTIES
       MACOSX_BUNDLE true
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
       XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
-      OUTPUT_NAME DolphinQt
+      OUTPUT_NAME WiiMixQt
     )
 
     # Copy qt.conf into the bundle

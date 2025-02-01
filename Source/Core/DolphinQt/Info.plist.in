@@ -30,7 +30,7 @@
         </dict>
     </array>
     <key>CFBundleExecutable</key>
-    <string>DolphinQt</string>
+    <string>WiiMixQt</string>
     <key>CFBundleIconFile</key>
     <string>Dolphin.icns</string>
     <key>CFBundleIdentifier</key>
