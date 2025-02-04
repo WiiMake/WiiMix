@@ -89,6 +89,16 @@ void WiiMixStateSendMenu::ConnectWidgets() {
         m_send_button->setEnabled(false);
         m_send_button->setText(QStringLiteral("Sending 0% complete"));
 
+        std::vector<WiiMixEnums::ObjectiveType> selected_objective_types;
+        for (QListWidgetItem* item : m_objective_types->selectedItems()) {
+            selected_objective_types.push_back(static_cast<WiiMixEnums::ObjectiveType>(m_objective_types->row(item)));
+        }
+
+        std::vector<WiiMixEnums::GameGenre> selected_game_genres;
+        for (QListWidgetItem* item : m_game_genres->selectedItems()) {
+            selected_game_genres.push_back(static_cast<WiiMixEnums::GameGenre>(m_game_genres->row(item)));
+        }
+
         emit SendObjective(WiiMixObjective(
             // Use -1 as a placeholder; for addObjective, the server will populate the objective id
             -1,
@@ -97,9 +107,9 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             -1,
             SConfig::GetInstance().GetGameID(),
             m_achievement_id->value(),
-            std::vector<WiiMixEnums::ObjectiveType>(), // TODOx: get the selected objective types
+            selected_objective_types,
             m_description->toPlainText().toStdString(),
-            std::vector<WiiMixEnums::GameGenre>(), // TODOx: get the selected game genres
+            selected_game_genres,
             static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
             m_time_length->value(),
             WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetUsername() : ""
