@@ -69,7 +69,11 @@ namespace WiiMixEnums {
         PACIFIST,
         NO_HIT,
         GLITCH,
-        MULTIPLAYER,
+        SINGLE_PLAYER,
+        TWO_PLAYER,
+        THREE_PLAYER,
+        FOUR_PLAYER,
+        COOPERATIVE,
         SPEEDRUN,
         END, // Default/size value
     };
@@ -85,7 +89,12 @@ namespace WiiMixEnums {
     #define OBJECTIVE_TYPE_COMPLETIONIST "COMPLETIONIST"
     #define OBJECTIVE_TYPE_PACIFIST "PACIFIST"
     #define OBJECTIVE_TYPE_NO_HIT "NO_HIT"
-    #define OBJECTIVE_TYPE_MULTIPLAYER "MULTIPLAYER"
+    #define OBJECTIVE_TYPE_GLITCH "GLITCH"
+    #define OBJECTIVE_TYPE_SINGLE_PLAYER "SINGLE_PLAYER"
+    #define OBJECTIVE_TYPE_TWO_PLAYER "TWO_PLAYER"
+    #define OBJECTIVE_TYPE_THREE_PLAYER "THREE_PLAYER"
+    #define OBJECTIVE_TYPE_FOUR_PLAYER "FOUR_PLAYER"
+    #define OBJECTIVE_TYPE_COOPERATIVE "COOPERATIVE"
     #define OBJECTIVE_TYPE_SPEEDRUN "SPEEDRUN"
 
     std::string ObjectiveTypeToString(ObjectiveType type);

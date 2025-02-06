@@ -183,10 +183,20 @@ namespace WiiMixEnums {
                 return OBJECTIVE_TYPE_PACIFIST;
             case ObjectiveType::NO_HIT:
                 return OBJECTIVE_TYPE_NO_HIT;
-            case ObjectiveType::MULTIPLAYER:
-                return OBJECTIVE_TYPE_MULTIPLAYER;
+            case ObjectiveType::GLITCH:
+                return OBJECTIVE_TYPE_GLITCH;
+            case ObjectiveType::SINGLE_PLAYER:
+                return OBJECTIVE_TYPE_SINGLE_PLAYER;
+            case ObjectiveType::TWO_PLAYER:
+                return OBJECTIVE_TYPE_TWO_PLAYER;
+            case ObjectiveType::THREE_PLAYER:
+                return OBJECTIVE_TYPE_THREE_PLAYER;
+            case ObjectiveType::FOUR_PLAYER:
+                return OBJECTIVE_TYPE_FOUR_PLAYER;
             case ObjectiveType::SPEEDRUN:
                 return OBJECTIVE_TYPE_SPEEDRUN;
+            case ObjectiveType::COOPERATIVE:
+                return OBJECTIVE_TYPE_COOPERATIVE;
             case ObjectiveType::END:
                 return WII_MIX_UNKNOWN;
             default:
@@ -218,8 +228,18 @@ namespace WiiMixEnums {
             return ObjectiveType::PACIFIST;
         } else if (str == OBJECTIVE_TYPE_NO_HIT) {
             return ObjectiveType::NO_HIT;
-        } else if (str == OBJECTIVE_TYPE_MULTIPLAYER) {
-            return ObjectiveType::MULTIPLAYER;
+        } else if (str == OBJECTIVE_TYPE_GLITCH) {
+            return ObjectiveType::GLITCH;
+        } else if (str == OBJECTIVE_TYPE_SINGLE_PLAYER) {
+            return ObjectiveType::SINGLE_PLAYER;
+        } else if (str == OBJECTIVE_TYPE_TWO_PLAYER) {
+            return ObjectiveType::TWO_PLAYER;
+        } else if (str == OBJECTIVE_TYPE_THREE_PLAYER) {
+            return ObjectiveType::THREE_PLAYER;
+        } else if (str == OBJECTIVE_TYPE_FOUR_PLAYER) {
+            return ObjectiveType::FOUR_PLAYER;
+        } else if (str == OBJECTIVE_TYPE_COOPERATIVE) {
+            return ObjectiveType::COOPERATIVE;
         } else if (str == OBJECTIVE_TYPE_SPEEDRUN) {
             return ObjectiveType::SPEEDRUN;
         } else {
