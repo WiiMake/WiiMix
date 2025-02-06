@@ -2064,7 +2064,6 @@ void MainWindow::StateSend(WiiMixObjective objective) {
   qDebug() << "Sending objective and state to the server";
   connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
   // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
-
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
   return;
 }

@@ -4,7 +4,13 @@
 
 ## FIRST RELEASE
 
-TAKE CARE OF TOMORROW, IN ADDITION TO CS252
+- [] Re-populate database
+- [] Figure out bingo problems on mac
+- [] Update db api (make it cleaner, easier to use)
+
+  - [] Added debug info for UpdatePlayerStats in the db api, so when statesend works, test that
+
+  - [] Make sure it's being called in the right places and updating the right things (i.e. num objectives created for local accounts seems to be wrong)
 
 - [untested] Fix game updating
 - [] Finish implementing handling completed bingo objectives on server
