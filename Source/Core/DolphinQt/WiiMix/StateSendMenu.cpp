@@ -12,6 +12,7 @@
 #include "DolphinQt/WiiMix/CommonSettings.h"
 #include "DolphinQt/WiiMix/GlobalSettings.h"
 #include "DolphinQt/WiiMix/Client.h"
+#include "DolphinQt/WiiMix/WebAPI.h"
 
 WiiMixStateSendMenu::WiiMixStateSendMenu() {
     CreateLayout();
@@ -103,8 +104,7 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             // Use -1 as a placeholder; for addObjective, the server will populate the objective id
             -1,
             m_title->text().toStdString(),
-            // TODOx: get the retroachievements game id using the achievement id
-            -1,
+            WiiMixWebAPI::getGameID(m_achievement_id->value()),
             SConfig::GetInstance().GetGameID(),
             m_achievement_id->value(),
             selected_objective_types,
