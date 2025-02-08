@@ -12,25 +12,34 @@
 
 #include "Common/FileUtil.h"
 
-WiiMixObjective::WiiMixObjective(uint16_t id, std::string title, uint16_t retroachievements_game_id,
-                                 std::string game_id, uint16_t achievement_id,
+WiiMixObjective::WiiMixObjective(int id, std::string title, int retroachievements_game_id,
+                                 std::string game_id, int achievement_id,
                                  std::vector<WiiMixEnums::ObjectiveType> objective_type,
                                  std::string objective_description,
                                  std::vector<WiiMixEnums::GameGenre> game_genres,
-                                 WiiMixEnums::Difficulty difficulty, uint64_t time, std::string creator_username,
+                                 WiiMixEnums::Difficulty difficulty, int time, std::string creator_username,
                                  WiiMixEnums::ObjectiveStatus status, int num_times_completed,
-                                 int num_times_attempted, WiiMixEnums::Player completed, int completion_time, std::chrono::system_clock::time_point last_attempted)
-    : m_id(id), m_title(std::move(title)), m_retroachievements_game_id(retroachievements_game_id),
-      m_game_id(std::move(game_id)), m_achievement_id(achievement_id),
-      m_objective_types(objective_type), m_objective_description(std::move(objective_description)),
-      m_game_genres(std::move(game_genres)), m_difficulty(difficulty), m_time(time), m_creator_username(creator_username),
-      m_status(status), m_num_times_completed(num_times_completed), m_num_times_attempted(num_times_attempted), m_player_completed(completed),
-      m_last_attempted(last_attempted)
-{
-  m_timer = new QElapsedTimer();
+                                 int num_times_attempted, WiiMixEnums::Player completed, int completion_time, std::chrono::system_clock::time_point last_attempted) {
+        m_id = id;
+        m_title = std::move(title);
+        m_retroachievements_game_id = retroachievements_game_id;
+        m_game_id = std::move(game_id);
+        m_achievement_id = achievement_id;
+        m_objective_types = objective_type;
+        m_objective_description = std::move(objective_description);
+        m_game_genres = std::move(game_genres);
+        m_difficulty = difficulty;
+        m_time = time;
+        m_creator_username = creator_username;
+        m_status = status;
+        m_num_times_completed = num_times_completed;
+        m_num_times_attempted = num_times_attempted;
+        m_player_completed = completed;
+        m_last_attempted = last_attempted;
+        m_timer = new QElapsedTimer();
 }
 
-uint16_t WiiMixObjective::GetId()
+int WiiMixObjective::GetId()
 {
   return m_id;
 }
@@ -40,7 +49,7 @@ std::string WiiMixObjective::GetTitle()
   return m_title;
 }
 
-uint16_t WiiMixObjective::GetRetroAchievementsGameId()
+int WiiMixObjective::GetRetroAchievementsGameId()
 {
   return m_retroachievements_game_id;
 }
@@ -50,7 +59,7 @@ std::string WiiMixObjective::GetGameId()
   return m_game_id;
 }
 
-uint16_t WiiMixObjective::GetAchievementId()
+int WiiMixObjective::GetAchievementId()
 {
   return m_achievement_id;
 }
@@ -75,7 +84,7 @@ WiiMixEnums::Difficulty WiiMixObjective::GetDifficulty()
   return m_difficulty;
 }
 
-uint64_t WiiMixObjective::GetTime()
+int WiiMixObjective::GetTime()
 {
   return m_time;
 }
@@ -128,11 +137,11 @@ QJsonObject WiiMixObjective::ToJson()
 
 WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
 {
-  uint16_t id = static_cast<uint16_t>(obj[QStringLiteral(OBJECTIVE_ID)].toInt());
+  int id = obj[QStringLiteral(OBJECTIVE_ID)].toInt();
   std::string title = obj[QStringLiteral(OBJECTIVE_TITLE)].toString().toStdString();
-  uint16_t retro_id = static_cast<uint16_t>(obj[QStringLiteral(OBJECTIVE_RETROACHIEVEMENTS_GAME_ID)].toInt());
+  int retro_id = obj[QStringLiteral(OBJECTIVE_RETROACHIEVEMENTS_GAME_ID)].toInt();
   std::string game_id = obj[QStringLiteral(OBJECTIVE_GAME_ID)].toString().toStdString();
-  uint16_t achievement_id = static_cast<uint16_t>(obj[QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID)].toInt());
+  int achievement_id = obj[QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID)].toInt();
   std::vector<WiiMixEnums::ObjectiveType> objective_types;
   for (const auto& objective_type : obj[QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES)].toArray())
     objective_types.push_back(WiiMixEnums::ObjectiveTypeFromString(objective_type.toString().toStdString()));
@@ -142,7 +151,7 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
     game_genres.push_back(WiiMixEnums::GameGenreFromString(genre.toString().toStdString()));
   auto difficulty = WiiMixEnums::DifficultyFromString(
     obj[QStringLiteral(OBJECTIVE_DIFFICULTY)].toString().toStdString());
-  uint64_t time = static_cast<uint64_t>(obj[QStringLiteral(OBJECTIVE_TIME)].toInt());
+  int time = obj[QStringLiteral(OBJECTIVE_TIME)].toInt();
   std::string creator_username = obj[QStringLiteral(OBJECTIVE_CREATOR_USERNAME)].isNull() ? "" : obj[QStringLiteral(OBJECTIVE_CREATOR_USERNAME)].toString().toStdString();
   auto status = WiiMixEnums::ObjectiveStatusFromString(obj[QStringLiteral(OBJECTIVE_HISTORY_MOST_RECENT_STATUS)].toString().toStdString());
   int num_times_completed = obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_COMPLETED)].toInt();

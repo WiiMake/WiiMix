@@ -13,16 +13,16 @@ class WiiMixObjective
 {
 public:
   explicit WiiMixObjective(
-    uint16_t id,
+    int id,
     std::string title,
-    uint16_t retroachievements_game_id,
+    int retroachievements_game_id,
     std::string game_id,
-    uint16_t achievement_id,
+    int achievement_id,
     std::vector<WiiMixEnums::ObjectiveType> objective_type,
     std::string objective_description,
     std::vector<WiiMixEnums::GameGenre> game_genres,
     WiiMixEnums::Difficulty difficulty,
-    uint64_t time,
+    int time,
     std::string creator_username = NULL,
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
@@ -65,16 +65,16 @@ public:
   #define OBJECTIVE_TYPE "objective_type"
   #define STATE_SLOT "slot"
 
-  uint16_t GetId();
+  int GetId();
   std::string GetTitle();
-  uint16_t GetRetroAchievementsGameId();
+  int GetRetroAchievementsGameId();
   std::string GetGameId();
-  uint16_t GetAchievementId();
+  int GetAchievementId();
   std::vector<WiiMixEnums::ObjectiveType> GetObjectiveTypes();
   std::string GetObjectiveDescription();
   std::vector<WiiMixEnums::GameGenre> GetGameGenres();
   WiiMixEnums::Difficulty GetDifficulty();
-  uint64_t GetTime();
+  int GetTime();
   std::string GetCreatorUsername();
   WiiMixEnums::ObjectiveStatus GetStatus();
   int GetNumTimesCompleted();
@@ -111,16 +111,16 @@ public:
   static QList<int> GetLocalObjectiveList(QString local_objectives);
 
 private:
-  uint16_t m_id;
+  int m_id;
   std::string m_title;
-  uint16_t m_retroachievements_game_id;
+  int m_retroachievements_game_id;
   std::string m_game_id;
-  uint16_t m_achievement_id;
+  int m_achievement_id;
   std::vector<WiiMixEnums::ObjectiveType> m_objective_types;
   std::string m_objective_description;
   std::vector<WiiMixEnums::GameGenre> m_game_genres;
   WiiMixEnums::Difficulty m_difficulty;
-  uint64_t m_time;
+  int m_time;
   std::string m_creator_username;
 
   // For bingo -> might refactor

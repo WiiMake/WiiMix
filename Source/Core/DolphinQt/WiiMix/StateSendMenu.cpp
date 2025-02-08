@@ -100,8 +100,7 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             selected_game_genres.push_back(static_cast<WiiMixEnums::GameGenre>(m_game_genres->row(item)));
         }
 
-        emit SendObjective(WiiMixObjective(
-            // Use -1 as a placeholder; for addObjective, the server will populate the objective id
+        WiiMixObjective objective(
             -1,
             m_title->text().toStdString(),
             WiiMixWebAPI::getGameID(m_achievement_id->value()),
@@ -113,7 +112,12 @@ void WiiMixStateSendMenu::ConnectWidgets() {
             static_cast<WiiMixEnums::Difficulty>(m_difficulty->currentIndex()),
             m_time_length->value(),
             WiiMixGlobalSettings::instance()->GetPlayer() != nullptr ? WiiMixGlobalSettings::instance()->GetPlayer()->GetUsername() : ""
-        ));
+        );
+
+        qDebug() << "achievement id objective: " << objective.GetAchievementId();
+        qDebug() << "difficulty objective: " << QString::fromStdString(WiiMixEnums::DifficultyToString(objective.GetDifficulty()));
+
+        emit SendObjective(objective);
     });
 }
 
