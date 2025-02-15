@@ -2055,6 +2055,7 @@ void MainWindow::StateSend(WiiMixObjective objective) {
       break;
     }
   }
+
   if (game.GetFileFormatName().find("Nkit") != std::string::npos) {
     QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("States for Nkit file types are not supported for compatibility reasons"));
     return;

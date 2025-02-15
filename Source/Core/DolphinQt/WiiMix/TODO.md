@@ -4,10 +4,9 @@
 
 ## FIRST RELEASE
 
-- [] Re-populate database
 - [] Figure out bingo problems on mac
-- [] Update db api (make it cleaner, easier to use)
 
+  - [] Account stuff still doesn't work
   - [] Added debug info for UpdatePlayerStats in the db api, so when statesend works, test that
 
   - [] Make sure it's being called in the right places and updating the right things (i.e. num objectives created for local accounts seems to be wrong)
