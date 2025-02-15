@@ -38,7 +38,7 @@ public:
   #define OBJECTIVE_GAME_ID "game_id"
   #define OBJECTIVE_ACHIEVEMENT_ID "achievement_id"
   #define OBJECTIVE_OBJECTIVE_TYPES "objective_types"
-  #define OBJECTIVE_OBJECTIVE_DESCRIPTION "objective_description"
+  #define OBJECTIVE_DESCRIPTION "description"
   #define OBJECTIVE_GAME_GENRES "game_genres"
   #define OBJECTIVE_DIFFICULTY "difficulty"
   #define OBJECTIVE_TIME "time"
