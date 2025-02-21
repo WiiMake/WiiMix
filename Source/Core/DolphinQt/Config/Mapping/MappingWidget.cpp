@@ -181,6 +181,12 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
       {
         default_device.clear();
       }
+      // const std::string wiimix_controller_device = GetController()->GetDefaultWiiMixDevice().ToString() + ":";
+      // printf("Default wiimix device: %s\n", wiimix_controller_device.c_str());
+      // if (default_device == wiimix_controller_device)
+      // {
+      //   default_device.clear();
+      // }
       group->SetControlExpression(0, fmt::format("`{}Cursor Y-`", default_device));
       group->SetControlExpression(1, fmt::format("`{}Cursor Y+`", default_device));
       group->SetControlExpression(2, fmt::format("`{}Cursor X-`", default_device));
@@ -188,6 +194,7 @@ QGroupBox* MappingWidget::CreateGroupBox(const QString& name, ControllerEmu::Con
 
       group->SetRelativeInput(false);
 
+      printf("Config Changed (MappingWidget 1)\n");
       emit ConfigChanged();
       GetController()->UpdateReferences(g_controller_interface);
     });
@@ -258,6 +265,7 @@ void MappingWidget::ShowAdvancedControlGroupDialog(ControllerEmu::ControlGroup* 
       setting->SetToDefault();
     }
 
+    printf("Config Changed (MappingWidget 2)\n");
     emit ConfigChanged();
   });
 
@@ -277,6 +285,7 @@ void MappingWidget::ShowAdvancedControlGroupDialog(ControllerEmu::ControlGroup* 
   button_box->setFocus();
 
   // Signal the newly created numeric setting widgets to display the current values.
+  printf("Config Changed (MappingWidget 3)\n");
   emit ConfigChanged();
 
   // Enable "Close" button functionality.
@@ -313,7 +322,7 @@ void MappingWidget::CreateControl(const ControllerEmu::Control* control, QFormLa
                                   bool indicator)
 {
   auto* button = new MappingButton(this, control->control_ref.get(), indicator);
-  qDebug() << "Adding control: " << control->ui_name.c_str();
+  // qDebug() << "Adding control: " << control->ui_name.c_str();
 
   button->setMinimumWidth(100);
   button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);

@@ -69,6 +69,9 @@ public:
                DefaultValue default_value = DefaultValue::AlwaysEnabled);
   virtual ~ControlGroup();
 
+  virtual void LoadConfigWiiMix(Common::IniFile::Section* sec, const std::string& defdev = "", const std::string&defdevwiimix = "",
+                          const std::string& base = "");
+
   virtual void LoadConfig(Common::IniFile::Section* sec, const std::string& defdev = "",
                           const std::string& base = "");
   virtual void SaveConfig(Common::IniFile::Section* sec, const std::string& defdev = "",

@@ -50,6 +50,61 @@ void ControlGroup::AddDeadzoneSetting(SettingValue<double>* value, double maximu
 
 ControlGroup::~ControlGroup() = default;
 
+void ControlGroup::LoadConfigWiiMix(Common::IniFile::Section* sec, const std::string& defdev, const std::string& defdevwiimix,
+                              const std::string& base)
+{
+  // TODOx: this currently loads ALL OF THE DEFAULT HOTKEYS; ideally we have it only change the defaults for device 1 and 2
+  const std::string group(base + name + "/");
+
+  // enabled
+  if (default_value != DefaultValue::AlwaysEnabled)
+    sec->Get(group + "Enabled", &enabled, default_value != DefaultValue::Disabled);
+
+  for (auto& setting : numeric_settings)
+    setting->LoadFromIni(*sec, group);
+
+  for (auto& c : controls)
+  {
+    {
+      // control expression
+      std::string expression;
+      sec->Get(group + c->name, &expression, "");
+      c->control_ref->SetExpression(std::move(expression));
+    }
+
+    // range
+    sec->Get(group + c->name + "/Range", &c->control_ref->range, 100.0);
+    c->control_ref->range /= 100;
+  }
+
+  // extensions
+  if (type == GroupType::Attachments)
+  {
+    auto* const ext = static_cast<Attachments*>(this);
+
+    ext->SetSelectedAttachment(0);
+    u32 n = 0;
+    std::string attachment_text;
+    sec->Get(base + name, &attachment_text, "");
+
+    // First assume attachment string is a valid expression.
+    // If it instead matches one of the names of our attachments it is overridden below.
+    ext->GetSelectionSetting().GetInputReference().SetExpression(attachment_text);
+
+    for (auto& ai : ext->GetAttachmentList())
+    {
+      ai->SetDefaultDevice(defdev);
+      ai->SetDefaultWiiMixDevice(defdevwiimix);
+      ai->LoadConfig(sec, base + ai->GetName() + "/");
+      
+      if (ai->GetName() == attachment_text)
+        ext->SetSelectedAttachment(n);
+
+      n++;
+    }
+  }
+}
+
 void ControlGroup::LoadConfig(Common::IniFile::Section* sec, const std::string& defdev,
                               const std::string& base)
 {
@@ -92,9 +147,10 @@ void ControlGroup::LoadConfig(Common::IniFile::Section* sec, const std::string& 
 
     for (auto& ai : ext->GetAttachmentList())
     {
+      printf("Does wiimixdevice need be set here?\n");
       ai->SetDefaultDevice(defdev);
       ai->LoadConfig(sec, base + ai->GetName() + "/");
-
+      
       if (ai->GetName() == attachment_text)
         ext->SetSelectedAttachment(n);
 

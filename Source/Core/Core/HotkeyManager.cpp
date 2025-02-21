@@ -22,6 +22,9 @@
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCPadStatus.h"
 #include <iostream>
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 // clang-format off
 constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
@@ -380,6 +383,8 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
   Common::IniFile inifile;
   if (inifile.Load(File::GetUserPath(D_CONFIG_IDX) + "Hotkeys.ini"))
   {
+    printf("Inifile loaded\n");
+    printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
     if (!inifile.Exists("Hotkeys") && inifile.Exists("Hotkeys1"))
     {
       auto sec = inifile.GetOrCreateSection("Hotkeys1");
@@ -388,6 +393,13 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
         std::string defdev;
         sec->Get("Device", &defdev, "");
         controller->SetDefaultDevice(defdev);
+      }
+
+      {
+        std::string defdevwiimix;
+        sec->Get("WiiMixDevice", &defdevwiimix, "");
+        printf("Setting wiimix device: %s\n" , defdevwiimix.c_str());
+        controller->SetDefaultWiiMixDevice(defdevwiimix);
       }
 
       for (auto& group : controller->groups)
@@ -408,6 +420,7 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
       controller->UpdateReferences(g_controller_interface);
     }
   }
+  printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
 }
 
 void Initialize()
@@ -432,6 +445,7 @@ void Initialize()
 void LoadConfig()
 {
   s_config.LoadConfig();
+  // NOTE: s_config.GetController(1) doesn't exist and causes a crash
   LoadLegacyConfig(s_config.GetController(0));
 }
 

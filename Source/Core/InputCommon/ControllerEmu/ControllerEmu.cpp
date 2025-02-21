@@ -41,6 +41,7 @@ std::unique_lock<std::recursive_mutex> EmulatedController::GetStateLock()
 
 void EmulatedController::UpdateReferences(const ControllerInterface& devi)
 {
+  printf("Default wiimix device in UpdateReferences: %s\n", GetDefaultWiiMixDevice().name.c_str());
   std::scoped_lock lk(s_get_state_mutex, devi.GetDevicesMutex());
 
   m_default_device_is_connected = devi.HasConnectedDevice(m_default_device);
@@ -188,14 +189,18 @@ void EmulatedController::LoadConfig(Common::IniFile::Section* sec, const std::st
   }
 
   std::string defdevwiimix = GetDefaultWiiMixDevice().ToString();
+  printf("Loading wiimix device: %s\n", defdevwiimix.c_str());
   if (base.empty())
   {
-    sec->Get(base + "WiiMixDevice", &defdev, "");
-    SetDefaultWiiMixDevice(defdev);
+    printf("Actually loading now\n");
+    sec->Get(base + "WiiMixDevice", &defdevwiimix, "");
+    SetDefaultWiiMixDevice(defdevwiimix);
   }
 
-  for (auto& cg : groups)
-    cg->LoadConfig(sec, defdev, base);
+  for (auto& cg : groups) {
+    cg->LoadConfigWiiMix(sec, defdev, defdevwiimix, base);
+  }
+  printf("Default WiiMix Device is now: %s\n", GetDefaultWiiMixDevice().name.c_str());
 }
 
 void EmulatedController::SaveConfig(Common::IniFile::Section* sec, const std::string& base)
@@ -207,7 +212,7 @@ void EmulatedController::SaveConfig(Common::IniFile::Section* sec, const std::st
 
   const std::string defdevwiimix = GetDefaultWiiMixDevice().ToString();
   if (base.empty())
-    sec->Set(/*std::string(" ") +*/ base + "WiiMixDevice", defdev, "");
+    sec->Set(/*std::string(" ") +*/ base + "WiiMixDevice", defdevwiimix, "");
 
   for (auto& ctrlGroup : groups)
     ctrlGroup->SaveConfig(sec, defdev, base);
@@ -221,6 +226,7 @@ void EmulatedController::LoadDefaults(const ControllerInterface& ciface)
   LoadConfig(&sec);
 
   const std::string& default_device_string = ciface.GetDefaultDeviceString();
+  printf("Default device string: %s\n", default_device_string.c_str());
   if (!default_device_string.empty())
   {
     SetDefaultDevice(default_device_string);

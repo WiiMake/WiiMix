@@ -73,6 +73,7 @@ bool InputConfig::LoadConfig()
   if (inifile.Load(File::GetUserPath(D_CONFIG_IDX) + m_ini_name + ".ini") &&
       !inifile.GetSections().empty())
   {
+    printf("Inifile for hotkeys not empty\n");
     int n = 0;
 
     std::vector<std::string> controller_names;
@@ -95,6 +96,7 @@ bool InputConfig::LoadConfig()
       {
         config = *inifile.GetOrCreateSection(controller->GetName());
       }
+      printf("Loading config for controller: %s\n", controller->GetName().c_str());
       controller->LoadConfig(&config);
       controller->UpdateReferences(g_controller_interface);
       controller_names.push_back(controller->GetName());
@@ -108,6 +110,7 @@ bool InputConfig::LoadConfig()
   }
   else
   {
+    printf("Inifile for hotkeys is empty\n");
     // Only load the default profile for the first controller and clear the others,
     // otherwise they would all share the same mappings on the same (default) device
     if (m_controllers.size() > 0)

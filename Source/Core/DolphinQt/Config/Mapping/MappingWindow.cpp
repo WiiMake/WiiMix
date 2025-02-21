@@ -82,7 +82,10 @@ MappingWindow::MappingWindow(QWidget* parent, Type type, int port_num)
   timer->start(1000 / INDICATOR_UPDATE_FREQ);
 
   const auto lock = GetController()->GetStateLock();
+  printf("Config Changed (MappingWindow 1)\n");
+  printf("Before config change: %s\n", GetController()->GetDefaultWiiMixDevice().name.c_str());
   emit ConfigChanged();
+  printf("After config change: %s\n", GetController()->GetDefaultWiiMixDevice().name.c_str());
 
   auto* filter = new WindowActivationEventFilter(this);
   installEventFilter(filter);
@@ -155,12 +158,12 @@ void MappingWindow::CreateResetLayout()
   m_reset_box = new QGroupBox(tr("Reset"));
   m_reset_clear = new NonDefaultQPushButton(tr("Clear"));
   m_reset_default = new NonDefaultQPushButton(tr("Default"));
-  m_reset_default_controller = new NonDefaultQPushButton(tr("Default (Controller)"));
+  // m_reset_default_controller = new NonDefaultQPushButton(tr("Default (Controller)"));
 
   m_reset_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   m_reset_layout->addWidget(m_reset_default);
-  m_reset_layout->addWidget(m_reset_default_controller);
+  // m_reset_layout->addWidget(m_reset_default_controller);
   m_reset_layout->addWidget(m_reset_clear);
 
   m_reset_box->setLayout(m_reset_layout);
@@ -194,6 +197,8 @@ void MappingWindow::ConnectWidgets()
 
   connect(m_reset_clear, &QPushButton::clicked, this, &MappingWindow::OnClearFieldsPressed);
   connect(m_reset_default, &QPushButton::clicked, this, &MappingWindow::OnDefaultFieldsPressed);
+  // connect(m_reset_default_controller, &QPushButton::clicked, this,
+  //         &MappingWindow::OnDefaultControllerFieldsPressed);
   connect(m_profiles_save, &QPushButton::clicked, this, &MappingWindow::OnSaveProfilePressed);
   connect(m_profiles_load, &QPushButton::clicked, this, &MappingWindow::OnLoadProfilePressed);
   connect(m_profiles_delete, &QPushButton::clicked, this, &MappingWindow::OnDeleteProfilePressed);
@@ -314,6 +319,7 @@ void MappingWindow::OnLoadProfilePressed()
   m_controller->UpdateReferences(g_controller_interface);
 
   const auto lock = GetController()->GetStateLock();
+  printf("Config Changed (MappingWindow 2)\n");
   emit ConfigChanged();
 }
 
@@ -372,9 +378,15 @@ void MappingWindow::RefreshDevices()
 void MappingWindow::OnGlobalDevicesChanged()
 {
   const QSignalBlocker blocker(m_devices_combo);
+  // printf("Beginning of OnGlobalDevicesChanged\n");
 
   m_devices_combo->clear();
   m_wiimix_devices_combo->clear();
+  // printf("Clear combo box OnGlobalDevicesChanged\n");
+  // printf("After clearing combo box, default wiimix device is: %s\n", GetController()->GetDefaultWiiMixDevice().name.c_str());
+
+  // Persist the default wiimix device
+  const auto default_wiimix_device = GetController()->GetDefaultWiiMixDevice().ToString();
 
   for (const auto& name : g_controller_interface.GetAllDeviceStrings())
   {
@@ -382,6 +394,7 @@ void MappingWindow::OnGlobalDevicesChanged()
     m_devices_combo->addItem(qname, qname);
     m_wiimix_devices_combo->addItem(qname, qname);
   }
+  // printf("After items added (OnGlobalDevicesChanged)\n");
 
   const auto default_device = m_controller->GetDefaultDevice().ToString();
 
@@ -390,8 +403,10 @@ void MappingWindow::OnGlobalDevicesChanged()
     const auto default_device_index =
         m_devices_combo->findText(QString::fromStdString(default_device));
 
+    // printf("After find text (OnGlobalDevicesChanged)\n");
     if (default_device_index != -1)
     {
+      // printf("Setting default device: %s\n", default_device.c_str());
       m_devices_combo->setCurrentIndex(default_device_index);
     }
     else
@@ -405,10 +420,13 @@ void MappingWindow::OnGlobalDevicesChanged()
     }
   }
 
-  const auto default_wiimix_device = m_controller->GetDefaultWiiMixDevice().ToString();
+
+  // const auto default_wiimix_device = m_controller->GetDefaultWiiMixDevice().ToString();
 
   if (!default_wiimix_device.empty())
   {
+    // NOTE: the problem stems from here; for some reason the default wiimix device is not set from config
+    // printf("Setting default wiimix device (OnGlobalDevicesChanged): %s\n", default_wiimix_device.c_str());
     const auto default_wiimix_device_index =
         m_wiimix_devices_combo->findText(QString::fromStdString(default_wiimix_device));
 
@@ -426,6 +444,7 @@ void MappingWindow::OnGlobalDevicesChanged()
       m_wiimix_devices_combo->setCurrentIndex(m_wiimix_devices_combo->count() - 1);
     }
   }
+  // printf("End of OnGlobalDevicesChanged\n");
 }
 
 void MappingWindow::SetMappingType(MappingWindow::Type type)
@@ -571,10 +590,12 @@ ControllerEmu::EmulatedController* MappingWindow::GetController() const
 
 void MappingWindow::OnDefaultFieldsPressed()
 {
+  printf("Loading defaults\n");
   m_controller->LoadDefaults(g_controller_interface);
   m_controller->UpdateReferences(g_controller_interface);
 
   const auto lock = GetController()->GetStateLock();
+  printf("Config Changed (MappingWindow 3)\n");
   emit ConfigChanged();
   emit Save();
 }
@@ -589,9 +610,14 @@ void MappingWindow::OnClearFieldsPressed()
   m_controller->LoadConfig(&sec);
   m_controller->SetDefaultDevice(default_device);
 
+  const auto default_wiimix_device = m_controller->GetDefaultWiiMixDevice();
+  m_controller->SetDefaultWiiMixDevice(default_wiimix_device);
+
   m_controller->UpdateReferences(g_controller_interface);
 
   const auto lock = GetController()->GetStateLock();
+  printf("Clearing fields\n");
+  printf("Config Changed (MappingWindow 4)\n");
   emit ConfigChanged();
   emit Save();
 }
