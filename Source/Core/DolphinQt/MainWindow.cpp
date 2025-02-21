@@ -727,7 +727,7 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::FullScreenHotkey, this, &MainWindow::FullScreen);
 
   connect(m_hotkey_scheduler, &HotkeyScheduler::StateLoadSlot, this, &MainWindow::StateLoadSlotAt);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveLoadSlot, this, &MainWindow::ObjectiveLoadSlotAt);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveLoadSlot, this, &MainWindow::ObjectiveLoadSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ObjectiveResetSlot, this, &MainWindow::ObjectiveResetSlotAt);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ResetCurrentObjectiveHotkey, this, &MainWindow::ResetCurrentObjective);
   connect(m_hotkey_scheduler, &HotkeyScheduler::BingoBoardHotkey, this, &MainWindow::ToggleBingoBoard);
