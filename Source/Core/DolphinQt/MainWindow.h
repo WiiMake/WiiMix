@@ -136,7 +136,6 @@ private:
   void TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes);
   void HandleAchievementGet(std::set<uint32_t> achievements);
   void ShowStateSendMenu(int slot);
-  void ObjectiveLoadSlotAt(int slot);
   void ObjectiveResetSlotAt(int slot);
   void ResetCurrentObjective();
   void BingoReady();
