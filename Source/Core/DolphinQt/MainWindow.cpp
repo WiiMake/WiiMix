@@ -1019,7 +1019,6 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
       return;
     }
   }
-
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
