@@ -130,7 +130,6 @@ void Classic::BuildDesiredExtensionState(DesiredExtensionState* target_state)
   // buttons and dpad
   m_buttons->GetState(&buttons, classic_button_bitmasks.data(), m_input_override_function);
   m_dpad->GetState(&buttons, classic_dpad_bitmasks.data(), m_input_override_function);
-
   classic_data.SetButtons(buttons);
 
   target_state->data = classic_data;
