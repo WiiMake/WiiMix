@@ -29,7 +29,7 @@ class WiiMixModesWidget final : public QMainWindow
 {
   Q_OBJECT
 public:
-  explicit WiiMixModesWidget(std::unique_ptr<BootParameters> boot_parameters);
+  explicit WiiMixModesWidget();
 
 signals:
   void ShuffleSelected(WiiMixEnums::Mode mode);

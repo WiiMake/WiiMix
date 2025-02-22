@@ -22,6 +22,7 @@
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/WiiMixButton.h"
+#include "DolphinQt/WiiMix/ModesWidget.h"
 
 class QMenu;
 class QStackedWidget;
@@ -351,9 +352,5 @@ private:
   WiiMixLogoButton* m_wii_mix_button;
 
   // ================ Modes Widget ================
-  QGroupBox* m_mode_box;
-  QHBoxLayout* m_mode_layout;
-  QHBoxLayout* m_button_layout;
-  std::array<QFrame*, 3> m_mode_selectors;
-  int selected_mode_n;
+  WiiMixModesWidget* m_modes_widget;
 };

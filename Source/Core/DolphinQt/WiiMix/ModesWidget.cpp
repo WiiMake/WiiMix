@@ -21,7 +21,7 @@
 #include "BingoGame.h"
 
 
-WiiMixModesWidget::WiiMixModesWidget(std::unique_ptr<BootParameters> boot_parameters) : QMainWindow(nullptr) {
+WiiMixModesWidget::WiiMixModesWidget() : QMainWindow(nullptr) {
     CreateLayout();
 }
 
@@ -37,7 +37,11 @@ void WiiMixModesWidget::CreateLayout() {
         frame->setFixedSize(300, 169);
         // Set up WiiMixButton
         char * backgroundImagePath = (char *) malloc(200);
-        strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/temporary_gradient_bg.png").data(), 200);
+        if (i == 0 || i == 2) {
+            strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/background-unavailable.png").data(), 200);
+        } else {
+            strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/temporary_gradient_bg.png").data(), 200);
+        }
         frame->setBorderRadius(18);
         frame->setBorderWidth(4);
         frame->setBorderColor("gray");
