@@ -58,7 +58,7 @@ void WiiMixConfigWidget::DeleteLayout() {
     }
     delete m_config_layout;
     // Delete the menu bar
-    delete m_menu_bar;
+    delete m_menu;
 }
 
 void WiiMixConfigWidget::DisplayClientError(QString error) {
@@ -107,15 +107,15 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
     QHBoxLayout* menu_layout = new QHBoxLayout();
     
     // Create the menu bar
-    m_menu_bar = new QMenuBar();
+    m_menu = new QMenu(QStringLiteral("Host/Connect"));
+    m_menu->setLayoutDirection(Qt::LayoutDirection::LeftToRight);
 
     // Create actions for Host and Connect
     QAction* host_action = new QAction(tr("Host"), this);
     QAction* connect_action = new QAction(tr("Connect"), this);
-
     // Add the actions directly to the menu bar
-    m_menu_bar->addAction(host_action);
-    m_menu_bar->addAction(connect_action);
+    m_menu->addAction(host_action);
+    m_menu->addAction(connect_action);
 
     // Connect the actions to your slots or lambda functions
     connect(host_action, &QAction::triggered, this, [this]() {
@@ -139,11 +139,12 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
     // TODOx: resolve when settings are changed (server vs client)
     connect(this, &WiiMixConfigWidget::onUpdateBingoConfig, this, &WiiMixConfigWidget::OnSettingsChanged);
 
-    menu_layout->addStretch();
-    menu_layout->addWidget(m_menu_bar);
-    menu_layout->addStretch();
+    menu_layout->addWidget(m_menu);
+    menu_layout->addWidget(new QLabel(QStringLiteral("\n\n")));
 
     m_config_layout->addLayout(menu_layout);
+    //m_config_layout->addWidget(m_menu);
+    //m_config_layout->addLayout(menu_layout);
 
     if (menu == QStringLiteral("Host")) {
         // Create host settings
