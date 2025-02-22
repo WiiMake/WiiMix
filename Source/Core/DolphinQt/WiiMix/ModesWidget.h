@@ -33,7 +33,9 @@ private:
   bool eventFilter(QObject* obj, QEvent* event) override;
   void CreateLayout();
   void ConnectWidgets();
+  void keyPressEvent(QKeyEvent* keyEvent) override;
 
+  int selected_mode_n;
   QGroupBox* m_mode_box;
   QHBoxLayout* m_mode_layout;
   std::array<QFrame*, 3> m_mode_selectors;

@@ -27,6 +27,7 @@ WiiMixModesWidget::WiiMixModesWidget(QWidget* parent) : QWidget(parent) {
 }
 
 void WiiMixModesWidget::CreateLayout() {
+    selected_mode_n = 0;
     m_mode_box = new QGroupBox(tr("Modes"));
     m_mode_layout = new QHBoxLayout();
     m_mode_box->setLayout(m_mode_layout);
@@ -34,6 +35,7 @@ void WiiMixModesWidget::CreateLayout() {
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
         WiiMixButton* frame = new WiiMixButton();
         frame->setFixedSize(300, 169);
+        frame->setFocusPolicy(Qt::TabFocus);
         // Set up WiiMixButton
         char * backgroundImagePath = (char *) malloc(200);
         //backgroundImagePath = "";
@@ -53,6 +55,9 @@ void WiiMixModesWidget::CreateLayout() {
         frame->installEventFilter(this); // To capture mouse events
         frame->setAttribute(Qt::WA_Hover, true);
         m_mode_selectors[i] = frame;
+    }
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END) - 1; i++) {
+        setTabOrder(m_mode_selectors[i], m_mode_selectors[i + 1]);
     }
 
     // Create selectors
@@ -79,8 +84,74 @@ void WiiMixModesWidget::CreateLayout() {
         m_mode_selectors[i]->setLayout(layout);
         m_mode_layout->addWidget(m_mode_selectors[i]);
     }
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END) - 1; i++) {
+        setTabOrder(m_mode_selectors[i], m_mode_selectors[i + 1]);
+    }
 
     setLayout(m_mode_layout);
+}
+
+void WiiMixModesWidget::keyPressEvent(QKeyEvent *keyEvent) {
+    qDebug() << "keyboard press detected";
+    int prev_selected = selected_mode_n;
+    if (keyEvent->key() == Qt::Key_D) {
+        qDebug() << "D pressed";
+        // move right
+        selected_mode_n += 1;
+        selected_mode_n %= 3;
+    } else if (keyEvent->key() == Qt::Key_A) {
+        // move left
+        qDebug() << "A pressed";
+        selected_mode_n -= 1;
+        selected_mode_n += (selected_mode_n == -1 ? 3 : 0);
+    }
+    //TODO: add S key for selecting wiimix launch, or maybe even map it to start button
+    WiiMixButton* other_frame = (WiiMixButton*)(m_mode_selectors[prev_selected]);
+    if (other_frame) {
+        other_frame->setGraphicsEffect(nullptr);
+    }
+    WiiMixButton* frame = (WiiMixButton *)(m_mode_selectors[selected_mode_n]);
+    // Highlight hovered frame
+    std::string theme = Config::Get(Config::MAIN_THEME_NAME);
+    auto *shadow = new QGraphicsDropShadowEffect;
+    shadow->setBlurRadius(25);
+    shadow->setXOffset(0);
+    shadow->setYOffset(0);
+
+    if (theme == "Clean") {
+        shadow->setColor(Qt::black);
+    } else if (theme == "Clean Blue") {
+        shadow->setColor(Qt::blue);
+    } else if (theme == "Clean Emerald") {
+        shadow->setColor(Qt::green);
+    } else if (theme == "Clean Lite") {
+        shadow->setColor(Qt::white);
+    } else if (theme == "Clean Pink") {
+        shadow->setColor(QColor(255, 192, 203));
+
+    } else {
+        qDebug("invalid theme name");
+    }
+    frame->setGraphicsEffect(shadow);
+    if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return) {
+        if (frame) {
+            std::string theme = Config::Get(Config::MAIN_THEME_NAME);
+            // Highlight the selected frame
+            if (theme == "Clean") { frame->setBorderColor("black"); }
+            else if (theme == "Clean Blue") { frame->setBorderColor("blue"); }
+            else if (theme == "Clean Emerald") { frame->setBorderColor("green"); }
+            else if (theme == "Clean Lite") { frame->setBorderColor("transparent"); }
+            else if (theme == "Clean Pink") { frame->setBorderColor("rgb(255, 192, 203)"); }
+            else {
+                qDebug("invalid theme name, applying default theme instead");
+                frame->setStyleSheet(QStringLiteral("QFrame { border: 5px solid black; }"));
+            }
+            // Trigger configuration update for this WiiMixEnums::Mode
+            WiiMixEnums::Mode selected_mode = static_cast<WiiMixEnums::Mode>(m_mode_layout->indexOf(frame));
+            emit WiiMixModesWidget::ModeChanged(selected_mode);
+        }
+    }
+
 }
 
 bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
