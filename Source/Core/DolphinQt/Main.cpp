@@ -35,6 +35,7 @@
 #include "DolphinQt/CenteredBoxProxy.h"
 #include "DolphinQt/Host.h"
 #include "DolphinQt/MainWindow.h"
+#include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
 #include "DolphinQt/QtUtils/RunOnObject.h"
 #include "DolphinQt/QtUtils/SetWindowDecorations.h"
@@ -270,6 +271,7 @@ int main(int argc, char* argv[])
     Settings::Instance().ApplyStyle();
 
     MainWindow win{std::move(boot), static_cast<const char*>(options.get("movie"))};
+    // WiiMixModesWidget win{std::move(boot)};
 
 // #if defined(USE_ANALYTICS) && USE_ANALYTICS
 //     if (!Config::Get(Config::MAIN_ANALYTICS_PERMISSION_ASKED))

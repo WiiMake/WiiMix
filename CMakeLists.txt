@@ -892,7 +892,6 @@ if (NOT BUILD_WIIMIX_SERVER_ONLY)
   ########################################
   # Install shared data files
   #
-  message("Soham CMAKE_SYSTEM_NAME:" ${CMAKE_SYSTEM_NAME})
   if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin|Windows")
     install(DIRECTORY Data/Sys/ DESTINATION ${datadir}/sys PATTERN)
   endif()

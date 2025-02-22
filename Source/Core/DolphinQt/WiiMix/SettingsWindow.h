@@ -52,6 +52,6 @@ private:
   QPushButton* m_save_button_box;
   WiiMixLogoButton* m_wii_mix_button;
 
-  WiiMixModesWidget *m_modes;
+  // WiiMixModesWidget *m_modes;
   WiiMixConfigWidget* m_config;
 };

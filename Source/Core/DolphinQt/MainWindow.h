@@ -5,6 +5,8 @@
 
 #include <QMainWindow>
 #include <QStringList>
+#include <QGroupBox>
+#include <QHBoxLayout>
 
 #include <array>
 #include <memory>
@@ -19,6 +21,7 @@
 #include "DolphinQt/WiiMix/GameManager.h"
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/Objective.h"
+#include "DolphinQt/WiiMix/WiiMixButton.h"
 
 class QMenu;
 class QStackedWidget;
@@ -99,6 +102,7 @@ signals:
   void ReadOnlyModeChanged(bool read_only);
   void RecordingStatusChanged(bool recording);
   void onStateSendProgressUpdate(QString progress_text);
+  
 
 public slots:
   void WiiMixStartObjective(WiiMixObjective new_objective);
@@ -112,7 +116,7 @@ public slots:
 private:
   void ShowWiiMixWindow();
   void Open();
-  void RefreshGameList();
+  // void RefreshGameList();
   void Play(const std::optional<std::string>& savestate_path = {});
   void Pause();
   void TogglePause();
@@ -147,8 +151,8 @@ private:
   void StateSaveUndo();
   void StateSaveOldest();
   void SetStateSlot(int slot);
-  void IncrementSelectedStateSlot();
-  void DecrementSelectedStateSlot();
+  // void IncrementSelectedStateSlot();
+  // void DecrementSelectedStateSlot();
   void BootWiiSystemMenu();
 
   void PerformOnlineUpdate(const std::string& region);
@@ -222,7 +226,7 @@ private:
   void ShowRiivolutionBootWidget(const UICommon::GameFile& game);
 
 #ifdef USE_RETRO_ACHIEVEMENTS
-  void ShowAchievementsWindow();
+  // void ShowAchievementsWindow();
   void ShowAchievementSettings();
 #endif  // USE_RETRO_ACHIEVEMENTS
   void ShowWiiMixAccountWindow();
@@ -240,12 +244,12 @@ private:
   void OnSignal();
 #endif
 
-  void OnPlayRecording();
-  void OnStartRecording();
-  void OnStopRecording();
-  void OnExportRecording();
-  void OnActivateChat();
-  void OnRequestGolfControl();
+  // void OnPlayRecording();
+  // void OnStartRecording();
+  // void OnStopRecording();
+  // void OnExportRecording();
+  // void OnActivateChat();
+  // void OnRequestGolfControl();
   void ShowTASInput();
 
   void ChangeDisc();
@@ -258,8 +262,8 @@ private:
   void UpdateScreenSaverInhibition();
 
   void OnStopComplete();
-  void dragEnterEvent(QDragEnterEvent* event) override;
-  void dropEvent(QDropEvent* event) override;
+  // void dragEnterEvent(QDragEnterEvent* event) override;
+  // void dropEvent(QDropEvent* event) override;
   QSize sizeHint() const override;
 
 #ifdef _WIN32
@@ -271,9 +275,9 @@ private:
   std::unique_ptr<X11Utils::XRRConfiguration> m_xrr_config;
 #endif
 
-  ToolBar* m_tool_bar;
-  MenuBar* m_menu_bar;
-  SearchBar* m_search_bar;
+  // ToolBar* m_tool_bar;
+  // MenuBar* m_menu_bar;
+  // SearchBar* m_search_bar;
   GameList* m_game_list;
   RenderWidget* m_render_widget = nullptr;
   bool m_rendering_to_main;
@@ -286,16 +290,16 @@ private:
   u32 m_state_slot = 1;
   std::unique_ptr<BootParameters> m_pending_boot;
 
-  WiiMixSettingsWindow* m_wiimix_window = nullptr;
-  WiiMixStateSendMenu* m_state_send_menu = nullptr;
-  ControllersWindow* m_controllers_window = nullptr;
-  SettingsWindow* m_settings_window = nullptr;
-  GraphicsWindow* m_graphics_window = nullptr;
-  FIFOPlayerWindow* m_fifo_window = nullptr;
-  SkylanderPortalWindow* m_skylander_window = nullptr;
-  InfinityBaseWindow* m_infinity_window = nullptr;
-  MappingWindow* m_hotkey_window = nullptr;
-  FreeLookWindow* m_freelook_window = nullptr;
+  // WiiMixSettingsWindow* m_wiimix_window = nullptr;
+  // WiiMixStateSendMenu* m_state_send_menu = nullptr;
+  // ControllersWindow* m_controllers_window = nullptr;
+  // SettingsWindow* m_settings_window = nullptr;
+  // GraphicsWindow* m_graphics_window = nullptr;
+  // FIFOPlayerWindow* m_fifo_window = nullptr;
+  // SkylanderPortalWindow* m_skylander_window = nullptr;
+  // InfinityBaseWindow* m_infinity_window = nullptr;
+  // MappingWindow* m_hotkey_window = nullptr;
+  // FreeLookWindow* m_freelook_window = nullptr;
 
   // WiiMixBingoSettings* m_bingo_settings = nullptr;
   QString m_player_name = QStringLiteral("");
@@ -309,35 +313,47 @@ private:
   QTimer* m_objective_timer = nullptr;
 
   HotkeyScheduler* m_hotkey_scheduler;
-  NetPlayDialog* m_netplay_dialog;
-  DiscordHandler* m_netplay_discord;
-  NetPlaySetupDialog* m_netplay_setup_dialog;
+  // NetPlayDialog* m_netplay_dialog;
+  // DiscordHandler* m_netplay_discord;
+  // NetPlaySetupDialog* m_netplay_setup_dialog;
   static constexpr int num_gc_controllers = 4;
-  std::array<GCTASInputWindow*, num_gc_controllers> m_gc_tas_input_windows{};
-  std::array<GBATASInputWindow*, num_gc_controllers> m_gba_tas_input_windows{};
+  // std::array<GCTASInputWindow*, num_gc_controllers> m_gc_tas_input_windows{};
+  // std::array<GBATASInputWindow*, num_gc_controllers> m_gba_tas_input_windows{};
   static constexpr int num_wii_controllers = 4;
-  std::array<WiiTASInputWindow*, num_wii_controllers> m_wii_tas_input_windows{};
+  // std::array<WiiTASInputWindow*, num_wii_controllers> m_wii_tas_input_windows{};
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-  AchievementsWindow* m_achievements_window = nullptr;
-#endif  // USE_RETRO_ACHIEVEMENTS
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   AchievementsWindow* m_achievements_window = nullptr;
+// #endif  // USE_RETRO_ACHIEVEMENTS
 
-  WiiMixAccountWindow* m_wiimix_account_window = nullptr;
-  WiiMixAccountLoginWindow* m_wiimix_account_login_window = nullptr;
+  // WiiMixAccountWindow* m_wiimix_account_window = nullptr;
+  // WiiMixAccountLoginWindow* m_wiimix_account_login_window = nullptr;
 
-  AssemblerWidget* m_assembler_widget;
-  BreakpointWidget* m_breakpoint_widget;
-  CodeWidget* m_code_widget;
-  JITWidget* m_jit_widget;
-  LogWidget* m_log_widget;
-  LogConfigWidget* m_log_config_widget;
-  MemoryWidget* m_memory_widget;
-  NetworkWidget* m_network_widget;
-  RegisterWidget* m_register_widget;
-  ThreadWidget* m_thread_widget;
-  WatchWidget* m_watch_widget;
-  CheatsManager* m_cheats_manager;
+  // AssemblerWidget* m_assembler_widget;
+  // BreakpointWidget* m_breakpoint_widget;
+  // CodeWidget* m_code_widget;
+  // JITWidget* m_jit_widget;
+  // LogWidget* m_log_widget;
+  // LogConfigWidget* m_log_config_widget;
+  // MemoryWidget* m_memory_widget;
+  // NetworkWidget* m_network_widget;
+  // RegisterWidget* m_register_widget;
+  // ThreadWidget* m_thread_widget;
+  // WatchWidget* m_watch_widget;
+  // CheatsManager* m_cheats_manager;
   QByteArray m_render_widget_geometry;
 
   WiiMixEnums::Mode m_mode;
+
+  // ================ Settings Widget ================
+  // QPushButton* m_load_button_box;
+  // QPushButton* m_save_button_box;
+  WiiMixLogoButton* m_wii_mix_button;
+
+  // ================ Modes Widget ================
+  QGroupBox* m_mode_box;
+  QHBoxLayout* m_mode_layout;
+  QHBoxLayout* m_button_layout;
+  std::array<QFrame*, 3> m_mode_selectors;
+  int selected_mode_n;
 };

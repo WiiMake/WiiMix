@@ -21,9 +21,8 @@
 #include "BingoGame.h"
 
 
-WiiMixModesWidget::WiiMixModesWidget(QWidget* parent) : QWidget(parent) {
+WiiMixModesWidget::WiiMixModesWidget(std::unique_ptr<BootParameters> boot_parameters) : QMainWindow(nullptr) {
     CreateLayout();
-    ConnectWidgets();
 }
 
 void WiiMixModesWidget::CreateLayout() {
@@ -138,10 +137,11 @@ void WiiMixModesWidget::keyPressEvent(QKeyEvent *keyEvent) {
             }
             // Trigger configuration update for this WiiMixEnums::Mode
             WiiMixEnums::Mode selected_mode = static_cast<WiiMixEnums::Mode>(m_mode_layout->indexOf(frame));
-            emit WiiMixModesWidget::ModeChanged(selected_mode);
+            if (selected_mode == WiiMixEnums::Mode::SHUFFLE) {
+                emit ShuffleSelected(selected_mode);
+            }
         }
     }
-
 }
 
 bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
@@ -237,13 +237,11 @@ bool WiiMixModesWidget::eventFilter(QObject* obj, QEvent* event) {
             }
             // Trigger configuration update for this WiiMixEnums::Mode
             WiiMixEnums::Mode selected_mode = static_cast<WiiMixEnums::Mode>(m_mode_layout->indexOf(frame));
-            emit WiiMixModesWidget::ModeChanged(selected_mode);
+            if (selected_mode == WiiMixEnums::Mode::SHUFFLE) {
+                emit ShuffleSelected(selected_mode);
+            }
             return true;
         }
     }
     return QWidget::eventFilter(obj, event);
-}
-
-void WiiMixModesWidget::ConnectWidgets() {
-    return;
 }

@@ -872,7 +872,6 @@ else()
   endif()
 
   # Define paths
-  message("Soham CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
   set(SYS_DIR ${CMAKE_SOURCE_DIR}/Data/Sys)
   set(TARGET_SYS_DIR ${CMAKE_BINARY_DIR}/Binaries/Sys)
 

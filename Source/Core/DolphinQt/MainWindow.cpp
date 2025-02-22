@@ -19,6 +19,7 @@
 #include <QWindow>
 #include <QString>
 #include <QTime>
+#include <QGraphicsDropShadowEffect>
 
 #include <fmt/format.h>
 
@@ -137,6 +138,9 @@
 #include "DolphinQt/WiiMix/GameManager.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
+#include "DolphinQt/WiiMix/Enums.h"
+#include "DolphinQt/WiiMix/GlobalSettings.h"
+#include "DolphinQt/WiiMix/WiiMixButton.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -241,29 +245,35 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
   setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
+  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setUnifiedTitleAndToolBarOnMac(true);
   setAcceptDrops(true);
   setAttribute(Qt::WA_NativeWindow);
+  setFixedSize(1280, 720);
+  showNormal();
+  setWindowState(Qt::WindowNoState);
 
   CreateComponents();
 
-  ConnectGameList();
-  ConnectHost();
-  ConnectToolBar();
+  // ConnectGameList();
+  // ConnectHost();
+  // ConnectToolBar();
   ConnectRenderWidget();
-  ConnectStack();
-  ConnectMenuBar();
+  // ConnectStack();
+  // ConnectMenuBar();
 
   State::EnableCompression(false); // hopefully speed things up
 
-  QSettings& settings = Settings::GetQSettings();
-  restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
-  restoreGeometry(settings.value(QStringLiteral("mainwindow/geometry")).toByteArray());
-  if (!Settings::Instance().IsBatchModeEnabled())
-  {
-    SetQWidgetWindowDecorations(this);
-    show();
-  }
+  // QSettings& settings = Settings::GetQSettings();
+  // restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
+  // restoreGeometry(settings.value(QStringLiteral("mainwindow/geometry")).toByteArray());
+
+  // if (!Settings::Instance().IsBatchModeEnabled())
+  // {
+  //   // SetQWidgetWindowDecorations(this);
+  //   showNormal();
+  //   setWindowState(Qt::WindowNoState);
+  // }
 
   InitControllers();
   ConnectHotkeys();
@@ -273,19 +283,19 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
           [](Qt::ColorScheme colorScheme) { Settings::Instance().ApplyStyle(); });
 #endif
 
-  connect(m_cheats_manager, &CheatsManager::OpenGeneralSettings, this,
-          &MainWindow::ShowGeneralWindow);
+  // connect(m_cheats_manager, &CheatsManager::OpenGeneralSettings, this,
+  //         &MainWindow::ShowGeneralWindow);
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-  connect(m_cheats_manager, &CheatsManager::OpenAchievementSettings, this,
-          &MainWindow::ShowAchievementSettings);
-  connect(m_game_list, &GameList::OpenAchievementSettings, this,
-          &MainWindow::ShowAchievementSettings);
-#endif  // USE_RETRO_ACHIEVEMENTS
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   connect(m_cheats_manager, &CheatsManager::OpenAchievementSettings, this,
+//           &MainWindow::ShowAchievementSettings);
+//   connect(m_game_list, &GameList::OpenAchievementSettings, this,
+//           &MainWindow::ShowAchievementSettings);
+// #endif  // USE_RETRO_ACHIEVEMENTS
 
   InitCoreCallbacks();
 
-  NetPlayInit();
+  // NetPlayInit();
 
 #ifdef USE_RETRO_ACHIEVEMENTS
   AchievementManager::GetInstance().Init();
@@ -318,7 +328,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_state_slot =
       std::clamp(Settings::Instance().GetStateSlot(), 1, static_cast<int>(State::NUM_STATES));
 
-  m_render_widget_geometry = settings.value(QStringLiteral("renderwidget/geometry")).toByteArray();
+  // m_render_widget_geometry = settings.value(QStringLiteral("renderwidget/geometry")).toByteArray();
 
   // Restoring of window states can sometimes go wrong, resulting in widgets being visible when they
   // shouldn't be so we have to reapply all our rules afterwards.
@@ -353,53 +363,6 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_objective_timer = new QTimer(this);
   m_objective_timer->setSingleShot(true);
 
-  // // Initialize bingo settings
-  // // Add all games to the default bingo settings using the map
-  // for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
-  //   UICommon::GameFile* game_file_obj = new UICommon::GameFile();
-  //   UICommon::GameFile::GetGameFileById(std::to_string(game_id), game_file_obj);
-  //   m_bingo_settings->AddGame(*game_file_obj);
-  // }
-  // // Hard code bingo lobby id for now
-  // qDebug() << "Set Lobby ID";
-  // m_bingo_settings->SetLobbyID(QStringLiteral("123456789"));
-  // // Hard code bingo players for now
-  // QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> players;
-  // // Populate players
-  // qDebug() << "Populate players";
-  // for (int i = 0; i < 2; i++) {
-  //   players[static_cast<WiiMixEnums::Player>(i)] = QPair<WiiMixEnums::Color, QString>(static_cast<WiiMixEnums::Color>(i), QStringLiteral("Player %1").arg(i + 1));
-  // }
-  // m_bingo_settings->SetPlayers(players);
-  // // Initialize bingo client
-  // qDebug() << "Initializing client";
-  // // TODOx: hard code unique player num (0 for device 1, 1 for device 2)
-  // m_player_num = 0;
-
-  // TODOx: Connect signal to bingo UI
-  // TODOx: Connect signal to bingo client ONLY when ready
-  // @vlad
-  // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &MainWindow::WiiMixShowcase);
-  // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &WiiMixConfigWidget::OnSettingsChanged);
-  //connect(m_wiimix_client, &WiiMixClient::onUpdateBingoConfig, this, &WiiMixConfigWidget::OnSettingsChanged);
-  // connect(m_wiimix_client, &WiiMixClient::onError, this, &WiiMixConfigWidget::DisplayClientError);
-
-  // Connect client to server
-  // WiiMixClient::instance()->ConnectToServer();
-
-  // Create a new lobby if it doesn't exist
-  // Since two requests are being
-  // This should double as a connection if the lobby does exist
-  // TODOx: may need to move this into ready
-  // WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::CREATE_BINGO_LOBBY);
-
-  // Load ScreenSaver
-  // printf("screensaver tries to load\n");
-  // m_screen_saver = new WiiMixScreenSaver(this);
-  // //m_screen_saver->setParent(this);
-  // //todox: please change this so it's a child of render widget for games
-  // m_screen_saver->CreateLayout();
-  // //m_screen_saver->show();
   m_wiimix_client = WiiMixClient::instance();
   if (!m_wiimix_client->ConnectToServer()) {
     QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
@@ -421,14 +384,14 @@ MainWindow::~MainWindow()
 #endif  // USE_RETRO_ACHIEVEMENTS
 
   delete m_render_widget;
-  delete m_netplay_dialog;
+  // delete m_netplay_dialog;
 
-  for (int i = 0; i < 4; i++)
-  {
-    delete m_gc_tas_input_windows[i];
-    delete m_gba_tas_input_windows[i];
-    delete m_wii_tas_input_windows[i];
-  }
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   delete m_gc_tas_input_windows[i];
+  //   delete m_gba_tas_input_windows[i];
+  //   delete m_wii_tas_input_windows[i];
+  // }
 
   ShutdownControllers();
 
@@ -533,179 +496,311 @@ static void InstallHotkeyFilter(QWidget* dialog)
 
 void MainWindow::CreateComponents()
 {
-  m_menu_bar = new MenuBar(this);
-  m_tool_bar = new ToolBar(this);
-  m_search_bar = new SearchBar(this);
-  m_game_list = new GameList(this);
+  // m_menu_bar = new MenuBar(this);
+  // m_tool_bar = new ToolBar(this);
+  // m_search_bar = new SearchBar(this);
+  // m_game_list = new GameList(this);
   m_render_widget = new RenderWidget;
-  m_stack = new QStackedWidget(this);
+  // m_stack = new QStackedWidget(this);
 
-  for (int i = 0; i < 4; i++)
-  {
-    m_gc_tas_input_windows[i] = new GCTASInputWindow(nullptr, i);
-    m_gba_tas_input_windows[i] = new GBATASInputWindow(nullptr, i);
-    m_wii_tas_input_windows[i] = new WiiTASInputWindow(nullptr, i);
-  }
+  // for (int i = 0; i < 4; i++)
+  // {
+  //   m_gc_tas_input_windows[i] = new GCTASInputWindow(nullptr, i);
+  //   m_gba_tas_input_windows[i] = new GBATASInputWindow(nullptr, i);
+  //   m_wii_tas_input_windows[i] = new WiiTASInputWindow(nullptr, i);
+  // }
 
-  m_jit_widget = new JITWidget(this);
-  m_log_widget = new LogWidget(this);
-  m_log_config_widget = new LogConfigWidget(this);
-  m_memory_widget = new MemoryWidget(Core::System::GetInstance(), this);
-  m_network_widget = new NetworkWidget(this);
-  m_register_widget = new RegisterWidget(this);
-  m_thread_widget = new ThreadWidget(this);
-  m_watch_widget = new WatchWidget(this);
-  m_breakpoint_widget = new BreakpointWidget(this);
-  m_code_widget = new CodeWidget(this);
-  m_cheats_manager = new CheatsManager(Core::System::GetInstance(), this);
-  m_assembler_widget = new AssemblerWidget(this);
+  // m_jit_widget = new JITWidget(this);
+  // m_log_widget = new LogWidget(this);
+  // m_log_config_widget = new LogConfigWidget(this);
+  // m_memory_widget = new MemoryWidget(Core::System::GetInstance(), this);
+  // m_network_widget = new NetworkWidget(this);
+  // m_register_widget = new RegisterWidget(this);
+  // m_thread_widget = new ThreadWidget(this);
+  // m_watch_widget = new WatchWidget(this);
+  // m_breakpoint_widget = new BreakpointWidget(this);
+  // m_code_widget = new CodeWidget(this);
+  // m_cheats_manager = new CheatsManager(Core::System::GetInstance(), this);
+  // m_assembler_widget = new AssemblerWidget(this);
 
   // m_achievements_window = new AchievementsWindow(this); // i think this should fix the issue of achievements window not existing
 
-  const auto request_watch = [this](QString name, u32 addr) {
-    m_watch_widget->AddWatch(name, addr);
-  };
-  const auto request_breakpoint = [this](u32 addr) { m_breakpoint_widget->AddBP(addr); };
-  const auto request_memory_breakpoint = [this](u32 addr) {
-    m_breakpoint_widget->AddAddressMBP(addr);
-  };
-  const auto request_view_in_memory = [this](u32 addr) { m_memory_widget->SetAddress(addr); };
-  const auto request_view_in_code = [this](u32 addr) {
-    m_code_widget->SetAddress(addr, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  };
+  // const auto request_watch = [this](QString name, u32 addr) {
+  //   m_watch_widget->AddWatch(name, addr);
+  // };
+  // const auto request_breakpoint = [this](u32 addr) { m_breakpoint_widget->AddBP(addr); };
+  // const auto request_memory_breakpoint = [this](u32 addr) {
+  //   m_breakpoint_widget->AddAddressMBP(addr);
+  // };
+  // const auto request_view_in_memory = [this](u32 addr) { m_memory_widget->SetAddress(addr); };
+  // const auto request_view_in_code = [this](u32 addr) {
+  //   m_code_widget->SetAddress(addr, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
+  // };
 
-  connect(m_watch_widget, &WatchWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  connect(m_watch_widget, &WatchWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  connect(m_register_widget, &RegisterWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  connect(m_register_widget, &RegisterWidget::RequestWatch, request_watch);
-  connect(m_register_widget, &RegisterWidget::RequestViewInMemory, request_view_in_memory);
-  connect(m_register_widget, &RegisterWidget::RequestViewInCode, request_view_in_code);
-  connect(m_thread_widget, &ThreadWidget::RequestBreakpoint, request_breakpoint);
-  connect(m_thread_widget, &ThreadWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  connect(m_thread_widget, &ThreadWidget::RequestWatch, request_watch);
-  connect(m_thread_widget, &ThreadWidget::RequestViewInMemory, request_view_in_memory);
-  connect(m_thread_widget, &ThreadWidget::RequestViewInCode, request_view_in_code);
+  // connect(m_watch_widget, &WatchWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
+  // connect(m_watch_widget, &WatchWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
+  // connect(m_register_widget, &RegisterWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
+  // connect(m_register_widget, &RegisterWidget::RequestWatch, request_watch);
+  // connect(m_register_widget, &RegisterWidget::RequestViewInMemory, request_view_in_memory);
+  // connect(m_register_widget, &RegisterWidget::RequestViewInCode, request_view_in_code);
+  // connect(m_thread_widget, &ThreadWidget::RequestBreakpoint, request_breakpoint);
+  // connect(m_thread_widget, &ThreadWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
+  // connect(m_thread_widget, &ThreadWidget::RequestWatch, request_watch);
+  // connect(m_thread_widget, &ThreadWidget::RequestViewInMemory, request_view_in_memory);
+  // connect(m_thread_widget, &ThreadWidget::RequestViewInCode, request_view_in_code);
 
-  connect(m_code_widget, &CodeWidget::RequestPPCComparison, m_jit_widget, &JITWidget::Compare);
-  connect(m_code_widget, &CodeWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  connect(m_memory_widget, &MemoryWidget::ShowCode, m_code_widget, [this](u32 address) {
-    m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  });
-  connect(m_memory_widget, &MemoryWidget::RequestWatch, request_watch);
+  // connect(m_code_widget, &CodeWidget::RequestPPCComparison, m_jit_widget, &JITWidget::Compare);
+  // connect(m_code_widget, &CodeWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
+  // connect(m_memory_widget, &MemoryWidget::ShowCode, m_code_widget, [this](u32 address) {
+  //   m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
+  // });
+  // connect(m_memory_widget, &MemoryWidget::RequestWatch, request_watch);
 
-  connect(m_breakpoint_widget, &BreakpointWidget::ShowCode, [this](u32 address) {
-    if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused)
-      m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  });
-  connect(m_breakpoint_widget, &BreakpointWidget::ShowMemory, m_memory_widget,
-          &MemoryWidget::SetAddress);
-  connect(m_cheats_manager, &CheatsManager::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  connect(m_cheats_manager, &CheatsManager::RequestWatch, request_watch);
+  // connect(m_breakpoint_widget, &BreakpointWidget::ShowCode, [this](u32 address) {
+  //   if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused)
+  //     m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
+  // });
+  // connect(m_breakpoint_widget, &BreakpointWidget::ShowMemory, m_memory_widget,
+  //         &MemoryWidget::SetAddress);
+  // connect(m_cheats_manager, &CheatsManager::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
+  // connect(m_cheats_manager, &CheatsManager::RequestWatch, request_watch);
+
+  // ====================== SETTINGS WIDGET ======================
+  // auto* layout = new QVBoxLayout(this);
+  
+  // selected_mode_n = 0;
+  // m_mode_box = new QGroupBox(tr("Modes"));
+  // m_mode_layout = new QHBoxLayout();
+  // m_mode_box->setLayout(m_mode_layout);
+  // m_mode_selectors = {};
+  // for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
+  //     WiiMixButton* frame = new WiiMixButton();
+  //     frame->setFocusPolicy(Qt::TabFocus);
+  //     // 20 padding on each side
+  //     frame->setFixedSize(300, 169);
+  //     // Set up WiiMixButton
+  //     char * backgroundImagePath = (char *) malloc(200);
+  //     if (i == 0 || i == 2) {
+  //         strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/background-unavailable.png").data(), 200);
+  //     } else {
+  //         strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/temporary_gradient_bg.png").data(), 200);
+  //     }
+  //     frame->setBorderRadius(18);
+  //     frame->setBorderWidth(4);
+  //     frame->setBorderColor("gray");
+  //     frame->setHasBackgroundImage(true);
+  //     frame->setBackgroundImage(backgroundImagePath);
+  //     frame->setCursor(Qt::PointingHandCursor);
+  //     frame->installEventFilter(this); // To capture mouse events
+  //     frame->setAttribute(Qt::WA_Hover, true);
+  //     m_mode_selectors[i] = frame;
+  // }
+
+  // // Create selectors
+  // QFont titleFont = QFont();
+  // titleFont.setPointSize(42);
+  // titleFont.setBold(true);
+
+  // QFont descriptionFont = QFont();
+  // descriptionFont.setPointSize(16);
+
+  // for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
+  //     QString titleText = WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode(i));
+  //     if (titleText == QStringLiteral("")) {
+  //         continue;
+  //     }
+
+  //     // Title
+  //     QLabel* title = new QLabel(titleText);
+  //     title->setFont(titleFont);
+  //     title->setStyleSheet(QStringLiteral(".QLabel {color: white;}"));
+  //     title->setAlignment(Qt::AlignCenter);
+  //     QVBoxLayout* layout = new QVBoxLayout();
+  //     layout->addWidget(title);
+  //     m_mode_selectors[i]->setLayout(layout);
+  //     m_mode_layout->addWidget(m_mode_selectors[i]);
+  // }
+  // for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END) - 1; i++) {
+  //     setTabOrder(m_mode_selectors[i], m_mode_selectors[i + 1]);
+  // }
+  // //setTabOrder(m_mode_selectors[static_cast<int>(WiiMixEnums::Mode::END) - 1], m_mode_selectors[0]);
+
+  // m_button_layout = new QHBoxLayout();
+
+  // m_wii_mix_button = new WiiMixLogoButton();
+  // m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
+  // m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
+  // m_wii_mix_button->setIconSize(QSize(150,100));
+  // // m_wii_mix_button->installEventFilter(this); // capture mouse events
+  // m_wii_mix_button->setCursor(Qt::PointingHandCursor);
+  // connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
+  //   // WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
+  //   // WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
+  //   // WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_config->GetMaxTimeBetweenSwitch());
+  //   // WiiMixShuffleSettings::instance()->SetEndless(m_config->GetEndless());
+  //   // emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
+  //   PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings::instance());
+  // }); // Start WiiMix
+  // QWidget* bgWidget = new QWidget();
+  // bgWidget->setParent(this);
+  // bgWidget->setAutoFillBackground(true);
+  // // bgWidget->setMaximumHeight(100);
+  // bgWidget->setMinimumWidth(1280);
+
+  // // QHBoxLayout* bottom_buttons = new QHBoxLayout(bgWidget);
+  // // //bottom_buttons->setAlignment(Qt::Alignment::);
+  // // bottom_buttons->setSpacing(0);  // Set spacing between widgets
+  // // bottom_buttons->setContentsMargins(2, 2, 0, 0);  // Remove any margins around the buttons
+  // // bottom_buttons->addStretch(); // Add space before the buttons
+  // // // bottom_buttons->addWidget(m_load_button_box, 0);
+  // // bottom_buttons->addStretch();
+  // // bottom_buttons->addWidget(m_wii_mix_button, 0);
+  // // bottom_buttons->addStretch();
+  // // // bottom_buttons->addWidget(m_save_button_box, 0);
+  // // bottom_buttons->addStretch(); // Add space after the buttons
+
+  // // QPixmap buttonBackground;
+  // // if (Config::Get(Config::MAIN_THEME_NAME) == "Clean" || Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
+  // //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
+  // // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {
+  // //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_green").pixmap(1200,100));
+  // // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
+  // //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_pink").pixmap(1200,100));
+  // // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
+  // //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_clean").pixmap(1200,100));
+  // // } else {
+  // //     qDebug() << "Incorrect theme name";
+  // // }
+  // // buttonBackground.scaled(this->size());
+
+  // QPalette* palette = new QPalette();
+  // // QBrush* buttonBackgroundBrush = new QBrush();
+  // // buttonBackgroundBrush->setTexture(buttonBackground);
+  // // palette->setBrush(QPalette::Window, *buttonBackgroundBrush);
+  // bgWidget->setPalette(*palette);
+  // m_button_layout->addWidget(m_wii_mix_button);
+  // layout->addLayout(m_mode_layout, 2);
+  // layout->addLayout(m_button_layout, 1);
+  // setLayout(layout);
+  // QVBoxLayout *layout = new QVBoxLayout();
+
+  // Create the button
+  QPushButton *button = new QPushButton(QStringLiteral("Start WiiMix"));
+
+  // // Add the button to the layout
+  // layout->addWidget(button);
+
+  this->layout()->addWidget(button);
+
+  // Set the layout for this widget
+  // this->setLayout(layout);
 }
+
+// ====================== MODES WIDGET ======================
 
 void MainWindow::ConnectWiiMix() {
   // Starts the wiimix
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
-  connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
-  connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
-  connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
+  // connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
+  // connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
+  // connect(this, &MainWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
+  // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
+  // connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
   connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
   connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
   connect(WiiMixGameManager::instance(), &WiiMixGameManager::onShuffleUpdate, this, &MainWindow::WiiMixShuffleUpdate);
   connect(WiiMixGameManager::instance(), &WiiMixGameManager::onAchievementGet, this, &MainWindow::HandleAchievementGet);
 }
 
-void MainWindow::ConnectMenuBar()
-{
-  setMenuBar(m_menu_bar);
-  // File
-  connect(m_menu_bar, &MenuBar::WiiMix, this, &MainWindow::ShowWiiMixWindow);
-  connect(m_menu_bar, &MenuBar::Open, this, &MainWindow::Open);
-  connect(m_menu_bar, &MenuBar::Exit, this, &MainWindow::close);
-  connect(m_menu_bar, &MenuBar::EjectDisc, this, &MainWindow::EjectDisc);
-  connect(m_menu_bar, &MenuBar::ChangeDisc, this, &MainWindow::ChangeDisc);
-  connect(m_menu_bar, &MenuBar::OpenUserFolder, this, &MainWindow::OpenUserFolder);
+// void MainWindow::ConnectMenuBar()
+// {
+//   setMenuBar(m_menu_bar);
+//   // File
+//   connect(m_menu_bar, &MenuBar::WiiMix, this, &MainWindow::ShowWiiMixWindow);
+//   connect(m_menu_bar, &MenuBar::Open, this, &MainWindow::Open);
+//   connect(m_menu_bar, &MenuBar::Exit, this, &MainWindow::close);
+//   connect(m_menu_bar, &MenuBar::EjectDisc, this, &MainWindow::EjectDisc);
+//   connect(m_menu_bar, &MenuBar::ChangeDisc, this, &MainWindow::ChangeDisc);
+//   connect(m_menu_bar, &MenuBar::OpenUserFolder, this, &MainWindow::OpenUserFolder);
 
-  // Emulation
-  connect(m_menu_bar, &MenuBar::Pause, this, &MainWindow::Pause);
-  connect(m_menu_bar, &MenuBar::Play, this, [this]() { Play(); });
-  connect(m_menu_bar, &MenuBar::Stop, this, &MainWindow::RequestStop);
-  connect(m_menu_bar, &MenuBar::Reset, this, &MainWindow::Reset);
-  connect(m_menu_bar, &MenuBar::Fullscreen, this, &MainWindow::FullScreen);
-  connect(m_menu_bar, &MenuBar::FrameAdvance, this, &MainWindow::FrameAdvance);
-  connect(m_menu_bar, &MenuBar::Screenshot, this, &MainWindow::ScreenShot);
-  connect(m_menu_bar, &MenuBar::StateLoad, this, &MainWindow::StateLoad);
-  connect(m_menu_bar, &MenuBar::StateSave, this, &MainWindow::StateSave);
-  connect(m_menu_bar, &MenuBar::StateLoadSlot, this, &MainWindow::StateLoadSlot);
-  connect(m_menu_bar, &MenuBar::StateSaveSlot, this, &MainWindow::StateSaveSlot);
-  connect(m_menu_bar, &MenuBar::StateSendSlot, this, &MainWindow::StateSendSlot);
-  // connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
-  connect(m_menu_bar, &MenuBar::StateLoadSlotAt, this, &MainWindow::StateLoadSlotAt);
-  connect(m_menu_bar, &MenuBar::StateSaveSlotAt, this, &MainWindow::StateSaveSlotAt);
-  connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::ShowStateSendMenu);
-  // connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
-  connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
-  connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
-  connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
-  connect(m_menu_bar, &MenuBar::SetStateSlot, this, &MainWindow::SetStateSlot);
+//   // Emulation
+//   connect(m_menu_bar, &MenuBar::Pause, this, &MainWindow::Pause);
+//   connect(m_menu_bar, &MenuBar::Play, this, [this]() { Play(); });
+//   connect(m_menu_bar, &MenuBar::Stop, this, &MainWindow::RequestStop);
+//   connect(m_menu_bar, &MenuBar::Reset, this, &MainWindow::Reset);
+//   connect(m_menu_bar, &MenuBar::Fullscreen, this, &MainWindow::FullScreen);
+//   connect(m_menu_bar, &MenuBar::FrameAdvance, this, &MainWindow::FrameAdvance);
+//   connect(m_menu_bar, &MenuBar::Screenshot, this, &MainWindow::ScreenShot);
+//   connect(m_menu_bar, &MenuBar::StateLoad, this, &MainWindow::StateLoad);
+//   connect(m_menu_bar, &MenuBar::StateSave, this, &MainWindow::StateSave);
+//   connect(m_menu_bar, &MenuBar::StateLoadSlot, this, &MainWindow::StateLoadSlot);
+//   connect(m_menu_bar, &MenuBar::StateSaveSlot, this, &MainWindow::StateSaveSlot);
+//   connect(m_menu_bar, &MenuBar::StateSendSlot, this, &MainWindow::StateSendSlot);
+//   // connect(m_menu_bar, &MenuBar::GameSwapSlot, this, &MainWindow::GameSwapSlot);
+//   connect(m_menu_bar, &MenuBar::StateLoadSlotAt, this, &MainWindow::StateLoadSlotAt);
+//   connect(m_menu_bar, &MenuBar::StateSaveSlotAt, this, &MainWindow::StateSaveSlotAt);
+//   connect(m_menu_bar, &MenuBar::StateSendSlotAt, this, &MainWindow::ShowStateSendMenu);
+//   // connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
+//   connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
+//   connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
+//   connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
+//   connect(m_menu_bar, &MenuBar::SetStateSlot, this, &MainWindow::SetStateSlot);
 
-  // Options
-  connect(m_menu_bar, &MenuBar::Configure, this, &MainWindow::ShowSettingsWindow);
-  connect(m_menu_bar, &MenuBar::ConfigureGraphics, this, &MainWindow::ShowGraphicsWindow);
-  connect(m_menu_bar, &MenuBar::ConfigureAudio, this, &MainWindow::ShowAudioWindow);
-  connect(m_menu_bar, &MenuBar::ConfigureControllers, this, &MainWindow::ShowControllersWindow);
-  connect(m_menu_bar, &MenuBar::ConfigureHotkeys, this, &MainWindow::ShowHotkeyDialog);
-  connect(m_menu_bar, &MenuBar::ConfigureFreelook, this, &MainWindow::ShowFreeLookWindow);
+//   // Options
+//   connect(m_menu_bar, &MenuBar::Configure, this, &MainWindow::ShowSettingsWindow);
+//   connect(m_menu_bar, &MenuBar::ConfigureGraphics, this, &MainWindow::ShowGraphicsWindow);
+//   connect(m_menu_bar, &MenuBar::ConfigureAudio, this, &MainWindow::ShowAudioWindow);
+//   connect(m_menu_bar, &MenuBar::ConfigureControllers, this, &MainWindow::ShowControllersWindow);
+//   connect(m_menu_bar, &MenuBar::ConfigureHotkeys, this, &MainWindow::ShowHotkeyDialog);
+//   connect(m_menu_bar, &MenuBar::ConfigureFreelook, this, &MainWindow::ShowFreeLookWindow);
 
-  // Tools
-  connect(m_menu_bar, &MenuBar::ShowMemcardManager, this, &MainWindow::ShowMemcardManager);
-  connect(m_menu_bar, &MenuBar::ShowResourcePackManager, this,
-          &MainWindow::ShowResourcePackManager);
-  connect(m_menu_bar, &MenuBar::ShowCheatsManager, this, &MainWindow::ShowCheatsManager);
-  connect(m_menu_bar, &MenuBar::BootGameCubeIPL, this, &MainWindow::OnBootGameCubeIPL);
-  connect(m_menu_bar, &MenuBar::ImportNANDBackup, this, &MainWindow::OnImportNANDBackup);
-  connect(m_menu_bar, &MenuBar::PerformOnlineUpdate, this, &MainWindow::PerformOnlineUpdate);
-  connect(m_menu_bar, &MenuBar::BootWiiSystemMenu, this, &MainWindow::BootWiiSystemMenu);
-  connect(m_menu_bar, &MenuBar::StartNetPlay, this, &MainWindow::ShowNetPlaySetupDialog);
-  connect(m_menu_bar, &MenuBar::BrowseNetPlay, this, &MainWindow::ShowNetPlayBrowser);
-  connect(m_menu_bar, &MenuBar::ShowFIFOPlayer, this, &MainWindow::ShowFIFOPlayer);
-  connect(m_menu_bar, &MenuBar::ShowSkylanderPortal, this, &MainWindow::ShowSkylanderPortal);
-  connect(m_menu_bar, &MenuBar::ShowInfinityBase, this, &MainWindow::ShowInfinityBase);
-  connect(m_menu_bar, &MenuBar::ConnectWiiRemote, this, &MainWindow::OnConnectWiiRemote);
+//   // Tools
+//   connect(m_menu_bar, &MenuBar::ShowMemcardManager, this, &MainWindow::ShowMemcardManager);
+//   connect(m_menu_bar, &MenuBar::ShowResourcePackManager, this,
+//           &MainWindow::ShowResourcePackManager);
+//   connect(m_menu_bar, &MenuBar::ShowCheatsManager, this, &MainWindow::ShowCheatsManager);
+//   connect(m_menu_bar, &MenuBar::BootGameCubeIPL, this, &MainWindow::OnBootGameCubeIPL);
+//   connect(m_menu_bar, &MenuBar::ImportNANDBackup, this, &MainWindow::OnImportNANDBackup);
+//   connect(m_menu_bar, &MenuBar::PerformOnlineUpdate, this, &MainWindow::PerformOnlineUpdate);
+//   connect(m_menu_bar, &MenuBar::BootWiiSystemMenu, this, &MainWindow::BootWiiSystemMenu);
+//   connect(m_menu_bar, &MenuBar::StartNetPlay, this, &MainWindow::ShowNetPlaySetupDialog);
+//   connect(m_menu_bar, &MenuBar::BrowseNetPlay, this, &MainWindow::ShowNetPlayBrowser);
+//   connect(m_menu_bar, &MenuBar::ShowFIFOPlayer, this, &MainWindow::ShowFIFOPlayer);
+//   connect(m_menu_bar, &MenuBar::ShowSkylanderPortal, this, &MainWindow::ShowSkylanderPortal);
+//   connect(m_menu_bar, &MenuBar::ShowInfinityBase, this, &MainWindow::ShowInfinityBase);
+//   connect(m_menu_bar, &MenuBar::ConnectWiiRemote, this, &MainWindow::OnConnectWiiRemote);
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-  connect(m_menu_bar, &MenuBar::ShowAchievementsWindow, this, &MainWindow::ShowAchievementsWindow);
-#endif  // USE_RETRO_ACHIEVEMENTS
-  connect(m_menu_bar, &MenuBar::ShowWiiMixAccountWindow, this, &MainWindow::ShowWiiMixAccountWindow);
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   connect(m_menu_bar, &MenuBar::ShowAchievementsWindow, this, &MainWindow::ShowAchievementsWindow);
+// #endif  // USE_RETRO_ACHIEVEMENTS
+//   connect(m_menu_bar, &MenuBar::ShowWiiMixAccountWindow, this, &MainWindow::ShowWiiMixAccountWindow);
 
-  // Movie
-  connect(m_menu_bar, &MenuBar::PlayRecording, this, &MainWindow::OnPlayRecording);
-  connect(m_menu_bar, &MenuBar::StartRecording, this, &MainWindow::OnStartRecording);
-  connect(m_menu_bar, &MenuBar::StopRecording, this, &MainWindow::OnStopRecording);
-  connect(m_menu_bar, &MenuBar::ExportRecording, this, &MainWindow::OnExportRecording);
-  connect(m_menu_bar, &MenuBar::ShowTASInput, this, &MainWindow::ShowTASInput);
+//   // Movie
+//   connect(m_menu_bar, &MenuBar::PlayRecording, this, &MainWindow::OnPlayRecording);
+//   connect(m_menu_bar, &MenuBar::StartRecording, this, &MainWindow::OnStartRecording);
+//   connect(m_menu_bar, &MenuBar::StopRecording, this, &MainWindow::OnStopRecording);
+//   connect(m_menu_bar, &MenuBar::ExportRecording, this, &MainWindow::OnExportRecording);
+//   connect(m_menu_bar, &MenuBar::ShowTASInput, this, &MainWindow::ShowTASInput);
 
-  // View
-  connect(m_menu_bar, &MenuBar::ShowList, m_game_list, &GameList::SetListView);
-  connect(m_menu_bar, &MenuBar::ShowGrid, m_game_list, &GameList::SetGridView);
-  connect(m_menu_bar, &MenuBar::PurgeGameListCache, m_game_list, &GameList::PurgeCache);
-  connect(m_menu_bar, &MenuBar::ShowSearch, m_search_bar, &SearchBar::Show);
+//   // View
+//   connect(m_menu_bar, &MenuBar::ShowList, m_game_list, &GameList::SetListView);
+//   connect(m_menu_bar, &MenuBar::ShowGrid, m_game_list, &GameList::SetGridView);
+//   connect(m_menu_bar, &MenuBar::PurgeGameListCache, m_game_list, &GameList::PurgeCache);
+//   connect(m_menu_bar, &MenuBar::ShowSearch, m_search_bar, &SearchBar::Show);
 
-  connect(m_menu_bar, &MenuBar::ColumnVisibilityToggled, m_game_list,
-          &GameList::OnColumnVisibilityToggled);
+//   connect(m_menu_bar, &MenuBar::ColumnVisibilityToggled, m_game_list,
+//           &GameList::OnColumnVisibilityToggled);
 
-  connect(m_menu_bar, &MenuBar::GameListPlatformVisibilityToggled, m_game_list,
-          &GameList::OnGameListVisibilityChanged);
-  connect(m_menu_bar, &MenuBar::GameListRegionVisibilityToggled, m_game_list,
-          &GameList::OnGameListVisibilityChanged);
+//   connect(m_menu_bar, &MenuBar::GameListPlatformVisibilityToggled, m_game_list,
+//           &GameList::OnGameListVisibilityChanged);
+//   connect(m_menu_bar, &MenuBar::GameListRegionVisibilityToggled, m_game_list,
+//           &GameList::OnGameListVisibilityChanged);
 
-  connect(m_menu_bar, &MenuBar::ShowAboutDialog, this, &MainWindow::ShowAboutDialog);
+//   connect(m_menu_bar, &MenuBar::ShowAboutDialog, this, &MainWindow::ShowAboutDialog);
 
-  connect(m_game_list, &GameList::SelectionChanged, m_menu_bar, &MenuBar::SelectionChanged);
-  connect(this, &MainWindow::ReadOnlyModeChanged, m_menu_bar, &MenuBar::ReadOnlyModeChanged);
-  connect(this, &MainWindow::RecordingStatusChanged, m_menu_bar, &MenuBar::RecordingStatusChanged);
-}
+//   connect(m_game_list, &GameList::SelectionChanged, m_menu_bar, &MenuBar::SelectionChanged);
+//   connect(this, &MainWindow::ReadOnlyModeChanged, m_menu_bar, &MenuBar::ReadOnlyModeChanged);
+//   connect(this, &MainWindow::RecordingStatusChanged, m_menu_bar, &MenuBar::RecordingStatusChanged);
+// }
 
 void MainWindow::ConnectHotkeys()
 {
@@ -716,11 +811,11 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::ExitHotkey, this, &MainWindow::close);
   connect(m_hotkey_scheduler, &HotkeyScheduler::UnlockCursor, this, &MainWindow::UnlockCursor);
   connect(m_hotkey_scheduler, &HotkeyScheduler::TogglePauseHotkey, this, &MainWindow::TogglePause);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::ActivateChat, this, &MainWindow::OnActivateChat);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::RequestGolfControl, this,
-          &MainWindow::OnRequestGolfControl);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::RefreshGameListHotkey, this,
-          &MainWindow::RefreshGameList);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::ActivateChat, this, &MainWindow::OnActivateChat);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::RequestGolfControl, this,
+  //         &MainWindow::OnRequestGolfControl);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::RefreshGameListHotkey, this,
+  //         &MainWindow::RefreshGameList);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StopHotkey, this, &MainWindow::RequestStop);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ResetHotkey, this, &MainWindow::Reset);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ScreenShotHotkey, this, &MainWindow::ScreenShot);
@@ -749,15 +844,15 @@ void MainWindow::ConnectHotkeys()
           &MainWindow::StateSaveSlot);
   connect(m_hotkey_scheduler, &HotkeyScheduler::SetStateSlotHotkey, this,
           &MainWindow::SetStateSlot);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::IncrementSelectedStateSlotHotkey, this,
-          &MainWindow::IncrementSelectedStateSlot);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::DecrementSelectedStateSlotHotkey, this,
-          &MainWindow::DecrementSelectedStateSlot);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::StartRecording, this,
-          &MainWindow::OnStartRecording);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::PlayRecording, this, &MainWindow::OnPlayRecording);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::ExportRecording, this,
-          &MainWindow::OnExportRecording);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::IncrementSelectedStateSlotHotkey, this,
+  //         &MainWindow::IncrementSelectedStateSlot);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::DecrementSelectedStateSlotHotkey, this,
+  //         &MainWindow::DecrementSelectedStateSlot);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::StartRecording, this,
+  //         &MainWindow::OnStartRecording);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::PlayRecording, this, &MainWindow::OnPlayRecording);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::ExportRecording, this,
+  //         &MainWindow::OnExportRecording);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ConnectWiiRemote, this,
           &MainWindow::OnConnectWiiRemote);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ToggleReadOnlyMode, [this] {
@@ -766,65 +861,65 @@ void MainWindow::ConnectHotkeys()
     movie.SetReadOnly(read_only);
     emit ReadOnlyModeChanged(read_only);
   });
-#ifdef USE_RETRO_ACHIEVEMENTS
-  connect(m_hotkey_scheduler, &HotkeyScheduler::OpenAchievements, this,
-          &MainWindow::ShowAchievementsWindow, Qt::QueuedConnection);
-#endif  // USE_RETRO_ACHIEVEMENTS
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   connect(m_hotkey_scheduler, &HotkeyScheduler::OpenAchievements, this,
+//           &MainWindow::ShowAchievementsWindow, Qt::QueuedConnection);
+// #endif  // USE_RETRO_ACHIEVEMENTS
 
-  connect(m_hotkey_scheduler, &HotkeyScheduler::Step, m_code_widget, &CodeWidget::Step);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::StepOver, m_code_widget, &CodeWidget::StepOver);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::StepOut, m_code_widget, &CodeWidget::StepOut);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::Skip, m_code_widget, &CodeWidget::Skip);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::Step, m_code_widget, &CodeWidget::Step);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::StepOver, m_code_widget, &CodeWidget::StepOver);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::StepOut, m_code_widget, &CodeWidget::StepOut);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::Skip, m_code_widget, &CodeWidget::Skip);
 
-  connect(m_hotkey_scheduler, &HotkeyScheduler::ShowPC, m_code_widget, &CodeWidget::ShowPC);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::SetPC, m_code_widget, &CodeWidget::SetPC);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::ShowPC, m_code_widget, &CodeWidget::ShowPC);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::SetPC, m_code_widget, &CodeWidget::SetPC);
 
-  connect(m_hotkey_scheduler, &HotkeyScheduler::ToggleBreakpoint, m_code_widget,
-          &CodeWidget::ToggleBreakpoint);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::AddBreakpoint, m_code_widget,
-          &CodeWidget::AddBreakpoint);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::ToggleBreakpoint, m_code_widget,
+  //         &CodeWidget::ToggleBreakpoint);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::AddBreakpoint, m_code_widget,
+  //         &CodeWidget::AddBreakpoint);
 
-  connect(m_hotkey_scheduler, &HotkeyScheduler::SkylandersPortalHotkey, this,
-          &MainWindow::ShowSkylanderPortal);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::InfinityBaseHotkey, this,
-          &MainWindow::ShowInfinityBase);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::SkylandersPortalHotkey, this,
+  //         &MainWindow::ShowSkylanderPortal);
+  // connect(m_hotkey_scheduler, &HotkeyScheduler::InfinityBaseHotkey, this,
+  //         &MainWindow::ShowInfinityBase);
 }
 
-void MainWindow::ConnectToolBar()
-{
-  addToolBar(m_tool_bar);
+// void MainWindow::ConnectToolBar()
+// {
+//   addToolBar(m_tool_bar);
 
-  connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::ShowWiiMixWindow);
-  connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
-  connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
+//   connect(m_tool_bar, &ToolBar::WiiMixPressed, this, &MainWindow::ShowWiiMixWindow);
+//   connect(m_tool_bar, &ToolBar::OpenPressed, this, &MainWindow::Open);
+//   connect(m_tool_bar, &ToolBar::RefreshPressed, this, &MainWindow::RefreshGameList);
 
-  connect(m_tool_bar, &ToolBar::PlayPressed, this, [this]() { Play(); });
-  connect(m_tool_bar, &ToolBar::PausePressed, this, &MainWindow::Pause);
-  connect(m_tool_bar, &ToolBar::StopPressed, this, &MainWindow::RequestStop);
-  connect(m_tool_bar, &ToolBar::FullScreenPressed, this, &MainWindow::FullScreen);
-  connect(m_tool_bar, &ToolBar::ScreenShotPressed, this, &MainWindow::ScreenShot);
-  connect(m_tool_bar, &ToolBar::SettingsPressed, this, &MainWindow::ShowSettingsWindow);
-  connect(m_tool_bar, &ToolBar::ControllersPressed, this, &MainWindow::ShowControllersWindow);
-  connect(m_tool_bar, &ToolBar::GraphicsPressed, this, &MainWindow::ShowGraphicsWindow);
+//   connect(m_tool_bar, &ToolBar::PlayPressed, this, [this]() { Play(); });
+//   connect(m_tool_bar, &ToolBar::PausePressed, this, &MainWindow::Pause);
+//   connect(m_tool_bar, &ToolBar::StopPressed, this, &MainWindow::RequestStop);
+//   connect(m_tool_bar, &ToolBar::FullScreenPressed, this, &MainWindow::FullScreen);
+//   connect(m_tool_bar, &ToolBar::ScreenShotPressed, this, &MainWindow::ScreenShot);
+//   connect(m_tool_bar, &ToolBar::SettingsPressed, this, &MainWindow::ShowSettingsWindow);
+//   connect(m_tool_bar, &ToolBar::ControllersPressed, this, &MainWindow::ShowControllersWindow);
+//   connect(m_tool_bar, &ToolBar::GraphicsPressed, this, &MainWindow::ShowGraphicsWindow);
 
-  connect(m_tool_bar, &ToolBar::StepPressed, m_code_widget, &CodeWidget::Step);
-  connect(m_tool_bar, &ToolBar::StepOverPressed, m_code_widget, &CodeWidget::StepOver);
-  connect(m_tool_bar, &ToolBar::StepOutPressed, m_code_widget, &CodeWidget::StepOut);
-  connect(m_tool_bar, &ToolBar::SkipPressed, m_code_widget, &CodeWidget::Skip);
-  connect(m_tool_bar, &ToolBar::ShowPCPressed, m_code_widget, &CodeWidget::ShowPC);
-  connect(m_tool_bar, &ToolBar::SetPCPressed, m_code_widget, &CodeWidget::SetPC);
-}
+//   connect(m_tool_bar, &ToolBar::StepPressed, m_code_widget, &CodeWidget::Step);
+//   connect(m_tool_bar, &ToolBar::StepOverPressed, m_code_widget, &CodeWidget::StepOver);
+//   connect(m_tool_bar, &ToolBar::StepOutPressed, m_code_widget, &CodeWidget::StepOut);
+//   connect(m_tool_bar, &ToolBar::SkipPressed, m_code_widget, &CodeWidget::Skip);
+//   connect(m_tool_bar, &ToolBar::ShowPCPressed, m_code_widget, &CodeWidget::ShowPC);
+//   connect(m_tool_bar, &ToolBar::SetPCPressed, m_code_widget, &CodeWidget::SetPC);
+// }
 
-void MainWindow::ConnectGameList()
-{
-  connect(m_game_list, &GameList::GameSelected, this, [this]() { Play(); });
-  connect(m_game_list, &GameList::NetPlayHost, this, &MainWindow::NetPlayHost);
-  connect(m_game_list, &GameList::OnStartWithRiivolution, this,
-          &MainWindow::ShowRiivolutionBootWidget);
+// void MainWindow::ConnectGameList()
+// {
+//   connect(m_game_list, &GameList::GameSelected, this, [this]() { Play(); });
+//   connect(m_game_list, &GameList::NetPlayHost, this, &MainWindow::NetPlayHost);
+//   connect(m_game_list, &GameList::OnStartWithRiivolution, this,
+//           &MainWindow::ShowRiivolutionBootWidget);
 
-  connect(m_game_list, &GameList::OpenGeneralSettings, this, &MainWindow::ShowGeneralWindow);
-  connect(m_game_list, &GameList::OpenGraphicsSettings, this, &MainWindow::ShowGraphicsWindow);
-}
+//   connect(m_game_list, &GameList::OpenGeneralSettings, this, &MainWindow::ShowGeneralWindow);
+//   connect(m_game_list, &GameList::OpenGraphicsSettings, this, &MainWindow::ShowGraphicsWindow);
+// }
 
 void MainWindow::ConnectRenderWidget()
 {
@@ -848,11 +943,11 @@ void MainWindow::ConnectStack()
   auto* layout = new QVBoxLayout;
   widget->setLayout(layout);
 
-  layout->addWidget(m_game_list);
-  layout->addWidget(m_search_bar);
+  // layout->addWidget(m_game_list);
+  // layout->addWidget(m_search_bar);
   layout->setContentsMargins(0, 0, 0, 0);
 
-  connect(m_search_bar, &SearchBar::Search, m_game_list, &GameList::SetSearchTerm);
+  // connect(m_search_bar, &SearchBar::Search, m_game_list, &GameList::SetSearchTerm);
 
   m_stack->addWidget(widget);
 
@@ -860,41 +955,41 @@ void MainWindow::ConnectStack()
 
   setDockOptions(DockOption::AllowNestedDocks | DockOption::AllowTabbedDocks);
   setTabPosition(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea, QTabWidget::North);
-  addDockWidget(Qt::LeftDockWidgetArea, m_log_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_log_config_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_code_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_register_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_thread_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_watch_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_breakpoint_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_memory_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_network_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_jit_widget);
-  addDockWidget(Qt::LeftDockWidgetArea, m_assembler_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_log_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_log_config_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_code_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_register_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_thread_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_watch_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_breakpoint_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_memory_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_network_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_jit_widget);
+  // addDockWidget(Qt::LeftDockWidgetArea, m_assembler_widget);
 
-  tabifyDockWidget(m_log_widget, m_log_config_widget);
-  tabifyDockWidget(m_log_widget, m_code_widget);
-  tabifyDockWidget(m_log_widget, m_register_widget);
-  tabifyDockWidget(m_log_widget, m_thread_widget);
-  tabifyDockWidget(m_log_widget, m_watch_widget);
-  tabifyDockWidget(m_log_widget, m_breakpoint_widget);
-  tabifyDockWidget(m_log_widget, m_memory_widget);
-  tabifyDockWidget(m_log_widget, m_network_widget);
-  tabifyDockWidget(m_log_widget, m_jit_widget);
-  tabifyDockWidget(m_log_widget, m_assembler_widget);
+  // tabifyDockWidget(m_log_widget, m_log_config_widget);
+  // tabifyDockWidget(m_log_widget, m_code_widget);
+  // tabifyDockWidget(m_log_widget, m_register_widget);
+  // tabifyDockWidget(m_log_widget, m_thread_widget);
+  // tabifyDockWidget(m_log_widget, m_watch_widget);
+  // tabifyDockWidget(m_log_widget, m_breakpoint_widget);
+  // tabifyDockWidget(m_log_widget, m_memory_widget);
+  // tabifyDockWidget(m_log_widget, m_network_widget);
+  // tabifyDockWidget(m_log_widget, m_jit_widget);
+  // tabifyDockWidget(m_log_widget, m_assembler_widget);
 }
 
-void MainWindow::RefreshGameList()
-{
-  Settings::Instance().ReloadTitleDB();
-  Settings::Instance().RefreshGameList();
-  QWidget* wItem;
-  //while ((wItem = m_stack->widget(0)) != 0) delete wItem;
-  m_stack->removeWidget(m_render_widget);
-  m_render_widget->setParent(nullptr);
-  m_stack->repaint();
-  //Host::GetInstance()->SetRenderFocus(isActiveWindow());
-}
+// void MainWindow::RefreshGameList()
+// {
+//   Settings::Instance().ReloadTitleDB();
+//   Settings::Instance().RefreshGameList();
+//   QWidget* wItem;
+//   //while ((wItem = m_stack->widget(0)) != 0) delete wItem;
+//   m_stack->removeWidget(m_render_widget);
+//   m_render_widget->setParent(nullptr);
+//   m_stack->repaint();
+//   //Host::GetInstance()->SetRenderFocus(isActiveWindow());
+// }
 
 QStringList MainWindow::PromptFileNames()
 {
@@ -958,8 +1053,9 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
     }
   }
   // ShowRenderWidget();
-  std::vector<UICommon::GameFile> game_list = m_wiimix_window->GetGamesList();
-  for (UICommon::GameFile game : game_list) {
+  std::vector<std::shared_ptr<const UICommon::GameFile>> game_list = WiiMixGlobalSettings::instance()->GetGamesList();
+  for (const auto& game_ptr : game_list) {
+    const UICommon::GameFile& game = *game_ptr;
     if (game.GetGameID() == new_objective.GetGameId()) {
       StartGame(BootParameters::GenerateFromFile(game.GetFilePath(), BootSessionData(savestate_file, DeleteSavestateAfterBoot::No)), save_path);
       // Start a 24 hour timer, UNLESS the objective is a rogue objective
@@ -1012,8 +1108,9 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
     return;
   }
   // ShowRenderWidget();
-  std::vector<UICommon::GameFile> game_list = m_wiimix_window->GetGamesList();
-  for (UICommon::GameFile game : game_list) {
+  std::vector<std::shared_ptr<const UICommon::GameFile>> game_list = WiiMixGlobalSettings::instance()->GetGamesList();
+  for (const auto& game_ptr : game_list) {
+    const UICommon::GameFile& game = *game_ptr;
     if (game.GetGameID() == new_objective.GetGameId()) {
       StartGame(BootParameters::GenerateFromFile(game.GetFilePath(), BootSessionData(savestate_file, DeleteSavestateAfterBoot::No)), "");
       return;
@@ -1145,13 +1242,13 @@ void MainWindow::ShowWiiMixWindow() {
     Core::SetState(Core::System::GetInstance(), Core::State::Paused);
   }
   // Create the window if it doesn't exist
-  if (!m_wiimix_window) {
-    m_wiimix_window = new WiiMixSettingsWindow(this);
-  }
-  SetQWidgetWindowDecorations(m_settings_window);
-  m_wiimix_window->show();
-  m_wiimix_window->raise();
-  m_wiimix_window->activateWindow();
+  // if (!m_wiimix_window) {
+  //   m_wiimix_window = new WiiMixSettingsWindow(this);
+  // }
+  // SetQWidgetWindowDecorations(m_settings_window);
+  // m_wiimix_window->show();
+  // m_wiimix_window->raise();
+  // m_wiimix_window->activateWindow();
   qDebug() << "Showing WiiMix";
   ConnectWiiMix();
   return;
@@ -1220,23 +1317,23 @@ void MainWindow::OnStopComplete()
 {
   m_stop_requested = false;
   //HideRenderWidget(!m_exit_requested, m_exit_requested);
-#ifdef USE_DISCORD_PRESENCE
-  if (!m_netplay_dialog->isVisible())
-    Discord::UpdateDiscordPresence();
-#endif
+// #ifdef USE_DISCORD_PRESENCE
+//   if (!m_netplay_dialog->isVisible())
+//     Discord::UpdateDiscordPresence();
+// #endif
 
   //SetFullScreenResolution(false);
 
   if (m_exit_requested || Settings::Instance().IsBatchModeEnabled())
   {
-    if (m_assembler_widget->ApplicationCloseRequest())
-    {
-      QGuiApplication::exit(0);
-    }
-    else
-    {
-      m_exit_requested = false;
-    }
+    // if (m_assembler_widget->ApplicationCloseRequest())
+    // {
+    //   QGuiApplication::exit(0);
+    // }
+    // else
+    // {
+    //   m_exit_requested = false;
+    // }
   }
 
   // If the current emulation prevented the booting of another, do that now
@@ -1323,7 +1420,7 @@ bool MainWindow::RequestStop()
     }
   }
 
-  OnStopRecording();
+  // OnStopRecording();
   // TODO: Add Debugger shutdown
 
   if (!m_stop_requested && UICommon::TriggerSTMPowerEvent())
@@ -1549,9 +1646,6 @@ void MainWindow::SetFullScreenResolution(bool fullscreen)
 
 void MainWindow::ShowRenderWidget()
 {
-
-  // return;
-
   if (Config::Get(Config::MAIN_RENDER_TO_MAIN))
   {
     // If we're rendering to main, add it to the stack and update our title when necessary.
@@ -1625,167 +1719,167 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
   }
 }
 
-void MainWindow::ShowControllersWindow()
-{
-  if (!m_controllers_window)
-  {
-    m_controllers_window = new ControllersWindow(this);
-    InstallHotkeyFilter(m_controllers_window);
-  }
+// void MainWindow::ShowControllersWindow()
+// {
+//   if (!m_controllers_window)
+//   {
+//     m_controllers_window = new ControllersWindow(this);
+//     InstallHotkeyFilter(m_controllers_window);
+//   }
 
-  SetQWidgetWindowDecorations(m_controllers_window);
-  m_controllers_window->show();
-  m_controllers_window->raise();
-  m_controllers_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_controllers_window);
+//   m_controllers_window->show();
+//   m_controllers_window->raise();
+//   m_controllers_window->activateWindow();
+// }
 
-void MainWindow::ShowFreeLookWindow()
-{
-  if (!m_freelook_window)
-  {
-    m_freelook_window = new FreeLookWindow(this);
-    InstallHotkeyFilter(m_freelook_window);
+// void MainWindow::ShowFreeLookWindow()
+// {
+//   if (!m_freelook_window)
+//   {
+//     m_freelook_window = new FreeLookWindow(this);
+//     InstallHotkeyFilter(m_freelook_window);
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-    connect(m_freelook_window, &FreeLookWindow::OpenAchievementSettings, this,
-            &MainWindow::ShowAchievementSettings);
-#endif  // USE_RETRO_ACHIEVEMENTS
-  }
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//     connect(m_freelook_window, &FreeLookWindow::OpenAchievementSettings, this,
+//             &MainWindow::ShowAchievementSettings);
+// #endif  // USE_RETRO_ACHIEVEMENTS
+//   }
 
-  SetQWidgetWindowDecorations(m_freelook_window);
-  m_freelook_window->show();
-  m_freelook_window->raise();
-  m_freelook_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_freelook_window);
+//   m_freelook_window->show();
+//   m_freelook_window->raise();
+//   m_freelook_window->activateWindow();
+// }
 
-void MainWindow::ShowSettingsWindow()
-{
-  if (!m_settings_window)
-  {
-    m_settings_window = new SettingsWindow(this);
-    InstallHotkeyFilter(m_settings_window);
-  }
+// void MainWindow::ShowSettingsWindow()
+// {
+//   if (!m_settings_window)
+//   {
+//     m_settings_window = new SettingsWindow(this);
+//     InstallHotkeyFilter(m_settings_window);
+//   }
 
-  SetQWidgetWindowDecorations(m_settings_window);
-  m_settings_window->show();
-  m_settings_window->raise();
-  m_settings_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_settings_window);
+//   m_settings_window->show();
+//   m_settings_window->raise();
+//   m_settings_window->activateWindow();
+// }
 
-void MainWindow::ShowAudioWindow()
-{
-  ShowSettingsWindow();
-  m_settings_window->SelectAudioPane();
-}
+// void MainWindow::ShowAudioWindow()
+// {
+//   ShowSettingsWindow();
+//   m_settings_window->SelectAudioPane();
+// }
 
-void MainWindow::ShowGeneralWindow()
-{
-  ShowSettingsWindow();
-  m_settings_window->SelectGeneralPane();
-}
+// void MainWindow::ShowGeneralWindow()
+// {
+//   ShowSettingsWindow();
+//   m_settings_window->SelectGeneralPane();
+// }
 
-void MainWindow::ShowAboutDialog()
-{
-  AboutDialog about{this};
-  SetQWidgetWindowDecorations(&about);
-  about.exec();
-}
+// void MainWindow::ShowAboutDialog()
+// {
+//   AboutDialog about{this};
+//   SetQWidgetWindowDecorations(&about);
+//   about.exec();
+// }
 
-void MainWindow::ShowHotkeyDialog()
-{
-  if (!m_hotkey_window)
-  {
-    m_hotkey_window = new MappingWindow(this, MappingWindow::Type::MAPPING_HOTKEYS, 0);
-    InstallHotkeyFilter(m_hotkey_window);
-  }
+// void MainWindow::ShowHotkeyDialog()
+// {
+//   if (!m_hotkey_window)
+//   {
+//     m_hotkey_window = new MappingWindow(this, MappingWindow::Type::MAPPING_HOTKEYS, 0);
+//     InstallHotkeyFilter(m_hotkey_window);
+//   }
 
-  SetQWidgetWindowDecorations(m_hotkey_window);
-  m_hotkey_window->show();
-  m_hotkey_window->raise();
-  m_hotkey_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_hotkey_window);
+//   m_hotkey_window->show();
+//   m_hotkey_window->raise();
+//   m_hotkey_window->activateWindow();
+// }
 
-void MainWindow::ShowGraphicsWindow()
-{
-  if (!m_graphics_window)
-  {
-#ifdef HAVE_XRANDR
-    if (GetWindowSystemType() == WindowSystemType::X11)
-    {
-      m_xrr_config = std::make_unique<X11Utils::XRRConfiguration>(
-          static_cast<Display*>(QGuiApplication::platformNativeInterface()->nativeResourceForWindow(
-              "display", windowHandle())),
-          winId());
-    }
-#endif
-    m_graphics_window = new GraphicsWindow(this);
-    InstallHotkeyFilter(m_graphics_window);
-  }
+// void MainWindow::ShowGraphicsWindow()
+// {
+//   if (!m_graphics_window)
+//   {
+// #ifdef HAVE_XRANDR
+//     if (GetWindowSystemType() == WindowSystemType::X11)
+//     {
+//       m_xrr_config = std::make_unique<X11Utils::XRRConfiguration>(
+//           static_cast<Display*>(QGuiApplication::platformNativeInterface()->nativeResourceForWindow(
+//               "display", windowHandle())),
+//           winId());
+//     }
+// #endif
+//     m_graphics_window = new GraphicsWindow(this);
+//     InstallHotkeyFilter(m_graphics_window);
+//   }
 
-  SetQWidgetWindowDecorations(m_graphics_window);
-  m_graphics_window->show();
-  m_graphics_window->raise();
-  m_graphics_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_graphics_window);
+//   m_graphics_window->show();
+//   m_graphics_window->raise();
+//   m_graphics_window->activateWindow();
+// }
 
-void MainWindow::ShowNetPlaySetupDialog()
-{
-  SetQWidgetWindowDecorations(m_netplay_setup_dialog);
-  m_netplay_setup_dialog->show();
-  m_netplay_setup_dialog->raise();
-  m_netplay_setup_dialog->activateWindow();
-}
+// void MainWindow::ShowNetPlaySetupDialog()
+// {
+//   SetQWidgetWindowDecorations(m_netplay_setup_dialog);
+//   m_netplay_setup_dialog->show();
+//   m_netplay_setup_dialog->raise();
+//   m_netplay_setup_dialog->activateWindow();
+// }
 
-void MainWindow::ShowNetPlayBrowser()
-{
-  auto* browser = new NetPlayBrowser(this);
-  browser->setAttribute(Qt::WA_DeleteOnClose, true);
-  connect(browser, &NetPlayBrowser::Join, this, &MainWindow::NetPlayJoin);
-  SetQWidgetWindowDecorations(browser);
-  browser->exec();
-}
+// void MainWindow::ShowNetPlayBrowser()
+// {
+//   auto* browser = new NetPlayBrowser(this);
+//   browser->setAttribute(Qt::WA_DeleteOnClose, true);
+//   connect(browser, &NetPlayBrowser::Join, this, &MainWindow::NetPlayJoin);
+//   SetQWidgetWindowDecorations(browser);
+//   browser->exec();
+// }
 
-void MainWindow::ShowFIFOPlayer()
-{
-  if (!m_fifo_window)
-  {
-    m_fifo_window = new FIFOPlayerWindow(Core::System::GetInstance().GetFifoPlayer(),
-                                         Core::System::GetInstance().GetFifoRecorder());
-    connect(m_fifo_window, &FIFOPlayerWindow::LoadFIFORequested, this,
-            [this](const QString& path) { StartGame(path, ScanForSecondDisc::No); });
-  }
+// void MainWindow::ShowFIFOPlayer()
+// {
+//   if (!m_fifo_window)
+//   {
+//     m_fifo_window = new FIFOPlayerWindow(Core::System::GetInstance().GetFifoPlayer(),
+//                                          Core::System::GetInstance().GetFifoRecorder());
+//     connect(m_fifo_window, &FIFOPlayerWindow::LoadFIFORequested, this,
+//             [this](const QString& path) { StartGame(path, ScanForSecondDisc::No); });
+//   }
 
-  SetQWidgetWindowDecorations(m_fifo_window);
-  m_fifo_window->show();
-  m_fifo_window->raise();
-  m_fifo_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_fifo_window);
+//   m_fifo_window->show();
+//   m_fifo_window->raise();
+//   m_fifo_window->activateWindow();
+// }
 
-void MainWindow::ShowSkylanderPortal()
-{
-  if (!m_skylander_window)
-  {
-    m_skylander_window = new SkylanderPortalWindow();
-  }
+// void MainWindow::ShowSkylanderPortal()
+// {
+//   if (!m_skylander_window)
+//   {
+//     m_skylander_window = new SkylanderPortalWindow();
+//   }
 
-  SetQWidgetWindowDecorations(m_skylander_window);
-  m_skylander_window->show();
-  m_skylander_window->raise();
-  m_skylander_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_skylander_window);
+//   m_skylander_window->show();
+//   m_skylander_window->raise();
+//   m_skylander_window->activateWindow();
+// }
 
-void MainWindow::ShowInfinityBase()
-{
-  if (!m_infinity_window)
-  {
-    m_infinity_window = new InfinityBaseWindow();
-  }
+// void MainWindow::ShowInfinityBase()
+// {
+//   if (!m_infinity_window)
+//   {
+//     m_infinity_window = new InfinityBaseWindow();
+//   }
 
-  SetQWidgetWindowDecorations(m_infinity_window);
-  m_infinity_window->show();
-  m_infinity_window->raise();
-  m_infinity_window->activateWindow();
-}
+//   SetQWidgetWindowDecorations(m_infinity_window);
+//   m_infinity_window->show();
+//   m_infinity_window->raise();
+//   m_infinity_window->activateWindow();
+// }
 
 void MainWindow::StateLoad()
 {
@@ -1989,76 +2083,76 @@ void MainWindow::StopWiiMix() {
 //   }
 // }
 
-void MainWindow::ShowStateSendMenu(int slot)
-{
-  m_state_send_menu = new WiiMixStateSendMenu();
-  connect(m_state_send_menu, &WiiMixStateSendMenu::SendObjective, this, &MainWindow::StateSend);
-  m_state_send_menu->setWindowTitle(QStringLiteral("State Send Menu"));
-  SetQWidgetWindowDecorations(m_state_send_menu);
-  m_state_send_menu->show();
-  m_state_send_menu->raise();
-  m_state_send_menu->activateWindow();
-  return;
-}
+// void MainWindow::ShowStateSendMenu(int slot)
+// {
+//   m_state_send_menu = new WiiMixStateSendMenu();
+//   connect(m_state_send_menu, &WiiMixStateSendMenu::SendObjective, this, &MainWindow::StateSend);
+//   m_state_send_menu->setWindowTitle(QStringLiteral("State Send Menu"));
+//   SetQWidgetWindowDecorations(m_state_send_menu);
+//   m_state_send_menu->show();
+//   m_state_send_menu->raise();
+//   m_state_send_menu->activateWindow();
+//   return;
+// }
 
-void MainWindow::StateSend(WiiMixObjective objective) {
-  // Send the objective + state to the server if the file type for the game is not .nkit.iso
-  // Find the current game based on the game id
-  UICommon::GameFile game;
-  for (auto& g : WiiMixGlobalSettings::instance()->GetGamesList()) {
-    if (g->GetGameID() == objective.GetGameId()) {
-      game = *g;
-      break;
-    }
-  }
+// void MainWindow::StateSend(WiiMixObjective objective) {
+//   // Send the objective + state to the server if the file type for the game is not .nkit.iso
+//   // Find the current game based on the game id
+//   UICommon::GameFile game;
+//   for (auto& g : WiiMixGlobalSettings::instance()->GetGamesList()) {
+//     if (g->GetGameID() == objective.GetGameId()) {
+//       game = *g;
+//       break;
+//     }
+//   }
 
-  if (game.GetFileFormatName().find("Nkit") != std::string::npos) {
-    QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("States for Nkit file types are not supported for compatibility reasons"));
-    return;
-  }
-  QJsonObject obj = objective.ToJson();
+//   if (game.GetFileFormatName().find("Nkit") != std::string::npos) {
+//     QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("States for Nkit file types are not supported for compatibility reasons"));
+//     return;
+//   }
+//   QJsonObject obj = objective.ToJson();
 
-  qDebug() << "Sending objective and state to the server";
-  connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
-  // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
-  return;
-}
+//   qDebug() << "Sending objective and state to the server";
+//   connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
+//   // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
+//   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
+//   return;
+// }
 
-void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) {
-  // Connect to the `bytesWritten` signal to track progress
-  // qDebug() << "Tracking progress";
-  // QTcpSocket* socket = WiiMixClient::instance()->GetSocket();
+// void MainWindow::TrackStateSendProgress(qint64 bytesWritten, qint64 totalBytes) {
+//   // Connect to the `bytesWritten` signal to track progress
+//   // qDebug() << "Tracking progress";
+//   // QTcpSocket* socket = WiiMixClient::instance()->GetSocket();
 
-  // connect(socket, &QTcpSocket::bytesWritten, m_state_send_menu->GetSendButton(), [this, totalBytes](qint64 bytes) mutable {
-      // static qint64 bytesWritten = 0;
-      // bytesWritten += bytes;
-  qint64 progress = static_cast<qint64>((bytesWritten * 100) / totalBytes);
+//   // connect(socket, &QTcpSocket::bytesWritten, m_state_send_menu->GetSendButton(), [this, totalBytes](qint64 bytes) mutable {
+//       // static qint64 bytesWritten = 0;
+//       // bytesWritten += bytes;
+//   qint64 progress = static_cast<qint64>((bytesWritten * 100) / totalBytes);
 
-  // percentage complete
-  m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
+//   // percentage complete
+//   m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
 
-      // bytes complete
-  // Update button text safely in the GUI thread
-  // emit onStateSendProgressUpdate(QStringLiteral("Sending %1% complete").arg(progress));
+//       // bytes complete
+//   // Update button text safely in the GUI thread
+//   // emit onStateSendProgressUpdate(QStringLiteral("Sending %1% complete").arg(progress));
 
-  // QMetaObject::invokeMethod(m_state_send_menu->GetSendButton(),
-  //                            [this, progress]() {
-  //                              this->m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
-  //                            },
-  //                            Qt::QueuedConnection);
+//   // QMetaObject::invokeMethod(m_state_send_menu->GetSendButton(),
+//   //                            [this, progress]() {
+//   //                              this->m_state_send_menu->GetSendButton()->setText(QStringLiteral("Sending %1% complete").arg(progress));
+//   //                            },
+//   //                            Qt::QueuedConnection);
 
-  if (progress >= 100) {
-      m_state_send_menu->close();
-  }
+//   if (progress >= 100) {
+//       m_state_send_menu->close();
+//   }
 
-  // qDebug() << "Progress: " << progress;
-  // });
-}
+//   // qDebug() << "Progress: " << progress;
+//   // });
+// }
 
 void MainWindow::TrackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
     // qDebug() << "track state read progress in main window";
-    m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(bytesWritten, totalBytes);
+    m_wii_mix_button->trackStateReadProgress(bytesWritten, totalBytes);
     return;
 }
 
@@ -2134,190 +2228,190 @@ void MainWindow::SetStateSlot(int slot)
                        2500);
 }
 
-void MainWindow::IncrementSelectedStateSlot()
-{
-  u32 state_slot = m_state_slot + 1;
-  if (state_slot > State::NUM_STATES)
-    state_slot = 1;
-  m_menu_bar->SetStateSlot(state_slot);
-}
+// void MainWindow::IncrementSelectedStateSlot()
+// {
+//   u32 state_slot = m_state_slot + 1;
+//   if (state_slot > State::NUM_STATES)
+//     state_slot = 1;
+//   m_menu_bar->SetStateSlot(state_slot);
+// }
 
-void MainWindow::DecrementSelectedStateSlot()
-{
-  u32 state_slot = m_state_slot - 1;
-  if (state_slot < 1)
-    state_slot = State::NUM_STATES;
-  m_menu_bar->SetStateSlot(state_slot);
-}
+// void MainWindow::DecrementSelectedStateSlot()
+// {
+//   u32 state_slot = m_state_slot - 1;
+//   if (state_slot < 1)
+//     state_slot = State::NUM_STATES;
+//   m_menu_bar->SetStateSlot(state_slot);
+// }
 
-void MainWindow::PerformOnlineUpdate(const std::string& region)
-{
-  WiiUpdate::PerformOnlineUpdate(region, this);
-  // Since the update may have installed a newer system menu, trigger a refresh.
-  Settings::Instance().NANDRefresh();
-}
+// void MainWindow::PerformOnlineUpdate(const std::string& region)
+// {
+//   WiiUpdate::PerformOnlineUpdate(region, this);
+//   // Since the update may have installed a newer system menu, trigger a refresh.
+//   Settings::Instance().NANDRefresh();
+// }
 
 void MainWindow::BootWiiSystemMenu()
 {
   StartGame(std::make_unique<BootParameters>(BootParameters::NANDTitle{Titles::SYSTEM_MENU}));
 }
 
-void MainWindow::NetPlayInit()
-{
-  const auto& game_list_model = m_game_list->GetGameListModel();
-  m_netplay_setup_dialog = new NetPlaySetupDialog(game_list_model, this);
-  m_netplay_dialog = new NetPlayDialog(
-      game_list_model,
-      [this](const std::string& path, std::unique_ptr<BootSessionData> boot_session_data) {
-        StartGame(path, ScanForSecondDisc::Yes, std::move(boot_session_data));
-      });
-#ifdef USE_DISCORD_PRESENCE
-  m_netplay_discord = new DiscordHandler(this);
-#endif
+// void MainWindow::NetPlayInit()
+// {
+//   const auto& game_list_model = m_game_list->GetGameListModel();
+//   m_netplay_setup_dialog = new NetPlaySetupDialog(game_list_model, this);
+//   m_netplay_dialog = new NetPlayDialog(
+//       game_list_model,
+//       [this](const std::string& path, std::unique_ptr<BootSessionData> boot_session_data) {
+//         StartGame(path, ScanForSecondDisc::Yes, std::move(boot_session_data));
+//       });
+// #ifdef USE_DISCORD_PRESENCE
+//   m_netplay_discord = new DiscordHandler(this);
+// #endif
 
-  connect(m_netplay_dialog, &NetPlayDialog::Stop, this, &MainWindow::ForceStop);
-  connect(m_netplay_dialog, &NetPlayDialog::rejected, this, &MainWindow::NetPlayQuit);
-  connect(m_netplay_setup_dialog, &NetPlaySetupDialog::Join, this, &MainWindow::NetPlayJoin);
-  connect(m_netplay_setup_dialog, &NetPlaySetupDialog::Host, this, &MainWindow::NetPlayHost);
-#ifdef USE_DISCORD_PRESENCE
-  connect(m_netplay_discord, &DiscordHandler::Join, this, &MainWindow::NetPlayJoin);
+//   connect(m_netplay_dialog, &NetPlayDialog::Stop, this, &MainWindow::ForceStop);
+//   connect(m_netplay_dialog, &NetPlayDialog::rejected, this, &MainWindow::NetPlayQuit);
+//   connect(m_netplay_setup_dialog, &NetPlaySetupDialog::Join, this, &MainWindow::NetPlayJoin);
+//   connect(m_netplay_setup_dialog, &NetPlaySetupDialog::Host, this, &MainWindow::NetPlayHost);
+// #ifdef USE_DISCORD_PRESENCE
+//   connect(m_netplay_discord, &DiscordHandler::Join, this, &MainWindow::NetPlayJoin);
 
-  Discord::InitNetPlayFunctionality(*m_netplay_discord);
-  m_netplay_discord->Start();
-#endif
-  connect(&Settings::Instance(), &Settings::ConfigChanged, this,
-          &MainWindow::UpdateScreenSaverInhibition);
-  connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
-          &MainWindow::UpdateScreenSaverInhibition);
-}
+//   Discord::InitNetPlayFunctionality(*m_netplay_discord);
+//   m_netplay_discord->Start();
+// #endif
+//   connect(&Settings::Instance(), &Settings::ConfigChanged, this,
+//           &MainWindow::UpdateScreenSaverInhibition);
+//   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
+//           &MainWindow::UpdateScreenSaverInhibition);
+// }
 
-bool MainWindow::NetPlayJoin()
-{
-  if (Core::IsRunning(Core::System::GetInstance()))
-  {
-    ModalMessageBox::critical(nullptr, tr("Error"),
-                              tr("Can't start a NetPlay Session while a game is still running!"));
-    return false;
-  }
+// bool MainWindow::NetPlayJoin()
+// {
+//   if (Core::IsRunning(Core::System::GetInstance()))
+//   {
+//     ModalMessageBox::critical(nullptr, tr("Error"),
+//                               tr("Can't start a NetPlay Session while a game is still running!"));
+//     return false;
+//   }
 
-  if (m_netplay_dialog->isVisible())
-  {
-    ModalMessageBox::critical(nullptr, tr("Error"),
-                              tr("A NetPlay Session is already in progress!"));
-    return false;
-  }
+//   if (m_netplay_dialog->isVisible())
+//   {
+//     ModalMessageBox::critical(nullptr, tr("Error"),
+//                               tr("A NetPlay Session is already in progress!"));
+//     return false;
+//   }
 
-  auto server = Settings::Instance().GetNetPlayServer();
+//   auto server = Settings::Instance().GetNetPlayServer();
 
-  // Settings
-  const std::string traversal_choice = Config::Get(Config::NETPLAY_TRAVERSAL_CHOICE);
-  const bool is_traversal = traversal_choice == "traversal";
+//   // Settings
+//   const std::string traversal_choice = Config::Get(Config::NETPLAY_TRAVERSAL_CHOICE);
+//   const bool is_traversal = traversal_choice == "traversal";
 
-  std::string host_ip;
-  u16 host_port;
-  if (server)
-  {
-    host_ip = "127.0.0.1";
-    host_port = server->GetPort();
-  }
-  else
-  {
-    host_ip = is_traversal ? Config::Get(Config::NETPLAY_HOST_CODE) :
-                             Config::Get(Config::NETPLAY_ADDRESS);
-    host_port = Config::Get(Config::NETPLAY_CONNECT_PORT);
-  }
+//   std::string host_ip;
+//   u16 host_port;
+//   if (server)
+//   {
+//     host_ip = "127.0.0.1";
+//     host_port = server->GetPort();
+//   }
+//   else
+//   {
+//     host_ip = is_traversal ? Config::Get(Config::NETPLAY_HOST_CODE) :
+//                              Config::Get(Config::NETPLAY_ADDRESS);
+//     host_port = Config::Get(Config::NETPLAY_CONNECT_PORT);
+//   }
 
-  const std::string traversal_host = Config::Get(Config::NETPLAY_TRAVERSAL_SERVER);
-  const u16 traversal_port = Config::Get(Config::NETPLAY_TRAVERSAL_PORT);
-  const std::string nickname = Config::Get(Config::NETPLAY_NICKNAME);
-  const std::string network_mode = Config::Get(Config::NETPLAY_NETWORK_MODE);
-  const bool host_input_authority = network_mode == "hostinputauthority" || network_mode == "golf";
+//   const std::string traversal_host = Config::Get(Config::NETPLAY_TRAVERSAL_SERVER);
+//   const u16 traversal_port = Config::Get(Config::NETPLAY_TRAVERSAL_PORT);
+//   const std::string nickname = Config::Get(Config::NETPLAY_NICKNAME);
+//   const std::string network_mode = Config::Get(Config::NETPLAY_NETWORK_MODE);
+//   const bool host_input_authority = network_mode == "hostinputauthority" || network_mode == "golf";
 
-  if (server)
-  {
-    server->SetHostInputAuthority(host_input_authority);
-    server->AdjustPadBufferSize(Config::Get(Config::NETPLAY_BUFFER_SIZE));
-  }
+//   if (server)
+//   {
+//     server->SetHostInputAuthority(host_input_authority);
+//     server->AdjustPadBufferSize(Config::Get(Config::NETPLAY_BUFFER_SIZE));
+//   }
 
-  // Create Client
-  const bool is_hosting_netplay = server != nullptr;
-  Settings::Instance().ResetNetPlayClient(new NetPlay::NetPlayClient(
-      host_ip, host_port, m_netplay_dialog, nickname,
-      NetPlay::NetTraversalConfig{is_hosting_netplay ? false : is_traversal, traversal_host,
-                                  traversal_port}));
+//   // Create Client
+//   const bool is_hosting_netplay = server != nullptr;
+//   Settings::Instance().ResetNetPlayClient(new NetPlay::NetPlayClient(
+//       host_ip, host_port, m_netplay_dialog, nickname,
+//       NetPlay::NetTraversalConfig{is_hosting_netplay ? false : is_traversal, traversal_host,
+//                                   traversal_port}));
 
-  if (!Settings::Instance().GetNetPlayClient()->IsConnected())
-  {
-    NetPlayQuit();
-    return false;
-  }
+//   if (!Settings::Instance().GetNetPlayClient()->IsConnected())
+//   {
+//     NetPlayQuit();
+//     return false;
+//   }
 
-  m_netplay_setup_dialog->close();
-  m_netplay_dialog->show(nickname, is_traversal);
+//   m_netplay_setup_dialog->close();
+//   m_netplay_dialog->show(nickname, is_traversal);
 
-  return true;
-}
+//   return true;
+// }
 
-bool MainWindow::NetPlayHost(const UICommon::GameFile& game)
-{
-  if (Core::IsRunning(Core::System::GetInstance()))
-  {
-    ModalMessageBox::critical(nullptr, tr("Error"),
-                              tr("Can't start a NetPlay Session while a game is still running!"));
-    return false;
-  }
+// bool MainWindow::NetPlayHost(const UICommon::GameFile& game)
+// {
+//   if (Core::IsRunning(Core::System::GetInstance()))
+//   {
+//     ModalMessageBox::critical(nullptr, tr("Error"),
+//                               tr("Can't start a NetPlay Session while a game is still running!"));
+//     return false;
+//   }
 
-  if (m_netplay_dialog->isVisible())
-  {
-    ModalMessageBox::critical(nullptr, tr("Error"),
-                              tr("A NetPlay Session is already in progress!"));
-    return false;
-  }
+//   if (m_netplay_dialog->isVisible())
+//   {
+//     ModalMessageBox::critical(nullptr, tr("Error"),
+//                               tr("A NetPlay Session is already in progress!"));
+//     return false;
+//   }
 
-  // Settings
-  u16 host_port = Config::Get(Config::NETPLAY_HOST_PORT);
-  const std::string traversal_choice = Config::Get(Config::NETPLAY_TRAVERSAL_CHOICE);
-  const bool is_traversal = traversal_choice == "traversal";
-  const bool use_upnp = Config::Get(Config::NETPLAY_USE_UPNP);
+//   // Settings
+//   u16 host_port = Config::Get(Config::NETPLAY_HOST_PORT);
+//   const std::string traversal_choice = Config::Get(Config::NETPLAY_TRAVERSAL_CHOICE);
+//   const bool is_traversal = traversal_choice == "traversal";
+//   const bool use_upnp = Config::Get(Config::NETPLAY_USE_UPNP);
 
-  const std::string traversal_host = Config::Get(Config::NETPLAY_TRAVERSAL_SERVER);
-  const u16 traversal_port = Config::Get(Config::NETPLAY_TRAVERSAL_PORT);
-  const u16 traversal_port_alt = Config::Get(Config::NETPLAY_TRAVERSAL_PORT_ALT);
+//   const std::string traversal_host = Config::Get(Config::NETPLAY_TRAVERSAL_SERVER);
+//   const u16 traversal_port = Config::Get(Config::NETPLAY_TRAVERSAL_PORT);
+//   const u16 traversal_port_alt = Config::Get(Config::NETPLAY_TRAVERSAL_PORT_ALT);
 
-  if (is_traversal)
-    host_port = Config::Get(Config::NETPLAY_LISTEN_PORT);
+//   if (is_traversal)
+//     host_port = Config::Get(Config::NETPLAY_LISTEN_PORT);
 
-  // Create Server
-  Settings::Instance().ResetNetPlayServer(
-      new NetPlay::NetPlayServer(host_port, use_upnp, m_netplay_dialog,
-                                 NetPlay::NetTraversalConfig{is_traversal, traversal_host,
-                                                             traversal_port, traversal_port_alt}));
+//   // Create Server
+//   Settings::Instance().ResetNetPlayServer(
+//       new NetPlay::NetPlayServer(host_port, use_upnp, m_netplay_dialog,
+//                                  NetPlay::NetTraversalConfig{is_traversal, traversal_host,
+//                                                              traversal_port, traversal_port_alt}));
 
-  if (!Settings::Instance().GetNetPlayServer()->is_connected)
-  {
-    ModalMessageBox::critical(
-        nullptr, tr("Failed to open server"),
-        tr("Failed to listen on port %1. Is another instance of the NetPlay server running?")
-            .arg(host_port));
-    NetPlayQuit();
-    return false;
-  }
+//   if (!Settings::Instance().GetNetPlayServer()->is_connected)
+//   {
+//     ModalMessageBox::critical(
+//         nullptr, tr("Failed to open server"),
+//         tr("Failed to listen on port %1. Is another instance of the NetPlay server running?")
+//             .arg(host_port));
+//     NetPlayQuit();
+//     return false;
+//   }
 
-  Settings::Instance().GetNetPlayServer()->ChangeGame(game.GetSyncIdentifier(),
-                                                      m_game_list->GetNetPlayName(game));
+//   Settings::Instance().GetNetPlayServer()->ChangeGame(game.GetSyncIdentifier(),
+//                                                       m_game_list->GetNetPlayName(game));
 
-  // Join our local server
-  return NetPlayJoin();
-}
+//   // Join our local server
+//   return NetPlayJoin();
+// }
 
-void MainWindow::NetPlayQuit()
-{
-  Settings::Instance().ResetNetPlayClient();
-  Settings::Instance().ResetNetPlayServer();
-#ifdef USE_DISCORD_PRESENCE
-  Discord::UpdateDiscordPresence();
-#endif
-}
+// void MainWindow::NetPlayQuit()
+// {
+//   Settings::Instance().ResetNetPlayClient();
+//   Settings::Instance().ResetNetPlayServer();
+// #ifdef USE_DISCORD_PRESENCE
+//   Discord::UpdateDiscordPresence();
+// #endif
+// }
 
 void MainWindow::UpdateScreenSaverInhibition()
 {
@@ -2339,6 +2433,17 @@ void MainWindow::UpdateScreenSaverInhibition()
 
 bool MainWindow::eventFilter(QObject* object, QEvent* event)
 {
+  // ================== Settings Window ==================
+  // if ((event->type() == QEvent::HoverLeave)) {
+  //   m_wii_mix_button->setGraphicsEffect(nullptr);
+  // }
+  // if (event->type() == QEvent::HoverEnter) {
+  //   auto* hoverEffect = new QGraphicsDropShadowEffect;
+  //   hoverEffect->setOffset(0, 0);
+  //   hoverEffect->setBlurRadius(25);
+  //   m_wii_mix_button->setGraphicsEffect(hoverEffect);
+  // }
+  // =====================================================
   if (event->type() == QEvent::Close)
   {
     if (RequestStop() && object == this)
@@ -2358,293 +2463,293 @@ QMenu* MainWindow::createPopupMenu()
   return nullptr;
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent* event)
-{
-  if (event->mimeData()->hasUrls() && event->mimeData()->urls().size() == 1)
-    event->acceptProposedAction();
-}
+// void MainWindow::dragEnterEvent(QDragEnterEvent* event)
+// {
+//   if (event->mimeData()->hasUrls() && event->mimeData()->urls().size() == 1)
+//     event->acceptProposedAction();
+// }
 
-void MainWindow::dropEvent(QDropEvent* event)
-{
-  const QList<QUrl>& urls = event->mimeData()->urls();
-  if (urls.empty())
-    return;
+// void MainWindow::dropEvent(QDropEvent* event)
+// {
+//   const QList<QUrl>& urls = event->mimeData()->urls();
+//   if (urls.empty())
+//     return;
 
-  QStringList files;
-  QStringList folders;
+//   QStringList files;
+//   QStringList folders;
 
-  for (const QUrl& url : urls)
-  {
-    QFileInfo file_info(url.toLocalFile());
-    QString path = file_info.filePath();
+//   for (const QUrl& url : urls)
+//   {
+//     QFileInfo file_info(url.toLocalFile());
+//     QString path = file_info.filePath();
 
-    if (!file_info.exists() || !file_info.isReadable())
-    {
-      ModalMessageBox::critical(this, tr("Error"), tr("Failed to open '%1'").arg(path));
-      return;
-    }
+//     if (!file_info.exists() || !file_info.isReadable())
+//     {
+//       ModalMessageBox::critical(this, tr("Error"), tr("Failed to open '%1'").arg(path));
+//       return;
+//     }
 
-    (file_info.isFile() ? files : folders).append(path);
-  }
+//     (file_info.isFile() ? files : folders).append(path);
+//   }
 
-  if (!files.isEmpty())
-  {
-    StartGame(StringListToStdVector(files));
-  }
-  else
-  {
-    Settings& settings = Settings::Instance();
-    const bool show_confirm = !settings.GetPaths().empty();
+//   if (!files.isEmpty())
+//   {
+//     StartGame(StringListToStdVector(files));
+//   }
+//   else
+//   {
+//     Settings& settings = Settings::Instance();
+//     const bool show_confirm = !settings.GetPaths().empty();
 
-    for (const QString& folder : folders)
-    {
-      if (show_confirm)
-      {
-        if (ModalMessageBox::question(
-                this, tr("Confirm"),
-                tr("Do you want to add \"%1\" to the list of Game Paths?").arg(folder)) !=
-            QMessageBox::Yes)
-          return;
-      }
-      settings.AddPath(folder);
-    }
-  }
-}
+//     for (const QString& folder : folders)
+//     {
+//       if (show_confirm)
+//       {
+//         if (ModalMessageBox::question(
+//                 this, tr("Confirm"),
+//                 tr("Do you want to add \"%1\" to the list of Game Paths?").arg(folder)) !=
+//             QMessageBox::Yes)
+//           return;
+//       }
+//       settings.AddPath(folder);
+//     }
+//   }
+// }
 
 QSize MainWindow::sizeHint() const
 {
   return QSize(800, 600);
 }
 
-#ifdef _WIN32
-bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result)
-{
-  auto* msg = reinterpret_cast<MSG*>(message);
-  if (msg && msg->message == WM_SETTINGCHANGE && msg->lParam != NULL &&
-      std::wstring_view(L"ImmersiveColorSet")
-              .compare(reinterpret_cast<const wchar_t*>(msg->lParam)) == 0)
-  {
-    // Windows light/dark theme has changed. Update our flag and refresh the theme.
-    auto& settings = Settings::Instance();
-    const bool was_dark_before = settings.IsSystemDark();
-    settings.UpdateSystemDark();
-    if (settings.IsSystemDark() != was_dark_before)
-    {
-      settings.ApplyStyle();
+// #ifdef _WIN32
+// bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result)
+// {
+//   auto* msg = reinterpret_cast<MSG*>(message);
+//   if (msg && msg->message == WM_SETTINGCHANGE && msg->lParam != NULL &&
+//       std::wstring_view(L"ImmersiveColorSet")
+//               .compare(reinterpret_cast<const wchar_t*>(msg->lParam)) == 0)
+//   {
+//     // Windows light/dark theme has changed. Update our flag and refresh the theme.
+//     auto& settings = Settings::Instance();
+//     const bool was_dark_before = settings.IsSystemDark();
+//     settings.UpdateSystemDark();
+//     if (settings.IsSystemDark() != was_dark_before)
+//     {
+//       settings.ApplyStyle();
 
-      // force the colors in the Skylander window to update
-      if (m_skylander_window)
-        m_skylander_window->RefreshList();
-    }
+//       // force the colors in the Skylander window to update
+//       if (m_skylander_window)
+//         m_skylander_window->RefreshList();
+//     }
 
-    // TODO: When switching from light to dark, the window decorations remain light. Qt seems very
-    // convinced that it needs to change these in response to this message, so even if we set them
-    // to dark here, Qt sets them back to light afterwards.
-  }
+//     // TODO: When switching from light to dark, the window decorations remain light. Qt seems very
+//     // convinced that it needs to change these in response to this message, so even if we set them
+//     // to dark here, Qt sets them back to light afterwards.
+//   }
 
-  return false;
-}
-#endif
+//   return false;
+// }
+// #endif
 
 void MainWindow::OnBootGameCubeIPL(DiscIO::Region region)
 {
   StartGame(std::make_unique<BootParameters>(BootParameters::IPL{region}));
 }
 
-void MainWindow::OnImportNANDBackup()
-{
-  auto response = ModalMessageBox::question(
-      this, tr("Question"),
-      tr("Merging a new NAND over your currently selected NAND will overwrite any channels "
-         "and savegames that already exist. This process is not reversible, so it is "
-         "recommended that you keep backups of both NANDs. Are you sure you want to "
-         "continue?"));
+// void MainWindow::OnImportNANDBackup()
+// {
+//   auto response = ModalMessageBox::question(
+//       this, tr("Question"),
+//       tr("Merging a new NAND over your currently selected NAND will overwrite any channels "
+//          "and savegames that already exist. This process is not reversible, so it is "
+//          "recommended that you keep backups of both NANDs. Are you sure you want to "
+//          "continue?"));
 
-  if (response == QMessageBox::No)
-    return;
+//   if (response == QMessageBox::No)
+//     return;
 
-  QString file =
-      DolphinFileDialog::getOpenFileName(this, tr("Select NAND Backup"), QDir::currentPath(),
-                                         tr("BootMii NAND backup file (*.bin);;"
-                                            "All Files (*)"));
+//   QString file =
+//       DolphinFileDialog::getOpenFileName(this, tr("Select NAND Backup"), QDir::currentPath(),
+//                                          tr("BootMii NAND backup file (*.bin);;"
+//                                             "All Files (*)"));
 
-  if (file.isEmpty())
-    return;
+//   if (file.isEmpty())
+//     return;
 
-  ParallelProgressDialog dialog(this);
-  dialog.GetRaw()->setMinimum(0);
-  dialog.GetRaw()->setMaximum(0);
-  dialog.GetRaw()->setLabelText(tr("Importing NAND backup"));
-  dialog.GetRaw()->setCancelButton(nullptr);
+//   ParallelProgressDialog dialog(this);
+//   dialog.GetRaw()->setMinimum(0);
+//   dialog.GetRaw()->setMaximum(0);
+//   dialog.GetRaw()->setLabelText(tr("Importing NAND backup"));
+//   dialog.GetRaw()->setCancelButton(nullptr);
 
-  auto beginning = QDateTime::currentDateTime().toMSecsSinceEpoch();
+//   auto beginning = QDateTime::currentDateTime().toMSecsSinceEpoch();
 
-  std::future<void> result = std::async(std::launch::async, [&] {
-    DiscIO::NANDImporter().ImportNANDBin(
-        file.toStdString(),
-        [&dialog, beginning] {
-          dialog.SetLabelText(
-              tr("Importing NAND backup\n Time elapsed: %1s")
-                  .arg((QDateTime::currentDateTime().toMSecsSinceEpoch() - beginning) / 1000));
-        },
-        [this] {
-          std::optional<std::string> keys_file = RunOnObject(this, [this] {
-            return DolphinFileDialog::getOpenFileName(
-                       this, tr("Select Keys File (OTP/SEEPROM Dump)"), QDir::currentPath(),
-                       tr("BootMii keys file (*.bin);;"
-                          "All Files (*)"))
-                .toStdString();
-          });
-          if (keys_file)
-            return *keys_file;
-          return std::string("");
-        });
-    dialog.Reset();
-  });
+//   std::future<void> result = std::async(std::launch::async, [&] {
+//     DiscIO::NANDImporter().ImportNANDBin(
+//         file.toStdString(),
+//         [&dialog, beginning] {
+//           dialog.SetLabelText(
+//               tr("Importing NAND backup\n Time elapsed: %1s")
+//                   .arg((QDateTime::currentDateTime().toMSecsSinceEpoch() - beginning) / 1000));
+//         },
+//         [this] {
+//           std::optional<std::string> keys_file = RunOnObject(this, [this] {
+//             return DolphinFileDialog::getOpenFileName(
+//                        this, tr("Select Keys File (OTP/SEEPROM Dump)"), QDir::currentPath(),
+//                        tr("BootMii keys file (*.bin);;"
+//                           "All Files (*)"))
+//                 .toStdString();
+//           });
+//           if (keys_file)
+//             return *keys_file;
+//           return std::string("");
+//         });
+//     dialog.Reset();
+//   });
 
-  SetQWidgetWindowDecorations(dialog.GetRaw());
-  dialog.GetRaw()->exec();
+//   SetQWidgetWindowDecorations(dialog.GetRaw());
+//   dialog.GetRaw()->exec();
 
-  result.wait();
+//   result.wait();
 
-  m_menu_bar->UpdateToolsMenu(Core::IsRunning(Core::System::GetInstance()));
-}
+//   m_menu_bar->UpdateToolsMenu(Core::IsRunning(Core::System::GetInstance()));
+// }
 
-void MainWindow::OnPlayRecording()
-{
-  QString dtm_file = DolphinFileDialog::getOpenFileName(
-      this, tr("Select the Recording File to Play"), QString(), tr("Dolphin TAS Movies (*.dtm)"));
+// void MainWindow::OnPlayRecording()
+// {
+//   QString dtm_file = DolphinFileDialog::getOpenFileName(
+//       this, tr("Select the Recording File to Play"), QString(), tr("Dolphin TAS Movies (*.dtm)"));
 
-  if (dtm_file.isEmpty())
-    return;
+//   if (dtm_file.isEmpty())
+//     return;
 
-  auto& movie = Core::System::GetInstance().GetMovie();
-  if (!movie.IsReadOnly())
-  {
-    // let's make the read-only flag consistent at the start of a movie.
-    movie.SetReadOnly(true);
-    emit ReadOnlyModeChanged(true);
-  }
+//   auto& movie = Core::System::GetInstance().GetMovie();
+//   if (!movie.IsReadOnly())
+//   {
+//     // let's make the read-only flag consistent at the start of a movie.
+//     movie.SetReadOnly(true);
+//     emit ReadOnlyModeChanged(true);
+//   }
 
-  std::optional<std::string> savestate_path;
-  if (movie.PlayInput(dtm_file.toStdString(), &savestate_path))
-  {
-    emit RecordingStatusChanged(true);
+//   std::optional<std::string> savestate_path;
+//   if (movie.PlayInput(dtm_file.toStdString(), &savestate_path))
+//   {
+//     emit RecordingStatusChanged(true);
 
-    Play(savestate_path);
-  }
-}
+//     Play(savestate_path);
+//   }
+// }
 
-void MainWindow::OnStartRecording()
-{
-  auto& system = Core::System::GetInstance();
-  auto& movie = system.GetMovie();
-  if (Core::GetState(system) == Core::State::Starting || movie.IsRecordingInput() ||
-      movie.IsPlayingInput())
-  {
-    return;
-  }
+// void MainWindow::OnStartRecording()
+// {
+//   auto& system = Core::System::GetInstance();
+//   auto& movie = system.GetMovie();
+//   if (Core::GetState(system) == Core::State::Starting || movie.IsRecordingInput() ||
+//       movie.IsPlayingInput())
+//   {
+//     return;
+//   }
 
-  if (movie.IsReadOnly())
-  {
-    // The user just chose to record a movie, so that should take precedence
-    movie.SetReadOnly(false);
-    emit ReadOnlyModeChanged(true);
-  }
+//   if (movie.IsReadOnly())
+//   {
+//     // The user just chose to record a movie, so that should take precedence
+//     movie.SetReadOnly(false);
+//     emit ReadOnlyModeChanged(true);
+//   }
 
-  Movie::ControllerTypeArray controllers{};
-  Movie::WiimoteEnabledArray wiimotes{};
+//   Movie::ControllerTypeArray controllers{};
+//   Movie::WiimoteEnabledArray wiimotes{};
 
-  for (int i = 0; i < 4; i++)
-  {
-    const SerialInterface::SIDevices si_device = Config::Get(Config::GetInfoForSIDevice(i));
-    if (si_device == SerialInterface::SIDEVICE_GC_GBA_EMULATED)
-      controllers[i] = Movie::ControllerType::GBA;
-    else if (SerialInterface::SIDevice_IsGCController(si_device))
-      controllers[i] = Movie::ControllerType::GC;
-    else
-      controllers[i] = Movie::ControllerType::None;
-    wiimotes[i] = Config::Get(Config::GetInfoForWiimoteSource(i)) != WiimoteSource::None;
-  }
+//   for (int i = 0; i < 4; i++)
+//   {
+//     const SerialInterface::SIDevices si_device = Config::Get(Config::GetInfoForSIDevice(i));
+//     if (si_device == SerialInterface::SIDEVICE_GC_GBA_EMULATED)
+//       controllers[i] = Movie::ControllerType::GBA;
+//     else if (SerialInterface::SIDevice_IsGCController(si_device))
+//       controllers[i] = Movie::ControllerType::GC;
+//     else
+//       controllers[i] = Movie::ControllerType::None;
+//     wiimotes[i] = Config::Get(Config::GetInfoForWiimoteSource(i)) != WiimoteSource::None;
+//   }
 
-  if (movie.BeginRecordingInput(controllers, wiimotes))
-  {
-    emit RecordingStatusChanged(true);
+//   if (movie.BeginRecordingInput(controllers, wiimotes))
+//   {
+//     emit RecordingStatusChanged(true);
 
-    if (!Core::IsRunning(system))
-      Play();
-  }
-}
+//     if (!Core::IsRunning(system))
+//       Play();
+//   }
+// }
 
-void MainWindow::OnStopRecording()
-{
-  auto& movie = Core::System::GetInstance().GetMovie();
-  if (movie.IsRecordingInput())
-    OnExportRecording();
-  if (movie.IsMovieActive())
-    movie.EndPlayInput(false);
-  emit RecordingStatusChanged(false);
-}
+// void MainWindow::OnStopRecording()
+// {
+//   auto& movie = Core::System::GetInstance().GetMovie();
+//   if (movie.IsRecordingInput())
+//     OnExportRecording();
+//   if (movie.IsMovieActive())
+//     movie.EndPlayInput(false);
+//   emit RecordingStatusChanged(false);
+// }
 
-void MainWindow::OnExportRecording()
-{
-  auto& system = Core::System::GetInstance();
-  const Core::CPUThreadGuard guard(system);
+// void MainWindow::OnExportRecording()
+// {
+//   auto& system = Core::System::GetInstance();
+//   const Core::CPUThreadGuard guard(system);
 
-  QString dtm_file = DolphinFileDialog::getSaveFileName(
-      this, tr("Save Recording File As"), QString(), tr("Dolphin TAS Movies (*.dtm)"));
-  if (!dtm_file.isEmpty())
-    system.GetMovie().SaveRecording(dtm_file.toStdString());
-}
+//   QString dtm_file = DolphinFileDialog::getSaveFileName(
+//       this, tr("Save Recording File As"), QString(), tr("Dolphin TAS Movies (*.dtm)"));
+//   if (!dtm_file.isEmpty())
+//     system.GetMovie().SaveRecording(dtm_file.toStdString());
+// }
 
-void MainWindow::OnActivateChat()
-{
-  if (g_netplay_chat_ui)
-    g_netplay_chat_ui->Activate();
-}
+// void MainWindow::OnActivateChat()
+// {
+//   if (g_netplay_chat_ui)
+//     g_netplay_chat_ui->Activate();
+// }
 
-void MainWindow::OnRequestGolfControl()
-{
-  auto client = Settings::Instance().GetNetPlayClient();
-  if (client)
-    client->RequestGolfControl();
-}
+// void MainWindow::OnRequestGolfControl()
+// {
+//   auto client = Settings::Instance().GetNetPlayClient();
+//   if (client)
+//     client->RequestGolfControl();
+// }
 
-void MainWindow::ShowTASInput()
-{
-  for (int i = 0; i < num_gc_controllers; i++)
-  {
-    const auto si_device = Config::Get(Config::GetInfoForSIDevice(i));
-    if (si_device == SerialInterface::SIDEVICE_GC_GBA_EMULATED)
-    {
-      SetQWidgetWindowDecorations(m_gba_tas_input_windows[i]);
-      m_gba_tas_input_windows[i]->show();
-      m_gba_tas_input_windows[i]->raise();
-      m_gba_tas_input_windows[i]->activateWindow();
-    }
-    else if (si_device != SerialInterface::SIDEVICE_NONE &&
-             si_device != SerialInterface::SIDEVICE_GC_GBA)
-    {
-      SetQWidgetWindowDecorations(m_gc_tas_input_windows[i]);
-      m_gc_tas_input_windows[i]->show();
-      m_gc_tas_input_windows[i]->raise();
-      m_gc_tas_input_windows[i]->activateWindow();
-    }
-  }
+// void MainWindow::ShowTASInput()
+// {
+//   for (int i = 0; i < num_gc_controllers; i++)
+//   {
+//     const auto si_device = Config::Get(Config::GetInfoForSIDevice(i));
+//     if (si_device == SerialInterface::SIDEVICE_GC_GBA_EMULATED)
+//     {
+//       SetQWidgetWindowDecorations(m_gba_tas_input_windows[i]);
+//       m_gba_tas_input_windows[i]->show();
+//       m_gba_tas_input_windows[i]->raise();
+//       m_gba_tas_input_windows[i]->activateWindow();
+//     }
+//     else if (si_device != SerialInterface::SIDEVICE_NONE &&
+//              si_device != SerialInterface::SIDEVICE_GC_GBA)
+//     {
+//       SetQWidgetWindowDecorations(m_gc_tas_input_windows[i]);
+//       m_gc_tas_input_windows[i]->show();
+//       m_gc_tas_input_windows[i]->raise();
+//       m_gc_tas_input_windows[i]->activateWindow();
+//     }
+//   }
 
-  auto& system = Core::System::GetInstance();
-  for (int i = 0; i < num_wii_controllers; i++)
-  {
-    if (Config::Get(Config::GetInfoForWiimoteSource(i)) == WiimoteSource::Emulated &&
-        (!Core::IsRunning(system) || system.IsWii()))
-    {
-      SetQWidgetWindowDecorations(m_wii_tas_input_windows[i]);
-      m_wii_tas_input_windows[i]->show();
-      m_wii_tas_input_windows[i]->raise();
-      m_wii_tas_input_windows[i]->activateWindow();
-    }
-  }
-}
+//   auto& system = Core::System::GetInstance();
+//   for (int i = 0; i < num_wii_controllers; i++)
+//   {
+//     if (Config::Get(Config::GetInfoForWiimoteSource(i)) == WiimoteSource::Emulated &&
+//         (!Core::IsRunning(system) || system.IsWii()))
+//     {
+//       SetQWidgetWindowDecorations(m_wii_tas_input_windows[i]);
+//       m_wii_tas_input_windows[i]->show();
+//       m_wii_tas_input_windows[i]->raise();
+//       m_wii_tas_input_windows[i]->activateWindow();
+//     }
+//   }
+// }
 
 void MainWindow::OnConnectWiiRemote(int id)
 {
@@ -2656,103 +2761,103 @@ void MainWindow::OnConnectWiiRemote(int id)
   }
 }
 
-void MainWindow::ShowWiiMixAccountWindow() {
-  // Check if the player is already logged in
-  WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
-  if (player != nullptr) {
-    qDebug() << "Showing account window";
-    if (!m_wiimix_account_window || m_wiimix_account_window == nullptr) {
-      m_wiimix_account_window = new WiiMixAccountWindow(this, player);
-    }
-    // Connect logout signal to this function so it will close and open the logout window on logout
-    connect(m_wiimix_account_window, &WiiMixAccountWindow::onLogout, this, &MainWindow::ShowWiiMixAccountWindow, Qt::UniqueConnection);
-    m_wiimix_account_window->show();
-    m_wiimix_account_window->raise();
-    m_wiimix_account_window->activateWindow();
-  }
-  else {
-    qDebug() << "Player not logged in";
-    // If the player is not logged in, show the login window
-    if (m_wiimix_account_login_window == nullptr) {
-      m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);
-    }
-    connect(m_wiimix_account_login_window, &WiiMixAccountLoginWindow::onLogin, this, &MainWindow::ShowWiiMixAccountWindow, Qt::UniqueConnection);
-    m_wiimix_account_login_window->show();
-    m_wiimix_account_login_window->raise();
-    m_wiimix_account_login_window->activateWindow();
-  }
-}
+// void MainWindow::ShowWiiMixAccountWindow() {
+//   // Check if the player is already logged in
+//   WiiMixPlayer *player = WiiMixGlobalSettings::instance()->GetPlayer();
+//   if (player != nullptr) {
+//     qDebug() << "Showing account window";
+//     if (!m_wiimix_account_window || m_wiimix_account_window == nullptr) {
+//       m_wiimix_account_window = new WiiMixAccountWindow(this, player);
+//     }
+//     // Connect logout signal to this function so it will close and open the logout window on logout
+//     connect(m_wiimix_account_window, &WiiMixAccountWindow::onLogout, this, &MainWindow::ShowWiiMixAccountWindow, Qt::UniqueConnection);
+//     m_wiimix_account_window->show();
+//     m_wiimix_account_window->raise();
+//     m_wiimix_account_window->activateWindow();
+//   }
+//   else {
+//     qDebug() << "Player not logged in";
+//     // If the player is not logged in, show the login window
+//     if (m_wiimix_account_login_window == nullptr) {
+//       m_wiimix_account_login_window = new WiiMixAccountLoginWindow(this);
+//     }
+//     connect(m_wiimix_account_login_window, &WiiMixAccountLoginWindow::onLogin, this, &MainWindow::ShowWiiMixAccountWindow, Qt::UniqueConnection);
+//     m_wiimix_account_login_window->show();
+//     m_wiimix_account_login_window->raise();
+//     m_wiimix_account_login_window->activateWindow();
+//   }
+// }
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-void MainWindow::ShowAchievementsWindow()
-{
-  if (!m_achievements_window)
-  {
-    m_achievements_window = new AchievementsWindow(this);
-  }
+// #ifdef USE_RETRO_ACHIEVEMENTS
+// void MainWindow::ShowAchievementsWindow()
+// {
+//   if (!m_achievements_window)
+//   {
+//     m_achievements_window = new AchievementsWindow(this);
+//   }
 
-  SetQWidgetWindowDecorations(m_achievements_window);
-  m_achievements_window->show();
-  m_achievements_window->raise();
-  m_achievements_window->activateWindow();
-  m_achievements_window->UpdateData(AchievementManager::UpdatedItems{.all = true});
-}
+//   SetQWidgetWindowDecorations(m_achievements_window);
+//   m_achievements_window->show();
+//   m_achievements_window->raise();
+//   m_achievements_window->activateWindow();
+//   m_achievements_window->UpdateData(AchievementManager::UpdatedItems{.all = true});
+// }
 
-void MainWindow::ShowAchievementSettings()
-{
-  ShowAchievementsWindow();
-  m_achievements_window->ForceSettingsTab();
-}
-#endif  // USE_RETRO_ACHIEVEMENTS
+// void MainWindow::ShowAchievementSettings()
+// {
+//   ShowAchievementsWindow();
+//   m_achievements_window->ForceSettingsTab();
+// }
+// #endif  // USE_RETRO_ACHIEVEMENTS
 
-void MainWindow::ShowMemcardManager()
-{
-  GCMemcardManager manager(this);
+// void MainWindow::ShowMemcardManager()
+// {
+//   GCMemcardManager manager(this);
 
-  SetQWidgetWindowDecorations(&manager);
-  manager.exec();
-}
+//   SetQWidgetWindowDecorations(&manager);
+//   manager.exec();
+// }
 
-void MainWindow::ShowResourcePackManager()
-{
-  ResourcePackManager manager(this);
+// void MainWindow::ShowResourcePackManager()
+// {
+//   ResourcePackManager manager(this);
 
-  SetQWidgetWindowDecorations(&manager);
-  manager.exec();
-}
+//   SetQWidgetWindowDecorations(&manager);
+//   manager.exec();
+// }
 
-void MainWindow::ShowCheatsManager()
-{
-  SetQWidgetWindowDecorations(m_cheats_manager);
-  m_cheats_manager->show();
-}
+// void MainWindow::ShowCheatsManager()
+// {
+//   SetQWidgetWindowDecorations(m_cheats_manager);
+//   m_cheats_manager->show();
+// }
 
-void MainWindow::ShowRiivolutionBootWidget(const UICommon::GameFile& game)
-{
-  auto second_game = m_game_list->FindSecondDisc(game);
-  std::vector<std::string> paths = {game.GetFilePath()};
-  if (second_game != nullptr)
-    paths.push_back(second_game->GetFilePath());
-  std::unique_ptr<BootParameters> boot_params = BootParameters::GenerateFromFile(paths);
-  if (!boot_params)
-    return;
-  if (!std::holds_alternative<BootParameters::Disc>(boot_params->parameters))
-    return;
+// void MainWindow::ShowRiivolutionBootWidget(const UICommon::GameFile& game)
+// {
+//   auto second_game = m_game_list->FindSecondDisc(game);
+//   std::vector<std::string> paths = {game.GetFilePath()};
+//   if (second_game != nullptr)
+//     paths.push_back(second_game->GetFilePath());
+//   std::unique_ptr<BootParameters> boot_params = BootParameters::GenerateFromFile(paths);
+//   if (!boot_params)
+//     return;
+//   if (!std::holds_alternative<BootParameters::Disc>(boot_params->parameters))
+//     return;
 
-  auto& disc = std::get<BootParameters::Disc>(boot_params->parameters);
-  RiivolutionBootWidget w(disc.volume->GetGameID(), disc.volume->GetRevision(),
-                          disc.volume->GetDiscNumber(), game.GetFilePath(), this);
-  SetQWidgetWindowDecorations(&w);
+//   auto& disc = std::get<BootParameters::Disc>(boot_params->parameters);
+//   RiivolutionBootWidget w(disc.volume->GetGameID(), disc.volume->GetRevision(),
+//                           disc.volume->GetDiscNumber(), game.GetFilePath(), this);
+//   SetQWidgetWindowDecorations(&w);
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-  connect(&w, &RiivolutionBootWidget::OpenAchievementSettings, this,
-          &MainWindow::ShowAchievementSettings);
-#endif  // USE_RETRO_ACHIEVEMENTS
+// #ifdef USE_RETRO_ACHIEVEMENTS
+//   connect(&w, &RiivolutionBootWidget::OpenAchievementSettings, this,
+//           &MainWindow::ShowAchievementSettings);
+// #endif  // USE_RETRO_ACHIEVEMENTS
 
-  w.exec();
-  if (!w.ShouldBoot())
-    return;
+//   w.exec();
+//   if (!w.ShouldBoot())
+//     return;
 
-  AddRiivolutionPatches(boot_params.get(), std::move(w.GetPatches()));
-  StartGame(std::move(boot_params));
-}
+//   AddRiivolutionPatches(boot_params.get(), std::move(w.GetPatches()));
+//   StartGame(std::move(boot_params));
+// }

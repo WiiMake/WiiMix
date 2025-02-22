@@ -8,6 +8,9 @@
 #include <QString>
 #include <QFrame>
 #include <QResizeEvent>
+#include <QMainWindow>
+
+#include "Core/Boot/Boot.h"
 
 #include <array>
 #include "WiiMixButton.h"
@@ -20,19 +23,20 @@ class QString;
 class QHBoxLayout;
 class QGroupBox;
 
-class WiiMixModesWidget final : public QWidget
+struct BootParameters;
+
+class WiiMixModesWidget final : public QMainWindow
 {
   Q_OBJECT
 public:
-  explicit WiiMixModesWidget(QWidget* parent);
+  explicit WiiMixModesWidget(std::unique_ptr<BootParameters> boot_parameters);
 
 signals:
-  void ModeChanged(WiiMixEnums::Mode mode);
+  void ShuffleSelected(WiiMixEnums::Mode mode);
 
 private:
   bool eventFilter(QObject* obj, QEvent* event) override;
   void CreateLayout();
-  void ConnectWidgets();
   void keyPressEvent(QKeyEvent* keyEvent) override;
 
   QGroupBox* m_mode_box;

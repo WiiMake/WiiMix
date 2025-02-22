@@ -108,9 +108,9 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
   m_grid_proxy = new GridProxyModel(this);
   m_grid_proxy->setSourceModel(&m_model);
 
-  MakeListView();
-  MakeGridView();
-  MakeEmptyView();
+  // MakeListView();
+  // MakeGridView();
+  // MakeEmptyView();
 
   if (Settings::GetQSettings().contains(QStringLiteral("gridview/scale")))
     m_model.SetScale(Settings::GetQSettings().value(QStringLiteral("gridview/scale")).toFloat());

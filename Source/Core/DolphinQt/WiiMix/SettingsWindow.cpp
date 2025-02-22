@@ -41,7 +41,7 @@ WiiMixSettingsWindow::WiiMixSettingsWindow(QWidget *parent) : QDialog(parent)
   backgroundBrush->setTexture(background);
   palette.setBrush(QPalette::Window, *backgroundBrush);
   this->setPalette(palette);
-  m_modes = new WiiMixModesWidget(this);
+  // m_modes = new WiiMixModesWidget(this);
   m_load_button_box = new QPushButton();
   m_load_button_box->setMaximumSize(QSize(60,60));
   m_load_button_box->setMinimumSize(QSize(60,60));
@@ -148,7 +148,7 @@ void WiiMixSettingsWindow::CreateMainLayout()
 
   auto* layout = new QVBoxLayout();
 
-  layout->addWidget(m_modes);
+  // layout->addWidget(m_modes);
   QWidget* bgWidget = new QWidget();
   bgWidget->setParent(this);
   bgWidget->setAutoFillBackground(true);
@@ -195,7 +195,7 @@ void WiiMixSettingsWindow::CreateMainLayout()
 
 void WiiMixSettingsWindow::ConnectWidgets()
 {
-    connect(m_modes, &WiiMixModesWidget::ModeChanged, this, &WiiMixSettingsWindow::CreateLayout);
+    // connect(m_modes, &WiiMixModesWidget::ShuffleSelected, &WiiMixSettingsWindow::CreateLayout);
     connect(m_load_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::LoadSettings);
     connect(m_save_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::SaveSettings);
     connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
