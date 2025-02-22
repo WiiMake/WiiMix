@@ -117,35 +117,6 @@ bool WiiMixSettingsWindow::eventFilter(QObject* obj, QEvent* event) {
 
 void WiiMixSettingsWindow::CreateMainLayout()
 {
-  // qDebug() << "Bingo Settings:";
-  // qDebug() << "Difficulty:" << static_cast<int>(WiiMixBingoSettings::instance()->GetDifficulty());
-  // qDebug() << "Save State Bank:" << static_cast<int>(WiiMixBingoSettings::instance()->GetSaveStateBank());
-  // // qDebug() << "Mode:" << static_cast<int>(WiiMixBingoSettings::instance()->GetMode());
-  // qDebug() << "Bingo Type:" << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
-  // qDebug() << "Card Size:" << static_cast<int>(WiiMixBingoSettings::instance()->GetCardSize());
-  // qDebug() << "Teams Enabled:" << WiiMixBingoSettings::instance()->GetTeams();
-  // qDebug() << "Lobby ID:" << WiiMixBingoSettings::instance()->GetLobbyID();
-  // qDebug() << "Lobby Password:" << WiiMixBingoSettings::instance()->GetLobbyPassword();
-  // qDebug() << "Players:";
-
-  // qDebug() << "Shuffle Settings:";
-  // qDebug() << "Min Time Between Switch:" << WiiMixShuffleSettings::instance()->GetMinTimeBetweenSwitch();
-  // qDebug() << "Max Time Between Switch:" << WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch();
-  // qDebug() << "Endless:" << WiiMixShuffleSettings::instance()->GetEndless();
-  // qDebug() << "Number of Switches:" << WiiMixShuffleSettings::instance()->GetNumberOfSwitches();
-
-  // qDebug() << "Rogue Settings:";
-  // qDebug() << "Rogue Length:" << static_cast<int>(WiiMixRogueSettings::instance()->GetLength());
-
-  // qDebug() << "Bingo Settings (again):";
-  // qDebug() << "Bingo Type:" << static_cast<int>(WiiMixBingoSettings::instance()->GetBingoType());
-  // qDebug() << "Lobby ID:" << WiiMixBingoSettings::instance()->GetLobbyID();
-
-  // qDebug() << "Address of BingoSettings instance:" << WiiMixBingoSettings::instance();
-  // qDebug() << "Address of ShuffleSettings instance:" << WiiMixShuffleSettings::instance();
-  // qDebug() << "Address of RogueSettings instance:" << WiiMixRogueSettings::instance();
-
-
   auto* layout = new QVBoxLayout();
 
   // layout->addWidget(m_modes);

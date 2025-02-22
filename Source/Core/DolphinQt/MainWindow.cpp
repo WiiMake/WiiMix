@@ -246,7 +246,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
   setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
-  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  //setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setUnifiedTitleAndToolBarOnMac(true);
   setAcceptDrops(true);
   setAttribute(Qt::WA_NativeWindow);
@@ -385,14 +385,6 @@ MainWindow::~MainWindow()
 #endif  // USE_RETRO_ACHIEVEMENTS
 
   delete m_render_widget;
-  // delete m_netplay_dialog;
-
-  // for (int i = 0; i < 4; i++)
-  // {
-  //   delete m_gc_tas_input_windows[i];
-  //   delete m_gba_tas_input_windows[i];
-  //   delete m_wii_tas_input_windows[i];
-  // }
 
   ShutdownControllers();
 
@@ -423,10 +415,8 @@ void MainWindow::InitControllers()
   qDebug() << "InitControllers";
   UICommon::InitControllers(::GetWindowSystemInfo(windowHandle()));
 
-  // qDebug() << "Hotkey scheduler start";
   m_hotkey_scheduler = new HotkeyScheduler();
   m_hotkey_scheduler->Start();
-  // qDebug() << "Hotkey scheduler started :)";
 
   // Defaults won't work reliably without loading and saving the config first
 
@@ -497,105 +487,29 @@ static void InstallHotkeyFilter(QWidget* dialog)
 
 void MainWindow::CreateComponents()
 {
-  // m_menu_bar = new MenuBar(this);
-  // m_tool_bar = new ToolBar(this);
-  // m_search_bar = new SearchBar(this);
-  // m_game_list = new GameList(this);
+
   m_render_widget = new RenderWidget(this);
   m_stack = new QStackedWidget(this);
   m_modes_widget = new WiiMixModesWidget(this);
-
-  // for (int i = 0; i < 4; i++)
-  // {
-  //   m_gc_tas_input_windows[i] = new GCTASInputWindow(nullptr, i);
-  //   m_gba_tas_input_windows[i] = new GBATASInputWindow(nullptr, i);
-  //   m_wii_tas_input_windows[i] = new WiiTASInputWindow(nullptr, i);
-  // }
-
-  // m_jit_widget = new JITWidget(this);
-  // m_log_widget = new LogWidget(this);
-  // m_log_config_widget = new LogConfigWidget(this);
-  // m_memory_widget = new MemoryWidget(Core::System::GetInstance(), this);
-  // m_network_widget = new NetworkWidget(this);
-  // m_register_widget = new RegisterWidget(this);
-  // m_thread_widget = new ThreadWidget(this);
-  // m_watch_widget = new WatchWidget(this);
-  // m_breakpoint_widget = new BreakpointWidget(this);
-  // m_code_widget = new CodeWidget(this);
-  // m_cheats_manager = new CheatsManager(Core::System::GetInstance(), this);
-  // m_assembler_widget = new AssemblerWidget(this);
-
-  // m_achievements_window = new AchievementsWindow(this); // i think this should fix the issue of achievements window not existing
-
-  // const auto request_watch = [this](QString name, u32 addr) {
-  //   m_watch_widget->AddWatch(name, addr);
-  // };
-  // const auto request_breakpoint = [this](u32 addr) { m_breakpoint_widget->AddBP(addr); };
-  // const auto request_memory_breakpoint = [this](u32 addr) {
-  //   m_breakpoint_widget->AddAddressMBP(addr);
-  // };
-  // const auto request_view_in_memory = [this](u32 addr) { m_memory_widget->SetAddress(addr); };
-  // const auto request_view_in_code = [this](u32 addr) {
-  //   m_code_widget->SetAddress(addr, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  // };
-
-  // connect(m_watch_widget, &WatchWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  // connect(m_watch_widget, &WatchWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  // connect(m_register_widget, &RegisterWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  // connect(m_register_widget, &RegisterWidget::RequestWatch, request_watch);
-  // connect(m_register_widget, &RegisterWidget::RequestViewInMemory, request_view_in_memory);
-  // connect(m_register_widget, &RegisterWidget::RequestViewInCode, request_view_in_code);
-  // connect(m_thread_widget, &ThreadWidget::RequestBreakpoint, request_breakpoint);
-  // connect(m_thread_widget, &ThreadWidget::RequestMemoryBreakpoint, request_memory_breakpoint);
-  // connect(m_thread_widget, &ThreadWidget::RequestWatch, request_watch);
-  // connect(m_thread_widget, &ThreadWidget::RequestViewInMemory, request_view_in_memory);
-  // connect(m_thread_widget, &ThreadWidget::RequestViewInCode, request_view_in_code);
-
-  // connect(m_code_widget, &CodeWidget::RequestPPCComparison, m_jit_widget, &JITWidget::Compare);
-  // connect(m_code_widget, &CodeWidget::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  // connect(m_memory_widget, &MemoryWidget::ShowCode, m_code_widget, [this](u32 address) {
-  //   m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  // });
-  // connect(m_memory_widget, &MemoryWidget::RequestWatch, request_watch);
-
-  // connect(m_breakpoint_widget, &BreakpointWidget::ShowCode, [this](u32 address) {
-  //   if (Core::GetState(Core::System::GetInstance()) == Core::State::Paused)
-  //     m_code_widget->SetAddress(address, CodeViewWidget::SetAddressUpdate::WithDetailedUpdate);
-  // });
-  // connect(m_breakpoint_widget, &BreakpointWidget::ShowMemory, m_memory_widget,
-  //         &MemoryWidget::SetAddress);
-  // connect(m_cheats_manager, &CheatsManager::ShowMemory, m_memory_widget, &MemoryWidget::SetAddress);
-  // connect(m_cheats_manager, &CheatsManager::RequestWatch, request_watch);
-
-  // ====================== SETTINGS WIDGET ======================
-  // auto* layout = new QVBoxLayout();
-  
-  // m_modes_widget = new WiiMixModesWidget();
-
-  // m_button_layout = new QHBoxLayout();
-
+  m_modes_widget->setFixedSize(1280, 620);
   m_wii_mix_button = new WiiMixLogoButton();
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
   m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
   m_wii_mix_button->setIconSize(QSize(150,100));
-  // m_wii_mix_button->installEventFilter(this); // capture mouse events
   m_wii_mix_button->setCursor(Qt::PointingHandCursor);
-  // connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
-  //   // WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
-  //   // WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
-  //   // WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_config->GetMaxTimeBetweenSwitch());
-  //   // WiiMixShuffleSettings::instance()->SetEndless(m_config->GetEndless());
-  //   // emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
-  //   PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings::instance());
-  // }); // Start WiiMix
-  m_wiimix_bg_widget = new QWidget();
-  m_wiimix_bg_widget->setParent(this);
+  m_wiimix_bg_widget = new QWidget(this);
   m_wiimix_bg_widget->setAutoFillBackground(true);
   m_wiimix_bg_widget->setMaximumHeight(100);
   m_wiimix_bg_widget->setMinimumWidth(1280);
+  QPixmap background = (Resources::GetResourceIcon("wiimix_background_top").pixmap(1200,800));
+  background.scaled(this->size());
+  QPalette bg_palette;
+  QBrush* backgroundBrush = new QBrush();
+  backgroundBrush->setTexture(background);
+  bg_palette.setBrush(QPalette::Window, *backgroundBrush);
+  this->setPalette(bg_palette);
 
   QHBoxLayout* bottom_buttons = new QHBoxLayout(m_wiimix_bg_widget);
-  //bottom_buttons->setAlignment(Qt::Alignment::);
   bottom_buttons->setSpacing(0); // Set spacing between widgets
   bottom_buttons->setContentsMargins(2, 2, 0, 0); // Remove any margins around the buttons
   bottom_buttons->addStretch(); // Add space before the buttons
@@ -895,49 +809,13 @@ void MainWindow::ConnectStack()
 
   layout->setContentsMargins(0, 0, 0, 0);
 
-  // connect(m_search_bar, &SearchBar::Search, m_game_list, &GameList::SetSearchTerm);
-
   m_stack->addWidget(widget);
 
   setCentralWidget(m_stack);
 
   setDockOptions(DockOption::AllowNestedDocks | DockOption::AllowTabbedDocks);
   setTabPosition(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea, QTabWidget::North);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_log_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_log_config_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_code_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_register_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_thread_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_watch_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_breakpoint_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_memory_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_network_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_jit_widget);
-  // addDockWidget(Qt::LeftDockWidgetArea, m_assembler_widget);
-
-  // tabifyDockWidget(m_log_widget, m_log_config_widget);
-  // tabifyDockWidget(m_log_widget, m_code_widget);
-  // tabifyDockWidget(m_log_widget, m_register_widget);
-  // tabifyDockWidget(m_log_widget, m_thread_widget);
-  // tabifyDockWidget(m_log_widget, m_watch_widget);
-  // tabifyDockWidget(m_log_widget, m_breakpoint_widget);
-  // tabifyDockWidget(m_log_widget, m_memory_widget);
-  // tabifyDockWidget(m_log_widget, m_network_widget);
-  // tabifyDockWidget(m_log_widget, m_jit_widget);
-  // tabifyDockWidget(m_log_widget, m_assembler_widget);
 }
-
-// void MainWindow::RefreshGameList()
-// {
-//   Settings::Instance().ReloadTitleDB();
-//   Settings::Instance().RefreshGameList();
-//   QWidget* wItem;
-//   //while ((wItem = m_stack->widget(0)) != 0) delete wItem;
-//   m_stack->removeWidget(m_render_widget);
-//   m_render_widget->setParent(nullptr);
-//   m_stack->repaint();
-//   //Host::GetInstance()->SetRenderFocus(isActiveWindow());
-// }
 
 QStringList MainWindow::PromptFileNames()
 {
