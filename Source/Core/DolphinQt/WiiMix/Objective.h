@@ -35,7 +35,7 @@ public:
   );
 
   #define OBJECTIVE_ID "id"
-  #define OBJECTIVE_FILE_HASH "file_hash"
+  #define OBJECTIVE_FILE_HASH "filehash"
   #define OBJECTIVE_TITLE "title"
   #define OBJECTIVE_RETROACHIEVEMENTS_GAME_ID "retroachievements_game_id"
   #define OBJECTIVE_GAME_ID "game_id"
