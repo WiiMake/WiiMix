@@ -13,6 +13,7 @@
 #include <QMutexLocker>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QCryptographicHash>
 
 #include <assert.h>
 #include <algorithm>
@@ -286,7 +287,7 @@ void WiiMixClient::BytesRead() {
         if (m_file.size() == m_file_sizes[m_current_file]) {
             // File completely read, save it
             qDebug() << "Saving file";
-            QString file_path = QString::fromStdString(File::GetUserPath(D_WIIMIX_STATESAVES_IDX)) + QString::number(m_objectives[m_current_file].GetId()) + QStringLiteral(".sav");
+            QString file_path = QString::fromStdString(WiiMixGlobalSettings::GetSaveStatePath(m_objectives[m_current_file]));
             qDebug() << "Saving file to " << file_path;
             QFile file(file_path);
             if (file.open(QIODevice::WriteOnly)) {
@@ -333,7 +334,6 @@ bool WiiMixClient::IsConnected() const {
 bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
     obj[QStringLiteral(SERVER_ACTION)] = static_cast<int>(action);
 
-    QJsonDocument json(obj);
     m_data = {};
 
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
@@ -345,11 +345,12 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         m_data.append('|');
     }
 
-    // Json size
-    m_data.append(QString::number(json.toJson().size()).toUtf8());
-    m_data.append('|');
+    // // Json size
+    // m_data.append(QString::number(json.toJson().size()).toUtf8());
+    // m_data.append('|');
 
     // File size
+    QJsonDocument json;
     if (action == WiiMixEnums::Action::ADD_OBJECTIVE) {
         // Load the data for the corresponding file
         int slot = obj[QStringLiteral(STATE_SLOT)].toInt() + 1;
@@ -362,6 +363,17 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
             qCritical() << "Failed to open file:" << file.errorString();
             return false;
         }
+        // Add filehash
+        QByteArray file_data = file.read(500);
+        file.seek(0);
+        QCryptographicHash hash(QCryptographicHash::Sha256);
+        hash.addData(file_data);
+        obj[QStringLiteral(OBJECTIVE_FILE_HASH)] = QString::fromStdString(hash.result().toHex().toStdString());
+        json = QJsonDocument(obj);
+
+        // Json size
+        m_data.append(QString::number(json.toJson().size()).toUtf8());
+        m_data.append('|');
 
         m_data.append(QString::number(file.size()).toUtf8());
         m_data.append('|');
@@ -371,6 +383,10 @@ bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
         qDebug() << QStringLiteral("File read successfully");
     }
     else {
+        // Json size
+        json = QJsonDocument(obj);
+        m_data.append(QString::number(json.toJson().size()).toUtf8());
+        m_data.append('|');
         std::vector<std::shared_ptr<const UICommon::GameFile>> games = WiiMixGlobalSettings::instance()->GetGamesList();
         qDebug() << QStringLiteral("Size of games list") << games.size();
         std::vector<std::shared_ptr<const UICommon::GameFile>> wiimix_games = {};

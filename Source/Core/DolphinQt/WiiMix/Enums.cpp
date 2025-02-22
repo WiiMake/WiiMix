@@ -195,8 +195,8 @@ namespace WiiMixEnums {
                 return OBJECTIVE_TYPE_FOUR_PLAYER;
             case ObjectiveType::SPEEDRUN:
                 return OBJECTIVE_TYPE_SPEEDRUN;
-            case ObjectiveType::COOPERATIVE:
-                return OBJECTIVE_TYPE_COOPERATIVE;
+            case ObjectiveType::VERSUS:
+                return OBJECTIVE_TYPE_VERSUS;
             case ObjectiveType::END:
                 return WII_MIX_UNKNOWN;
             default:
@@ -238,8 +238,8 @@ namespace WiiMixEnums {
             return ObjectiveType::THREE_PLAYER;
         } else if (str == OBJECTIVE_TYPE_FOUR_PLAYER) {
             return ObjectiveType::FOUR_PLAYER;
-        } else if (str == OBJECTIVE_TYPE_COOPERATIVE) {
-            return ObjectiveType::COOPERATIVE;
+        } else if (str == OBJECTIVE_TYPE_VERSUS) {
+            return ObjectiveType::VERSUS;
         } else if (str == OBJECTIVE_TYPE_SPEEDRUN) {
             return ObjectiveType::SPEEDRUN;
         } else {
@@ -387,5 +387,57 @@ namespace WiiMixEnums {
         } else {
             return ObjectiveStatus::END;
         }
+    }
+
+    std::string GameGenresToString(std::vector<GameGenre> genres) {
+        std::string result;
+        for (const auto& genre : genres) {
+            if (!result.empty()) {
+                result += ",";
+            }
+            result += GameGenreToString(genre);
+        }
+        return result;
+    }
+
+    std::vector<GameGenre> GameGenresFromString(const std::string& str) {
+        std::vector<GameGenre> genres;
+        std::string::size_type start = 0;
+        std::string::size_type end = str.find(',');
+
+        while (end != std::string::npos) {
+            genres.push_back(GameGenreFromString(str.substr(start, end - start)));
+            start = end + 1;
+            end = str.find(',', start);
+        }
+
+        genres.push_back(GameGenreFromString(str.substr(start)));
+        return genres;
+    }
+
+    std::string ObjectiveTypesToString(std::vector<ObjectiveType> types) {
+        std::string result;
+        for (const auto& type : types) {
+            if (!result.empty()) {
+                result += ",";
+            }
+            result += ObjectiveTypeToString(type);
+        }
+        return result;
+    }
+
+    std::vector<ObjectiveType> ObjectiveTypesFromString(const std::string& str) {
+        std::vector<ObjectiveType> types;
+        std::string::size_type start = 0;
+        std::string::size_type end = str.find(',');
+
+        while (end != std::string::npos) {
+            types.push_back(ObjectiveTypeFromString(str.substr(start, end - start)));
+            start = end + 1;
+            end = str.find(',', start);
+        }
+
+        types.push_back(ObjectiveTypeFromString(str.substr(start)));
+        return types;
     }
 };

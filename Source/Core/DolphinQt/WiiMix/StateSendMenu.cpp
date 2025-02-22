@@ -102,6 +102,7 @@ void WiiMixStateSendMenu::ConnectWidgets() {
 
         WiiMixObjective objective(
             -1,
+            "",
             m_title->text().toStdString(),
             WiiMixWebAPI::getGameID(m_achievement_id->value()),
             SConfig::GetInstance().GetGameID(),

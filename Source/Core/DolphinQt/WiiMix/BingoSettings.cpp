@@ -7,10 +7,12 @@
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
 
-WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank save_state_bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::BingoType bingo_type, int card_size, bool teams) : WiiMixCommonSettings(
+WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank save_state_bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::BingoType bingo_type, int card_size, bool teams) : WiiMixCommonSettings(
     difficulty,
     save_state_bank,
-    objectives
+    objectives,
+    types,
+    genres
 ), m_bingo_type(bingo_type), m_card_size(card_size), m_teams(teams) {
     // Check if config overrides defaults
     if (bingo_type != DEFAULT_BINGO_TYPE) {
@@ -222,6 +224,18 @@ void WiiMixBingoSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state
     m_save_state_bank = save_state_bank;
     Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SAVE_STATE_BANK, save_state_bank);
     // emit SettingsChanged(save_state_bank);
+}
+
+void WiiMixBingoSettings::SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) {
+    m_objective_types = types;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_OBJECTIVE_TYPES, WiiMixEnums::ObjectiveTypesToString(types));
+    // emit SettingsChanged(types);
+}
+
+void WiiMixBingoSettings::SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) {
+    m_game_genres = genres;
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_GAME_GENRES, WiiMixEnums::GameGenresToString(genres));
+    // emit SettingsChanged(genres);
 }
 
 QString WiiMixBingoSettings::BingoTypeToString(WiiMixEnums::BingoType type) {

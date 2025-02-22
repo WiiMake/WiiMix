@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-
+#include <vector>
 namespace WiiMixEnums {
     enum class Difficulty {
         EASY,
@@ -73,7 +73,7 @@ namespace WiiMixEnums {
         TWO_PLAYER,
         THREE_PLAYER,
         FOUR_PLAYER,
-        COOPERATIVE,
+        VERSUS,
         SPEEDRUN,
         END, // Default/size value
     };
@@ -94,11 +94,13 @@ namespace WiiMixEnums {
     #define OBJECTIVE_TYPE_TWO_PLAYER "TWO_PLAYER"
     #define OBJECTIVE_TYPE_THREE_PLAYER "THREE_PLAYER"
     #define OBJECTIVE_TYPE_FOUR_PLAYER "FOUR_PLAYER"
-    #define OBJECTIVE_TYPE_COOPERATIVE "COOPERATIVE"
+    #define OBJECTIVE_TYPE_VERSUS "VERSUS"
     #define OBJECTIVE_TYPE_SPEEDRUN "SPEEDRUN"
 
     std::string ObjectiveTypeToString(ObjectiveType type);
     ObjectiveType ObjectiveTypeFromString(const std::string& str);
+    std::string ObjectiveTypesToString(std::vector<ObjectiveType> types);
+    std::vector<ObjectiveType> ObjectiveTypesFromString(const std::string& str);
 
     // Sourced from the retroachievements genre list at https://retroachievements.org/game/9553
     enum class GameGenre {
@@ -309,6 +311,8 @@ namespace WiiMixEnums {
 
     std::string GameGenreToString(GameGenre genre);
     GameGenre GameGenreFromString(const std::string& str);
+    std::string GameGenresToString(std::vector<GameGenre> genres);
+    std::vector<GameGenre> GameGenresFromString(const std::string& str);
 
     enum class Role {
         ADMIN, // Can create objectives, delete objectives, and update objectives. Can edit users (permissions/deletion).
@@ -361,6 +365,8 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_GAMES {}
 #define MAX_GAMES 10
 #define DEFAULT_OBJECTIVES {}
+#define DEFAULT_OBJECTIVE_TYPES {}
+#define DEFAULT_GAME_GENRES {}
 
 // BINGO
 #define DEFAULT_BINGO_DIFFICULTY WiiMixEnums::Difficulty::NORMAL

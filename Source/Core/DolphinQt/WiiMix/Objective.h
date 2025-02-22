@@ -9,11 +9,13 @@
 #include <QJsonObject>
 #include <QElapsedTimer>
 
+
 class WiiMixObjective
 {
 public:
   explicit WiiMixObjective(
     int id,
+    std::string file_hash,
     std::string title,
     int retroachievements_game_id,
     std::string game_id,
@@ -33,6 +35,7 @@ public:
   );
 
   #define OBJECTIVE_ID "id"
+  #define OBJECTIVE_FILE_HASH "file_hash"
   #define OBJECTIVE_TITLE "title"
   #define OBJECTIVE_RETROACHIEVEMENTS_GAME_ID "retroachievements_game_id"
   #define OBJECTIVE_GAME_ID "game_id"
@@ -66,6 +69,7 @@ public:
   #define STATE_SLOT "slot"
 
   int GetId();
+  std::string GetFileHash();
   std::string GetTitle();
   int GetRetroAchievementsGameId();
   std::string GetGameId();
@@ -102,6 +106,7 @@ public:
   void SetNumTimesCompleted(int num_times_completed);
   void SetNumTimesAttempted(int num_times_attempted);
   void SetLastAttempted(std::chrono::system_clock::time_point last_attempted);
+  void SetFileHash(std::string file_hash);
   int GetCompletionTime();
   void SetCompletionTime(int completion_time);
   static QString CompletionTimeToString(int ms);
@@ -112,6 +117,7 @@ public:
 
 private:
   int m_id;
+  std::string m_file_hash;
   std::string m_title;
   int m_retroachievements_game_id;
   std::string m_game_id;

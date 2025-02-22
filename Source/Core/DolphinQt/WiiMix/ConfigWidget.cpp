@@ -524,7 +524,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     QGroupBox* common_settings_box = new QGroupBox(tr("Common Settings"));
     QVBoxLayout* common_settings_layout = new QVBoxLayout();
 
-    QLabel*difficulty_label = new QLabel(tr("Objective Difficulty:"));
+    QLabel* difficulty_label = new QLabel(tr("Objective Difficulty:"));
     m_difficulty = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Difficulty::END); i++) {
         m_difficulty->addItem(WiiMixCommonSettings::DifficultyToString(static_cast<WiiMixEnums::Difficulty>(i)));
@@ -559,7 +559,7 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     // m_config_layout->addWidget(time_label);
     // m_config_layout->addWidget(m_time);
 
-    QLabel*save_state_label = new QLabel(tr("Save State Bank:"));
+    QLabel* save_state_label = new QLabel(tr("Save State Bank:"));
     m_save_state_bank = new QComboBox();
     for (int i = 0; i < static_cast<int>(WiiMixEnums::SaveStateBank::END); i++) {
         m_save_state_bank->addItem(WiiMixCommonSettings::SaveStateBankToString(static_cast<WiiMixEnums::SaveStateBank>(i)));
@@ -584,8 +584,29 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     connect(m_save_state_bank, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
         SetSaveStateBank(m_save_state_bank->currentText());
     });
+
     common_settings_layout->addWidget(save_state_label);
     common_settings_layout->addWidget(m_save_state_bank);
+
+    QLabel* objective_types_label = new QLabel(tr("Objective Types:"));
+    m_objective_types = new QListWidget();
+    m_objective_types->setSelectionMode(QAbstractItemView::MultiSelection);
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::ObjectiveType::END); i++) {
+        m_objective_types->addItem(QString::fromStdString(WiiMixEnums::ObjectiveTypeToString(static_cast<WiiMixEnums::ObjectiveType>(i))));
+    }
+
+    common_settings_layout->addWidget(objective_types_label);
+    common_settings_layout->addWidget(m_objective_types);
+
+    QLabel* game_genres_label = new QLabel(tr("Game Genres:"));
+    m_game_genres = new QListWidget();
+    m_game_genres->setSelectionMode(QAbstractItemView::MultiSelection);
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::ObjectiveType::END); i++) {
+        m_game_genres->addItem(QString::fromStdString(WiiMixEnums::GameGenreToString(static_cast<WiiMixEnums::GameGenre>(i))));
+    }
+
+    common_settings_layout->addWidget(game_genres_label);
+    common_settings_layout->addWidget(m_game_genres);
 
     common_settings_box->setLayout(common_settings_layout);
 

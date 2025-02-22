@@ -546,6 +546,8 @@ const Info<int> WIIMIX_PLAYER_NUM_OBJECTIVES_CREATED{{System::Main, "WiiMix", "N
 // WiiMix (bingo)
 const Info<WiiMixEnums::Difficulty> WIIMIX_BINGO_DIFFICULTY{{System::Main, "WiiMix", "BingoDifficulty"}, DEFAULT_DIFFICULTY};
 const Info<WiiMixEnums::SaveStateBank> WIIMIX_BINGO_SAVE_STATE_BANK{{System::Main, "WiiMix", "BingoSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
+const Info<std::string> WIIMIX_BINGO_OBJECTIVE_TYPES{{System::Main, "WiiMix", "BingoObjectiveTypes"}, ""};
+const Info<std::string> WIIMIX_BINGO_GAME_GENRES{{System::Main, "WiiMix", "BingoGameGenres"}, ""};
 const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE{{System::Main, "WiiMix", "BingoType"}, DEFAULT_BINGO_TYPE};
 const Info<int> WIIMIX_CARD_SIZE{{System::Main, "WiiMix", "CardSize"}, DEFAULT_CARD_SIZE};
 const Info<bool> WIIMIX_TEAMS{{System::Main, "WiiMix", "Teams"}, DEFAULT_TEAMS};
@@ -553,11 +555,15 @@ const Info<bool> WIIMIX_TEAMS{{System::Main, "WiiMix", "Teams"}, DEFAULT_TEAMS};
 // WiiMix (rogue)
 const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY{{System::Main, "WiiMix", "RogueDifficulty"}, DEFAULT_DIFFICULTY};
 const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK{{System::Main, "WiiMix", "RogueSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
+const Info<std::string> WIIMIX_ROGUE_OBJECTIVE_TYPES{{System::Main, "WiiMix", "RogueObjectiveTypes"}, ""};
+const Info<std::string> WIIMIX_ROGUE_GAME_GENRES{{System::Main, "WiiMix", "RogueGameGenres"}, ""};
 const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH{{System::Main, "WiiMix", "RogueLength"}, DEFAULT_ROGUE_LENGTH};
 
 // WiiMix (shuffle)
 const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY{{System::Main, "WiiMix", "ShuffleDifficulty"}, DEFAULT_DIFFICULTY};
 const Info<WiiMixEnums::SaveStateBank> WIIMIX_SHUFFLE_SAVE_STATE_BANK{{System::Main, "WiiMix", "ShuffleSaveStateBank"}, DEFAULT_SAVE_STATE_BANK};
+const Info<std::string> WIIMIX_SHUFFLE_OBJECTIVE_TYPES{{System::Main, "WiiMix", "ShuffleObjectiveTypes"}, ""};
+const Info<std::string> WIIMIX_SHUFFLE_GAME_GENRES{{System::Main, "WiiMix", "ShuffleGameGenres"}, ""};
 const Info<int> WIIMIX_NUMBER_OF_SWITCHES{{System::Main, "WiiMix", "NumSwitches"}, DEFAULT_NUMBER_OF_SWITCHES};
 const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MinTimeBetweenSwitch"}, DEFAULT_MIN_SWITCH_TIME};
 const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MaxTimeBetweenSwitch"}, DEFAULT_MAX_SWITCH_TIME};

@@ -17,8 +17,10 @@
 class WiiMixBingoSettings : public WiiMixCommonSettings 
 {
 public:
-  explicit WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS);
-  static WiiMixBingoSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
+  explicit WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES,
+      std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS);
+  static WiiMixBingoSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_BINGO_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_BINGO_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES,
+      std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES, WiiMixEnums::BingoType bingo_type = DEFAULT_BINGO_TYPE, int card_size = DEFAULT_CARD_SIZE, bool teams = DEFAULT_TEAMS) {
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_BINGO_DIFFICULTY);
     if (difficulty == DEFAULT_BINGO_DIFFICULTY && config_difficulty != DEFAULT_BINGO_DIFFICULTY) {
         difficulty = config_difficulty;
@@ -28,8 +30,19 @@ public:
     if (save_state_bank == DEFAULT_BINGO_SAVE_STATE_BANK && config_save_state_bank != DEFAULT_BINGO_SAVE_STATE_BANK) {
         save_state_bank = config_save_state_bank;
     }
+
+    std::vector<WiiMixEnums::ObjectiveType> config_objective_types = WiiMixEnums::ObjectiveTypesFromString(Config::Get(Config::WIIMIX_BINGO_OBJECTIVE_TYPES));
+    if (types.empty() && config_objective_types.size() > 0) {
+      types = config_objective_types;
+    }
+
+    std::vector<WiiMixEnums::GameGenre> config_game_genres = WiiMixEnums::GameGenresFromString(Config::Get(Config::WIIMIX_BINGO_GAME_GENRES));
+    if (genres.empty() && config_game_genres.size() > 0) {
+      genres = config_game_genres;
+    }
+
     if (!s_instance) {
-        s_instance = new WiiMixBingoSettings(difficulty, save_state_bank, objectives, bingo_type, card_size, teams);
+        s_instance = new WiiMixBingoSettings(difficulty, save_state_bank, objectives, types, genres, bingo_type, card_size, teams);
     }
     return s_instance;
   }
@@ -110,6 +123,8 @@ public:
 
   void SetDifficulty(WiiMixEnums::Difficulty difficulty);
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank);
+  void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) override;
+  void SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) override;
 
   static int StringToCardSize(QString size);
 

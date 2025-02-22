@@ -1,10 +1,14 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 
+#include <QList>
+#include "DolphinQt/WiiMix/Enums.h"
 
 WiiMixShuffleSettings::WiiMixShuffleSettings(
     WiiMixEnums::Difficulty difficulty,
       WiiMixEnums::SaveStateBank save_state_bank,
       std::vector<WiiMixObjective> objectives,
+      std::vector<WiiMixEnums::ObjectiveType> types,
+      std::vector<WiiMixEnums::GameGenre> genres,
     int number_of_switches, 
     int min_time_between_switch, 
     int max_time_between_switch, 
@@ -138,6 +142,27 @@ void WiiMixShuffleSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_sta
         Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SAVE_STATE_BANK, save_state_bank);
     #endif
     // emit SettingsChanged(save_state_bank);
+}
+
+void WiiMixShuffleSettings::SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) {
+    m_objective_types = types;
+    // Convert std::vector to QList
+    // QList<WiiMixEnums::ObjectiveType> qlist_types = QList<WiiMixEnums::ObjectiveType>::fromVector(QVector<WiiMixEnums::ObjectiveType>::fromStdVector(types));
+
+    // Wrap in Config::Info if needed
+    // Config::Info<std::vector<WiiMixEnums::ObjectiveType>> info(types);
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_OBJECTIVE_TYPES, WiiMixEnums::ObjectiveTypesToString(types));
+    #endif
+    // emit SettingsChanged(types);
+}
+
+void WiiMixShuffleSettings::SetGameGenres(std::vector<WiiMixEnums::GameGenre> game_genres) {
+    m_game_genres = game_genres;
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_GAME_GENRES, WiiMixEnums::GameGenresToString(game_genres));
+    #endif
+    // emit SettingsChanged(game_genres);
 }
 
 QJsonDocument WiiMixShuffleSettings::ToJson() {

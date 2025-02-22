@@ -80,7 +80,9 @@ public:
   void SetNumUniqueObjectivesCompleted(int num_unique_objectives_completed);
   void SetNumObjectivesAttempted(int num_objectives_attempted);
   void SetNumObjectivesCreated(int num_objectives_created);
-
+  static std::string GetSaveStatePath(WiiMixObjective objective);
+  static std::string GetLiveSaveStatePath(WiiMixObjective objective);
+  
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
 

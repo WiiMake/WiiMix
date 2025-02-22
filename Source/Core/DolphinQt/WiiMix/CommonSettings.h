@@ -27,7 +27,7 @@ class WiiMixCommonSettings : public QObject {
 
 public:
   explicit WiiMixCommonSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_DIFFICULTY, WiiMixEnums::SaveStateBank bank = DEFAULT_SAVE_STATE_BANK,
-    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES);
+    std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES);
   WiiMixCommonSettings(const WiiMixCommonSettings& other) = default;
 
   // // Delete the copy constructor and copy assignment operator
@@ -41,11 +41,15 @@ public:
   #define COMMON_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
   #define COMMON_SETTINGS_OBJECTIVES "OBJECTIVES"
   #define COMMON_SETTINGS_DIFFICULTY "DIFFICULTY"
+  #define COMMON_SETTINGS_OBJECTIVE_TYPES "OBJECTIVE_TYPES"
+  #define COMMON_SETTINGS_GAME_GENRES "GAME_GENRES"
   #define COMMON_SETTINGS_GAMES_LIST "GAMES_LIST"
   #define COMMON_SETTINGS_LOCAL_OBJECTIVES "LOCAL_OBJECTIVES"
 
   virtual void SetSaveStateBank(WiiMixEnums::SaveStateBank bank);
   virtual void SetDifficulty(WiiMixEnums::Difficulty difficulty);
+  virtual void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types);
+  virtual void SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres);
   // Time will be an optional parameter that the user can set in case they only have a certain amount of time
   // It will be taken into account when populating objectives
   // void SetTime(int time);
@@ -60,6 +64,8 @@ public:
   [[nodiscard]] WiiMixEnums::Difficulty GetDifficulty() const;
   // int GetTime();
   [[nodiscard]] WiiMixEnums::SaveStateBank GetSaveStateBank() const;
+  [[nodiscard]] std::vector<WiiMixEnums::ObjectiveType> GetObjectiveTypes() const;
+  [[nodiscard]] std::vector<WiiMixEnums::GameGenre> GetGameGenres() const;
   [[nodiscard]] std::vector<WiiMixObjective> GetObjectives() const;
 
   static QString DifficultyToString(WiiMixEnums::Difficulty difficulty);
@@ -86,6 +92,8 @@ public:
 protected:
   WiiMixEnums::Difficulty m_difficulty;
   WiiMixEnums::SaveStateBank m_save_state_bank;
+  std::vector<WiiMixEnums::ObjectiveType> m_objective_types;
+  std::vector<WiiMixEnums::GameGenre> m_game_genres;
 
 private:
   std::vector<WiiMixObjective> m_objectives;

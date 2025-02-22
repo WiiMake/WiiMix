@@ -8,10 +8,15 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::RogueLength length) : WiiMixCommonSettings(
+#include "DolphinQt/WiiMix/Enums.h"
+
+WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types,
+ std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length) : WiiMixCommonSettings(
     difficulty,
     bank,
-    objectives
+    objectives,
+    types,
+    genres
 ), m_length(length) {
     if (length != DEFAULT_ROGUE_LENGTH) {
         m_length = length;
@@ -56,6 +61,22 @@ void WiiMixRogueSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank save_state
         Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SAVE_STATE_BANK, save_state_bank);
     #endif
     // emit SettingsChanged(save_state_bank);
+}
+
+void WiiMixRogueSettings::SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) {
+    m_objective_types = types;
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_OBJECTIVE_TYPES, WiiMixEnums::ObjectiveTypesToString(types));
+    #endif
+    // emit SettingsChanged(types);
+}
+
+void WiiMixRogueSettings::SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) {
+    m_game_genres = genres;
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_GAME_GENRES, WiiMixEnums::GameGenresToString(genres));
+    #endif
+    // emit SettingsChanged(genres);
 }
 
 QList<WiiMixEnums::RogueItem> WiiMixRogueSettings::GetItemSet()

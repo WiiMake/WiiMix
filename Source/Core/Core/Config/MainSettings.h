@@ -372,6 +372,8 @@ extern const Info<std::string> WIIMIX_GAME_IDS;
 // WiiMix (bingo)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_BINGO_DIFFICULTY;
 extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_BINGO_SAVE_STATE_BANK;
+extern const Info<std::string> WIIMIX_BINGO_OBJECTIVE_TYPES; // std::vector<WiiMixEnums::ObjectiveType>
+extern const Info<std::string> WIIMIX_BINGO_GAME_GENRES; // std::vector<WiiMixEnums::GameGenre>
 extern const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE;
 extern const Info<int> WIIMIX_CARD_SIZE;
 extern const Info<bool> WIIMIX_TEAMS;
@@ -379,11 +381,15 @@ extern const Info<bool> WIIMIX_TEAMS;
 // WiiMix (rogue)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY;
 extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK;
+extern const Info<std::string> WIIMIX_ROGUE_OBJECTIVE_TYPES;
+extern const Info<std::string> WIIMIX_ROGUE_GAME_GENRES;
 extern const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH;
 
 // WiiMix (shuffle)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY;
 extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_SHUFFLE_SAVE_STATE_BANK;
+extern const Info<std::string> WIIMIX_SHUFFLE_OBJECTIVE_TYPES;
+extern const Info<std::string> WIIMIX_SHUFFLE_GAME_GENRES;
 extern const Info<int> WIIMIX_NUMBER_OF_SWITCHES;
 extern const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH;
 extern const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH;

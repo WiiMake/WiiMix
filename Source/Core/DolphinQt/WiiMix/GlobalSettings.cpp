@@ -279,3 +279,11 @@ void WiiMixGlobalSettings::SetNumObjectivesCreated(int num_objectives_created) {
         emit onSetNumObjectivesCreated(num_objectives_created);
     }
 }
+
+std::string WiiMixGlobalSettings::GetSaveStatePath(WiiMixObjective objective) {
+    return File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + objective.GetGameId() + "_" + objective.GetFileHash() + ".sav";
+}
+
+std::string WiiMixGlobalSettings::GetLiveSaveStatePath(WiiMixObjective objective) {
+    return File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + objective.GetGameId() + "_" + objective.GetFileHash() + ".sav";
+}

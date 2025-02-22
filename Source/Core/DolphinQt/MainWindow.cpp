@@ -948,10 +948,10 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective) {
 void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string save_path) {
   // char buf[6];
   // sprintf(buf, "%d", new_objective.GetId());
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
+  std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(new_objective);
   qDebug() << "savestate_file: " << QString::fromStdString(savestate_file);
   if (!File::Exists(savestate_file)) {
-    savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::to_string(new_objective.GetId())+ ".sav";
+    savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
     if (!File::Exists(savestate_file)) {
       qDebug() << "File does not exist: " << QString::fromStdString(savestate_file);
       return;
@@ -982,7 +982,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
 }
 
 void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(current_objective.GetId()) + ".sav";
+  std::string savestate_file = WiiMixGlobalSettings::GetSaveStatePath(current_objective);
   // dont stop the game if its the same game
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
     if (Core::safe_to_quit) {
@@ -991,9 +991,9 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     }
     while (Core::safe_to_quit == false)
       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-    savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
+    savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(new_objective);
     if (!File::Exists(savestate_file)) {
-      savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::to_string(new_objective.GetId()) + ".sav";
+      savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
       if (!File::Exists(savestate_file)) {
         return;
       }
@@ -1007,7 +1007,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
   char buf[6];
   sprintf(buf, "%d", new_objective.GetId());
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_STATESAVES_IDX) + std::string(buf) + ".sav";
+  std::string savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
   if (!File::Exists(savestate_file)) {
     return;
   }
@@ -1025,7 +1025,7 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
   char buf[6];
   sprintf(buf, "%d", current_objective.GetId());
-  std::string savestate_file = File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + std::string(buf) + ".sav";
+  std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(current_objective);
   if (Core::IsRunning(Core::System::GetInstance())) {
     State::SaveAs(Core::System::GetInstance(), savestate_file);
     while (Core::safe_to_quit == false)
@@ -2087,7 +2087,7 @@ void MainWindow::HandleAchievementGet(std::set<u32> achievements)
     qDebug() << "Error; current objective not set correctly";
     assert(false);
   }
-  WiiMixObjective objective(0, "", 0, "", 0, {}, "", {}, WiiMixEnums::Difficulty::EASY, 0);
+  WiiMixObjective objective(0, "", "", 0, "", 0, {}, "", {}, WiiMixEnums::Difficulty::EASY, 0);
   if (mode == WiiMixEnums::Mode::ROGUE) {
     objective = WiiMixRogueSettings::instance()->GetObjectives()[current_objective];
     time_to_complete = objective.GetTime();

@@ -9,7 +9,7 @@
 #include "DolphinQt/WiiMix/Enums.h"
 
 WiiMixCommonSettings::WiiMixCommonSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank,
-    std::vector<WiiMixObjective> objectives) : m_difficulty(difficulty), m_save_state_bank(bank), m_objectives(objectives) {
+    std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres) : m_difficulty(difficulty), m_save_state_bank(bank), m_objectives(objectives), m_objective_types(types), m_game_genres(genres) {
     if (difficulty != DEFAULT_DIFFICULTY) {
         m_difficulty = difficulty;
     }
@@ -140,6 +140,8 @@ QJsonObject WiiMixCommonSettings::ToJsonCommon() {
         json[QStringLiteral(COMMON_SETTINGS_OBJECTIVES)] = {};
     }
     json[QStringLiteral(COMMON_SETTINGS_DIFFICULTY)] = static_cast<int>(GetDifficulty());
+    json[QStringLiteral(COMMON_SETTINGS_OBJECTIVE_TYPES)] = QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(GetObjectiveTypes()));
+    json[QStringLiteral(COMMON_SETTINGS_GAME_GENRES)] = QString::fromStdString(WiiMixEnums::GameGenresToString(GetGameGenres()));
     return json;
 }
 
@@ -152,7 +154,9 @@ WiiMixCommonSettings WiiMixCommonSettings::FromJsonCommon(QJsonDocument settings
         objectives.push_back(WiiMixObjective::FromJson(value.toObject()));
     }
     WiiMixEnums::Difficulty difficulty = static_cast<WiiMixEnums::Difficulty>(obj[QStringLiteral(COMMON_SETTINGS_DIFFICULTY)].toInt());
-    return WiiMixCommonSettings(difficulty, bank, objectives);
+    std::vector<WiiMixEnums::ObjectiveType> objective_types = WiiMixEnums::ObjectiveTypesFromString(obj[QStringLiteral(COMMON_SETTINGS_OBJECTIVE_TYPES)].toString().toStdString());
+    std::vector<WiiMixEnums::GameGenre> game_genres = WiiMixEnums::GameGenresFromString(obj[QStringLiteral(COMMON_SETTINGS_GAME_GENRES)].toString().toStdString());
+    return WiiMixCommonSettings(difficulty, bank, objectives, objective_types, game_genres);
 }
 
 WiiMixEnums::Difficulty WiiMixCommonSettings::GetDifficulty() const {
@@ -169,4 +173,22 @@ WiiMixEnums::SaveStateBank WiiMixCommonSettings::GetSaveStateBank() const {
 
 std::vector<WiiMixObjective> WiiMixCommonSettings::GetObjectives() const {
     return m_objectives;
+}
+
+std::vector<WiiMixEnums::ObjectiveType> WiiMixCommonSettings::GetObjectiveTypes() const {
+    // Assuming m_objective_types is a member variable of type WiiMixEnums::ObjectiveType
+    return m_objective_types;
+}
+
+std::vector<WiiMixEnums::GameGenre> WiiMixCommonSettings::GetGameGenres() const {
+    // Assuming m_game_genres is a member variable of type WiiMixEnums::GameGenre
+    return m_game_genres;
+}
+
+void WiiMixCommonSettings::SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) {
+    m_objective_types = types;
+}
+
+void WiiMixCommonSettings::SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) {
+    m_game_genres = genres;
 }

@@ -16,11 +16,13 @@ public:
       WiiMixEnums::Difficulty difficulty = DEFAULT_SHUFFLE_DIFFICULTY,
       WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_SHUFFLE_SAVE_STATE_BANK,
       std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES,
+      std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES,
+      std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES,
       int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
       int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
       int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME,
       bool endless = DEFAULT_IS_ENDLESS) {
-    // Check if difficulty or save state bank are different from the default
+    // Check if difficulty, save state bank, objective types, or game genres are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_SHUFFLE_DIFFICULTY);
     if (difficulty == DEFAULT_SHUFFLE_DIFFICULTY && config_difficulty != DEFAULT_SHUFFLE_DIFFICULTY) {
         difficulty = config_difficulty;
@@ -30,8 +32,19 @@ public:
     if (save_state_bank == DEFAULT_SHUFFLE_SAVE_STATE_BANK && config_save_state_bank != DEFAULT_SHUFFLE_SAVE_STATE_BANK) {
         save_state_bank = config_save_state_bank;
     }
+
+    std::vector<WiiMixEnums::ObjectiveType> config_objective_types = WiiMixEnums::ObjectiveTypesFromString(Config::Get(Config::WIIMIX_SHUFFLE_OBJECTIVE_TYPES));
+    if (types.empty() && config_objective_types.size() > 0) {
+      types = config_objective_types;
+    }
+
+    std::vector<WiiMixEnums::GameGenre> config_game_genres = WiiMixEnums::GameGenresFromString(Config::Get(Config::WIIMIX_SHUFFLE_GAME_GENRES));
+    if (genres.empty() && config_game_genres.size() > 0) {
+      genres = config_game_genres;
+    }
+
     if (!s_instance) {
-        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, number_of_switches, min_time_between_switch, max_time_between_switch, endless);
+        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, types, genres, number_of_switches, min_time_between_switch, max_time_between_switch, endless);
     }
     return s_instance;
   }
@@ -43,7 +56,7 @@ public:
 
   explicit WiiMixShuffleSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_SHUFFLE_DIFFICULTY,
       WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_SHUFFLE_SAVE_STATE_BANK,
-      std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
+      std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> objective_types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> game_genres = DEFAULT_GAME_GENRES, int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
     int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
     int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME, 
     bool endless = DEFAULT_IS_ENDLESS);
@@ -59,11 +72,13 @@ public:
   bool GetEndless() const; // The user(s) can play as long as they want
   void SetEndless(bool value);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
+  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
+  void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) override;
+  void SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) override;
 
   QJsonDocument ToJson();
   void FromJson(QJsonDocument json);
 
-  void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
 
 private:
   inline static WiiMixShuffleSettings* s_instance = nullptr; // Singleton instance

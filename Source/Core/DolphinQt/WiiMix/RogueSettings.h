@@ -16,7 +16,7 @@
 class WiiMixRogueSettings : public WiiMixCommonSettings 
 {
 public:
-  static WiiMixRogueSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_ROGUE_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_ROGUE_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
+  static WiiMixRogueSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_ROGUE_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_ROGUE_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES, WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
     // Check if difficulty or save state bank are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_ROGUE_DIFFICULTY);
     if (difficulty == DEFAULT_ROGUE_DIFFICULTY && config_difficulty != DEFAULT_ROGUE_DIFFICULTY) {
@@ -27,13 +27,24 @@ public:
     if (save_state_bank == DEFAULT_ROGUE_SAVE_STATE_BANK && config_save_state_bank != DEFAULT_ROGUE_SAVE_STATE_BANK) {
         save_state_bank = config_save_state_bank;
     }
+
+    std::vector<WiiMixEnums::ObjectiveType> config_objective_types = WiiMixEnums::ObjectiveTypesFromString(Config::Get(Config::WIIMIX_ROGUE_OBJECTIVE_TYPES));
+    if (types.empty() && !config_objective_types.empty()) {
+      types = config_objective_types;
+    }
+
+    std::vector<WiiMixEnums::GameGenre> config_genres = WiiMixEnums::GameGenresFromString(Config::Get(Config::WIIMIX_ROGUE_GAME_GENRES));
+    if (genres.empty() && !config_genres.empty()) {
+      genres = config_genres;
+    }
+
     if (!s_instance) {
-        s_instance = new WiiMixRogueSettings(difficulty, save_state_bank, objectives, rogue_length);
+        s_instance = new WiiMixRogueSettings(difficulty, save_state_bank, objectives, types, genres, rogue_length);
     }
     return s_instance;
   }
 
-  explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, WiiMixEnums::RogueLength length);
+  explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length);
 
   #define ROGUE_SETTINGS_SEED "SEED"
   #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
@@ -86,7 +97,9 @@ public:
   void SetLength(WiiMixEnums::RogueLength length);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
-
+  void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) override;
+  void SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) override;
+  
   QJsonDocument ToJson();
   void FromJson(QJsonDocument json);
 

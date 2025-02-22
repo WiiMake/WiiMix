@@ -16,6 +16,7 @@
 #include <QPair>
 #include <QRegularExpression>
 #include <QVBoxLayout>
+#include <QListWidget>
 
 #include "DolphinQt/WiiMix/Client.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
@@ -146,6 +147,8 @@ private:
 
   QComboBox* m_difficulty;
   QComboBox* m_save_state_bank;
+  QListWidget* m_objective_types;
+  QListWidget* m_game_genres;
 
   QString m_player_name;
   int m_player_num;

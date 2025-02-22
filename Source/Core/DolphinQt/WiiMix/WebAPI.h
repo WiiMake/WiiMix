@@ -13,6 +13,4 @@ class WiiMixWebAPI {
   private:
     static std::string m_username;
     static std::string m_token;
-
-
 };
