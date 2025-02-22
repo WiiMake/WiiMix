@@ -350,6 +350,7 @@ private:
   // QPushButton* m_load_button_box;
   // QPushButton* m_save_button_box;
   WiiMixLogoButton* m_wii_mix_button;
+  QWidget* m_wiimix_bg_widget;
 
   // ================ Modes Widget ================
   WiiMixModesWidget* m_modes_widget;

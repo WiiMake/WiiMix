@@ -251,13 +251,13 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   setAcceptDrops(true);
   setAttribute(Qt::WA_NativeWindow);
   setFixedSize(1280, 720);
-  showNormal();
-  setWindowState(Qt::WindowNoState);
+  show();
+  // setWindowState(Qt::WindowNoState);
 
   CreateComponents();
 
   // ConnectGameList();
-  // ConnectHost();
+  ConnectHost();
   // ConnectToolBar();
   ConnectRenderWidget();
   ConnectStack();
@@ -501,8 +501,9 @@ void MainWindow::CreateComponents()
   // m_tool_bar = new ToolBar(this);
   // m_search_bar = new SearchBar(this);
   // m_game_list = new GameList(this);
-  m_render_widget = new RenderWidget;
+  m_render_widget = new RenderWidget(this);
   m_stack = new QStackedWidget(this);
+  m_modes_widget = new WiiMixModesWidget(this);
 
   // for (int i = 0; i < 4; i++)
   // {
@@ -567,18 +568,18 @@ void MainWindow::CreateComponents()
   // connect(m_cheats_manager, &CheatsManager::RequestWatch, request_watch);
 
   // ====================== SETTINGS WIDGET ======================
-  auto* layout = new QVBoxLayout();
+  // auto* layout = new QVBoxLayout();
   
-  m_modes_widget = new WiiMixModesWidget();
+  // m_modes_widget = new WiiMixModesWidget();
 
   // m_button_layout = new QHBoxLayout();
 
-  // m_wii_mix_button = new WiiMixLogoButton();
-  // m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
-  // m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
-  // m_wii_mix_button->setIconSize(QSize(150,100));
-  // // m_wii_mix_button->installEventFilter(this); // capture mouse events
-  // m_wii_mix_button->setCursor(Qt::PointingHandCursor);
+  m_wii_mix_button = new WiiMixLogoButton();
+  m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
+  m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
+  m_wii_mix_button->setIconSize(QSize(150,100));
+  // m_wii_mix_button->installEventFilter(this); // capture mouse events
+  m_wii_mix_button->setCursor(Qt::PointingHandCursor);
   // connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
   //   // WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
   //   // WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
@@ -587,46 +588,43 @@ void MainWindow::CreateComponents()
   //   // emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
   //   PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings::instance());
   // }); // Start WiiMix
-  // QWidget* bgWidget = new QWidget();
-  // bgWidget->setParent(this);
-  // bgWidget->setAutoFillBackground(true);
-  // // bgWidget->setMaximumHeight(100);
-  // bgWidget->setMinimumWidth(1280);
+  m_wiimix_bg_widget = new QWidget();
+  m_wiimix_bg_widget->setParent(this);
+  m_wiimix_bg_widget->setAutoFillBackground(true);
+  m_wiimix_bg_widget->setMaximumHeight(100);
+  m_wiimix_bg_widget->setMinimumWidth(1280);
 
-  // QHBoxLayout* bottom_buttons = new QHBoxLayout(bgWidget);
-  // //bottom_buttons->setAlignment(Qt::Alignment::);
-  // bottom_buttons->setSpacing(0);  // Set spacing between widgets
-  // bottom_buttons->setContentsMargins(2, 2, 0, 0);  // Remove any margins around the buttons
-  // bottom_buttons->addStretch(); // Add space before the buttons
-  // // bottom_buttons->addWidget(m_load_button_box, 0);
-  // bottom_buttons->addStretch();
-  // bottom_buttons->addWidget(m_wii_mix_button, 0);
-  // bottom_buttons->addStretch();
-  // // bottom_buttons->addWidget(m_save_button_box, 0);
-  // bottom_buttons->addStretch(); // Add space after the buttons
+  QHBoxLayout* bottom_buttons = new QHBoxLayout(m_wiimix_bg_widget);
+  //bottom_buttons->setAlignment(Qt::Alignment::);
+  bottom_buttons->setSpacing(0); // Set spacing between widgets
+  bottom_buttons->setContentsMargins(2, 2, 0, 0); // Remove any margins around the buttons
+  bottom_buttons->addStretch(); // Add space before the buttons
+  // bottom_buttons->addWidget(m_load_button_box, 0);
+  bottom_buttons->addWidget(m_wii_mix_button, 0);
+  bottom_buttons->addStretch();
+  // bottom_buttons->addWidget(m_save_button_box, 0);
 
-  // QPixmap buttonBackground;
-  // if (Config::Get(Config::MAIN_THEME_NAME) == "Clean" || Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
-  //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
-  // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {
-  //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_green").pixmap(1200,100));
-  // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
-  //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_pink").pixmap(1200,100));
-  // } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
-  //     buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_clean").pixmap(1200,100));
-  // } else {
-  //     qDebug() << "Incorrect theme name";
-  // }
-  // buttonBackground.scaled(this->size());
+  QPixmap buttonBackground;
+  if (Config::Get(Config::MAIN_THEME_NAME) == "Clean" || Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_green").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Pink") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_pink").pixmap(1200,100));
+  } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Lite") {
+      buttonBackground = (Resources::GetResourceIcon("wiimix_background_bottom_clean").pixmap(1200,100));
+  } else {
+      qDebug() << "Incorrect theme name";
+  }
+  buttonBackground.scaled(this->size());
 
-  // QPalette* palette = new QPalette();
-  // QBrush* buttonBackgroundBrush = new QBrush();
-  // buttonBackgroundBrush->setTexture(buttonBackground);
-  // palette->setBrush(QPalette::Window, *buttonBackgroundBrush);
-  // bgWidget->setPalette(*palette);
-  // m_button_layout->addWidget(m_wii_mix_button);
-  // // layout->addLayout(m_mode_layout, 2);
-  // // layout->addLayout(m_button_layout, 1);
+  QPalette* palette = new QPalette();
+  QBrush* buttonBackgroundBrush = new QBrush();
+  buttonBackgroundBrush->setTexture(buttonBackground);
+  palette->setBrush(QPalette::Window, *buttonBackgroundBrush);
+  m_wiimix_bg_widget->setPalette(*palette);
+  // layout->addLayout(m_mode_layout, 2);
+  // layout->addLayout(m_button_layout, 1);
 
 
   // setLayout(layout);
@@ -642,7 +640,7 @@ void MainWindow::CreateComponents()
 
   // Set the layout for this widget
   // layout->addWidget(m_modes_widget);
-  // this->setLayout(layout);
+  // setLayout(layout);
 }
 
 // ====================== MODES WIDGET ======================
@@ -892,21 +890,8 @@ void MainWindow::ConnectStack()
   auto* layout = new QVBoxLayout;
   widget->setLayout(layout);
 
-  // layout->addWidget(m_game_list);
-  // QVBoxLayout *layout = new QVBoxLayout();
-
-  // // Create the button
-  QPushButton *button = new QPushButton(QStringLiteral("Start WiiMix"));
-
-  // // Add the button to the layout
-  layout->addWidget(button);
-
-  // this->layout()->addWidget(button);
-
-  // Set the layout for this widget
-  // layout->addWidget(m_modes_widget);
-  // this->setLayout(layout);
-  // layout->addWidget(m_search_bar);
+  layout->addWidget(m_modes_widget, 2);
+  layout->addWidget(m_wiimix_bg_widget, 1);
 
   layout->setContentsMargins(0, 0, 0, 0);
 
