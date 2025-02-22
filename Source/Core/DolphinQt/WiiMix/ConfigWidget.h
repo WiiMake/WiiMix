@@ -113,7 +113,7 @@ private:
   // Note when designing interfaces only make the elements that contain data members
 
   // Bingo Config Options
-  QMenuBar* m_menu_bar;
+  QMenu* m_menu;
   QLineEdit* m_bingo_lobby_id;
   QLineEdit* m_bingo_seed;
   QLineEdit* m_bingo_player_name;
