@@ -38,7 +38,6 @@ void WiiMixModesWidget::CreateLayout() {
         frame->setFocusPolicy(Qt::TabFocus);
         // Set up WiiMixButton
         char * backgroundImagePath = (char *) malloc(200);
-        //backgroundImagePath = "";
         if (i == 0 || i == 2) {
             strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/background-unavailable.png").data(), 200);
         }
