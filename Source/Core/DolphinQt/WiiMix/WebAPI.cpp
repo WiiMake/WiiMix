@@ -118,8 +118,6 @@ std::vector<uint8_t> WiiMixWebAPI::getAchievementIcon(int achievement_id) {
   if (curl)
   {
     std::string url = "https://retroachievements.org/Badge/" + std::to_string(achievement_id) + "_lock.png";
-    // std::string url = "https://retroachievements.org/Badge/400012_lock.png";
-    // qDebug() << url.c_str();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -140,8 +138,6 @@ std::vector<uint8_t> WiiMixWebAPI::getAchievementIcon(int achievement_id) {
       // // }
       // iconData.assign(image.bits(), image.bits() + image.sizeInBytes() * 8);
     }
-    qDebug() << iconData;
-    qDebug() << "readBuffer size: " << readBuffer.size();
   }
   return iconData;
 }

@@ -391,18 +391,20 @@ namespace WiiMixEnums {
 
     std::string GameGenresToString(std::vector<GameGenre> genres) {
         std::string result;
+        result += "[";
         for (const auto& genre : genres) {
             if (!result.empty()) {
                 result += ",";
             }
             result += GameGenreToString(genre);
         }
+        result += "]";
         return result;
     }
 
     std::vector<GameGenre> GameGenresFromString(const std::string& str) {
         std::vector<GameGenre> genres;
-        std::string::size_type start = 0;
+        std::string::size_type start = str.find('[') + 1;
         std::string::size_type end = str.find(',');
 
         while (end != std::string::npos) {
@@ -411,24 +413,28 @@ namespace WiiMixEnums {
             end = str.find(',', start);
         }
 
-        genres.push_back(GameGenreFromString(str.substr(start)));
+        end = str.find(']');
+        if (start < end) {
+            genres.push_back(GameGenreFromString(str.substr(start, end - start)));
+        }
         return genres;
     }
 
     std::string ObjectiveTypesToString(std::vector<ObjectiveType> types) {
-        std::string result;
+        std::string result = "[";
         for (const auto& type : types) {
-            if (!result.empty()) {
+            if (result.length() > 1) {
                 result += ",";
             }
-            result += ObjectiveTypeToString(type);
+            result += "\"" + ObjectiveTypeToString(type) + "\"";
         }
+        result += "]";
         return result;
     }
 
     std::vector<ObjectiveType> ObjectiveTypesFromString(const std::string& str) {
         std::vector<ObjectiveType> types;
-        std::string::size_type start = 0;
+        std::string::size_type start = str.find('[') + 1;
         std::string::size_type end = str.find(',');
 
         while (end != std::string::npos) {
@@ -437,7 +443,10 @@ namespace WiiMixEnums {
             end = str.find(',', start);
         }
 
-        types.push_back(ObjectiveTypeFromString(str.substr(start)));
+        end = str.find(']');
+        if (start < end) {
+            types.push_back(ObjectiveTypeFromString(str.substr(start, end - start)));
+        }
         return types;
     }
 };

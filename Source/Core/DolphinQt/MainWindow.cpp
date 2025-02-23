@@ -977,7 +977,6 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       // Add message for objective image, title, and description
       // Get the icon from retroachievements
       std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
-      qDebug() << "Icon data size: " << img_data.size();
       VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
       VideoCommon::LoadPNGTexture(icon, img_data);
       // icon->height = sqrt(img_data.size() / 4);

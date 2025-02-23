@@ -203,11 +203,17 @@ void WiiMixSettingsWindow::ConnectWidgets()
         if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
           WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));
           WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
+          WiiMixBingoSettings::instance()->SetObjectiveTypes(m_config->GetObjectiveTypes());
+          WiiMixBingoSettings::instance()->SetGameGenres(m_config->GetGameGenres());
           WiiMixBingoSettings::instance()->SetCardSize(WiiMixBingoSettings::StringToCardSize(m_config->GetCardSize()));
           WiiMixBingoSettings::instance()->SetBingoType(m_config->GetBingoType());
           emit StartWiiMixBingo(WiiMixBingoSettings::instance(), WiiMixClient::instance());
         }
         else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+          WiiMixShuffleSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));
+          WiiMixShuffleSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
+          WiiMixShuffleSettings::instance()->SetObjectiveTypes(m_config->GetObjectiveTypes());
+          WiiMixShuffleSettings::instance()->SetGameGenres(m_config->GetGameGenres());
           WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
           WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
           WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_config->GetMaxTimeBetweenSwitch());
@@ -215,6 +221,10 @@ void WiiMixSettingsWindow::ConnectWidgets()
           emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
         }
         else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+          WiiMixRogueSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));
+          WiiMixRogueSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));
+          WiiMixRogueSettings::instance()->SetObjectiveTypes(m_config->GetObjectiveTypes());
+          WiiMixRogueSettings::instance()->SetGameGenres(m_config->GetGameGenres());
           WiiMixRogueSettings::instance()->SetLength(m_config->GetRogueLength());
           WiiMixRogueSettings::instance()->SetSeed(m_config->GetRogueSeed());
           emit StartWiiMixRogue(WiiMixRogueSettings::instance());

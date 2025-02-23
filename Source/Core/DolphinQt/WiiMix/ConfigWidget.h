@@ -65,6 +65,10 @@ public:
   void SetDifficulty(QString value);
   QString GetSaveStateBank() const;
   void SetSaveStateBank(QString value);
+  std::vector<WiiMixEnums::ObjectiveType> GetObjectiveTypes();
+  void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> objective_types);
+  std::vector<WiiMixEnums::GameGenre> GetGameGenres();
+  void SetGameGenres(std::vector<WiiMixEnums::GameGenre> game_genres);
   
   // Bingo
   WiiMixEnums::BingoType GetBingoType() const;
