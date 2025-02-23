@@ -264,6 +264,7 @@ private:
 
   void UpdateScreenSaverInhibition();
   void ChangeUpperWidget();
+  void BackToUpperWidget();
 
   void OnStopComplete();
   // void dragEnterEvent(QDragEnterEvent* event) override;
@@ -280,7 +281,7 @@ private:
 #endif
 
   // ToolBar* m_tool_bar;
-  // MenuBar* m_menu_bar;
+  MenuBar* m_menu_bar;
   // SearchBar* m_search_bar;
   GameList* m_game_list;
   RenderWidget* m_render_widget = nullptr;

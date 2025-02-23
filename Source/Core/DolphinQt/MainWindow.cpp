@@ -250,7 +250,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
   setWindowTitle(QString::fromStdString(Common::GetScmRevStr()));
   setWindowIcon(Resources::GetAppIcon());
-  //setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
   setUnifiedTitleAndToolBarOnMac(true);
   setAcceptDrops(true);
   setAttribute(Qt::WA_NativeWindow);
@@ -260,18 +260,21 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
 
   CreateComponents();
 
-  // ConnectGameList();
+  m_game_list->setVisible(false);
+  m_menu_bar->setVisible(false);
+
+  ConnectGameList();
   ConnectHost();
   // ConnectToolBar();
   ConnectRenderWidget();
   ConnectStack();
-  // ConnectMenuBar();
+  ConnectMenuBar();
 
   State::EnableCompression(false); // hopefully speed things up
 
-  // QSettings& settings = Settings::GetQSettings();
-  // restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
-  // restoreGeometry(settings.value(QStringLiteral("mainwindow/geometry")).toByteArray());
+  QSettings& settings = Settings::GetQSettings();
+  restoreState(settings.value(QStringLiteral("mainwindow/state")).toByteArray());
+  restoreGeometry(settings.value(QStringLiteral("mainwindow/geometry")).toByteArray());
 
   // if (!Settings::Instance().IsBatchModeEnabled())
   // {
@@ -333,7 +336,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   m_state_slot =
       std::clamp(Settings::Instance().GetStateSlot(), 1, static_cast<int>(State::NUM_STATES));
 
-  // m_render_widget_geometry = settings.value(QStringLiteral("renderwidget/geometry")).toByteArray();
+  m_render_widget_geometry = settings.value(QStringLiteral("renderwidget/geometry")).toByteArray();
 
   // Restoring of window states can sometimes go wrong, resulting in widgets being visible when they
   // shouldn't be so we have to reapply all our rules afterwards.
@@ -372,6 +375,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   if (!m_wiimix_client->ConnectToServer()) {
     QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
   }
+  ConnectWiiMix();
 }
 
 // void MainWindow::DisplayClientError(QString error) {
@@ -491,6 +495,9 @@ static void InstallHotkeyFilter(QWidget* dialog)
 
 void MainWindow::CreateComponents()
 {
+  m_menu_bar = new MenuBar(this);
+  m_game_list = new GameList(this);
+
   m_render_widget = new RenderWidget(this);
   m_stack = new QStackedWidget(this);
   settingsWindow = new EmbeddedSettingsWindow(this);
@@ -543,6 +550,8 @@ void MainWindow::CreateComponents()
   m_wiimix_bg_widget->setPalette(*palette);
 
   connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
+  connect(settingsWindow, &EmbeddedSettingsWindow::backToUpperWidget, this, &MainWindow::BackToUpperWidget);
+
   // layout->addLayout(m_mode_layout, 2);
   // layout->addLayout(m_button_layout, 1);
 
@@ -569,7 +578,7 @@ void MainWindow::ConnectWiiMix() {
   // Starts the wiimix
   // connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixBingo, this, &MainWindow::PopulateWiiMixBingoObjectives);
   // connect(m_wiimix_window, &WiiMixSettingsWindow::StartWiiMixRogue, this, &MainWindow::PopulateWiiMixRogueObjectives);
-  // connect(this, &MainWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
+  connect(settingsWindow, &EmbeddedSettingsWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
   // connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
@@ -579,8 +588,8 @@ void MainWindow::ConnectWiiMix() {
   connect(WiiMixGameManager::instance(), &WiiMixGameManager::onAchievementGet, this, &MainWindow::HandleAchievementGet);
 }
 
-// void MainWindow::ConnectMenuBar()
-// {
+void MainWindow::ConnectMenuBar()
+{
 //   setMenuBar(m_menu_bar);
 //   // File
 //   connect(m_menu_bar, &MenuBar::WiiMix, this, &MainWindow::ShowWiiMixWindow);
@@ -650,25 +659,25 @@ void MainWindow::ConnectWiiMix() {
 //   connect(m_menu_bar, &MenuBar::ShowTASInput, this, &MainWindow::ShowTASInput);
 
 //   // View
-//   connect(m_menu_bar, &MenuBar::ShowList, m_game_list, &GameList::SetListView);
-//   connect(m_menu_bar, &MenuBar::ShowGrid, m_game_list, &GameList::SetGridView);
-//   connect(m_menu_bar, &MenuBar::PurgeGameListCache, m_game_list, &GameList::PurgeCache);
-//   connect(m_menu_bar, &MenuBar::ShowSearch, m_search_bar, &SearchBar::Show);
+  connect(m_menu_bar, &MenuBar::ShowList, m_game_list, &GameList::SetListView);
+  connect(m_menu_bar, &MenuBar::ShowGrid, m_game_list, &GameList::SetGridView);
+  connect(m_menu_bar, &MenuBar::PurgeGameListCache, m_game_list, &GameList::PurgeCache);
+  // connect(m_menu_bar, &MenuBar::ShowSearch, m_search_bar, &SearchBar::Show);
 
-//   connect(m_menu_bar, &MenuBar::ColumnVisibilityToggled, m_game_list,
-//           &GameList::OnColumnVisibilityToggled);
+  connect(m_menu_bar, &MenuBar::ColumnVisibilityToggled, m_game_list,
+          &GameList::OnColumnVisibilityToggled);
 
-//   connect(m_menu_bar, &MenuBar::GameListPlatformVisibilityToggled, m_game_list,
-//           &GameList::OnGameListVisibilityChanged);
-//   connect(m_menu_bar, &MenuBar::GameListRegionVisibilityToggled, m_game_list,
-//           &GameList::OnGameListVisibilityChanged);
+  connect(m_menu_bar, &MenuBar::GameListPlatformVisibilityToggled, m_game_list,
+          &GameList::OnGameListVisibilityChanged);
+  connect(m_menu_bar, &MenuBar::GameListRegionVisibilityToggled, m_game_list,
+          &GameList::OnGameListVisibilityChanged);
 
 //   connect(m_menu_bar, &MenuBar::ShowAboutDialog, this, &MainWindow::ShowAboutDialog);
 
 //   connect(m_game_list, &GameList::SelectionChanged, m_menu_bar, &MenuBar::SelectionChanged);
 //   connect(this, &MainWindow::ReadOnlyModeChanged, m_menu_bar, &MenuBar::ReadOnlyModeChanged);
 //   connect(this, &MainWindow::RecordingStatusChanged, m_menu_bar, &MenuBar::RecordingStatusChanged);
-// }
+}
 
 void MainWindow::ConnectHotkeys()
 {
@@ -780,16 +789,16 @@ void MainWindow::ConnectHotkeys()
 //   connect(m_tool_bar, &ToolBar::SetPCPressed, m_code_widget, &CodeWidget::SetPC);
 // }
 
-// void MainWindow::ConnectGameList()
-// {
-//   connect(m_game_list, &GameList::GameSelected, this, [this]() { Play(); });
-//   connect(m_game_list, &GameList::NetPlayHost, this, &MainWindow::NetPlayHost);
-//   connect(m_game_list, &GameList::OnStartWithRiivolution, this,
-//           &MainWindow::ShowRiivolutionBootWidget);
+void MainWindow::ConnectGameList()
+{
+  connect(m_game_list, &GameList::GameSelected, this, [this]() { Play(); });
+  // connect(m_game_list, &GameList::NetPlayHost, this, &MainWindow::NetPlayHost);
+  // connect(m_game_list, &GameList::OnStartWithRiivolution, this,
+  //         &MainWindow::ShowRiivolutionBootWidget);
 
-//   connect(m_game_list, &GameList::OpenGeneralSettings, this, &MainWindow::ShowGeneralWindow);
-//   connect(m_game_list, &GameList::OpenGraphicsSettings, this, &MainWindow::ShowGraphicsWindow);
-// }
+  // connect(m_game_list, &GameList::OpenGeneralSettings, this, &MainWindow::ShowGeneralWindow);
+  // connect(m_game_list, &GameList::OpenGraphicsSettings, this, &MainWindow::ShowGraphicsWindow);
+}
 
 void MainWindow::ConnectRenderWidget()
 {
@@ -855,6 +864,15 @@ void MainWindow::ChangeUpperWidget() {
   settingsWindow->setFixedSize(1280, 620);
 }
 
+void MainWindow::BackToUpperWidget() {
+  qDebug() << "BackToUpperWidget";
+  settingsWindow->setFixedSize(0, 0);
+  settingsWindow->setDisabled(true);
+  m_upper_widget->setDisabled(false);
+  m_upper_widget->setFocus();
+  m_upper_widget->setFixedSize(1280, 620);
+}
+
 void MainWindow::ChangeDisc()
 {
   std::vector<std::string> paths = StringListToStdVector(PromptFileNames());
@@ -899,9 +917,11 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
   }
   // ShowRenderWidget();
   std::vector<std::shared_ptr<const UICommon::GameFile>> game_list = WiiMixGlobalSettings::instance()->GetGamesList();
+  qDebug() << "Game list size: " << game_list.size();
   for (const auto& game_ptr : game_list) {
     const UICommon::GameFile& game = *game_ptr;
     if (game.GetGameID() == new_objective.GetGameId()) {
+      qDebug() << "Starting game: " << QString::fromStdString(game.GetGameID());
       StartGame(BootParameters::GenerateFromFile(game.GetFilePath(), BootSessionData(savestate_file, DeleteSavestateAfterBoot::No)), save_path);
       // Start a 24 hour timer, UNLESS the objective is a rogue objective
       WiiMixEnums::Mode mode = WiiMixGlobalSettings::instance()->GetMode();
@@ -940,7 +960,6 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       return;
     }
   }
-  qDebug() << "Game does not exist";
   // QTimer::singleShot(1000, this, [this, &new_objective]() {
   //   OSD::AddMessage("Objective: " + new_objective.GetTitle(), 5000, OSD::Color::GREEN);
   //   OSD::AddMessage("Description: " + new_objective.GetObjectiveDescription(), 5000, OSD::Color::GREEN);
@@ -949,7 +968,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
 }
 
 void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
-  std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(current_objective);
+  std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(new_objective);
   if (!File::Exists(savestate_file)) {
     savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
     if (!File::Exists(savestate_file)) {
@@ -1270,8 +1289,8 @@ bool MainWindow::RequestStop()
 
   if (!m_render_widget->isFullScreen())
     m_render_widget_geometry = m_render_widget->saveGeometry();
-  //else
-    //FullScreen();
+  else
+    FullScreen();
 
   if (false && Config::Get(Config::MAIN_CONFIRM_ON_STOP))
   {
@@ -1512,6 +1531,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     //   ShowRenderWidget();
 
     // SetFullScreenResolution(false);
+    qDebug() << "SetFullScreenResolution";
     SetFullScreenResolution(true);
     m_render_widget->showFullScreen();
     // Host::GetInstance()->SetRenderFullscreen(false);
@@ -1555,9 +1575,10 @@ void MainWindow::ShowRenderWidget()
   {
     // If we're rendering to main, add it to the stack and update our title when necessary.
     m_rendering_to_main = true;
+    
 
     m_stack->setCurrentIndex(m_stack->addWidget(m_render_widget));
-    connect(Host::GetInstance(), &Host::RequestTitle, this, &MainWindow::setWindowTitle);
+    // connect(Host::GetInstance(), &Host::RequestTitle, this, &MainWindow::setWindowTitle);
     m_stack->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     m_stack->repaint();
 

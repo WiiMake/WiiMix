@@ -115,42 +115,42 @@ GameList::GameList(QWidget* parent) : QStackedWidget(parent), m_model(this)
   if (Settings::GetQSettings().contains(QStringLiteral("gridview/scale")))
     m_model.SetScale(Settings::GetQSettings().value(QStringLiteral("gridview/scale")).toFloat());
 
-  connect(m_list, &QTableView::doubleClicked, this, &GameList::GameSelected);
-  connect(m_grid, &QListView::doubleClicked, this, &GameList::GameSelected);
+  // connect(m_list, &QTableView::doubleClicked, this, &GameList::GameSelected);
+  // connect(m_grid, &QListView::doubleClicked, this, &GameList::GameSelected);
   // NOTE: use the GetWiiMixGames instead
   // Check if over the checkbox; if so, toggle a game in or out of the WiiMix
   // connect(&(m_list->find("WiiMix")), &QCheckBox::stateChanged, this, &GameList::WiiMixCheckboxClicked);
-  connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
-  connect(&m_model, &QAbstractItemModel::rowsRemoved, this, &GameList::ConsiderViewChange);
+  // connect(&m_model, &QAbstractItemModel::rowsInserted, this, &GameList::ConsiderViewChange);
+  // connect(&m_model, &QAbstractItemModel::rowsRemoved, this, &GameList::ConsiderViewChange);
   
-  addWidget(m_list);
-  addWidget(m_grid);
-  addWidget(m_empty);
-  m_prefer_list = Settings::Instance().GetPreferredView();
-  ConsiderViewChange();
+  // addWidget(m_list);
+  // addWidget(m_grid);
+  // addWidget(m_empty);
+  // m_prefer_list = Settings::Instance().GetPreferredView();
+  // ConsiderViewChange();
 
-  auto* zoom_in = new QShortcut(QKeySequence::ZoomIn, this);
-  auto* zoom_out = new QShortcut(QKeySequence::ZoomOut, this);
-  zoom_in->setContext(Qt::WidgetWithChildrenShortcut);
-  zoom_out->setContext(Qt::WidgetWithChildrenShortcut);
+  // auto* zoom_in = new QShortcut(QKeySequence::ZoomIn, this);
+  // auto* zoom_out = new QShortcut(QKeySequence::ZoomOut, this);
+  // zoom_in->setContext(Qt::WidgetWithChildrenShortcut);
+  // zoom_out->setContext(Qt::WidgetWithChildrenShortcut);
 
-  connect(zoom_in, &QShortcut::activated, this, &GameList::ZoomIn);
-  connect(zoom_out, &QShortcut::activated, this, &GameList::ZoomOut);
+  // connect(zoom_in, &QShortcut::activated, this, &GameList::ZoomIn);
+  // connect(zoom_out, &QShortcut::activated, this, &GameList::ZoomOut);
 
   // On most keyboards the key to the left of the primary delete key represents 'plus' when shift is
   // held and 'equal' when it isn't. By common convention, pressing control and that key is treated
   // conceptually as 'control plus' (which is then interpreted as an appropriate zooming action)
   // instead of the technically correct 'control equal'. Qt doesn't account for this convention so
   // an alternate shortcut is needed to avoid counterintuitive behavior.
-  const auto* zoom_in_alternate = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Equal), this);
-  connect(zoom_in_alternate, &QShortcut::activated, this, &GameList::ZoomIn);
+  // const auto* zoom_in_alternate = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Equal), this);
+  // connect(zoom_in_alternate, &QShortcut::activated, this, &GameList::ZoomIn);
 
   // The above correction introduces a different inconsistency: now zooming in can be done using
   // conceptual 'control plus' or 'control shift plus', while zooming out can only be done using
   // 'control minus'. Adding an alternate shortcut representing 'control shift minus' restores
   // consistency.
-  const auto* zoom_out_alternate = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Underscore), this);
-  connect(zoom_out_alternate, &QShortcut::activated, this, &GameList::ZoomOut);
+  // const auto* zoom_out_alternate = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Underscore), this);
+  // connect(zoom_out_alternate, &QShortcut::activated, this, &GameList::ZoomOut);
 
   connect(&Settings::Instance(), &Settings::MetadataRefreshCompleted, this,
           [this] { m_grid_proxy->invalidate(); });
@@ -178,82 +178,82 @@ void GameList::MakeListView()
   // Have 1 pixel of padding above and below the 32 pixel banners.
   m_list->verticalHeader()->setDefaultSectionSize(32 + 2);
 
-  QHeaderView* hor_header = m_list->horizontalHeader();
+  // QHeaderView* hor_header = m_list->horizontalHeader();
 
-  hor_header->restoreState(
-      Settings::GetQSettings().value(QStringLiteral("tableheader/state")).toByteArray());
+  // hor_header->restoreState(
+  //     Settings::GetQSettings().value(QStringLiteral("tableheader/state")).toByteArray());
 
-  hor_header->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(hor_header, &QWidget::customContextMenuRequested, this, &GameList::ShowHeaderContextMenu);
+  // hor_header->setContextMenuPolicy(Qt::CustomContextMenu);
+  // connect(hor_header, &QWidget::customContextMenuRequested, this, &GameList::ShowHeaderContextMenu);
 
-  connect(hor_header, &QHeaderView::sortIndicatorChanged, this, &GameList::OnHeaderViewChanged);
-  connect(hor_header, &QHeaderView::sectionCountChanged, this, &GameList::OnHeaderViewChanged);
-  connect(hor_header, &QHeaderView::sectionMoved, this, &GameList::OnHeaderViewChanged);
-  connect(hor_header, &QHeaderView::sectionResized, this, &GameList::OnSectionResized);
+  // connect(hor_header, &QHeaderView::sortIndicatorChanged, this, &GameList::OnHeaderViewChanged);
+  // connect(hor_header, &QHeaderView::sectionCountChanged, this, &GameList::OnHeaderViewChanged);
+  // connect(hor_header, &QHeaderView::sectionMoved, this, &GameList::OnHeaderViewChanged);
+  // connect(hor_header, &QHeaderView::sectionResized, this, &GameList::OnSectionResized);
 
-  if (!Settings::GetQSettings().contains(QStringLiteral("tableheader/state")))
-    m_list->sortByColumn(static_cast<int>(GameListModel::Column::Title), Qt::AscendingOrder);
+  // if (!Settings::GetQSettings().contains(QStringLiteral("tableheader/state")))
+  //   m_list->sortByColumn(static_cast<int>(GameListModel::Column::Title), Qt::AscendingOrder);
 
-  const auto SetResizeMode = [&hor_header](const GameListModel::Column column,
-                                           const QHeaderView::ResizeMode mode) {
-    hor_header->setSectionResizeMode(static_cast<int>(column), mode);
-  };
-  {
-    using Column = GameListModel::Column;
-    using Mode = QHeaderView::ResizeMode;
-    SetResizeMode(Column::WiiMix, Mode::Fixed);
-    SetResizeMode(Column::Objectives, Mode::Fixed);
-    SetResizeMode(Column::Platform, Mode::Fixed);
-    SetResizeMode(Column::Banner, Mode::Fixed);
-    SetResizeMode(Column::Title, Mode::Interactive);
-    SetResizeMode(Column::Description, Mode::Interactive);
-    SetResizeMode(Column::Maker, Mode::Interactive);
-    SetResizeMode(Column::ID, Mode::Fixed);
-    SetResizeMode(Column::Country, Mode::Fixed);
-    SetResizeMode(Column::Size, Mode::Fixed);
-    SetResizeMode(Column::FileName, Mode::Interactive);
-    SetResizeMode(Column::FilePath, Mode::Interactive);
-    SetResizeMode(Column::FileFormat, Mode::Fixed);
-    SetResizeMode(Column::BlockSize, Mode::Fixed);
-    SetResizeMode(Column::Compression, Mode::Fixed);
-    SetResizeMode(Column::Tags, Mode::Interactive);
+  // const auto SetResizeMode = [&hor_header](const GameListModel::Column column,
+  //                                          const QHeaderView::ResizeMode mode) {
+  //   hor_header->setSectionResizeMode(static_cast<int>(column), mode);
+  // };
+  // {
+  //   using Column = GameListModel::Column;
+  //   using Mode = QHeaderView::ResizeMode;
+  //   SetResizeMode(Column::WiiMix, Mode::Fixed);
+  //   SetResizeMode(Column::Objectives, Mode::Fixed);
+  //   SetResizeMode(Column::Platform, Mode::Fixed);
+  //   SetResizeMode(Column::Banner, Mode::Fixed);
+  //   SetResizeMode(Column::Title, Mode::Interactive);
+  //   SetResizeMode(Column::Description, Mode::Interactive);
+  //   SetResizeMode(Column::Maker, Mode::Interactive);
+  //   SetResizeMode(Column::ID, Mode::Fixed);
+  //   SetResizeMode(Column::Country, Mode::Fixed);
+  //   SetResizeMode(Column::Size, Mode::Fixed);
+  //   SetResizeMode(Column::FileName, Mode::Interactive);
+  //   SetResizeMode(Column::FilePath, Mode::Interactive);
+  //   SetResizeMode(Column::FileFormat, Mode::Fixed);
+  //   SetResizeMode(Column::BlockSize, Mode::Fixed);
+  //   SetResizeMode(Column::Compression, Mode::Fixed);
+  //   SetResizeMode(Column::Tags, Mode::Interactive);
 
-    // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
-    // are 96 pixels wide, platform and country icons are 32 pixels wide.
-    m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 38);
-    m_list->setColumnWidth(static_cast<int>(Column::Objectives), 80);
-    m_list->setColumnWidth(static_cast<int>(Column::Banner), 102);
-    m_list->setColumnWidth(static_cast<int>(Column::Platform), 38);
-    m_list->setColumnWidth(static_cast<int>(Column::Country), 38);
-    m_list->setColumnWidth(static_cast<int>(Column::Size), 85);
-    m_list->setColumnWidth(static_cast<int>(Column::ID), 70);
-  }
+  //   // Cells have 3 pixels of padding, so the width of these needs to be image width + 6. Banners
+  //   // are 96 pixels wide, platform and country icons are 32 pixels wide.
+  //   m_list->setColumnWidth(static_cast<int>(Column::WiiMix), 38);
+  //   m_list->setColumnWidth(static_cast<int>(Column::Objectives), 80);
+  //   m_list->setColumnWidth(static_cast<int>(Column::Banner), 102);
+  //   m_list->setColumnWidth(static_cast<int>(Column::Platform), 38);
+  //   m_list->setColumnWidth(static_cast<int>(Column::Country), 38);
+  //   m_list->setColumnWidth(static_cast<int>(Column::Size), 85);
+  //   m_list->setColumnWidth(static_cast<int>(Column::ID), 70);
+  // }
 
-  // There's some odd platform-specific behavior with default minimum section size
-  hor_header->setMinimumSectionSize(38);
+  // // There's some odd platform-specific behavior with default minimum section size
+  // hor_header->setMinimumSectionSize(38);
 
-  UpdateColumnVisibility();
+  // UpdateColumnVisibility();
 
-  m_list->verticalHeader()->hide();
-  m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_list->setFrameStyle(QFrame::NoFrame);
+  // m_list->verticalHeader()->hide();
+  // m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  // m_list->setFrameStyle(QFrame::NoFrame);
 
-  hor_header->setSectionsMovable(true);
-  hor_header->setHighlightSections(false);
+  // hor_header->setSectionsMovable(true);
+  // hor_header->setHighlightSections(false);
 
-  // Work around a Qt bug where clicking in the background (below the last game) as the first
-  // action and then pressing a key (e.g. page down or end) selects the first entry in the list
-  // instead of performing that key's action.  This workaround does not work if there are no games
-  // when the view first appears, but then games are added (e.g. due to no game folders being
-  // present, and then the user adding one), but that is an infrequent situation.
-  m_list->selectRow(0);
-  m_list->clearSelection();
+  // // Work around a Qt bug where clicking in the background (below the last game) as the first
+  // // action and then pressing a key (e.g. page down or end) selects the first entry in the list
+  // // instead of performing that key's action.  This workaround does not work if there are no games
+  // // when the view first appears, but then games are added (e.g. due to no game folders being
+  // // present, and then the user adding one), but that is an infrequent situation.
+  // m_list->selectRow(0);
+  // m_list->clearSelection();
 
-  connect(m_list, &QTableView::customContextMenuRequested, this, &GameList::ShowContextMenu);
-  connect(m_list->selectionModel(), &QItemSelectionModel::selectionChanged,
-          [this](const QItemSelection&, const QItemSelection&) {
-            emit SelectionChanged(GetSelectedGame());
-          });
+  // connect(m_list, &QTableView::customContextMenuRequested, this, &GameList::ShowContextMenu);
+  // connect(m_list->selectionModel(), &QItemSelectionModel::selectionChanged,
+  //         [this](const QItemSelection&, const QItemSelection&) {
+  //           emit SelectionChanged(GetSelectedGame());
+  //         });
 }
 
 GameList::~GameList()
@@ -265,27 +265,27 @@ GameList::~GameList()
 
 void GameList::UpdateColumnVisibility()
 {
-  const auto SetVisiblity = [this](const GameListModel::Column column, const bool is_visible) {
-    m_list->setColumnHidden(static_cast<int>(column), !is_visible);
-  };
+  // const auto SetVisiblity = [this](const GameListModel::Column column, const bool is_visible) {
+  //   m_list->setColumnHidden(static_cast<int>(column), !is_visible);
+  // };
 
-  using Column = GameListModel::Column;
-  SetVisiblity(Column::WiiMix, Config::Get(Config::MAIN_GAMELIST_COLUMN_WIIMIX));
-  SetVisiblity(Column::Objectives, Config::Get(Config::MAIN_GAMELIST_COLUMN_OBJECTIVES));
-  SetVisiblity(Column::Platform, Config::Get(Config::MAIN_GAMELIST_COLUMN_PLATFORM));
-  SetVisiblity(Column::Banner, Config::Get(Config::MAIN_GAMELIST_COLUMN_BANNER));
-  SetVisiblity(Column::Title, Config::Get(Config::MAIN_GAMELIST_COLUMN_TITLE));
-  SetVisiblity(Column::Description, Config::Get(Config::MAIN_GAMELIST_COLUMN_DESCRIPTION));
-  SetVisiblity(Column::Maker, Config::Get(Config::MAIN_GAMELIST_COLUMN_MAKER));
-  SetVisiblity(Column::ID, Config::Get(Config::MAIN_GAMELIST_COLUMN_GAME_ID));
-  SetVisiblity(Column::Country, Config::Get(Config::MAIN_GAMELIST_COLUMN_REGION));
-  SetVisiblity(Column::Size, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_SIZE));
-  SetVisiblity(Column::FileName, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_NAME));
-  SetVisiblity(Column::FilePath, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_PATH));
-  SetVisiblity(Column::FileFormat, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_FORMAT));
-  SetVisiblity(Column::BlockSize, Config::Get(Config::MAIN_GAMELIST_COLUMN_BLOCK_SIZE));
-  SetVisiblity(Column::Compression, Config::Get(Config::MAIN_GAMELIST_COLUMN_COMPRESSION));
-  SetVisiblity(Column::Tags, Config::Get(Config::MAIN_GAMELIST_COLUMN_TAGS));
+  // using Column = GameListModel::Column;
+  // SetVisiblity(Column::WiiMix, Config::Get(Config::MAIN_GAMELIST_COLUMN_WIIMIX));
+  // SetVisiblity(Column::Objectives, Config::Get(Config::MAIN_GAMELIST_COLUMN_OBJECTIVES));
+  // SetVisiblity(Column::Platform, Config::Get(Config::MAIN_GAMELIST_COLUMN_PLATFORM));
+  // SetVisiblity(Column::Banner, Config::Get(Config::MAIN_GAMELIST_COLUMN_BANNER));
+  // SetVisiblity(Column::Title, Config::Get(Config::MAIN_GAMELIST_COLUMN_TITLE));
+  // SetVisiblity(Column::Description, Config::Get(Config::MAIN_GAMELIST_COLUMN_DESCRIPTION));
+  // SetVisiblity(Column::Maker, Config::Get(Config::MAIN_GAMELIST_COLUMN_MAKER));
+  // SetVisiblity(Column::ID, Config::Get(Config::MAIN_GAMELIST_COLUMN_GAME_ID));
+  // SetVisiblity(Column::Country, Config::Get(Config::MAIN_GAMELIST_COLUMN_REGION));
+  // SetVisiblity(Column::Size, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_SIZE));
+  // SetVisiblity(Column::FileName, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_NAME));
+  // SetVisiblity(Column::FilePath, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_PATH));
+  // SetVisiblity(Column::FileFormat, Config::Get(Config::MAIN_GAMELIST_COLUMN_FILE_FORMAT));
+  // SetVisiblity(Column::BlockSize, Config::Get(Config::MAIN_GAMELIST_COLUMN_BLOCK_SIZE));
+  // SetVisiblity(Column::Compression, Config::Get(Config::MAIN_GAMELIST_COLUMN_COMPRESSION));
+  // SetVisiblity(Column::Tags, Config::Get(Config::MAIN_GAMELIST_COLUMN_TAGS));
 }
 
 void GameList::MakeEmptyView()
@@ -324,7 +324,7 @@ void GameList::MakeEmptyView()
 
 void GameList::resizeEvent(QResizeEvent* event)
 {
-  OnHeaderViewChanged();
+  // OnHeaderViewChanged();
 }
 
 void GameList::MakeGridView()
@@ -1099,51 +1099,51 @@ void GameList::OnSectionResized(int index, int, int)
 
 void GameList::OnHeaderViewChanged()
 {
-  static bool block = false;
+  // static bool block = false;
 
-  if (block)
-    return;
+  // if (block)
+  //   return;
 
-  block = true;
+  // block = true;
 
-  UpdateColumnVisibility();
+  // UpdateColumnVisibility();
 
-  // So here's the deal: Qt's way of resizing stuff around stretched columns sucks ass
-  // That's why instead of using Stretch, we'll just make resizable columns take all the available
-  // space ourselves!
+  // // So here's the deal: Qt's way of resizing stuff around stretched columns sucks ass
+  // // That's why instead of using Stretch, we'll just make resizable columns take all the available
+  // // space ourselves!
 
-  int available_width = width() - style()->pixelMetric(QStyle::PM_ScrollBarExtent);
-  int previous_width = 0;
+  // int available_width = width() - style()->pixelMetric(QStyle::PM_ScrollBarExtent);
+  // int previous_width = 0;
 
-  std::vector<int> candidate_columns;
+  // std::vector<int> candidate_columns;
 
-  // Iterate through all columns
-  for (int i = 0; i < static_cast<int>(GameListModel::Column::Count); i++)
-  {
-    if (m_list->isColumnHidden(i))
-      continue;
+  // // Iterate through all columns
+  // for (int i = 0; i < static_cast<int>(GameListModel::Column::Count); i++)
+  // {
+  //   if (m_list->isColumnHidden(i))
+  //     continue;
 
-    if (m_list->horizontalHeader()->sectionResizeMode(i) == QHeaderView::Fixed)
-    {
-      available_width -= m_list->columnWidth(i);
-    }
-    else
-    {
-      candidate_columns.push_back(i);
-      previous_width += m_list->columnWidth(i);
-    }
-  }
+  //   if (m_list->horizontalHeader()->sectionResizeMode(i) == QHeaderView::Fixed)
+  //   {
+  //     available_width -= m_list->columnWidth(i);
+  //   }
+  //   else
+  //   {
+  //     candidate_columns.push_back(i);
+  //     previous_width += m_list->columnWidth(i);
+  //   }
+  // }
 
-  for (int column : candidate_columns)
-  {
-    int column_width = static_cast<int>(
-        std::max(5.f, std::ceil(available_width * (static_cast<float>(m_list->columnWidth(column)) /
-                                                   previous_width))));
+  // for (int column : candidate_columns)
+  // {
+  //   int column_width = static_cast<int>(
+  //       std::max(5.f, std::ceil(available_width * (static_cast<float>(m_list->columnWidth(column)) /
+  //                                                  previous_width))));
 
-    m_list->setColumnWidth(column, column_width);
-  }
+  //   m_list->setColumnWidth(column, column_width);
+  // }
 
-  block = false;
+  // block = false;
 }
 
 void GameList::NewTag()

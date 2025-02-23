@@ -38,34 +38,35 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     QWidget* settingsLayoutWrapper = new QWidget();
     settingsLayoutWrapper->setStyleSheet(QStringLiteral(".QWidget{border-radius: 5px; background-color: rgba(0, 0, 0, 120)}"));
     QVBoxLayout* shuffle_settings_layout = new QVBoxLayout(settingsLayoutWrapper);
-    QPushButton* returnButton = new QPushButton();
+    returnButton = new QPushButton();
     returnButton->setFixedSize(100, 100);
-    //TODO: please map this button to do opposite of changeUpperWidget function
+    // connect(returnButton, &QPushButton::clicked, this, [this]() {
+    //     qDebug() << "Back to upper widget";
+    //     emit backToUpperWidget();
+    // });
+
+    // returnButton->installEventFilter(this);
     char *rButtonStyleSheet = (char *) malloc(400);
     std::string returnButtonPng = File::GetSysDirectory() + "Resources/wiimix_back_button.png";
     printf("%s\n", returnButtonPng.data());
     sprintf(rButtonStyleSheet, ".QPushButton{background-image: url(\"%s\"); background-color: transparent; border-color: transparent}", returnButtonPng.data());
     returnButton->setStyleSheet(QString::fromStdString(rButtonStyleSheet));
     shuffle_settings_outer_outer_layout->addWidget(returnButton);
-    //shuffle_settings_layout->addSpacing(40);
+    // shuffle_settings_layout->addSpacing(40);
 
     int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
-    num_switches_label = new QLabel(tr("Number of Objectives:"));
+    QLabel* num_switches_label = new QLabel(tr("Number of Players:"));
     num_switches_label->setFont(*font);
-    m_num_switches = new QLineEdit();
-    m_num_switches->setText(QString::number(num_switches));
-    QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
-    m_num_switches->setValidator(int_validator);
-
-
-    //num_switches_layout->addSpacing(120);
+    m_num_players = new QSpinBox();
+    m_num_players->setRange(1, 2);
+    num_switches_layout->addSpacing(120);
     num_switches_layout->addWidget(num_switches_label);
-    num_switches_layout->addWidget(m_num_switches);
-    //num_switches_layout->addSpacing(120);
+    num_switches_layout->addWidget(m_num_players_label);
+    num_switches_layout->addSpacing(120);
 
-    //shuffle_settings_layout->addWidget(num_switches_label);
+    // shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
     // shuffle_settings_layout->addLayout(endlessHLayout);
     QHBoxLayout* minSwitchHBox = new QHBoxLayout();
@@ -84,24 +85,32 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_max_time_between_switch->setValue(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
     m_max_time_between_switch->setSliderPosition(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
-    //minSwitchHBox->addSpacing(120);
-    setTabOrder(m_num_switches, m_min_time_between_switch);
+    // minSwitchHBox->addSpacing(120);
+    // setTabOrder(m_num_players, m_min_time_between_switch);
     minSwitchHBox->addWidget(m_min_switch_time_label);
     minSwitchHBox->addWidget(m_min_time_between_switch);
-    //minSwitchHBox->addSpacing(120);
+    // minSwitchHBox->addSpacing(120);
     shuffle_settings_layout->addLayout(minSwitchHBox);
-    //maxSwitchHBox->addSpacing(120);
+    // maxSwitchHBox->addSpacing(120);
     setTabOrder(m_min_time_between_switch, m_max_time_between_switch);
     maxSwitchHBox->addWidget(m_max_switch_time_label);
     maxSwitchHBox->addWidget(m_max_time_between_switch);
-    //maxSwitchHBox->addSpacing(120);
+    // maxSwitchHBox->addSpacing(120);
     shuffle_settings_layout->addLayout(maxSwitchHBox);
     QHBoxLayout* startButtonBox = new QHBoxLayout();
     //startButtonBox->addSpacing(120);
     startButton = new QPushButton(QStringLiteral("Start"));
     startButtonBox->addWidget(startButton);
-    //startButtonBox->addSpacing(120);
-    //TODO: map this button to open shuffle
+    // connect(startButton, &QPushButton::clicked, this, [this]() {
+    //     qDebug() << "Start Shuffle";
+    //     WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_min_time_between_switch->value());
+    //     WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_max_time_between_switch->value());
+    //     // Really just number of objectives 
+    //     WiiMixShuffleSettings::instance()->SetNumberOfSwitches(3);
+    //     emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
+    // });
+    // startButton->installEventFilter(this);
+    // startButtonBox->addSpacing(120);
     shuffle_settings_layout->addLayout(startButtonBox);
 
     shuffle_settings_layout->addSpacing(100);
@@ -109,14 +118,14 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     shuffle_settings_outer_outer_layout->addLayout(shuffle_settings_outer_layout);
 
 
-    connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
+    connect(m_num_players, &QSpinBox::textChanged, this, [this](const QString& text) {
         setNumSwitches(text.toInt());
     });
 
     // Connect endless_mode to disable/enable number of switches
-    connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
-        setEndless(checked);
-    });
+    // connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
+    //     setEndless(checked);
+    // });
 
     // Connect slider value change to update the label
     connect(m_min_time_between_switch, &QSlider::valueChanged, this, [this](int value) {
@@ -130,16 +139,18 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     //shuffle_settings_box->setLayout(shuffle_settings_layout);
     //m_config_layout->addWidget(shuffle_settings_box);
 }
-void EmbeddedSettingsWindow::setNumSwitches(int num_switches) {
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
-    m_num_switches->setText(QString::number(num_switches));
-}
 
-void EmbeddedSettingsWindow::setEndless(bool endless) {
-    m_endless_mode->setChecked(endless);
-    m_num_switches->setDisabled(endless);
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
-}
+// void EmbeddedSettingsWindow::setNumSwitches(int num_switches) {
+//     Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
+//     m_num_players->setText(QString::number(num_switches));
+// }
+
+// void EmbeddedSettingsWindow::setEndless(bool endless) {
+//     m_endless_mode->setChecked(endless);
+//     m_num_players->setDisabled(endless);
+//     Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
+// }
+
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
 void EmbeddedSettingsWindow::setMinTimeBetweenSwitch(int min_time) {
     m_min_time_between_switch->setValue(min_time);
@@ -163,10 +174,14 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
         selectedSetting += 1;
         selectedSetting %= 4;
         if (prev_selected == 0) {
-            num_switches_label->setGraphicsEffect(nullptr);
-        } else if (prev_selected == 1) {
+            returnButton->setGraphicsEffect(nullptr);
+        }
+        else if (prev_selected == 1) {
+            m_num_players_label->setGraphicsEffect(nullptr);
+        }
+        else if (prev_selected == 2) {
             m_min_switch_time_label->setGraphicsEffect(nullptr);
-        } else if (prev_selected == 2) {
+        } else if (prev_selected == 3) {
             m_max_switch_time_label->setGraphicsEffect(nullptr);
         } else {
             startButton->setGraphicsEffect(nullptr);
@@ -176,10 +191,14 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
         glow->setOffset(0);
         glow->setBlurRadius(10);
         if (selectedSetting == 0) {
-            num_switches_label->setGraphicsEffect(glow);
-        } else if (selectedSetting == 1) {
+            returnButton->setGraphicsEffect(glow);
+        }
+        else if (selectedSetting == 1) {
+            m_num_players_label->setGraphicsEffect(glow);
+        }
+        else if (selectedSetting == 2) {
             m_min_switch_time_label->setGraphicsEffect(glow);
-        } else if (selectedSetting == 2) {
+        } else if (selectedSetting == 3) {
             m_max_switch_time_label->setGraphicsEffect(glow);
         } else {
             startButton->setGraphicsEffect(glow);
@@ -191,10 +210,14 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
             selectedSetting += 4;
         }
         if (prev_selected == 0) {
-            num_switches_label->setGraphicsEffect(nullptr);
-        } else if (prev_selected == 1) {
+            returnButton->setGraphicsEffect(nullptr);
+        }
+        else if (prev_selected == 1) {
+            m_num_players_label->setGraphicsEffect(nullptr);
+        }
+        else if (prev_selected == 2) {
             m_min_switch_time_label->setGraphicsEffect(nullptr);
-        } else if (prev_selected == 2) {
+        } else if (prev_selected == 3) {
             m_max_switch_time_label->setGraphicsEffect(nullptr);
         } else {
             startButton->setGraphicsEffect(nullptr);
@@ -204,38 +227,61 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
         glow->setOffset(0);
         glow->setBlurRadius(10);
         if (selectedSetting == 0) {
-            num_switches_label->setGraphicsEffect(glow);
-        } else if (selectedSetting == 1) {
+            returnButton->setGraphicsEffect(glow);
+        }
+        else if (selectedSetting == 1) {
+            m_num_players_label->setGraphicsEffect(glow);
+        }
+        else if (selectedSetting == 2) {
             m_min_switch_time_label->setGraphicsEffect(glow);
-        } else if (selectedSetting == 2) {
+        } else if (selectedSetting == 3) {
             m_max_switch_time_label->setGraphicsEffect(glow);
         } else {
             startButton->setGraphicsEffect(glow);
         }
     } else if (keyEvent->key() == Qt::Key_D) {
         // increase something
-        if (selectedSetting == 0) {
-            m_num_switches->setText(QString::number(m_num_switches->text().toInt() + 1));
-        } else if (selectedSetting == 1) { // min time
+        if (selectedSetting == 2) { // min time
             setMinTimeBetweenSwitch(m_min_time_between_switch->value() + 1);
-        } else if (selectedSetting == 2) { // max time
+        } else if (selectedSetting == 3) { // max time
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() + 1);
+        }
+        else if (selectedSetting == 1) { // max time
+            setMaxTimeBetweenSwitch(m_num_players->value() + 1);
         }
     } else if (keyEvent->key() == Qt::Key_A) {
         // decrease something
-        if (selectedSetting == 0) {
-            m_num_switches->setText(QString::number(m_num_switches->text().toInt() - 1));
-        } else if (selectedSetting == 1) { // min time
+        if (selectedSetting == 2) { // min time
             setMinTimeBetweenSwitch(m_min_time_between_switch->value() - 1);
-        } else if (selectedSetting == 2) { // max time
+        } else if (selectedSetting == 3) { // max time
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() - 1);
         }
-    } else if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return) {
+        else if (selectedSetting == 1) { // max time
+            setMaxTimeBetweenSwitch(m_num_players->value() - 1);
+        }
+    } 
+    else if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return) {
+        if (selectedSetting == 0) {
+            // return
+            emit backToUpperWidget();
+        }
         if (selectedSetting == 4) {
-            //TODO: think of it as starting game, so trigger exactly the same thing as on click
+            // start
+            qDebug() << "Start Shuffle";
+            WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_min_time_between_switch->value());
+            WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_max_time_between_switch->value());
+            if (m_num_players->value() == 1) {
+                WiiMixShuffleSettings::instance()->SetObjectiveTypes({WiiMixEnums::ObjectiveType::SINGLE_PLAYER});
+            } else {
+                WiiMixShuffleSettings::instance()->SetObjectiveTypes({WiiMixEnums::ObjectiveType::VERSUS});
+            }
+            // Really just number of objectives
+            WiiMixShuffleSettings::instance()->SetNumberOfSwitches(3);
+            emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
         }
     }
 };
+
 bool EmbeddedSettingsWindow::eventFilter(QObject* obj, QEvent* event) {
     return QWidget::eventFilter(obj, event);
 };
