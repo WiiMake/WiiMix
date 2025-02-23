@@ -34,7 +34,7 @@ void WiiMixModesWidget::CreateLayout() {
     m_mode_selectors = {};
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
         WiiMixButton* frame = new WiiMixButton();
-        frame->setFixedSize(300, 169);
+        frame->setFixedSize(420, 237);
         frame->setFocusPolicy(Qt::TabFocus);
         // Set up WiiMixButton
         char * backgroundImagePath = (char *) malloc(200);
@@ -44,7 +44,6 @@ void WiiMixModesWidget::CreateLayout() {
         else {
             strncpy(backgroundImagePath, (File::GetSysDirectory() + "Resources" + "/temporary_gradient_bg.png").data(), 200);
         }
-        printf("%s\n", backgroundImagePath);
         frame->setBorderRadius(18);
         frame->setBorderWidth(4);
         frame->setBorderColor("gray");
@@ -61,7 +60,7 @@ void WiiMixModesWidget::CreateLayout() {
 
     // Create selectors
     QFont titleFont = QFont();
-    titleFont.setPointSize(42);
+    titleFont.setPointSize(60);
     titleFont.setBold(true);
 
     QFont descriptionFont = QFont();
@@ -74,7 +73,7 @@ void WiiMixModesWidget::CreateLayout() {
         }
 
         // Title
-        QLabel* title = new QLabel(titleText);
+        QLabel* title = new QLabel(titleText.toUpper());
         title->setFont(titleFont);
         title->setStyleSheet(QStringLiteral(".QLabel {color: white;}"));
         title->setAlignment(Qt::AlignCenter);

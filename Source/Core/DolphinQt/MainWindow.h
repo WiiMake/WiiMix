@@ -353,5 +353,5 @@ private:
   QWidget* m_wiimix_bg_widget;
 
   // ================ Modes Widget ================
-  WiiMixModesWidget* m_modes_widget;
+  WiiMixModesWidget* m_upper_widget;
 };

@@ -506,6 +506,8 @@ else()
     WiiMix/RogueWindow.h
 		WiiMix/WebAPI.cpp
 		WiiMix/WebAPI.h
+          WiiMix/EmbeddedSettingsWindow.cpp
+          WiiMix/EmbeddedSettingsWindow.h
   )
 
   set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")

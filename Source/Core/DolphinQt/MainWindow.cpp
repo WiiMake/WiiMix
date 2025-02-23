@@ -487,11 +487,11 @@ static void InstallHotkeyFilter(QWidget* dialog)
 
 void MainWindow::CreateComponents()
 {
-
   m_render_widget = new RenderWidget(this);
   m_stack = new QStackedWidget(this);
-  m_modes_widget = new WiiMixModesWidget(this);
-  m_modes_widget->setFixedSize(1280, 620);
+  m_upper_widget = new WiiMixModesWidget(this);
+  m_upper_widget->setAutoFillBackground(true);
+  m_upper_widget->setFixedSize(1280, 620);
   m_wii_mix_button = new WiiMixLogoButton();
   m_wii_mix_button->setIcon(Resources::GetResourceIcon("wiimix_text"));
   m_wii_mix_button->setStyleSheet(QStringLiteral("QToolButton {background-color: #00000000; color: #00000000; border: #FFFFFF}"));
@@ -501,22 +501,20 @@ void MainWindow::CreateComponents()
   m_wiimix_bg_widget->setAutoFillBackground(true);
   m_wiimix_bg_widget->setMaximumHeight(100);
   m_wiimix_bg_widget->setMinimumWidth(1280);
-  QPixmap background = (Resources::GetResourceIcon("wiimix_background_top").pixmap(1200,800));
+  QPixmap background = (Resources::GetResourceIcon("wiimix_background_top").pixmap(1200, 800));
   background.scaled(this->size());
   QPalette bg_palette;
   QBrush* backgroundBrush = new QBrush();
   backgroundBrush->setTexture(background);
   bg_palette.setBrush(QPalette::Window, *backgroundBrush);
-  this->setPalette(bg_palette);
+  m_upper_widget->setPalette(bg_palette);
 
   QHBoxLayout* bottom_buttons = new QHBoxLayout(m_wiimix_bg_widget);
   bottom_buttons->setSpacing(0); // Set spacing between widgets
   bottom_buttons->setContentsMargins(2, 2, 0, 0); // Remove any margins around the buttons
   bottom_buttons->addStretch(); // Add space before the buttons
-  // bottom_buttons->addWidget(m_load_button_box, 0);
   bottom_buttons->addWidget(m_wii_mix_button, 0);
   bottom_buttons->addStretch();
-  // bottom_buttons->addWidget(m_save_button_box, 0);
 
   QPixmap buttonBackground;
   if (Config::Get(Config::MAIN_THEME_NAME) == "Clean" || Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
@@ -552,9 +550,9 @@ void MainWindow::CreateComponents()
 
   // this->layout()->addWidget(button);
 
-  // Set the layout for this widget
-  // layout->addWidget(m_modes_widget);
-  // setLayout(layout);
+   //Set the layout for this widget
+//   layout->addWidget(m_modes_widget);
+//   setLayout(layout);
 }
 
 // ====================== MODES WIDGET ======================
@@ -804,7 +802,7 @@ void MainWindow::ConnectStack()
   auto* layout = new QVBoxLayout;
   widget->setLayout(layout);
 
-  layout->addWidget(m_modes_widget, 2);
+  layout->addWidget(m_upper_widget, 2);
   layout->addWidget(m_wiimix_bg_widget, 1);
 
   layout->setContentsMargins(0, 0, 0, 0);

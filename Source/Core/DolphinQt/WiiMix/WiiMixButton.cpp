@@ -51,8 +51,8 @@ void WiiMixButton::drawButton() {
     char styleSheet[500];
     if (hasBackgroundImage) {
         std::snprintf(styleSheet, 500,
-                      ".QFrame {background-image: url(\"%s\"); border-radius: %dpx; border-width: %dpx; border-color: %s; border-style: solid}",
-                      backgroundImage.data(), border_radius, border_width, border_color.data());
+                      ".QFrame {border-image: url(\"%s\") %d stretch stretch; border-radius: %dpx; border-width: %dpx; border-color: %s; border-style: solid}",
+                      backgroundImage.data(), border_radius, border_radius, border_width, border_color.data());
     } else {
         std::snprintf(styleSheet, 500,
                       ".QFrame {border-radius: %dpx; border-width: %dpx; border-color: %s; border-style: solid}",
