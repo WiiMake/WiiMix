@@ -20,7 +20,7 @@
 #include "Common/IniFile.h"
 #include "Core/ConfigManager.h"
 
-WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games, int current_objective, WiiMixPlayer *player) : m_mode(mode), m_games(games), m_current_objective(current_objective), m_player(player) {
+WiiMixGlobalSettings::WiiMixGlobalSettings(WiiMixEnums::Mode mode, std::vector<std::shared_ptr<const UICommon::GameFile>> games, int current_objective, WiiMixPlayer *player, std::vector<int> scores) : m_mode(mode), m_games(games), m_current_objective(current_objective), m_player(player), m_objective_scores(scores) {
     WiiMixEnums::Mode config_mode = Config::Get(Config::WIIMIX_MODE);
     if (mode != DEFAULT_MODE) {
         m_mode = mode;
@@ -286,4 +286,16 @@ std::string WiiMixGlobalSettings::GetSaveStatePath(WiiMixObjective objective) {
 
 std::string WiiMixGlobalSettings::GetLiveSaveStatePath(WiiMixObjective objective) {
     return File::GetUserPath(D_WIIMIX_LIVE_STATESAVES_IDX) + objective.GetGameId() + "_" + objective.GetFileHash() + ".sav";
+}
+
+void WiiMixGlobalSettings::SetObjectiveScores(std::vector<int>& scores) {
+    m_objective_scores = scores;
+}
+
+void WiiMixGlobalSettings::IncrementPlayerScore(int player_num) {
+    m_objective_scores.at(player_num - 1) = m_objective_scores.at(player_num - 1) + 1;
+}
+
+std::vector<int>& WiiMixGlobalSettings::GetObjectiveScores() {
+    return m_objective_scores;
 }

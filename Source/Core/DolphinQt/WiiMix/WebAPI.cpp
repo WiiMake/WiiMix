@@ -5,6 +5,10 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QString>
+#include <QByteArray>
+#include <QBuffer>
+
+#include <curl/curl.h>
 
 std::string WiiMixWebAPI::m_username = "WiiMix";
 std::string WiiMixWebAPI::m_token = "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5";
@@ -103,4 +107,37 @@ uint16_t WiiMixWebAPI::getGameID(uint32_t achievement_id) {
     }
   }
   return game_id;
+}
+
+std::vector<uint8_t> WiiMixWebAPI::getAchievementIcon(int achievement_id) {
+  QPixmap icon;
+  CURL* curl = curl_easy_init();
+  CURLcode res;
+  std::string readBuffer;
+  std::vector<uint8_t> iconData;
+  if (curl)
+  {
+    std::string url = "https://retroachievements.org/Badge/" + std::to_string(achievement_id) + "_lock.png";
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    if (res == CURLE_OK)
+    {
+      iconData.assign(readBuffer.begin(), readBuffer.end());
+      // QImage image;
+      // image.loadFromData(reinterpret_cast<const uchar*>(iconData.data()), iconData.size(), "PNG");
+      // // if (!image.isNull())
+      // // {
+      // //   QImage rgbaImage = image.convertToFormat(QImage::Format_RGBA8888);
+      // //   uchar* pixels = rgbaImage.bits();
+      // //   int size = rgbaImage.height() * rgbaImage.width() * 4;
+      // //   iconData.assign(rgbaImage.bits(), rgbaImage.bits() + size);
+      // // }
+      // iconData.assign(image.bits(), image.bits() + image.sizeInBytes() * 8);
+    }
+  }
+  return iconData;
 }

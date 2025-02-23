@@ -662,6 +662,44 @@ QString WiiMixConfigWidget::GetSaveStateBank() const {
     return m_save_state_bank->currentText();
 }
 
+std::vector<WiiMixEnums::ObjectiveType> WiiMixConfigWidget::GetObjectiveTypes() {
+    std::vector<WiiMixEnums::ObjectiveType> objective_types;
+    for (int i = 0; i < m_objective_types->count(); ++i) {
+        if (m_objective_types->item(i)->isSelected()) {
+            objective_types.push_back(static_cast<WiiMixEnums::ObjectiveType>(i));
+        }
+    }
+    return objective_types;
+}
+
+void WiiMixConfigWidget::SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> objective_types) {
+    for (int i = 0; i < m_objective_types->count(); ++i) {
+        m_objective_types->item(i)->setSelected(false);
+    }
+    for (const auto& type : objective_types) {
+        m_objective_types->item(static_cast<int>(type))->setSelected(true);
+    }
+}
+
+std::vector<WiiMixEnums::GameGenre> WiiMixConfigWidget::GetGameGenres() {
+    std::vector<WiiMixEnums::GameGenre> game_genres;
+    for (int i = 0; i < m_game_genres->count(); ++i) {
+        if (m_game_genres->item(i)->isSelected()) {
+            game_genres.push_back(static_cast<WiiMixEnums::GameGenre>(i));
+        }
+    }
+    return game_genres;
+}
+
+void WiiMixConfigWidget::SetGameGenres(std::vector<WiiMixEnums::GameGenre> game_genres) {
+    for (int i = 0; i < m_game_genres->count(); ++i) {
+        m_game_genres->item(i)->setSelected(false);
+    }
+    for (const auto& genre : game_genres) {
+        m_game_genres->item(static_cast<int>(genre))->setSelected(true);
+    }
+}
+
 int WiiMixConfigWidget::GetNumSwitches() const {
     return m_num_switches->text().toInt();
 }

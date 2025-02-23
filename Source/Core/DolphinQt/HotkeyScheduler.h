@@ -46,6 +46,10 @@ signals:
   void BingoBoardHotkey();
   void ResetCurrentObjectiveHotkey();
   void StopWiiMixHotkey();
+  void P1ClaimObjectiveHotkey(int player_num);
+  void P2ClaimObjectiveHotkey(int player_num);
+  // void P3ClaimObjectiveHotkey(int player_num);
+  // void P4ClaimObjectiveHotkey(int player_num);
   // void ObjectiveLoadSlotHotkey();
   void StateLoadSlot(int state);
   void ObjectiveLoadSlot(int state);

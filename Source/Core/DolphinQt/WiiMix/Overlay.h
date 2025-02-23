@@ -2,11 +2,9 @@
 // Created by Владислав Павловский on 25.10.2024.
 //
 
-#ifndef DOLPHIN_EMU_OVERLAY_H
-#define DOLPHIN_EMU_OVERLAY_H
-
-#endif //DOLPHIN_EMU_OVERLAY_H
+#pragma once
 
 namespace WiiMixOverlay {
+    std::vector<u8> getRow(VideoCommon::CustomTextureData::ArraySlice::Level * texture, int row);
     bool displayBingoBoard(std::vector<std::string> filenames);
 }

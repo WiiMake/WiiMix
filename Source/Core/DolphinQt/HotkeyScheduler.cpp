@@ -551,6 +551,12 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_STOP_WIIMIX))
         emit StopWiiMixHotkey();
 
+      if (IsHotkey(HK_CLAIM_COMPLETED_OBJECTIVE_P1))
+        emit P1ClaimObjectiveHotkey(1);
+
+      if (IsHotkey(HK_CLAIM_COMPLETED_OBJECTIVE_P2))
+        emit P2ClaimObjectiveHotkey(2);
+
       // Stereoscopy
       if (IsHotkey(HK_TOGGLE_STEREO_SBS))
       {

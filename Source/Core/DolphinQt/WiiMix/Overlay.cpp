@@ -88,17 +88,14 @@ namespace WiiMixOverlay {
             }
         }
         // todox: according to the print statements below, size of bingoBoard is incorrect
-        //printf("size of bingoBoard: %ld\n", bingoBoard->data.size());
-        //printf("size should be: %ld\n", (long) bingoBoard->height * 4 * bingoBoard->width);
-        /*
-         * uncomment this to print buffer
+        printf("size of bingoBoard: %ld\n", bingoBoard->data.size());
+        printf("size should be: %ld\n", (long) bingoBoard->height * 4 * bingoBoard->width);
         for (int i = 0; i < bingoBoard->height; i++) {
             for (int j = 0; j < bingoBoard->width * 4; j++) {
                 printf("%-3d ", bingoBoard->data[i * bingoBoard->width * 4 + j]);
             }
             printf("\n");
         }
-        */
         OSD::AddMessage("", 100000, OSD::Color::YELLOW, bingoBoard);
         OSD::DrawMessages();
         return true;

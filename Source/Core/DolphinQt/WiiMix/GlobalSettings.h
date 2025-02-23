@@ -14,6 +14,7 @@
 
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QList>
 
 #include <algorithm>
 #include <random>
@@ -83,6 +84,10 @@ public:
   static std::string GetSaveStatePath(WiiMixObjective objective);
   static std::string GetLiveSaveStatePath(WiiMixObjective objective);
   
+  std::vector<int>& GetObjectiveScores();
+  void SetObjectiveScores(std::vector<int>& scores);
+  void IncrementPlayerScore(int player);
+
   // QJsonObject ToJsonCommon();
   // void FromJsonCommon(QJsonDocument settings_json);
 
@@ -107,7 +112,7 @@ protected:
   // The default constructor is protected, as there should only be one instance of WiiMixSettings
   // It should only be called within the classes that extend it
 
-  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES, int current_objective = 0, WiiMixPlayer *player = nullptr);
+  explicit WiiMixGlobalSettings(WiiMixEnums::Mode mode = DEFAULT_MODE, std::vector<std::shared_ptr<const UICommon::GameFile>> games = DEFAULT_GAMES, int current_objective = 0, WiiMixPlayer *player = nullptr, std::vector<int> default_scores = {});
 
   inline static WiiMixGlobalSettings* s_instance = nullptr; // Singleton instance
 
@@ -116,4 +121,5 @@ private:
   std::vector<std::shared_ptr<const UICommon::GameFile>> m_games;
   int m_current_objective;
   WiiMixPlayer *m_player;
+  std::vector<int> m_objective_scores;
 };
