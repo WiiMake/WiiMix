@@ -248,6 +248,9 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() + 1);
         }
         else if (selectedSetting == 1) { // max time
+            if (m_num_players->value() >= 2) {
+                return;
+            }
             setNumSwitches(m_num_players->value() + 1);
         }
     } else if (keyEvent->key() == Qt::Key_A) {
@@ -258,6 +261,9 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() - 1);
         }
         else if (selectedSetting == 1) { // max time
+            if (m_num_players->value() <= 1) {
+                return;
+            }
             setNumSwitches(m_num_players->value() - 1);
         }
     } 
