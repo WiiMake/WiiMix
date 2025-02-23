@@ -713,6 +713,8 @@ void MainWindow::ConnectMenuBar()
 
 void MainWindow::ConnectHotkeys()
 {
+  connect(m_hotkey_scheduler, &HotkeyScheduler::P1ClaimObjectiveHotkey, this, &MainWindow::ClaimObjective);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::P2ClaimObjectiveHotkey, this, &MainWindow::ClaimObjective);
   connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::ShowWiiMixWindow);
   connect(m_hotkey_scheduler, &HotkeyScheduler::Open, this, &MainWindow::Open);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ChangeDisc, this, &MainWindow::ChangeDisc);
@@ -952,6 +954,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective) {
 void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string save_path) {
   // char buf[6];
   // sprintf(buf, "%d", new_objective.GetId());
+  qDebug() << "Starting";
   std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(new_objective);
   qDebug() << "savestate_file: " << QString::fromStdString(savestate_file);
   if (!File::Exists(savestate_file)) {
@@ -998,7 +1001,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       // WiiMixOverlay::displayBingoBoard(files);
 
       OSD::ClearMessages();
-      OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 60000, OSD::Color::GREEN, icon);
+      OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 10000000, OSD::Color::GREEN, icon);
       // OSD::DrawMessages();
       return;
     }
@@ -1012,42 +1015,46 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
 }
 
 void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
-  std::string savestate_file = WiiMixGlobalSettings::GetSaveStatePath(current_objective);
+  std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(current_objective);
+  if (!File::Exists(savestate_file)) {
+    savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
+    if (!File::Exists(savestate_file)) {
+      return;
+    }
+  }
   // dont stop the game if its the same game
+  qDebug() << "Swapping: " << QString::fromStdString(savestate_file);
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
     if (Core::safe_to_quit) {
       qDebug() << "Saving state to:" << QString::fromStdString(savestate_file);
       State::SaveAs(Core::System::GetInstance(), savestate_file);
     }
-    while (Core::safe_to_quit == false)
-      QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-    savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(new_objective);
-    if (!File::Exists(savestate_file)) {
-      savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
-      if (!File::Exists(savestate_file)) {
-        return;
+    else {
+      while (Core::safe_to_quit == false) {
+        QCoreApplication::processEvents();
       }
     }
-    State::LoadAs(Core::System::GetInstance(), savestate_file);
-    std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
-    VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
-    VideoCommon::LoadPNGTexture(icon, img_data);
-    // icon->row_length = icon->width;
-    // for (int i = 0; i < icon->height; i++) {
-    //   for (int j = 0; j < icon->width * 4; j++) {
-    //       printf("%-3d ", icon->data[i * icon->width * 4 + j]);
-    //   }
-    //   printf("\n");
-    // }
-    OSD::ClearMessages();
-    OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 60000, OSD::Color::GREEN, icon);
-    // OSD::DrawMessages();
     return;
   }
+  State::LoadAs(Core::System::GetInstance(), savestate_file);
+  std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
+  VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
+  VideoCommon::LoadPNGTexture(icon, img_data);
+  // icon->row_length = icon->width;
+  // for (int i = 0; i < icon->height; i++) {
+  //   for (int j = 0; j < icon->width * 4; j++) {
+  //       printf("%-3d ", icon->data[i * icon->width * 4 + j]);
+  //   }
+  //   printf("\n");
+  // }
+  OSD::ClearMessages();
+  OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 10000000, OSD::Color::GREEN, icon);
+  // OSD::DrawMessages();
   WiiMixStartObjective(new_objective, savestate_file);
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
+  qDebug() << "Restarting objective";
   char buf[6];
   sprintf(buf, "%d", new_objective.GetId());
   std::string savestate_file = WiiMixGlobalSettings::GetSaveStatePath(new_objective);
@@ -1062,10 +1069,10 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective) {
       return;
     }
   }
-
 }
 
 void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObjective current_objective) {
+  qDebug() << "Restarting objective with current objective";
   char buf[6];
   sprintf(buf, "%d", current_objective.GetId());
   std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(current_objective);
@@ -1093,6 +1100,25 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
   // Start the wiimix
   qDebug() << "Bingo calls";
+}
+
+void MainWindow::ClaimObjective(int player_num) {
+  WiiMixGlobalSettings::instance()->IncrementPlayerScore(player_num);
+  std::vector<WiiMixObjective> objectives = WiiMixShuffleSettings::instance()->GetObjectives();
+  objectives.erase(objectives.begin() + WiiMixGlobalSettings::instance()->GetCurrentObjective()); // why are vectors weird lol
+  WiiMixShuffleSettings::instance()->SetObjectives(objectives);
+  WiiMixShuffleSettings::instance()->SetObjectives(objectives);
+  WiiMixGlobalSettings::instance()->SetCurrentObjective(-1);
+  switch (WiiMixGlobalSettings::instance()->GetMode())
+  {
+    case WiiMixEnums::Mode::SHUFFLE:
+      WiiMixShuffleUpdate();
+      break;
+    case WiiMixEnums::Mode::ROGUE:
+      break;
+    case WiiMixEnums::Mode::BINGO:
+      break;
+  }
 }
 
 void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
@@ -1154,7 +1180,7 @@ void MainWindow::WiiMixShuffleUpdate() {
   std::random_device rd;
   std::mt19937 g(rd());
   int next_objective_index = g() % WiiMixShuffleSettings::instance()->GetObjectives().size();
-  while (next_objective_index == WiiMixGlobalSettings::instance()->GetCurrentObjective()) {
+  while (next_objective_index == WiiMixGlobalSettings::instance()->GetCurrentObjective() && WiiMixShuffleSettings::instance()->GetObjectives().size() > 1) {
     g.seed(rd());
     next_objective_index = g() % WiiMixShuffleSettings::instance()->GetObjectives().size();
   }
@@ -1526,7 +1552,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     return;
   }
 
-
   // Boot up, show an error if it fails to load the game.
   if (!BootManager::BootCore(Core::System::GetInstance(), std::move(parameters),
                              ::GetWindowSystemInfo(m_render_widget->windowHandle())))
@@ -1559,8 +1584,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     Config::Set(Config::LayerType::Base, Config::MAIN_FULLSCREEN_DISPLAY_RES, "FullscreenDisplayRes");
     qDebug() << Config::Get(Config::MAIN_FULLSCREEN_DISPLAY_RES).c_str();
   });
-
-
 }
 
 void MainWindow::SetFullScreenResolution(bool fullscreen)

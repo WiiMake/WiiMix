@@ -298,6 +298,10 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     // _trans("Bingo Ready"),
     _trans("Show Bingo Board"),
     _trans("Reset Objective"),
+    _trans("Claim Completed Objective P1"),
+    _trans("Claim Completed Objective P2"),
+    // _trans("Claim Completed Objective P3"),
+    // _trans("Claim Completed Objective P4"),
     _trans("Stop WiiMix"),
 
     _trans("Save Oldest State"),

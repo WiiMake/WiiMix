@@ -198,6 +198,7 @@ private:
   void StartWiiMixBingo(WiiMixBingoSettings* settings);
   void StartWiiMixRogue(WiiMixRogueSettings* settings);
   void StartWiiMixShuffle(WiiMixShuffleSettings* settings);
+  void ClaimObjective(int player_num);
   void WiiMixShuffleUpdate();
   // void WiiMixShowcase(WiiMixBingoSettings settings);
   void ShowRenderWidget();
