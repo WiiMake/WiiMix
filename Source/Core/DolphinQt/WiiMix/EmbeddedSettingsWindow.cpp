@@ -54,17 +54,16 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     shuffle_settings_outer_outer_layout->addWidget(returnButton);
     // shuffle_settings_layout->addSpacing(40);
 
-    int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
-    QLabel* num_switches_label = new QLabel(tr("Number of Players:"));
-    num_switches_label->setFont(*font);
-    m_num_players = new QSpinBox();
+    m_num_players_label = new QLabel(tr("Number of Players: ") + QString::number(Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES)));
+    m_num_players_label->setFont(*font);
+    m_num_players = new QSlider(Qt::Horizontal);
+    m_num_players->setTracking(true);
     m_num_players->setRange(1, 2);
-    num_switches_layout->addSpacing(120);
-    num_switches_layout->addWidget(num_switches_label);
+    m_num_players->setValue(Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES));
     num_switches_layout->addWidget(m_num_players_label);
-    num_switches_layout->addSpacing(120);
+    num_switches_layout->addWidget(m_num_players);
 
     // shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
@@ -118,8 +117,9 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     shuffle_settings_outer_outer_layout->addLayout(shuffle_settings_outer_layout);
 
 
-    connect(m_num_players, &QSpinBox::textChanged, this, [this](const QString& text) {
-        setNumSwitches(text.toInt());
+    connect(m_num_players, &QSlider::valueChanged, this, [this](const int value) {
+        // Config::Set(Config::WIIMIX_NUMBER_OF_SWITCHES);
+        setNumSwitches(value);
     });
 
     // Connect endless_mode to disable/enable number of switches
@@ -140,10 +140,11 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
     //m_config_layout->addWidget(shuffle_settings_box);
 }
 
-// void EmbeddedSettingsWindow::setNumSwitches(int num_switches) {
-//     Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
-//     m_num_players->setText(QString::number(num_switches));
-// }
+void EmbeddedSettingsWindow::setNumSwitches(int num_switches) {
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
+    m_num_players_label->setText(QStringLiteral("Number of Players: ") + QString::number(num_switches));
+    m_num_players->setValue(num_switches);
+}
 
 // void EmbeddedSettingsWindow::setEndless(bool endless) {
 //     m_endless_mode->setChecked(endless);
@@ -172,7 +173,7 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
     if (keyEvent->key() == Qt::Key_S) {
         int prev_selected = selectedSetting;
         selectedSetting += 1;
-        selectedSetting %= 4;
+        selectedSetting %= 5;
         if (prev_selected == 0) {
             returnButton->setGraphicsEffect(nullptr);
         }
@@ -207,7 +208,7 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
         int prev_selected = selectedSetting;
         selectedSetting -= 1;
         if (selectedSetting == -1) {
-            selectedSetting += 4;
+            selectedSetting += 5;
         }
         if (prev_selected == 0) {
             returnButton->setGraphicsEffect(nullptr);
@@ -247,7 +248,7 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() + 1);
         }
         else if (selectedSetting == 1) { // max time
-            setMaxTimeBetweenSwitch(m_num_players->value() + 1);
+            setNumSwitches(m_num_players->value() + 1);
         }
     } else if (keyEvent->key() == Qt::Key_A) {
         // decrease something
@@ -257,7 +258,7 @@ void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
             setMaxTimeBetweenSwitch(m_max_time_between_switch->value() - 1);
         }
         else if (selectedSetting == 1) { // max time
-            setMaxTimeBetweenSwitch(m_num_players->value() - 1);
+            setNumSwitches(m_num_players->value() - 1);
         }
     } 
     else if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return) {

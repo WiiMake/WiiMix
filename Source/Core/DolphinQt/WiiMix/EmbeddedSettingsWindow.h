@@ -15,11 +15,11 @@ class EmbeddedSettingsWindow final : public QWidget {
 
 private:
     QVBoxLayout* m_config_layout;
-    QSpinBox* m_num_players;
     QCheckBox* m_endless_mode;
     QLabel* m_min_switch_time_label;
     QLabel* m_max_switch_time_label;
     QLabel* m_num_players_label;
+    QSlider* m_num_players;
     QSlider* m_min_time_between_switch;
     QSlider* m_max_time_between_switch;
     int selectedSetting;
