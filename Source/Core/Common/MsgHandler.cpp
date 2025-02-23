@@ -112,6 +112,7 @@ static bool ShowMessageAlert(std::string_view text, bool yes_no, Common::Log::Lo
   const char* caption = GetCaption(style);
   // Directly call GenericLogFmt rather than using the normal log macros so that we can use the
   // caller's line file and line number
+
   Common::Log::GenericLogFmt<2>(Common::Log::LogLevel::LERROR, log_type, file, line,
                                 FMT_STRING("{}: {}"), caption, text);
 
