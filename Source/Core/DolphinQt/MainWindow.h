@@ -261,6 +261,7 @@ private:
   QStringList PromptFileNames();
 
   void UpdateScreenSaverInhibition();
+  void ChangeUpperWidget();
 
   void OnStopComplete();
   // void dragEnterEvent(QDragEnterEvent* event) override;

@@ -564,6 +564,7 @@ void MainWindow::ConnectWiiMix() {
   // connect(this, &MainWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
+  connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
   connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
   connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
   connect(WiiMixGameManager::instance(), &WiiMixGameManager::onShuffleUpdate, this, &MainWindow::WiiMixShuffleUpdate);
@@ -833,6 +834,10 @@ QStringList MainWindow::PromptFileNames()
   }
 
   return paths;
+}
+
+void MainWindow::ChangeUpperWidget() {
+  return;
 }
 
 void MainWindow::ChangeDisc()
