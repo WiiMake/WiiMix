@@ -23,6 +23,7 @@
 #include "DolphinQt/WiiMix/Objective.h"
 #include "DolphinQt/WiiMix/WiiMixButton.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
+#include "DolphinQt/WiiMix/EmbeddedSettingsWindow.h"
 
 class QMenu;
 class QStackedWidget;
@@ -355,4 +356,5 @@ private:
 
   // ================ Modes Widget ================
   WiiMixModesWidget* m_upper_widget;
+  EmbeddedSettingsWindow* settingsWindow;
 };

@@ -6,47 +6,108 @@
 #include <QIntValidator>
 #include <QCheckBox>
 #include <QSlider>
+#include <QPushButton>
+#include <QKeyEvent>
+#include <QGraphicsDropShadowEffect>
 #include "EmbeddedSettingsWindow.h"
 #include "Common/Config/Config.h"
 #include "Core/Config/MainSettings.h"
+#include "DolphinQt/Resources.h"
+#include "Common/FileUtil.h"
 
 EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
-    m_config_layout = new QVBoxLayout();
-
-    QGroupBox* shuffle_settings_box = new QGroupBox(tr("Shuffle Settings"));
-    QVBoxLayout* shuffle_settings_layout = new QVBoxLayout();
+    setParent(parent);
+    setAutoFillBackground(true);
+    QPixmap background = (Resources::GetResourceIcon("wiimix_background_top").pixmap(1200, 800));
+    background.scaled(this->size());
+    QPalette bg_palette;
+    QBrush* backgroundBrush = new QBrush();
+    backgroundBrush->setTexture(background);
+    bg_palette.setBrush(QPalette::Window, *backgroundBrush);
+    this->setPalette(bg_palette);
+    //m_config_layout = new QVBoxLayout(this);
+    QFont* font = new QFont();
+    font->setPointSize(32);
+    font->setBold(true);
+    selectedSetting = 0;
+    QVBoxLayout* shuffle_settings_outer_outer_layout = new QVBoxLayout(this);
+    shuffle_settings_outer_outer_layout->installEventFilter(this);
+    setFocusPolicy(Qt::TabFocus);
+    QVBoxLayout* shuffle_settings_outer_layout = new QVBoxLayout();
+    shuffle_settings_outer_layout->setContentsMargins(100, 100, 100, 100);
+    QWidget* settingsLayoutWrapper = new QWidget();
+    settingsLayoutWrapper->setStyleSheet(QStringLiteral(".QWidget{border-radius: 5px; background-color: rgba(0, 0, 0, 120)}"));
+    QVBoxLayout* shuffle_settings_layout = new QVBoxLayout(settingsLayoutWrapper);
+    QPushButton* returnButton = new QPushButton();
+    returnButton->setFixedSize(100, 100);
+    //TODO: please map this button to do opposite of changeUpperWidget function
+    char *rButtonStyleSheet = (char *) malloc(400);
+    std::string returnButtonPng = File::GetSysDirectory() + "Resources/wiimix_back_button.png";
+    printf("%s\n", returnButtonPng.data());
+    sprintf(rButtonStyleSheet, ".QPushButton{background-image: url(\"%s\"); background-color: transparent; border-color: transparent}", returnButtonPng.data());
+    returnButton->setStyleSheet(QString::fromStdString(rButtonStyleSheet));
+    shuffle_settings_outer_outer_layout->addWidget(returnButton);
+    //shuffle_settings_layout->addSpacing(40);
 
     int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
     QHBoxLayout* num_switches_layout = new QHBoxLayout();
 
-    QLabel* num_switches_label = new QLabel(tr("Number of Objectives:"));
+    num_switches_label = new QLabel(tr("Number of Objectives:"));
+    num_switches_label->setFont(*font);
     m_num_switches = new QLineEdit();
     m_num_switches->setText(QString::number(num_switches));
     QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
     m_num_switches->setValidator(int_validator);
 
-    m_endless_mode = new QCheckBox(tr("Endless Mode"));
-    m_endless_mode->setChecked(Config::Get(Config::WIIMIX_IS_ENDLESS));
-    m_num_switches->setDisabled(m_endless_mode->isChecked());
 
+    //num_switches_layout->addSpacing(120);
+    num_switches_layout->addWidget(num_switches_label);
     num_switches_layout->addWidget(m_num_switches);
-    num_switches_layout->addWidget(m_endless_mode);
+    //num_switches_layout->addSpacing(120);
 
-    shuffle_settings_layout->addWidget(num_switches_label);
+    //shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
-
-    m_min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
+    // shuffle_settings_layout->addLayout(endlessHLayout);
+    QHBoxLayout* minSwitchHBox = new QHBoxLayout();
+    m_min_switch_time_label = new QLabel(QStringLiteral("Min Time Between Shuffles: ") + QString::number(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH)));
+    m_min_switch_time_label->setFont(*font);
     m_min_time_between_switch = new QSlider(Qt::Horizontal);
+    m_min_time_between_switch->setTracking(true);
     m_min_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_min_time_between_switch->setValue(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH));
-    m_max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
+    m_min_time_between_switch->setSliderPosition(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH));
+    QHBoxLayout* maxSwitchHBox = new QHBoxLayout();
+    m_max_switch_time_label = new QLabel(QStringLiteral("Max Time Between Shuffles: ") + QString::number(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH)));
+    m_max_switch_time_label->setFont(*font);
     m_max_time_between_switch = new QSlider(Qt::Horizontal);
+    m_max_time_between_switch->setTracking(true);
     m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_max_time_between_switch->setValue(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
-    shuffle_settings_layout->addWidget(m_min_switch_time_label);
-    shuffle_settings_layout->addWidget(m_min_time_between_switch);
-    shuffle_settings_layout->addWidget(m_max_switch_time_label);
-    shuffle_settings_layout->addWidget(m_max_time_between_switch);
+    m_max_time_between_switch->setSliderPosition(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
+    //minSwitchHBox->addSpacing(120);
+    setTabOrder(m_num_switches, m_min_time_between_switch);
+    minSwitchHBox->addWidget(m_min_switch_time_label);
+    minSwitchHBox->addWidget(m_min_time_between_switch);
+    //minSwitchHBox->addSpacing(120);
+    shuffle_settings_layout->addLayout(minSwitchHBox);
+    //maxSwitchHBox->addSpacing(120);
+    setTabOrder(m_min_time_between_switch, m_max_time_between_switch);
+    maxSwitchHBox->addWidget(m_max_switch_time_label);
+    maxSwitchHBox->addWidget(m_max_time_between_switch);
+    //maxSwitchHBox->addSpacing(120);
+    shuffle_settings_layout->addLayout(maxSwitchHBox);
+    QHBoxLayout* startButtonBox = new QHBoxLayout();
+    //startButtonBox->addSpacing(120);
+    startButton = new QPushButton(QStringLiteral("Start"));
+    startButtonBox->addWidget(startButton);
+    //startButtonBox->addSpacing(120);
+    //TODO: map this button to open shuffle
+    shuffle_settings_layout->addLayout(startButtonBox);
+
+    shuffle_settings_layout->addSpacing(100);
+    shuffle_settings_outer_layout->addWidget(settingsLayoutWrapper);
+    shuffle_settings_outer_outer_layout->addLayout(shuffle_settings_outer_layout);
+
 
     connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
         setNumSwitches(text.toInt());
@@ -66,8 +127,8 @@ EmbeddedSettingsWindow::EmbeddedSettingsWindow(QWidget *parent) {
         setMaxTimeBetweenSwitch(value);
     });
 
-    shuffle_settings_box->setLayout(shuffle_settings_layout);
-    m_config_layout->addWidget(shuffle_settings_box);
+    //shuffle_settings_box->setLayout(shuffle_settings_layout);
+    //m_config_layout->addWidget(shuffle_settings_box);
 }
 void EmbeddedSettingsWindow::setNumSwitches(int num_switches) {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_NUMBER_OF_SWITCHES, num_switches);
@@ -90,7 +151,91 @@ void EmbeddedSettingsWindow::setMinTimeBetweenSwitch(int min_time) {
 // WARNING: this combined with rerendering the entire window & network requests might be too costly
 void EmbeddedSettingsWindow::setMaxTimeBetweenSwitch(int max_time) {
     m_max_time_between_switch->setValue(max_time);
-    m_min_time_between_switch->setSliderPosition(max_time);
+    m_max_time_between_switch->setSliderPosition(max_time);
     m_max_switch_time_label->setText(QStringLiteral("Max Time Between Shuffles: ") + QString::number(max_time));
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
 }
+
+void EmbeddedSettingsWindow::keyPressEvent(QKeyEvent *keyEvent) {
+    qDebug() << "EmbeddedSettingsWindow caught keyboard event";
+    if (keyEvent->key() == Qt::Key_S) {
+        int prev_selected = selectedSetting;
+        selectedSetting += 1;
+        selectedSetting %= 4;
+        if (prev_selected == 0) {
+            num_switches_label->setGraphicsEffect(nullptr);
+        } else if (prev_selected == 1) {
+            m_min_switch_time_label->setGraphicsEffect(nullptr);
+        } else if (prev_selected == 2) {
+            m_max_switch_time_label->setGraphicsEffect(nullptr);
+        } else {
+            startButton->setGraphicsEffect(nullptr);
+        }
+        QGraphicsDropShadowEffect* glow = new QGraphicsDropShadowEffect();
+        glow->setColor(Qt::blue);
+        glow->setOffset(0);
+        glow->setBlurRadius(10);
+        if (selectedSetting == 0) {
+            num_switches_label->setGraphicsEffect(glow);
+        } else if (selectedSetting == 1) {
+            m_min_switch_time_label->setGraphicsEffect(glow);
+        } else if (selectedSetting == 2) {
+            m_max_switch_time_label->setGraphicsEffect(glow);
+        } else {
+            startButton->setGraphicsEffect(glow);
+        }
+    } else if (keyEvent->key() == Qt::Key_W) {
+        int prev_selected = selectedSetting;
+        selectedSetting -= 1;
+        if (selectedSetting == -1) {
+            selectedSetting += 4;
+        }
+        if (prev_selected == 0) {
+            num_switches_label->setGraphicsEffect(nullptr);
+        } else if (prev_selected == 1) {
+            m_min_switch_time_label->setGraphicsEffect(nullptr);
+        } else if (prev_selected == 2) {
+            m_max_switch_time_label->setGraphicsEffect(nullptr);
+        } else {
+            startButton->setGraphicsEffect(nullptr);
+        }
+        QGraphicsDropShadowEffect* glow = new QGraphicsDropShadowEffect();
+        glow->setColor(Qt::blue);
+        glow->setOffset(0);
+        glow->setBlurRadius(10);
+        if (selectedSetting == 0) {
+            num_switches_label->setGraphicsEffect(glow);
+        } else if (selectedSetting == 1) {
+            m_min_switch_time_label->setGraphicsEffect(glow);
+        } else if (selectedSetting == 2) {
+            m_max_switch_time_label->setGraphicsEffect(glow);
+        } else {
+            startButton->setGraphicsEffect(glow);
+        }
+    } else if (keyEvent->key() == Qt::Key_D) {
+        // increase something
+        if (selectedSetting == 0) {
+            m_num_switches->setText(QString::number(m_num_switches->text().toInt() + 1));
+        } else if (selectedSetting == 1) { // min time
+            setMinTimeBetweenSwitch(m_min_time_between_switch->value() + 1);
+        } else if (selectedSetting == 2) { // max time
+            setMaxTimeBetweenSwitch(m_max_time_between_switch->value() + 1);
+        }
+    } else if (keyEvent->key() == Qt::Key_A) {
+        // decrease something
+        if (selectedSetting == 0) {
+            m_num_switches->setText(QString::number(m_num_switches->text().toInt() - 1));
+        } else if (selectedSetting == 1) { // min time
+            setMinTimeBetweenSwitch(m_min_time_between_switch->value() - 1);
+        } else if (selectedSetting == 2) { // max time
+            setMaxTimeBetweenSwitch(m_max_time_between_switch->value() - 1);
+        }
+    } else if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return) {
+        if (selectedSetting == 4) {
+            //TODO: think of it as starting game, so trigger exactly the same thing as on click
+        }
+    }
+};
+bool EmbeddedSettingsWindow::eventFilter(QObject* obj, QEvent* event) {
+    return QWidget::eventFilter(obj, event);
+};

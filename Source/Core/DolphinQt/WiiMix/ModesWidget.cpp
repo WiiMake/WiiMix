@@ -90,7 +90,7 @@ void WiiMixModesWidget::CreateLayout() {
 }
 
 void WiiMixModesWidget::keyPressEvent(QKeyEvent *keyEvent) {
-    qDebug() << "keyboard press detected";
+    qDebug() << "keyboard press detected in wiimix mode";
     int prev_selected = selected_mode_n;
     if (keyEvent->key() == Qt::Key_D) {
         qDebug() << "D pressed";
@@ -103,7 +103,6 @@ void WiiMixModesWidget::keyPressEvent(QKeyEvent *keyEvent) {
         selected_mode_n -= 1;
         selected_mode_n += (selected_mode_n == -1 ? 3 : 0);
     }
-    //TODO: add S key for selecting wiimix launch, or maybe even map it to start button
     WiiMixButton* other_frame = (WiiMixButton*)(m_mode_selectors[prev_selected]);
     if (other_frame) {
         other_frame->setGraphicsEffect(nullptr);

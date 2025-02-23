@@ -489,6 +489,8 @@ void MainWindow::CreateComponents()
 {
   m_render_widget = new RenderWidget(this);
   m_stack = new QStackedWidget(this);
+  settingsWindow = new EmbeddedSettingsWindow(this);
+  settingsWindow->setFixedSize(0, 0);
   m_upper_widget = new WiiMixModesWidget(this);
   m_upper_widget->setAutoFillBackground(true);
   m_upper_widget->setFixedSize(1280, 620);
@@ -535,6 +537,8 @@ void MainWindow::CreateComponents()
   buttonBackgroundBrush->setTexture(buttonBackground);
   palette->setBrush(QPalette::Window, *buttonBackgroundBrush);
   m_wiimix_bg_widget->setPalette(*palette);
+
+  connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
   // layout->addLayout(m_mode_layout, 2);
   // layout->addLayout(m_button_layout, 1);
 
@@ -564,7 +568,7 @@ void MainWindow::ConnectWiiMix() {
   // connect(this, &MainWindow::StartWiiMixShuffle, this, &MainWindow::PopulateWiiMixShuffleObjectives);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateBingoObjectives, this, &MainWindow::StartWiiMixBingo);
   // connect(m_wiimix_client, &WiiMixClient::onUpdateRogueObjectives, this, &MainWindow::StartWiiMixRogue);
-  connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
+  // connect(m_upper_widget, &WiiMixModesWidget::ModeChanged, this, &MainWindow::ChangeUpperWidget);
   connect(m_wiimix_client, &WiiMixClient::onUpdateShuffleObjectives, this, &MainWindow::StartWiiMixShuffle);
   connect(m_wiimix_client, &WiiMixClient::onBytesRead, this, &MainWindow::TrackStateReadProgress, Qt::QueuedConnection);
   connect(WiiMixGameManager::instance(), &WiiMixGameManager::onShuffleUpdate, this, &MainWindow::WiiMixShuffleUpdate);
@@ -803,8 +807,9 @@ void MainWindow::ConnectStack()
   auto* layout = new QVBoxLayout;
   widget->setLayout(layout);
 
-  layout->addWidget(m_upper_widget, 2);
-  layout->addWidget(m_wiimix_bg_widget, 1);
+  layout->addWidget(m_upper_widget);
+  layout->addWidget(settingsWindow);
+  layout->addWidget(m_wiimix_bg_widget);
 
   layout->setContentsMargins(0, 0, 0, 0);
 
@@ -837,7 +842,11 @@ QStringList MainWindow::PromptFileNames()
 }
 
 void MainWindow::ChangeUpperWidget() {
-  return;
+  m_upper_widget->setFixedSize(0, 0);
+  m_upper_widget->setDisabled(true);
+  settingsWindow->setDisabled(false);
+  settingsWindow->setFocus();
+  settingsWindow->setFixedSize(1280, 620);
 }
 
 void MainWindow::ChangeDisc()
