@@ -300,6 +300,7 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Reset Objective"),
     _trans("Claim Completed Objective P1"),
     _trans("Claim Completed Objective P2"),
+    _trans("Open Controller Window"),
     // _trans("Claim Completed Objective P3"),
     // _trans("Claim Completed Objective P4"),
     _trans("Stop WiiMix"),
@@ -650,6 +651,10 @@ void HotkeyManager::LoadDefaults(const ControllerInterface& ciface)
 
   // Ready for bingo
   // set_key_expression(HK_BINGO_READY, "X");
+
+  set_key_expression(HK_CLAIM_COMPLETED_OBJECTIVE_P1, "Select");
+  set_key_expression(HK_CLAIM_COMPLETED_OBJECTIVE_P2, "Select");
+  set_key_expression(HK_OPEN_CONTROLLER_WINDOW, hotkey_string({"`Ctrl`", "`Shift`", "`C`"}));
 
   set_key_expression(HK_UNDO_LOAD_STATE, "F12");
   set_key_expression(HK_UNDO_SAVE_STATE, hotkey_string({"`Shift`", "`F12`"}));

@@ -297,7 +297,7 @@ private:
 
   // WiiMixSettingsWindow* m_wiimix_window = nullptr;
   // WiiMixStateSendMenu* m_state_send_menu = nullptr;
-  // ControllersWindow* m_controllers_window = nullptr;
+  ControllersWindow* m_controllers_window = nullptr;
   // SettingsWindow* m_settings_window = nullptr;
   // GraphicsWindow* m_graphics_window = nullptr;
   // FIFOPlayerWindow* m_fifo_window = nullptr;

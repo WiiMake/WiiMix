@@ -548,6 +548,9 @@ void HotkeyScheduler::Run()
       if (IsHotkey(HK_RESET_OBJECTIVE))
         emit ResetCurrentObjectiveHotkey();
 
+      if (IsHotkey(HK_OPEN_CONTROLLER_WINDOW))
+        emit OpenControllerWindowHotkey();
+
       if (IsHotkey(HK_STOP_WIIMIX))
         emit StopWiiMixHotkey();
 

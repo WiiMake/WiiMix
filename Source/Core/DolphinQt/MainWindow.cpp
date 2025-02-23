@@ -440,6 +440,9 @@ void MainWindow::InitControllers()
   Keyboard::LoadConfig();
   Keyboard::GetConfig()->SaveConfig();
 
+  HotkeyManagerEmu::LoadConfig();
+  HotkeyManagerEmu::GetConfig()->SaveConfig();
+
   FreeLook::LoadInputConfig();
   FreeLook::GetInputConfig()->SaveConfig();
 }
@@ -690,6 +693,7 @@ void MainWindow::ConnectHotkeys()
   connect(m_hotkey_scheduler, &HotkeyScheduler::ExitHotkey, this, &MainWindow::close);
   connect(m_hotkey_scheduler, &HotkeyScheduler::UnlockCursor, this, &MainWindow::UnlockCursor);
   connect(m_hotkey_scheduler, &HotkeyScheduler::TogglePauseHotkey, this, &MainWindow::TogglePause);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::OpenControllerWindowHotkey, this, &MainWindow::ShowControllersWindow);
   // connect(m_hotkey_scheduler, &HotkeyScheduler::ActivateChat, this, &MainWindow::OnActivateChat);
   // connect(m_hotkey_scheduler, &HotkeyScheduler::RequestGolfControl, this,
   //         &MainWindow::OnRequestGolfControl);
@@ -1645,19 +1649,19 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
   }
 }
 
-// void MainWindow::ShowControllersWindow()
-// {
-//   if (!m_controllers_window)
-//   {
-//     m_controllers_window = new ControllersWindow(this);
-//     InstallHotkeyFilter(m_controllers_window);
-//   }
+void MainWindow::ShowControllersWindow()
+{
+  if (!m_controllers_window)
+  {
+    m_controllers_window = new ControllersWindow(this);
+    InstallHotkeyFilter(m_controllers_window);
+  }
 
-//   SetQWidgetWindowDecorations(m_controllers_window);
-//   m_controllers_window->show();
-//   m_controllers_window->raise();
-//   m_controllers_window->activateWindow();
-// }
+  SetQWidgetWindowDecorations(m_controllers_window);
+  m_controllers_window->show();
+  m_controllers_window->raise();
+  m_controllers_window->activateWindow();
+}
 
 // void MainWindow::ShowFreeLookWindow()
 // {

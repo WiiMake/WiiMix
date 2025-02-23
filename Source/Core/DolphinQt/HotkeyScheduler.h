@@ -41,6 +41,7 @@ signals:
   void SetStateSlotHotkey(int slot);
   void IncrementSelectedStateSlotHotkey();
   void DecrementSelectedStateSlotHotkey();
+  void OpenControllerWindowHotkey();
   void StateLoadSlotHotkey();
   void StateSaveSlotHotkey();
   void BingoBoardHotkey();
