@@ -992,14 +992,14 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       // }
       // printf("%d\n", icon->data.size());
 
-      std::vector<std::string> files = {};
-      for (int i = 0; i < 25; i++) {
-        files.push_back("/home/xanmankey/Programming/OpenSource/WiiMix/Data/Sys/Resources/Flag_Russia.png");
-      }
-      WiiMixOverlay::displayBingoBoard(files);
+      // std::vector<std::string> files = {};
+      // for (int i = 0; i < 25; i++) {
+      //   files.push_back("/home/xanmankey/Programming/OpenSource/WiiMix/Data/Sys/Resources/Flag_Russia.png");
+      // }
+      // WiiMixOverlay::displayBingoBoard(files);
 
-      // OSD::ClearMessages();
-      // OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 60000, OSD::Color::GREEN, icon);
+      OSD::ClearMessages();
+      OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 60000, OSD::Color::GREEN, icon);
       // OSD::DrawMessages();
       return;
     }
@@ -1032,10 +1032,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     State::LoadAs(Core::System::GetInstance(), savestate_file);
     std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
     VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
-    icon->height = sqrt(img_data.size() / 4);
-    icon->width = icon->height;
-    // icon->format = AbstractTextureFormat::RGBA8;
-    icon->data = img_data;
+    VideoCommon::LoadPNGTexture(icon, img_data);
     // icon->row_length = icon->width;
     // for (int i = 0; i < icon->height; i++) {
     //   for (int j = 0; j < icon->width * 4; j++) {
@@ -1045,7 +1042,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     // }
     OSD::ClearMessages();
     OSD::AddMessage("Objective: " + new_objective.GetTitle() + "\n" + new_objective.GetObjectiveDescription(), 60000, OSD::Color::GREEN, icon);
-    OSD::DrawMessages();
+    // OSD::DrawMessages();
     return;
   }
   WiiMixStartObjective(new_objective, savestate_file);
