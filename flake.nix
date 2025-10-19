@@ -28,7 +28,24 @@
 	    pkgs.qt6.qtbase.dev
 	    pkgs.dbus.dev
 	    pkgs.libpqxx.dev
+	    pkgs.postgresql.dev
 	  ];
+
+	  shellHook = '
+	   if [ ! -d build ]; then
+ 	     mkdir build
+	   fi
+	   cd build
+	   cmake .. \
+	   -G Ninja \
+	   -DLINUX_LOCAL_DEV=true \
+       	   -DCMAKE_BUILD_TYPE=Debug \
+	   -DCMAKE_CXX_COMPILER=g++ \
+	   -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
+	   -DBUILD_WIIMIX_SERVER_ONLY=ON;
+	    ninja;
+	  '
+
         };
       };
 }
