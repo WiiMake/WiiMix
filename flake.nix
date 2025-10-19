@@ -30,5 +30,5 @@
 	    pkgs.libpqxx.dev
 	  ];
         };
-      }
+      };
 }
