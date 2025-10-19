@@ -31,7 +31,7 @@
 	    pkgs.postgresql.dev
 	  ];
 
-	  shellHook = '
+	  shellHook = ''
 	   if [ ! -d build ]; then
  	     mkdir build
 	   fi
@@ -44,7 +44,7 @@
 	   -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
 	   -DBUILD_WIIMIX_SERVER_ONLY=ON;
 	    ninja;
-	  '
+	  '';
 
         };
       };
