@@ -10,6 +10,10 @@
 
 #include <QMenuBar>
 #include <QPointer>
+#include <QLabel>
+#include <QHBoxLayout>
+
+#include "DolphinQt/QtUtils/StatusCircle.h"
 
 #include "Common/CommonTypes.h"
 
@@ -157,6 +161,7 @@ private:
   void AddMovieMenu();
   void AddJITMenu();
   void AddSymbolsMenu();
+  void AddWiiMixServerStatusIndicator();
 
   void UpdateStateSlotMenu();
 
@@ -200,6 +205,8 @@ private:
   QString GetSignatureSelector() const;
 
   static QPointer<MenuBar> s_menu_bar;
+
+  // void setWiiMixServerStatus(bool connected);
 
   // File
   QAction* m_open_action;
@@ -300,4 +307,9 @@ private:
   QAction* m_jit_register_cache_off;
 
   bool m_game_selected = false;
+
+  // Status widget + label for wiimix server connection status
+  StatusCircle* m_wiimix_server_status_widget;
+  QLabel* m_wiimix_server_status_label;
+  // QHBoxLayout* m_wiimix_server_status_layout;
 };

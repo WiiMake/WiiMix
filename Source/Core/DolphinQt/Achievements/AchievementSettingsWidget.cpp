@@ -8,6 +8,7 @@
 #include <QLineEdit>
 #include <QString>
 #include <QVBoxLayout>
+#include <QMenu>
 
 #include "Core/AchievementManager.h"
 #include "Core/Config/AchievementSettings.h"
@@ -24,6 +25,7 @@
 #include "DolphinQt/QtUtils/NonDefaultQPushButton.h"
 #include "DolphinQt/QtUtils/SignalBlocking.h"
 #include "DolphinQt/Settings.h"
+#include "DolphinQt/WiiMix/WebAPI.h"
 
 AchievementSettingsWidget::AchievementSettingsWidget(QWidget* parent) : QWidget(parent)
 {
@@ -73,12 +75,27 @@ void AchievementSettingsWidget::CreateLayout()
   m_common_username_input = new QLineEdit(QStringLiteral(""));
   m_common_password_label = new QLabel(tr("Password"));
   m_common_password_input = new QLineEdit(QStringLiteral(""));
-  m_common_password_input->setEchoMode(QLineEdit::Password);
+  m_common_password_input->setEchoMode(QLineEdit::PasswordEchoOnEdit);
   m_common_login_button = new QPushButton(tr("Log In"));
   m_common_logout_button = new QPushButton(tr("Log Out"));
   m_common_login_failed = new QLabel(tr("Login Failed"));
   m_common_login_failed->setStyleSheet(QStringLiteral("QLabel { color : red; }"));
   m_common_login_failed->setVisible(false);
+  m_common_api_token_label = new QLabel(tr("API Token"));
+  m_common_api_token = new QLineEdit(QString::fromStdString(Config::Get(Config::RA_API_TOKEN)));
+  connect(m_common_api_token, &QLineEdit::editingFinished, this, [this]() {
+    // Validate token
+    bool res = WiiMixWebAPI::basicRequest(m_common_api_token->text().toStdString());
+    if (!res)
+    {
+      m_common_login_failed->setText(tr("Invalid API Token"));
+      m_common_login_failed->setVisible(true);
+      return;
+    }
+    // Save token
+    Config::SetBaseOrCurrent(Config::RA_API_TOKEN, m_common_api_token->text().toStdString());
+  });
+  m_common_api_token->setEchoMode(QLineEdit::PasswordEchoOnEdit);
   m_common_hardcore_enabled_input = new ToolTipCheckBox(tr("Enable Hardcore Mode"));
   m_common_hardcore_enabled_input->SetDescription(
       tr("Enable Hardcore Mode on RetroAchievements.<br><br>Hardcore Mode is intended to provide "
@@ -105,6 +122,11 @@ void AchievementSettingsWidget::CreateLayout()
          "the player has already unlocked on the site so that the player will be notified if they "
          "meet the unlock conditions again, useful for custom speedrun criteria or simply for fun."
          "<br><br>Setting takes effect on next game load."));
+  m_common_spectator_enabled_input = new ToolTipCheckBox(tr("Enable Spectator Mode"));
+  m_common_spectator_enabled_input->SetDescription(
+    tr("Enable Spectator Mode.<br><br>Spectator Mode prevents achievements from unlocking "
+       "and is intended for streaming or other situations where you do not want to "
+       "interfere with a player's session."));
   m_common_discord_presence_enabled_input = new ToolTipCheckBox(tr("Enable Discord Presence"));
   m_common_discord_presence_enabled_input->SetDescription(
       tr("Use RetroAchievements rich presence in your Discord status.<br><br>Show Current Game on "
@@ -123,6 +145,8 @@ void AchievementSettingsWidget::CreateLayout()
   m_common_layout->addWidget(m_common_login_button);
   m_common_layout->addWidget(m_common_logout_button);
   m_common_layout->addWidget(m_common_login_failed);
+  m_common_layout->addWidget(m_common_api_token_label);
+  m_common_layout->addWidget(m_common_api_token);
   // i18n: Settings that affect the functionality of unlocking achievements.
   m_common_layout->addWidget(new QLabel(tr("Function Settings")));
   m_common_layout->addWidget(m_common_hardcore_enabled_input);

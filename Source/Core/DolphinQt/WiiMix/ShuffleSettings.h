@@ -21,6 +21,7 @@ public:
       int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
       int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
       int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME,
+      int num_players = DEFAULT_NUM_PLAYERS,
       bool endless = DEFAULT_IS_ENDLESS) {
     // Check if difficulty, save state bank, objective types, or game genres are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_SHUFFLE_DIFFICULTY);
@@ -44,7 +45,7 @@ public:
     }
 
     if (!s_instance) {
-        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, types, genres, number_of_switches, min_time_between_switch, max_time_between_switch, endless);
+        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, types, genres, number_of_switches, min_time_between_switch, max_time_between_switch, num_players, endless);
     }
     return s_instance;
   }
@@ -59,6 +60,7 @@ public:
       std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> objective_types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> game_genres = DEFAULT_GAME_GENRES, int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
     int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
     int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME, 
+    int num_players = DEFAULT_NUM_PLAYERS,
     bool endless = DEFAULT_IS_ENDLESS);
 
   // Note that EITHER the number of switches OR the number of objectives gets set
@@ -69,6 +71,8 @@ public:
   void SetMinTimeBetweenSwitch(int value);
   int GetMaxTimeBetweenSwitch() const;
   void SetMaxTimeBetweenSwitch(int value);
+  int GetNumPlayers() const;
+  void SetNumPlayers(int value);
   bool GetEndless() const; // The user(s) can play as long as they want
   void SetEndless(bool value);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
@@ -85,5 +89,6 @@ private:
   int m_number_of_switches;
   int m_min_time_between_switch;
   int m_max_time_between_switch;
+  int m_num_players;
   bool m_endless;
 };

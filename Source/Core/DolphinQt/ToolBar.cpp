@@ -16,6 +16,8 @@
 #include "DolphinQt/Resources.h"
 #include "DolphinQt/Settings.h"
 
+#include "DolphinQt/WiiMix/Client.h"
+
 static QSize ICON_SIZE(32, 32);
 
 ToolBar::ToolBar(QWidget* parent) : QToolBar(parent)
@@ -51,9 +53,15 @@ ToolBar::ToolBar(QWidget* parent) : QToolBar(parent)
           [this] { m_refresh_action->setEnabled(false); });
   connect(&Settings::Instance(), &Settings::GameListRefreshStarted, this,
           [this] { m_refresh_action->setEnabled(true); });
+  connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
+          [this] { OnWiiMixStateChanged(); });
 
   OnEmulationStateChanged(Core::GetState(Core::System::GetInstance()));
   OnDebugModeToggled(Settings::Instance().IsDebugModeEnabled());
+}
+
+void ToolBar::OnWiiMixStateChanged() {
+  m_wiimix_action->setEnabled(WiiMixClient::instance()->IsConnected());
 }
 
 void ToolBar::OnEmulationStateChanged(Core::State state)

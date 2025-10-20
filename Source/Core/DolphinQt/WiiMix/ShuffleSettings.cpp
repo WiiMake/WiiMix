@@ -11,7 +11,8 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
       std::vector<WiiMixEnums::GameGenre> genres,
     int number_of_switches, 
     int min_time_between_switch, 
-    int max_time_between_switch, 
+    int max_time_between_switch,
+    int num_players,
     bool endless)
     : WiiMixCommonSettings(
         difficulty,
@@ -21,6 +22,7 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
       m_number_of_switches(number_of_switches),
       m_min_time_between_switch(min_time_between_switch),
       m_max_time_between_switch(max_time_between_switch),
+      m_num_players(num_players),
       m_endless(endless)
 {
     #ifdef QT_GUI_LIB
@@ -72,6 +74,23 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
     qDebug() << "max_time_between_switch: " << m_max_time_between_switch;
 
     #ifdef QT_GUI_LIB
+        if (num_players != DEFAULT_NUM_PLAYERS) {
+            m_num_players = num_players;
+        } else if (Config::Get(Config::WIIMIX_NUM_PLAYERS) != DEFAULT_NUM_PLAYERS) {
+            m_num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS);
+        } else {
+            m_num_players = DEFAULT_NUM_PLAYERS;
+        }
+    #endif
+
+    if (num_players != DEFAULT_NUM_PLAYERS) {
+        m_num_players = num_players;
+    } else {
+        m_num_players = DEFAULT_NUM_PLAYERS;
+    }
+    qDebug() << "num_players: " << m_num_players;
+
+    #ifdef QT_GUI_LIB
         if (endless != DEFAULT_IS_ENDLESS) {
             m_endless = endless;
         } else if (Config::Get(Config::WIIMIX_IS_ENDLESS) != DEFAULT_IS_ENDLESS) {
@@ -116,6 +135,16 @@ int WiiMixShuffleSettings::GetMaxTimeBetweenSwitch() const
 void WiiMixShuffleSettings::SetMaxTimeBetweenSwitch(int value)
 {
     m_max_time_between_switch = value;
+}
+
+int WiiMixShuffleSettings::GetNumPlayers() const
+{
+    return m_num_players;
+}
+
+void WiiMixShuffleSettings::SetNumPlayers(int value)
+{
+    m_num_players = value;
 }
 
 bool WiiMixShuffleSettings::GetEndless() const

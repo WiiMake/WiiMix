@@ -70,6 +70,8 @@
 #include "UICommon/AutoUpdate.h"
 #include "UICommon/GameFile.h"
 
+#include "DolphinQt/WiiMix/Client.h"
+
 QPointer<MenuBar> MenuBar::s_menu_bar;
 
 QString MenuBar::GetSignatureSelector() const
@@ -92,6 +94,7 @@ MenuBar::MenuBar(QWidget* parent) : QMenuBar(parent)
   AddJITMenu();
   AddSymbolsMenu();
   AddHelpMenu();
+  AddWiiMixServerStatusIndicator();
 
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
           [=, this](Core::State state) { OnEmulationStateChanged(state); });
@@ -1113,6 +1116,49 @@ void MenuBar::AddSymbolsMenu()
   m_symbols->addSeparator();
 
   m_symbols->addAction(tr("&Patch HLE Functions"), this, &MenuBar::PatchHLEFunctions);
+}
+
+void MenuBar::AddWiiMixServerStatusIndicator() {
+  // Create a colored circle widget for server status
+  m_wiimix_server_status_label = new QLabel(this);
+  m_wiimix_server_status_label->setText(tr("Server Status: Unknown"));
+  m_wiimix_server_status_label->setMargin(5);
+
+  m_wiimix_server_status_widget = new StatusCircle(this);
+
+  // Provide server reconnection logic
+  connect(m_wiimix_server_status_widget, &StatusCircle::StatusCircleClicked, this, [this]() {
+    m_wiimix_server_status_widget->setColor(Qt::yellow);
+    m_wiimix_server_status_label->setText(tr("Server Status: Reconnecting..."));
+    if (!WiiMixClient::instance()->ConnectToServer()) {
+      QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
+    }
+  });
+
+  // Create a horizontal layout to add widgets side by side
+  auto* layout = new QHBoxLayout();
+  auto* containerWidget = new QWidget();
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(0);
+  layout->addWidget(m_wiimix_server_status_widget);
+  layout->addWidget(m_wiimix_server_status_label);
+
+  containerWidget->setLayout(layout);
+  s_menu_bar->setCornerWidget(containerWidget, Qt::TopRightCorner);
+
+  // layout->setSizeConstraint(QLayout::SetFixedSize);
+
+  // Update setWiiMixServerStatus to change circle color
+  connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
+    [this](bool connected) {
+      if (connected) {
+        m_wiimix_server_status_label->setText(tr("Server Status: Connected"));
+        m_wiimix_server_status_widget->setColor(Qt::green);
+      } else {
+        m_wiimix_server_status_label->setText(tr("Server Status: Disconnected"));
+        m_wiimix_server_status_widget->setColor(Qt::red);
+      }
+    });
 }
 
 void MenuBar::UpdateToolsMenu(bool emulation_started)

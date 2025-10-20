@@ -300,8 +300,8 @@ constexpr std::array<const char*, NUM_HOTKEYS> s_hotkey_labels{{
     _trans("Reset Objective"),
     _trans("Claim Completed Objective P1"),
     _trans("Claim Completed Objective P2"),
-    // _trans("Claim Completed Objective P3"),
-    // _trans("Claim Completed Objective P4"),
+    _trans("Claim Completed Objective P3"),
+    _trans("Claim Completed Objective P4"),
     _trans("Stop WiiMix"),
 
     _trans("Save Oldest State"),
@@ -362,6 +362,7 @@ void Enable(bool enable_toggle)
 
 bool IsPressed(int id, bool held)
 {
+  // This also polls
   unsigned int group = static_cast<HotkeyManager*>(s_config.GetController(0))->FindGroupByID(id);
   unsigned int group_key =
       static_cast<HotkeyManager*>(s_config.GetController(0))->GetIndexForGroup(group, id);

@@ -406,7 +406,8 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
   // //m_screen_saver->show();
   m_wiimix_client = WiiMixClient::instance();
   if (!m_wiimix_client->ConnectToServer()) {
-    QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
+    // QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
+    qDebug() << QStringLiteral("Failed to connect to the wiimix server");
   }
 }
 
@@ -713,8 +714,7 @@ void MainWindow::ConnectMenuBar()
 
 void MainWindow::ConnectHotkeys()
 {
-  connect(m_hotkey_scheduler, &HotkeyScheduler::P1ClaimObjectiveHotkey, this, &MainWindow::ClaimObjective);
-  connect(m_hotkey_scheduler, &HotkeyScheduler::P2ClaimObjectiveHotkey, this, &MainWindow::ClaimObjective);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::ClaimObjectiveHotkey, this, &MainWindow::ClaimObjective);
   connect(m_hotkey_scheduler, &HotkeyScheduler::WiiMix, this, &MainWindow::ShowWiiMixWindow);
   connect(m_hotkey_scheduler, &HotkeyScheduler::Open, this, &MainWindow::Open);
   connect(m_hotkey_scheduler, &HotkeyScheduler::ChangeDisc, this, &MainWindow::ChangeDisc);
@@ -979,7 +979,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       }
       // Add message for objective image, title, and description
       // Get the icon from retroachievements
-      std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
+      std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
       VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
       VideoCommon::LoadPNGTexture(icon, img_data);
       // icon->height = sqrt(img_data.size() / 4);
@@ -1037,7 +1037,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     return;
   }
   State::LoadAs(Core::System::GetInstance(), savestate_file);
-  std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetAchievementId());
+  std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
   VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
   VideoCommon::LoadPNGTexture(icon, img_data);
   // icon->row_length = icon->width;
@@ -1100,6 +1100,7 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
   // Start the wiimix
   qDebug() << "Bingo calls";
+  WiiMixGameManager::instance()->SetIsRunning(true);
 }
 
 void MainWindow::ClaimObjective(int player_num) {
@@ -1289,7 +1290,8 @@ void MainWindow::TogglePause()
 void MainWindow::OnStopComplete()
 {
   m_stop_requested = false;
-  //HideRenderWidget(!m_exit_requested, m_exit_requested);
+  // Hide render widget on stop
+  HideRenderWidget(!m_exit_requested, m_exit_requested);
 #ifdef USE_DISCORD_PRESENCE
   if (!m_netplay_dialog->isVisible())
     Discord::UpdateDiscordPresence();
@@ -1319,6 +1321,9 @@ void MainWindow::OnStopComplete()
 
 bool MainWindow::RequestStop()
 {
+  if (WiiMixGameManager::instance()->IsWiiMixStarted()) {
+    StopWiiMix();
+  }
   if (!Core::IsRunning(Core::System::GetInstance()))
   {
     Core::QueueHostJob([this](Core::System&) { OnStopComplete(); }, true);
@@ -1978,25 +1983,26 @@ void MainWindow::ToggleBingoBoard() {
 // Wasn't immediately clear to me how to implement this
 void MainWindow::StopWiiMix() {
   qDebug() << "Stopping WiiMix";
-  if (!WiiMixGameManager::instance()->IsRunning()) {
-    qDebug() << "WiiMix is not running";
+  if (!WiiMixGameManager::instance()->IsWiiMixStarted()) {
+    qDebug() << "WiiMix has not been started";
     return;
   }
   WiiMixGlobalSettings::instance()->SetCurrentObjective({});
-  // Confirm whether the user wants to stop the wiimix or not
-  auto response = ModalMessageBox::question(
-      this, tr("Confirm"),
-      tr("Are you sure you want to stop the current WiiMix session?"));
+  // NOTE: should add a setting for whether to confirm whether the user wants to stop the wiimix or not
+  // auto response = ModalMessageBox::question(
+  //     this, tr("Confirm"),
+  //     tr("Are you sure you want to stop the current WiiMix session?"));
 
-  if (response == QMessageBox::No)
-    return;
-  else {
+  // if (response == QMessageBox::No)
+  //   return;
+  // else {
     // Stop any games currently running
     if (Core::GetState(Core::System::GetInstance()) == Core::State::Running) {
       Core::Stop(Core::System::GetInstance());
     }
     // Disconnect the timer
     m_objective_timer->disconnect();
+    WiiMixGameManager::instance()->GetTimer()->stop();
     // TODO: clearing objectives should be handled by the end screen
     switch (WiiMixGlobalSettings::instance()->GetMode()) {
       case WiiMixEnums::Mode::BINGO:
@@ -2019,8 +2025,11 @@ void MainWindow::StopWiiMix() {
         // WiiMixShuffleSettings::instance()->SetObjectives({});
         break;
     }
-  }
+  // }
+  // Reset state
+  m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(0, 10);
   WiiMixGameManager::instance()->SetIsRunning(false);
+  WiiMixGameManager::instance()->SetWiiMixStarted(false);
   return;
 }
 
@@ -2753,6 +2762,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
 #ifdef USE_RETRO_ACHIEVEMENTS
 void MainWindow::ShowAchievementsWindow()
 {
+  qDebug() << "Showing achievements window";
   if (!m_achievements_window)
   {
     m_achievements_window = new AchievementsWindow(this);
@@ -2763,6 +2773,7 @@ void MainWindow::ShowAchievementsWindow()
   m_achievements_window->raise();
   m_achievements_window->activateWindow();
   m_achievements_window->UpdateData(AchievementManager::UpdatedItems{.all = true});
+  qDebug() << "Achievements window shown";
 }
 
 void MainWindow::ShowAchievementSettings()

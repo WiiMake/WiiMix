@@ -22,12 +22,15 @@ public:
     void ClearLiveStates();
     void Reset();
     void SetIsRunning(bool state);
-    bool IsRunning();
+    bool IsWiiMixStarted(); // If a WiiMix has started and is either in the loading or running state
+    void SetWiiMixStarted(bool state);
+    bool IsRunning(); // If a game is running
     QTimer *GetTimer();
 
 signals:
     void onShuffleUpdate();
     void onAchievementGet(std::set<uint32_t> achievements);
+    void onSetWiiMixStarted(bool state);
 
 public slots:
     void OnAchievementGet(std::set<uint32_t> achievements);
@@ -37,6 +40,7 @@ protected:
 
 private:
     bool m_running;
+    bool m_wii_mix_started;
     QTimer* m_timer;
 
     inline static WiiMixGameManager* s_instance = nullptr; // Singleton instance

@@ -43,6 +43,7 @@ signals:
 
 private:
   void OnEmulationStateChanged(Core::State state);
+  void OnWiiMixStateChanged();
   void OnDebugModeToggled(bool enabled);
 
   void MakeActions();

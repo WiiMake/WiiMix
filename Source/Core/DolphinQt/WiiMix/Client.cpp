@@ -45,34 +45,13 @@ WiiMixClient::WiiMixClient(QObject *parent, QTcpSocket *socket)
 // 
 bool WiiMixClient::ConnectToServer() {
     if (m_socket == nullptr) {
+        // Only on initial socket creation
         m_socket = new QTcpSocket(this);
         m_socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, 512 * 1024); // Set send buffer size to 512 KB
         m_socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024); // Set receive buffer size to 64 KB
         // qDebug() << "Port " << WIIMIX_PORT;
         // qDebug() << "IP " << WIIMIX_IP;
-        
-        #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
-        // Use the loopback address for network testing
-            m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
-        #else
-            assert(false);
-        #endif
-        
-        qDebug() << QStringLiteral("Connecting client to server");
-        if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
-            qCritical() << "Failed to connect to server:" << m_socket->errorString();
-            // Emit a signal to the UI to display an error message
-            // QMessageBox::critical(this, tr("Error"), tr("Player name must be unique"));
-            QStringLiteral("Could not connect");
-            QStringLiteral("Could not connect to the WiiMix server.");
-            // emit onError(QStringLiteral("Could not connect to the WiiMix server."));
-            return false;
-        }
-        else {
-            qDebug() << m_socket->state();
-        }
-
-        connect(m_socket, &QTcpSocket::disconnected, this, [this]() {
+                connect(m_socket, &QTcpSocket::disconnected, this, [this]() {
             qWarning() << "Disconnected from server";
             // Try to reconnect
             #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
@@ -85,7 +64,8 @@ bool WiiMixClient::ConnectToServer() {
             if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
                 qCritical() << "Failed to connect to server:" << m_socket->errorString();
                 // Emit a signal to the UI to display an error message
-                emit onError(QStringLiteral("Could not connect to the WiiMix server; WiiMix functionality will not work unless you are connected."));
+                // emit onError(QStringLiteral("Could not connect to the WiiMix server; WiiMix functionality will not work unless you are connected."));
+                emit onClientConnection(false);
                 return;
             }
             else {
@@ -94,6 +74,29 @@ bool WiiMixClient::ConnectToServer() {
         }, Qt::UniqueConnection);
         connect(m_socket, &QTcpSocket::readyRead, this, &WiiMixClient::BytesRead, Qt::UniqueConnection);
     }
+
+    #if defined(WIIMIX_PORT) && defined(WIIMIX_IP)
+    // Use the loopback address for network testing
+        m_socket->connectToHost(QString::fromStdString(WIIMIX_IP), WIIMIX_PORT);
+    #else
+        assert(false);
+    #endif
+    
+    qDebug() << QStringLiteral("Connecting client to server");
+    if (!m_socket->waitForConnected(3000)) {  // 3-second timeout
+        qCritical() << "Failed to connect to server:" << m_socket->errorString();
+        // Emit a signal to the UI to display an error message
+        // QMessageBox::critical(this, tr("Error"), tr("Player name must be unique"));
+        QStringLiteral("Could not connect");
+        QStringLiteral("Could not connect to the WiiMix server.");
+        // emit onError(QStringLiteral("Could not connect to the WiiMix server."));
+        emit onClientConnection(false);
+        return false;
+    }
+    else {
+        qDebug() << m_socket->state();
+    }
+    emit onClientConnection(true);
     return true;
 }
 
@@ -205,6 +208,7 @@ void WiiMixClient::BytesRead() {
     if (!m_json.isEmpty() && current_pos >= m_data_size - m_json_size) {
         // Reset all data
         qDebug() << "All data read in by client";
+        emit onBytesRead(m_files_size + m_json_size, m_data_size);
         m_json_size = 0;
         m_files_size = 0;
         m_data_size = 0;
@@ -281,8 +285,16 @@ void WiiMixClient::BytesRead() {
         if (bytes_to_read > data.size() - current_pos) {
             bytes_to_read = data.size() - current_pos;
         }
-        m_file.append(data.mid(current_pos, bytes_to_read));
-        current_pos += bytes_to_read;
+        // Implement a chunking approach while reading the file
+        // So the UI can be updated while the file is being read
+        // TODO: not sure if this logic works
+        while (bytes_to_read > 0) {
+            int chunk_size = std::min(bytes_to_read, 4096); // Read in chunks of 4KB
+            m_file.append(data.mid(current_pos, chunk_size));
+            current_pos += chunk_size;
+            bytes_to_read -= chunk_size;
+            emit onBytesRead(m_files_size + m_json_size + m_file.size(), m_data_size);
+        }
 
         if (m_file.size() == m_file_sizes[m_current_file]) {
             // File completely read, save it
@@ -321,7 +333,7 @@ void WiiMixClient::BytesRead() {
         return;
         // }
     }
-    emit onBytesRead(m_files_size + m_json_size, m_data_size);
+    // emit onBytesRead(m_files_size + m_json_size, m_data_size);
 }
 
 bool WiiMixClient::IsConnected() const {

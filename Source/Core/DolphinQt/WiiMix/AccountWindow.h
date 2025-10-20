@@ -30,4 +30,4 @@ private:
     QLabel* m_num_objectives_attempted;
     QLabel* m_num_objectives_created;
     // TODOx: build in a UI for objective history at some point
-};;
+};

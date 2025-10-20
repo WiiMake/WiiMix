@@ -55,6 +55,8 @@ public:
   void SetMinTimeBetweenSwitch(int value);
   int GetMaxTimeBetweenSwitch() const;
   void SetMaxTimeBetweenSwitch(int value);
+  int GetNumPlayers() const;
+  void SetNumPlayers(int value);
   bool GetEndless() const;
   void SetEndless(bool value);
   int GetNumSwitches() const;
@@ -144,6 +146,8 @@ private:
   QSlider* m_min_time_between_switch;
   QLabel* m_max_switch_time_label;
   QSlider* m_max_time_between_switch;
+  QLabel* m_num_players_label;
+  QComboBox* m_num_players_dropdown; 
   QLineEdit* m_num_switches;
   QCheckBox* m_endless_mode;
 

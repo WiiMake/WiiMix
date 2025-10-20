@@ -7,6 +7,7 @@
 
 WiiMixGameManager::WiiMixGameManager() {
   m_running = false;
+  m_wii_mix_started = false;
   m_timer = new QTimer();
   if (!File::IsDirectory(File::GetUserPath(D_OBJECTIVES_IDX))) {
     qDebug() << "Creating directory objectives";
@@ -77,6 +78,18 @@ bool WiiMixGameManager::IsRunning()
 void WiiMixGameManager::SetIsRunning(bool state)
 {
   m_running = state;
+}
+
+bool WiiMixGameManager::IsWiiMixStarted() {
+  return m_wii_mix_started;
+}
+
+void WiiMixGameManager::SetWiiMixStarted(bool state)
+{
+  m_wii_mix_started = state;
+
+  // Update WiiMixButton to reflect new state
+  emit WiiMixGameManager::onSetWiiMixStarted(state);
 }
 
 QTimer *WiiMixGameManager::GetTimer()

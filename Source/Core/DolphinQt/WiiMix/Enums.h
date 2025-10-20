@@ -69,10 +69,6 @@ namespace WiiMixEnums {
         PACIFIST,
         NO_HIT,
         GLITCH,
-        SINGLE_PLAYER,
-        TWO_PLAYER,
-        THREE_PLAYER,
-        FOUR_PLAYER,
         VERSUS,
         SPEEDRUN,
         END, // Default/size value
@@ -90,10 +86,6 @@ namespace WiiMixEnums {
     #define OBJECTIVE_TYPE_PACIFIST "PACIFIST"
     #define OBJECTIVE_TYPE_NO_HIT "NO_HIT"
     #define OBJECTIVE_TYPE_GLITCH "GLITCH"
-    #define OBJECTIVE_TYPE_SINGLE_PLAYER "SINGLE_PLAYER"
-    #define OBJECTIVE_TYPE_TWO_PLAYER "TWO_PLAYER"
-    #define OBJECTIVE_TYPE_THREE_PLAYER "THREE_PLAYER"
-    #define OBJECTIVE_TYPE_FOUR_PLAYER "FOUR_PLAYER"
     #define OBJECTIVE_TYPE_VERSUS "VERSUS"
     #define OBJECTIVE_TYPE_SPEEDRUN "SPEEDRUN"
 
@@ -393,5 +385,6 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_SHUFFLE_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_MIN_SWITCH_TIME 15
 #define DEFAULT_MAX_SWITCH_TIME 60
+#define DEFAULT_NUM_PLAYERS 1
 #define DEFAULT_NUMBER_OF_SWITCHES 10
 #define DEFAULT_IS_ENDLESS false

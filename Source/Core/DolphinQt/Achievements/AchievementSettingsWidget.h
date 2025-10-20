@@ -47,6 +47,8 @@ private:
   QLineEdit* m_common_username_input;
   QLabel* m_common_password_label;
   QLineEdit* m_common_password_input;
+  QLabel* m_common_api_token_label;
+  QLineEdit* m_common_api_token;
   QPushButton* m_common_login_button;
   QPushButton* m_common_logout_button;
   ToolTipCheckBox* m_common_hardcore_enabled_input;

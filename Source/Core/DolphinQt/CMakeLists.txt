@@ -392,6 +392,8 @@ else()
     QtUtils/SetWindowDecorations.cpp
     QtUtils/SetWindowDecorations.h
     QtUtils/SignalBlocking.h
+    QtUtils/StatusCircle.cpp
+    QtUtils/StatusCircle.h
     QtUtils/UTF8CodePointCountValidator.cpp
     QtUtils/UTF8CodePointCountValidator.h
     QtUtils/WindowActivationEventFilter.cpp

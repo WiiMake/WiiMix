@@ -72,6 +72,7 @@ signals:
   void onBytesWritten(int bytesWritten, int totalBytes);
   void onBytesRead(int bytesRead, int totalBytes);
   void onError(QString error);
+  void onClientConnection(bool connected);
 
 public slots:
   void BytesRead();

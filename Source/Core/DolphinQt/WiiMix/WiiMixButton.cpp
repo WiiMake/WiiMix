@@ -23,7 +23,8 @@ void WiiMixLogoButton::paintEvent(QPaintEvent *event) {
     if (radius != 0) {
         QColor color;
         if (Config::Get(Config::MAIN_THEME_NAME) == "Clean") {
-            color = QColor(127, 127, 127);
+            // color = QColor(127, 127, 127);
+            color = QColor(0x3f, 0xBE, 0xED);
         } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Blue") {
             color = Qt::blue;
         } else if (Config::Get(Config::MAIN_THEME_NAME) == "Clean Emerald") {

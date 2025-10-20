@@ -844,7 +844,7 @@ void AchievementManager::LoadGameCallback(int result, const char* error_message,
   if (result != RC_OK)
   {
     WARN_LOG_FMT(ACHIEVEMENTS, "Failed to load data for current game.");
-    OSD::AddMessage("Achievements are not supported for this title.", OSD::Duration::VERY_LONG,
+    OSD::AddMessage("Achievements are not supported for this title. Please try logging out and logging back into retroachievements.", OSD::Duration::VERY_LONG,
                     OSD::Color::RED);
     return;
   }

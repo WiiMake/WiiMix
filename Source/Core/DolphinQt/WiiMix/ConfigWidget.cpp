@@ -272,6 +272,7 @@ void WiiMixConfigWidget::CreateBingoLayout(QString menu) {
             QCheckBox* team_selector = new QCheckBox();
             team_selector->setStyleSheet(QStringLiteral(".QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(m_players[static_cast<WiiMixEnums::Player>(i)].first))));
             connect(team_selector, &QCheckBox::clicked, this, [this, team_selector](bool checked) {
+                team_selector->setCheckState(Qt::Unchecked);
                 int index = m_team_selectors.indexOf(team_selector);
                 SetTeamSelectors(index);
             });
@@ -458,11 +459,13 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(num_switches_label);
     shuffle_settings_layout->addLayout(num_switches_layout);
 
-    m_min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: 15"));
+    int min_time = Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);
+    m_min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: " ) + QString::number(min_time));
     m_min_time_between_switch = new QSlider(Qt::Horizontal);
     m_min_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
-    m_min_time_between_switch->setValue(Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH));
-    m_max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: 60"));
+    m_min_time_between_switch->setValue(min_time);
+    int max_time = Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH);
+    m_max_switch_time_label = new QLabel(tr("Max Time Between Shuffles: ") + QString::number(max_time));
     m_max_time_between_switch = new QSlider(Qt::Horizontal);
     m_max_time_between_switch->setRange(DEFAULT_MIN_SWITCH_TIME, DEFAULT_MAX_SWITCH_TIME);
     m_max_time_between_switch->setValue(Config::Get(Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH));
@@ -470,6 +473,19 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(m_min_time_between_switch);
     shuffle_settings_layout->addWidget(m_max_switch_time_label);
     shuffle_settings_layout->addWidget(m_max_time_between_switch);
+
+    int num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS);
+    m_num_players_label = new QLabel(tr("Number of Players: ") + QString::number(num_players));
+    m_num_players_dropdown = new QComboBox();
+    for (int i = 1; i <= MAX_PLAYERS; i++) {
+        m_num_players_dropdown->addItem(QString::number(i));
+    }
+    m_num_players_dropdown->setCurrentIndex(Config::Get(Config::WIIMIX_NUM_PLAYERS) - 1);
+    connect(m_num_players_dropdown, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        SetNumPlayers(index);
+    });
+    shuffle_settings_layout->addWidget(m_num_players_label);
+    shuffle_settings_layout->addWidget(m_num_players_dropdown);
     
     connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
         SetNumSwitches(text.toInt());
@@ -736,6 +752,13 @@ int WiiMixConfigWidget::GetMaxTimeBetweenSwitch() const
     return m_max_time_between_switch->value();
 }
 
+int WiiMixConfigWidget::GetNumPlayers() const
+{
+    bool ok = false;
+    int value = m_num_players_dropdown->currentText().toInt(&ok);
+    return ok ? value : 1;
+}
+
 QString WiiMixConfigWidget::GenerateLobbyID() const {
      // Generate a random string of length LOBBY_ID_LENGTH
     // const QString possible_characters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
@@ -821,10 +844,12 @@ void WiiMixConfigWidget::SetDifficulty(QString difficulty) {
     if (index != -1) {
         m_difficulty->setCurrentIndex(index);
     }
-    if (WiiMixClient::instance()->IsConnected()) {
-        QJsonObject obj = GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY)->ToJson().object();
-        obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
-        WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+    if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+        if (WiiMixClient::instance()->IsConnected()) {
+            QJsonObject obj = GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY)->ToJson().object();
+            obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
+            WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+        }
     }
     // else {
     //     emit onUpdateBingoConfig(GetBingoSettings());
@@ -836,10 +861,12 @@ void WiiMixConfigWidget::SetSaveStateBank(QString bank) {
     if (index != -1) {
         m_save_state_bank->setCurrentIndex(index);
     }
-    if (WiiMixClient::instance()->IsConnected()) {
-        QJsonObject obj = GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY)->ToJson().object();
-        obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
-        WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+    if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+        if (WiiMixClient::instance()->IsConnected()) {
+            QJsonObject obj = GetBingoSettings(WiiMixEnums::Action::UPDATE_BINGO_LOBBY)->ToJson().object();
+            obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
+            WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+        }
     }
    // else {
    //     emit onUpdateBingoConfig(GetBingoSettings());
@@ -916,6 +943,12 @@ void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
 }
 
+void WiiMixConfigWidget::SetNumPlayers(int index) {
+    m_num_players_dropdown->setCurrentIndex(index);
+    m_num_players_label->setText(QStringLiteral("Number of Players: ") + QString::number(index + 1));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUM_PLAYERS, index + 1);
+}
+
 void WiiMixConfigWidget::SetLobbyPassword(QString password) {
     m_bingo_lobby_password->setText(password);
     if (WiiMixClient::instance()->IsConnected()) {
@@ -967,12 +1000,36 @@ void WiiMixConfigWidget::SetTeamSelectors(int index) {
     // Change the color to indicate team selection
     // If teams, select the next color regardless of whether someone has it selected or not
     if (GetTeams()) {
-        int color_index = static_cast<int>(m_players.value(static_cast<WiiMixEnums::Player>(index)).first);
-        color_index += 1;
-        color_index %= static_cast<int>(WiiMixEnums::Color::END); 
-        auto& player = m_players[static_cast<WiiMixEnums::Player>(index)];
-        player.first = static_cast<WiiMixEnums::Color>(color_index);
-        m_team_selectors.at(index)->setStyleSheet(QStringLiteral("QCheckBox { background-color: %1; }").arg(QString::fromStdString(ColorToHex(static_cast<WiiMixEnums::Color>(color_index)))));
+        // Toggle between RED and BLUE only when teams are enabled, and prevent making all players the same team.
+        WiiMixEnums::Player player_enum = static_cast<WiiMixEnums::Player>(index);
+        WiiMixEnums::Color current_color = m_players.value(player_enum).first;
+        WiiMixEnums::Color target_color = (current_color == WiiMixEnums::Color::RED) ? WiiMixEnums::Color::BLUE : WiiMixEnums::Color::RED;
+
+        // Simulate the change and ensure not all players end up with the same color.
+        bool all_same_after = true;
+        WiiMixEnums::Color reference_color = (index == 0) ? target_color : m_players.value(static_cast<WiiMixEnums::Player>(0)).first;
+        for (int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            WiiMixEnums::Color col = (i == index) ? target_color : m_players.value(static_cast<WiiMixEnums::Player>(i)).first;
+            if (col != reference_color)
+            {
+            all_same_after = false;
+            break;
+            }
+        }
+
+        if (all_same_after)
+        {
+            QMessageBox::critical(this, tr("Error"), tr("There must be at least one player on each team."));
+            return;
+        }
+
+        // Apply the change
+        m_players[player_enum].first = target_color;
+        m_team_selectors.at(index)->setStyleSheet(
+            QStringLiteral("QCheckBox { background-color: %1; }")
+            .arg(QString::fromStdString(ColorToHex(target_color)))
+        );
     }
     // If not teams, just use the default colors associated with the players
     if (WiiMixClient::instance()->IsConnected()) {

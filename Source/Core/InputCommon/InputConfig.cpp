@@ -149,6 +149,12 @@ void InputConfig::SaveConfig()
 
 ControllerEmu::EmulatedController* InputConfig::GetController(int index) const
 {
+  // Polling; often ends up polling "Hotkeys" or "FreeLook1"
+  // std::cout << "Get controller" << std::endl;
+  // for (auto& controller : m_controllers)
+  // {
+  //   std::cout << controller->GetName() << std::endl;
+  // }
   return m_controllers.at(index).get();
 }
 

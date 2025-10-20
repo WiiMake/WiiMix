@@ -19,6 +19,7 @@
 #include "DolphinQt/Resources.h"
 #include "DolphinQt/Settings.h"
 #include "DolphinQt/WiiMix/Enums.h"
+#include "DolphinQt/WiiMix/GameManager.h"
 #include "DolphinQt/WiiMix/ModesWidget.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
 #include "DolphinQt/WiiMix/BingoSettings.h"
@@ -198,8 +199,13 @@ void WiiMixSettingsWindow::ConnectWidgets()
     connect(m_modes, &WiiMixModesWidget::ModeChanged, this, &WiiMixSettingsWindow::CreateLayout);
     connect(m_load_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::LoadSettings);
     connect(m_save_button_box, &QPushButton::clicked, this, &WiiMixSettingsWindow::SaveSettings);
+    connect(WiiMixGameManager::instance(), &WiiMixGameManager::onSetWiiMixStarted, m_wii_mix_button, [this](bool state) {
+      m_wii_mix_button->setDisabled(state);
+    });
     connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
-      if (m_config) {
+      // Only start a WiiMix if a WiiMix isn't already running
+      if (m_config && !WiiMixGameManager::instance()->IsWiiMixStarted()) {
+        WiiMixGameManager::instance()->SetWiiMixStarted(true);
         if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
           WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));
           WiiMixBingoSettings::instance()->SetSaveStateBank(WiiMixCommonSettings::StringToSaveStateBank(m_config->GetSaveStateBank()));

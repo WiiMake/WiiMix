@@ -7,10 +7,13 @@
 class WiiMixWebAPI {
   public:
     // static void RALoginCallback(std::string username, std::string token); // currently unused
-    static std::map<uint16_t, std::string> getGameAchievements(uint16_t game_id);
-    static std::map<std::string, uint16_t> getGameList(uint16_t console_id); // 16 for gamecube
-    static uint16_t getGameID(uint32_t achievement_id);
-    static std::vector<uint8_t> getAchievementIcon(int achievement_id);
+    static std::map<int, std::string> getGameAchievements(int game_id);
+    static std::map<std::string, int> getGameList(int console_id); // 16 for gamecube
+    static int getRetroAchievementsGameID(int achievement_id);
+    static int getBadgeID(int game_id, int achievement_id);
+    static std::vector<uint8_t> getAchievementIcon(int game_id, int achievement_id);
+    static bool basicRequest(std::string token);
+    // void WiiMixWebAPI::setToken(std::string token);
   private:
     static std::string m_username;
     static std::string m_token;
