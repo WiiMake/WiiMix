@@ -384,6 +384,8 @@ extern const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK;
 extern const Info<std::string> WIIMIX_ROGUE_OBJECTIVE_TYPES;
 extern const Info<std::string> WIIMIX_ROGUE_GAME_GENRES;
 extern const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH;
+extern const Info<int> WIIMIX_NUM_PLAYERS_ROGUE;
+extern const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_ROGUE;
 
 // WiiMix (shuffle)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY;
@@ -393,8 +395,9 @@ extern const Info<std::string> WIIMIX_SHUFFLE_GAME_GENRES;
 extern const Info<int> WIIMIX_NUMBER_OF_SWITCHES;
 extern const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH;
 extern const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH;
-extern const Info<int> WIIMIX_NUM_PLAYERS;
+extern const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE;
 extern const Info<bool> WIIMIX_IS_ENDLESS;
+extern const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE;
 
 // GameCube path utility functions
 

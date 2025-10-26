@@ -474,18 +474,43 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     shuffle_settings_layout->addWidget(m_max_switch_time_label);
     shuffle_settings_layout->addWidget(m_max_time_between_switch);
 
-    int num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS);
-    m_num_players_label = new QLabel(tr("Number of Players: ") + QString::number(num_players));
-    m_num_players_dropdown = new QComboBox();
+    int num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS_SHUFFLE);
+    m_num_players_shuffle_label = new QLabel(tr("Number of Players: ") + QString::number(num_players));
+    m_num_players_shuffle_dropdown = new QComboBox();
     for (int i = 1; i <= MAX_PLAYERS; i++) {
-        m_num_players_dropdown->addItem(QString::number(i));
+        m_num_players_shuffle_dropdown->addItem(QString::number(i));
     }
-    m_num_players_dropdown->setCurrentIndex(Config::Get(Config::WIIMIX_NUM_PLAYERS) - 1);
-    connect(m_num_players_dropdown, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
-        SetNumPlayers(index);
+    m_num_players_shuffle_dropdown->setCurrentIndex(Config::Get(Config::WIIMIX_NUM_PLAYERS_SHUFFLE) - 1);
+    connect(m_num_players_shuffle_dropdown, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        if (index >= 1) {
+            // Enable multiplayer mode dropdown
+            m_multiplayer_mode_shuffle_dropdown->setEnabled(true);
+        }
+        else {
+            // Disable multiplayer mode dropdown
+            m_multiplayer_mode_shuffle_dropdown->setEnabled(false);
+        }
+        SetNumPlayersShuffle(index);
     });
-    shuffle_settings_layout->addWidget(m_num_players_label);
-    shuffle_settings_layout->addWidget(m_num_players_dropdown);
+    shuffle_settings_layout->addWidget(m_num_players_shuffle_label);
+    shuffle_settings_layout->addWidget(m_num_players_shuffle_dropdown);
+
+    WiiMixEnums::MultiplayerMode multiplayer_mode = Config::Get(Config::WIIMIX_MULTIPLAYER_MODE_SHUFFLE);
+    m_multiplayer_mode_shuffle_label = new QLabel(tr("Multiplayer Mode"));
+    m_multiplayer_mode_shuffle_dropdown = new QComboBox();
+    // Add all values in WiiMixEnums::MultiplayerMode to the dropdown
+    for (int i = 0; i < static_cast<int>(WiiMixEnums::MultiplayerMode::END); i++) {
+        m_multiplayer_mode_shuffle_dropdown->addItem(QString::fromStdString(WiiMixEnums::MultiplayerModeToString(static_cast<WiiMixEnums::MultiplayerMode>(i))));
+    }
+    m_multiplayer_mode_shuffle_dropdown->setCurrentIndex(static_cast<int>(multiplayer_mode));
+    connect(m_multiplayer_mode_shuffle_dropdown, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        SetMultiplayerModeShuffle(static_cast<WiiMixEnums::MultiplayerMode>(index));
+    });
+    if (num_players < 1) {
+        m_multiplayer_mode_shuffle_dropdown->setDisabled(true);
+    }
+    shuffle_settings_layout->addWidget(m_multiplayer_mode_shuffle_label);
+    shuffle_settings_layout->addWidget(m_multiplayer_mode_shuffle_dropdown);
     
     connect(m_num_switches, &QLineEdit::textChanged, this, [this](const QString& text) {
         SetNumSwitches(text.toInt());
@@ -520,6 +545,19 @@ void WiiMixConfigWidget::CreateRogueLayout() {
     connect(m_rogue_length, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
         SetRogueLength(m_rogue_length->currentText());
     });
+
+    int num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS_ROGUE);
+    m_num_players_rogue_label = new QLabel(tr("Number of Players: ") + QString::number(num_players));
+    m_num_players_rogue_dropdown = new QComboBox();
+    for (int i = 1; i <= MAX_PLAYERS; i++) {
+        m_num_players_rogue_dropdown->addItem(QString::number(i));
+    }
+    m_num_players_rogue_dropdown->setCurrentIndex(Config::Get(Config::WIIMIX_NUM_PLAYERS_ROGUE) - 1);
+    connect(m_num_players_rogue_dropdown, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        SetNumPlayersRogue(index);
+    });
+    m_config_layout->addWidget(m_num_players_rogue_label);
+    m_config_layout->addWidget(m_num_players_rogue_dropdown);
 
     m_config_layout->addWidget(new QLabel(tr("Seed")));
     m_rogue_seed = new QLineEdit();
@@ -629,25 +667,6 @@ void WiiMixConfigWidget::CreateCommonLayout() {
     m_config_layout->addWidget(common_settings_box);
 }
 
-// Need to also implement the corresponding parsing, checks, and probably associated error messages
-// with the QValidators
-
-// @xanmankey
-void SetRogueSeed() {
-    return;
-}
-
-// @xanmankey
-void SetBingoSeed() {
-
-    return;
-}
-
-// @xanmankey
-void SetLobbyID() {
-    return;
-}
-
 void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
     // Add mode-specific configuration options
     if (mode == WiiMixEnums::Mode::BINGO) {
@@ -752,11 +771,22 @@ int WiiMixConfigWidget::GetMaxTimeBetweenSwitch() const
     return m_max_time_between_switch->value();
 }
 
-int WiiMixConfigWidget::GetNumPlayers() const
+int WiiMixConfigWidget::GetNumPlayersShuffle() const
 {
     bool ok = false;
-    int value = m_num_players_dropdown->currentText().toInt(&ok);
+    int value = m_num_players_shuffle_dropdown->currentText().toInt(&ok);
     return ok ? value : 1;
+}
+
+WiiMixEnums::MultiplayerMode WiiMixConfigWidget::GetMultiplayerModeShuffle() const
+{
+    return static_cast<WiiMixEnums::MultiplayerMode>(m_multiplayer_mode_shuffle_dropdown->currentIndex());
+}
+
+void WiiMixConfigWidget::SetMultiplayerModeShuffle(WiiMixEnums::MultiplayerMode multiplayer_mode)
+{
+    m_multiplayer_mode_shuffle_dropdown->setCurrentIndex(static_cast<int>(multiplayer_mode));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_MULTIPLAYER_MODE_SHUFFLE, multiplayer_mode);
 }
 
 QString WiiMixConfigWidget::GenerateLobbyID() const {
@@ -820,6 +850,18 @@ QString WiiMixConfigWidget::GetRogueSeed() const{
     return m_rogue_seed->text();
 }
 
+int WiiMixConfigWidget::GetNumPlayersRogue() const {
+    bool ok = false;
+    int value = m_num_players_rogue_dropdown->currentText().toInt(&ok);
+    return ok ? value : 1;
+}
+
+void WiiMixConfigWidget::SetNumPlayersRogue(int index) {
+    m_num_players_rogue_dropdown->setCurrentIndex(index);
+    m_num_players_rogue_label->setText(QStringLiteral("Number of Players: ") + QString::number(index + 1));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUM_PLAYERS_ROGUE, index + 1);
+}
+
 std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
     std::array<bool, MAX_PLAYERS> team_selectors;
     for (int i = 0; i < MAX_PLAYERS; ++i) {
@@ -833,6 +875,15 @@ std::array<bool, MAX_PLAYERS> WiiMixConfigWidget::GetTeamSelectors() const {
 
 void WiiMixConfigWidget::SetBingoSeed(QString seed) {
     m_bingo_seed->setText(seed);
+    // If a bingo seed is set, first ensure it is a valid seed
+    if (!WiiMixBingoSettings::VerifySeed(seed.toStdString())) {
+        // Display a warning message and clear the seed
+        QMessageBox::warning(this, tr("Invalid Seed"), tr("The provided Bingo seed %1 is invalid. Please enter a valid seed.").arg(seed));
+        m_bingo_seed->clear();
+        return;
+    }
+    // Then, if it is a valid seed, disable objective selections and set card size accordingly
+    
 }
 
 void WiiMixConfigWidget::SetLobbyID(QString id) {
@@ -943,10 +994,10 @@ void WiiMixConfigWidget::SetMaxTimeBetweenSwitch(int max_time) {
     Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, max_time);
 }
 
-void WiiMixConfigWidget::SetNumPlayers(int index) {
-    m_num_players_dropdown->setCurrentIndex(index);
-    m_num_players_label->setText(QStringLiteral("Number of Players: ") + QString::number(index + 1));
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUM_PLAYERS, index + 1);
+void WiiMixConfigWidget::SetNumPlayersShuffle(int index) {
+    m_num_players_shuffle_dropdown->setCurrentIndex(index);
+    m_num_players_shuffle_label->setText(QStringLiteral("Number of Players: ") + QString::number(index + 1));
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_NUM_PLAYERS_SHUFFLE, index + 1);
 }
 
 void WiiMixConfigWidget::SetLobbyPassword(QString password) {

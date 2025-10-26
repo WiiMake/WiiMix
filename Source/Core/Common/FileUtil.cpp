@@ -842,6 +842,9 @@ const std::string GetGpuDriverDirectory(unsigned int dir_index)
 #endif
 
 static std::string s_user_paths[NUM_PATH_INDICES];
+
+// On Ubuntu, D_CONFIX_IDX is ./.var/app/org.DolphinEmu.dolphin-emu/config/dolphin-emu/GCPadNew.ini
+// You can find out the directories easily by just logging s_user_paths
 static void RebuildUserDirectories(unsigned int dir_index)
 {
   switch (dir_index)

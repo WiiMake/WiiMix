@@ -49,19 +49,23 @@ public:
   QString GetRogueSeed() const;
   void SetRogueSeed(QString seed);
   QRegularExpression RogueSeedValidator();
+  int GetNumPlayersRogue() const;
+  void SetNumPlayersRogue(int value);
 
   // Shuffle
   int GetMinTimeBetweenSwitch() const;
   void SetMinTimeBetweenSwitch(int value);
   int GetMaxTimeBetweenSwitch() const;
   void SetMaxTimeBetweenSwitch(int value);
-  int GetNumPlayers() const;
-  void SetNumPlayers(int value);
+  int GetNumPlayersShuffle() const;
+  void SetNumPlayersShuffle(int value);
   bool GetEndless() const;
   void SetEndless(bool value);
   int GetNumSwitches() const;
   void SetNumSwitches(int value);
-  
+  WiiMixEnums::MultiplayerMode GetMultiplayerModeShuffle() const;
+  void SetMultiplayerModeShuffle(WiiMixEnums::MultiplayerMode multiplayer_mode);
+
   // General
   QString GetDifficulty() const;
   void SetDifficulty(QString value);
@@ -140,16 +144,20 @@ private:
   // Rogue Config Options
   QComboBox* m_rogue_length;
   QLineEdit* m_rogue_seed;
+  QLabel* m_num_players_rogue_label;
+  QComboBox* m_num_players_rogue_dropdown;
 
   // Shuffle Config Options
   QLabel* m_min_switch_time_label;
   QSlider* m_min_time_between_switch;
   QLabel* m_max_switch_time_label;
   QSlider* m_max_time_between_switch;
-  QLabel* m_num_players_label;
-  QComboBox* m_num_players_dropdown; 
+  QLabel* m_num_players_shuffle_label;
+  QComboBox* m_num_players_shuffle_dropdown; 
   QLineEdit* m_num_switches;
   QCheckBox* m_endless_mode;
+  QLabel* m_multiplayer_mode_shuffle_label;
+  QComboBox* m_multiplayer_mode_shuffle_dropdown;
 
   // Common Config Options
 

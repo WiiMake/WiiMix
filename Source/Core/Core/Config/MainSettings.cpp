@@ -558,6 +558,8 @@ const Info<WiiMixEnums::SaveStateBank> WIIMIX_ROGUE_SAVE_STATE_BANK{{System::Mai
 const Info<std::string> WIIMIX_ROGUE_OBJECTIVE_TYPES{{System::Main, "WiiMix", "RogueObjectiveTypes"}, ""};
 const Info<std::string> WIIMIX_ROGUE_GAME_GENRES{{System::Main, "WiiMix", "RogueGameGenres"}, ""};
 const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH{{System::Main, "WiiMix", "RogueLength"}, DEFAULT_ROGUE_LENGTH};
+const Info<int> WIIMIX_NUM_PLAYERS_ROGUE{{System::Main, "WiiMix", "NumPlayersRogue"}, DEFAULT_NUM_PLAYERS_ROGUE};
+const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_ROGUE{{System::Main, "WiiMix", "MultiplayerModeRogue"}, DEFAULT_MULTIPLAYER_MODE_ROGUE};
 
 // WiiMix (shuffle)
 const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY{{System::Main, "WiiMix", "ShuffleDifficulty"}, DEFAULT_DIFFICULTY};
@@ -567,8 +569,9 @@ const Info<std::string> WIIMIX_SHUFFLE_GAME_GENRES{{System::Main, "WiiMix", "Shu
 const Info<int> WIIMIX_NUMBER_OF_SWITCHES{{System::Main, "WiiMix", "NumSwitches"}, DEFAULT_NUMBER_OF_SWITCHES};
 const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MinTimeBetweenSwitch"}, DEFAULT_MIN_SWITCH_TIME};
 const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MaxTimeBetweenSwitch"}, DEFAULT_MAX_SWITCH_TIME};
-const Info<int> WIIMIX_NUM_PLAYERS{{System::Main, "WiiMix", "NumPlayers"}, DEFAULT_NUM_PLAYERS};
+const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE{{System::Main, "WiiMix", "NumPlayersShuffle"}, DEFAULT_NUM_PLAYERS_SHUFFLE};
 const Info<bool> WIIMIX_IS_ENDLESS{{System::Main, "WiiMix", "IsEndless"}, DEFAULT_IS_ENDLESS};
+const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE{{System::Main, "WiiMix", "MultiplayerModeShuffle"}, DEFAULT_MULTIPLAYER_MODE_SHUFFLE};
 
 static std::set<std::pair<u16, u16>> LoadUSBWhitelistFromString(const std::string& devices_string)
 {

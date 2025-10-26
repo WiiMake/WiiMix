@@ -13,17 +13,21 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
     int min_time_between_switch, 
     int max_time_between_switch,
     int num_players,
-    bool endless)
+    bool endless,
+    WiiMixEnums::MultiplayerMode multiplayer_mode)
     : WiiMixCommonSettings(
         difficulty,
         save_state_bank,
-        objectives
+        objectives,
+        types,
+        genres
     ),
       m_number_of_switches(number_of_switches),
       m_min_time_between_switch(min_time_between_switch),
       m_max_time_between_switch(max_time_between_switch),
       m_num_players(num_players),
-      m_endless(endless)
+      m_endless(endless),
+      m_multiplayer_mode(multiplayer_mode)
 {
     #ifdef QT_GUI_LIB
         if (number_of_switches != DEFAULT_NUMBER_OF_SWITCHES) {
@@ -36,8 +40,6 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
     #endif
     if (number_of_switches != DEFAULT_NUMBER_OF_SWITCHES) {
         m_number_of_switches = number_of_switches;
-    } else {
-        m_number_of_switches = DEFAULT_NUMBER_OF_SWITCHES;
     }
 
     #ifdef QT_GUI_LIB
@@ -51,10 +53,7 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
     #endif
     if (min_time_between_switch != DEFAULT_MIN_SWITCH_TIME) {
         m_min_time_between_switch = min_time_between_switch;
-    } else {
-        m_min_time_between_switch = DEFAULT_MIN_SWITCH_TIME;
     }
-    qDebug() << "min_time_between_switch: " << m_min_time_between_switch;
 
     #ifdef QT_GUI_LIB
         if (max_time_between_switch != DEFAULT_MAX_SWITCH_TIME) {
@@ -68,27 +67,21 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
 
     if (max_time_between_switch != DEFAULT_MAX_SWITCH_TIME) {
         m_max_time_between_switch = max_time_between_switch;
-    } else {
-        m_max_time_between_switch = DEFAULT_MAX_SWITCH_TIME;
     }
-    qDebug() << "max_time_between_switch: " << m_max_time_between_switch;
 
     #ifdef QT_GUI_LIB
-        if (num_players != DEFAULT_NUM_PLAYERS) {
+        if (num_players != DEFAULT_NUM_PLAYERS_SHUFFLE) {
             m_num_players = num_players;
-        } else if (Config::Get(Config::WIIMIX_NUM_PLAYERS) != DEFAULT_NUM_PLAYERS) {
-            m_num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS);
+        } else if (Config::Get(Config::WIIMIX_NUM_PLAYERS_SHUFFLE) != DEFAULT_NUM_PLAYERS_SHUFFLE) {
+            m_num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS_SHUFFLE);
         } else {
-            m_num_players = DEFAULT_NUM_PLAYERS;
+            m_num_players = DEFAULT_NUM_PLAYERS_SHUFFLE;
         }
     #endif
 
-    if (num_players != DEFAULT_NUM_PLAYERS) {
+    if (num_players != DEFAULT_NUM_PLAYERS_SHUFFLE) {
         m_num_players = num_players;
-    } else {
-        m_num_players = DEFAULT_NUM_PLAYERS;
     }
-    qDebug() << "num_players: " << m_num_players;
 
     #ifdef QT_GUI_LIB
         if (endless != DEFAULT_IS_ENDLESS) {
@@ -102,8 +95,20 @@ WiiMixShuffleSettings::WiiMixShuffleSettings(
 
     if (endless != DEFAULT_IS_ENDLESS) {
         m_endless = endless;
-    } else {
-        m_endless = DEFAULT_IS_ENDLESS;
+    }
+
+    #ifdef QT_GUI_LIB
+        if (multiplayer_mode != DEFAULT_MULTIPLAYER_MODE_SHUFFLE) {
+            m_multiplayer_mode = multiplayer_mode;
+        } else if (Config::Get(Config::WIIMIX_MULTIPLAYER_MODE_SHUFFLE) != DEFAULT_MULTIPLAYER_MODE_SHUFFLE) {
+            m_multiplayer_mode = Config::Get(Config::WIIMIX_MULTIPLAYER_MODE_SHUFFLE);
+        } else {
+            m_multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_SHUFFLE;
+        }
+    #endif
+
+    if (multiplayer_mode != DEFAULT_MULTIPLAYER_MODE_SHUFFLE) {
+        m_multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_SHUFFLE;
     }
 }
 
@@ -157,6 +162,20 @@ void WiiMixShuffleSettings::SetEndless(bool value)
     m_endless = value;
 }
 
+WiiMixEnums::MultiplayerMode WiiMixShuffleSettings::GetMultiplayerMode() const
+{
+    return m_multiplayer_mode;
+}
+
+void WiiMixShuffleSettings::SetMultiplayerMode(WiiMixEnums::MultiplayerMode multiplayer_mode)
+{
+    m_multiplayer_mode = multiplayer_mode;
+    #ifdef QT_GUI_LIB
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_MULTIPLAYER_MODE_SHUFFLE, multiplayer_mode);
+    #endif
+    // emit SettingsChanged(multiplayer_mode);
+}
+
 void WiiMixShuffleSettings::SetDifficulty(WiiMixEnums::Difficulty difficulty) {
     m_difficulty = difficulty;
     #ifdef QT_GUI_LIB
@@ -199,7 +218,9 @@ QJsonDocument WiiMixShuffleSettings::ToJson() {
     obj[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)] = m_number_of_switches;
     obj[QStringLiteral(SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH)] = m_min_time_between_switch;
     obj[QStringLiteral(SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH)] = m_max_time_between_switch;
+    obj[QStringLiteral(SHUFFLE_SETTINGS_NUM_PLAYERS)] = m_num_players;
     obj[QStringLiteral(SHUFFLE_SETTINGS_IS_ENDLESS)] = m_endless;
+    obj[QStringLiteral(SHUFFLE_SETTINGS_MULTIPLAYER_MODE)] = static_cast<int>(m_multiplayer_mode);
     return QJsonDocument(obj);
 }
 
@@ -209,5 +230,7 @@ void WiiMixShuffleSettings::FromJson(QJsonDocument json) {
     m_number_of_switches = obj[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt();
     m_min_time_between_switch = obj[QStringLiteral(SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH)].toInt();
     m_max_time_between_switch = obj[QStringLiteral(SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH)].toInt();
+    m_num_players = obj[QStringLiteral(SHUFFLE_SETTINGS_NUM_PLAYERS)].toInt();
     m_endless = obj[QStringLiteral(SHUFFLE_SETTINGS_IS_ENDLESS)].toBool();
+    m_multiplayer_mode = static_cast<WiiMixEnums::MultiplayerMode>(obj[QStringLiteral(SHUFFLE_SETTINGS_MULTIPLAYER_MODE)].toInt());
 }

@@ -16,8 +16,8 @@ enum class Platform
 {
   GameCubeDisc = 0,
   WiiDisc,
-  WiiWAD,
-  ELFOrDOL,
+  WiiWAD, // Wii channels
+  ELFOrDOL, // Can be a wii or gamecube game
   NumberOfPlatforms
 };
 

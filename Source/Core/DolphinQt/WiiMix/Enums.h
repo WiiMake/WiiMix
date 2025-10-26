@@ -26,6 +26,18 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    enum class MultiplayerMode {
+        VERSUS,
+        COOP,
+        END, // Default/size value
+    };
+
+    #define MULTIPLAYER_MODE_COOP "COOP"
+    #define MULTIPLAYER_MODE_VERSUS "VERSUS"
+
+    MultiplayerMode StringToMultiplayerMode(const std::string& str);
+    std::string MultiplayerModeToString(MultiplayerMode mode);
+
     enum class SaveStateBank {
         USER,
         VERIFIED,
@@ -69,7 +81,7 @@ namespace WiiMixEnums {
         PACIFIST,
         NO_HIT,
         GLITCH,
-        VERSUS,
+        // VERSUS, Deprecated; versus is now a separate multiplayer mode instead
         SPEEDRUN,
         END, // Default/size value
     };
@@ -379,12 +391,15 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_ROGUE_DIFFICULTY WiiMixEnums::Difficulty::NORMAL
 #define DEFAULT_ROGUE_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_ROGUE_LENGTH WiiMixEnums::RogueLength::MEDIUM
+#define DEFAULT_NUM_PLAYERS_ROGUE 1
+#define DEFAULT_MULTIPLAYER_MODE_ROGUE WiiMixEnums::MultiplayerMode::COOP
 
 // SHUFFLE
 #define DEFAULT_SHUFFLE_DIFFICULTY WiiMixEnums::Difficulty::NORMAL
 #define DEFAULT_SHUFFLE_SAVE_STATE_BANK WiiMixEnums::SaveStateBank::UNVERIFIED
 #define DEFAULT_MIN_SWITCH_TIME 15
 #define DEFAULT_MAX_SWITCH_TIME 60
-#define DEFAULT_NUM_PLAYERS 1
+#define DEFAULT_NUM_PLAYERS_SHUFFLE 1
+#define DEFAULT_MULTIPLAYER_MODE_SHUFFLE WiiMixEnums::MultiplayerMode::VERSUS
 #define DEFAULT_NUMBER_OF_SWITCHES 10
 #define DEFAULT_IS_ENDLESS false

@@ -10,6 +10,7 @@
 #include <QMessageBox>
 
 #include "Core/ConfigLoaders/GameConfigLoader.h"
+#include "Core/Config/WiimoteSettings.h"
 
 #include "Common/IniFile.h"
 #include "Common/FileUtil.h"
@@ -27,6 +28,12 @@
 #include "DolphinQt/WiiMix/ShuffleSettings.h"
 #include <iostream>
 #include <QGraphicsDropShadowEffect>
+
+#include "Core/HW/Wiimote.h"
+#include "Core/HW/GCPad.h"
+#include "Core/HW/SI/SI_Device.h"
+#include "InputCommon/ControllerInterface/ControllerInterface.h"
+#include "InputCommon/InputConfig.h"
 
 WiiMixLogoButton* WiiMixSettingsWindow::getWiiMixLogoButton() {
     return m_wii_mix_button;
@@ -194,6 +201,51 @@ void WiiMixSettingsWindow::CreateMainLayout()
   return;
 }
 
+bool WiiMixSettingsWindow::VerifyPlayerInput(bool different_console_types, int player_number, DiscIO::Platform console) {
+  // Check player 1 controller (bingo does not support local x online multiplayer)
+  if (console == DiscIO::Platform::GameCubeDisc) {
+    // Check GameCube controller for player
+    // Check if GameCube controller for player is mapped (0 source means none)
+    if (Config::Get(Config::GetInfoForSIDevice(player_number)) == SerialInterface::SIDEVICE_NONE) 
+    {
+      emit ErrorLoadingSettings(QStringLiteral("Player %1 GameCube controller is not mapped. Please configure the controller before starting WiiMix.").arg(player_number));
+      return false;
+    }
+  }
+  else if (console == DiscIO::Platform::WiiDisc || console == DiscIO::Platform::WiiWAD) {
+    // Check Wii controller for player 1
+    // Check if Wiimote for player 1 is mapped
+    if (Config::Get(Config::GetInfoForWiimoteSource(player_number)) == WiimoteSource::None) 
+    {
+      emit ErrorLoadingSettings(QStringLiteral("Player %1 Wii controller is not mapped. Please configure the controller before starting WiiMix.").arg(player_number));
+      return false;
+    }
+  }
+
+  if (different_console_types) {
+    // Check if the user is using the same input device and the same wiimix input device for both consoles
+    // Get emulated (or real) gamecube controller and emulated wii controller
+    ciface::Core::DeviceQualifier gcdevice = Pad::GetConfig()->GetController(player_number)->GetDefaultDevice();
+    ciface::Core::DeviceQualifier wiimotedevice = Wiimote::GetConfig()->GetController(player_number)->GetDefaultDevice();
+    // TODO: add wiimix err handling later
+    // const ciface::Core::DeviceQualifier& wiimix_device = GetDefaultWiiMixDevice();
+
+    if (gcdevice != wiimotedevice) {
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question(this, tr("Different Console Types"),
+                                    tr("You are using different console types (GameCube and Wii) in this WiiMix. "
+                                      "You are currently using different devices for controllers for the respective consoles."
+                                      "Do you want to continue?"),
+                                    QMessageBox::Yes | QMessageBox::No);
+      if (reply == QMessageBox::No) {
+        return false; // User chose not to continue
+      }
+      different_console_types = false; // Only warn once
+    }
+  }
+  return true;
+}
+
 void WiiMixSettingsWindow::ConnectWidgets()
 {
     connect(m_modes, &WiiMixModesWidget::ModeChanged, this, &WiiMixSettingsWindow::CreateLayout);
@@ -205,6 +257,89 @@ void WiiMixSettingsWindow::ConnectWidgets()
     connect(m_wii_mix_button, &QPushButton::clicked, this, [this] {
       // Only start a WiiMix if a WiiMix isn't already running
       if (m_config && !WiiMixGameManager::instance()->IsWiiMixStarted()) {
+        // Error out if the game list is empty
+        if (WiiMixGlobalSettings::instance()->GetGamesList().empty()) {
+          emit ErrorLoadingSettings(QStringLiteral("Cannot start WiiMix: No games selected"));
+          return;
+        }
+
+        // Error out if the controller configuration is invalid, i.e.:
+        // A controller is not mapped for any player participating in the WiiMix for any of the consoles selected
+        
+        // Determine the list of consoles
+        std::set<DiscIO::Platform> consoles = {};
+        for (const std::shared_ptr<const UICommon::GameFile> game : WiiMixGlobalSettings::instance()->GetGamesList()) {
+          // Add the console for the game if not already in the set
+          // If the platform type is ELFOrDOL, need to determine if it's a Wii or GameCube game so ask the user
+          if (game->GetPlatform() == DiscIO::Platform::ELFOrDOL) {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle(tr("Unknown Platform"));
+            msgBox.setText(tr("The game \"%1\" is an ELF or DOL file. Please specify its platform:").arg(QString::fromStdString(game->GetFileName())));
+            QPushButton* gcButton = msgBox.addButton(tr("GameCube"), QMessageBox::AcceptRole);
+            QPushButton* wiiButton = msgBox.addButton(tr("Wii"), QMessageBox::AcceptRole);
+            msgBox.setIcon(QMessageBox::Question);
+            msgBox.exec();
+
+            DiscIO::Platform selected_platform = DiscIO::Platform::GameCubeDisc;
+            if (msgBox.clickedButton() == wiiButton)
+              selected_platform = DiscIO::Platform::WiiDisc;
+
+            // Use a public setter instead of direct member access
+            // Create a non-const copy and set the platform
+            std::shared_ptr<UICommon::GameFile> non_const_game = std::make_shared<UICommon::GameFile>(*game);
+            non_const_game->SetPlatform(selected_platform);
+
+            // Save the updated platform to the game's config file
+            // NOTE: not sure if this would cause any problems
+            Common::IniFile ini;
+            std::string config_path = File::GetUserPath(D_GAMESETTINGS_IDX) + game->GetGameID() + ".ini";
+            ini.Load(config_path);
+            auto* section = ini.GetOrCreateSection("Game");
+            section->Set("Platform", static_cast<int>(selected_platform));
+            ini.Save(config_path);
+          }
+          consoles.insert(game->GetPlatform());
+        }
+
+        bool different_console_types = false;
+        if (consoles.count(DiscIO::Platform::GameCubeDisc) > 0 &&
+            (consoles.count(DiscIO::Platform::WiiDisc) > 0 || consoles.count(DiscIO::Platform::WiiWAD) > 0))
+          different_console_types = true;
+
+        // For each console, check the controller mappings
+        for (const auto& console : consoles) {
+          // Single player if bingo, otherwise possible multiplayer
+          if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
+            // Check the single player's controller
+            if (!VerifyPlayerInput(different_console_types, 1, console)) {
+              return; // Could not verify player input
+            }
+            different_console_types = false; // Only warn for different_console_types the first time
+          }
+          else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::SHUFFLE) {
+            // Check the number of players for shuffle
+            for (int player = 1; player <= WiiMixShuffleSettings::instance()->GetNumPlayers(); player++) {
+              if (!VerifyPlayerInput(different_console_types, player, console)) {
+                return; // Could not verify player input
+              }
+              different_console_types = false; // Only warn for different_console_types the first time
+            }
+          }
+          else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
+            // Check the number of players for rogue
+            for (int player = 1; player <= WiiMixRogueSettings::instance()->GetNumPlayers(); player++) {
+              if (!VerifyPlayerInput(different_console_types, player, console)) {
+                return; // Could not verify player input
+              }
+              different_console_types = false; // Only warn for different_console_types the first time
+            }
+          }
+        }
+        
+        // Warning if controllers are mapped differently across consoles, i.e:
+        // Player 1 is mapping keyboard to Wii but Xbox Controller to GameCube
+        // Option to quit and view controller configuration or continue anyway
+
         WiiMixGameManager::instance()->SetWiiMixStarted(true);
         if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::BINGO) {
           WiiMixBingoSettings::instance()->SetDifficulty(WiiMixCommonSettings::StringToDifficulty(m_config->GetDifficulty()));

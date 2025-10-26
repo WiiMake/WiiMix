@@ -100,6 +100,7 @@ public:
   DiscIO::Region GetRegion() const { return m_region; }
   DiscIO::Country GetCountry() const { return m_country; }
   DiscIO::Platform GetPlatform() const { return m_platform; }
+  void SetPlatform(DiscIO::Platform platform) { m_platform = platform; }
   DiscIO::BlobType GetBlobType() const { return m_blob_type; }
   u64 GetBlockSize() const { return m_block_size; }
   const std::string& GetCompressionMethod() const { return m_compression_method; }

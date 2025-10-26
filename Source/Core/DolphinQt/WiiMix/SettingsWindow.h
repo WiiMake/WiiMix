@@ -42,6 +42,7 @@ private:
   bool eventFilter(QObject* obj, QEvent* event) override;
   void LoadSettings();
   void SaveSettings();
+  bool VerifyPlayerInput(bool different_console_types, int player_number, DiscIO::Platform console);
 
   void CreateMainLayout();
   void ConnectWidgets();

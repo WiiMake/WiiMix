@@ -187,8 +187,8 @@ namespace WiiMixEnums {
                 return OBJECTIVE_TYPE_GLITCH;
             case ObjectiveType::SPEEDRUN:
                 return OBJECTIVE_TYPE_SPEEDRUN;
-            case ObjectiveType::VERSUS:
-                return OBJECTIVE_TYPE_VERSUS;
+            // case ObjectiveType::VERSUS:
+            //     return OBJECTIVE_TYPE_VERSUS;
             case ObjectiveType::END:
                 return WII_MIX_UNKNOWN;
             default:
@@ -222,8 +222,8 @@ namespace WiiMixEnums {
             return ObjectiveType::NO_HIT;
         } else if (str == OBJECTIVE_TYPE_GLITCH) {
             return ObjectiveType::GLITCH;
-        } else if (str == OBJECTIVE_TYPE_VERSUS) {
-            return ObjectiveType::VERSUS;
+        // } else if (str == OBJECTIVE_TYPE_VERSUS) {
+        //     return ObjectiveType::VERSUS;
         } else if (str == OBJECTIVE_TYPE_SPEEDRUN) {
             return ObjectiveType::SPEEDRUN;
         } else {
@@ -423,5 +423,28 @@ namespace WiiMixEnums {
 
         types.push_back(ObjectiveTypeFromString(str.substr(start)));
         return types;
+    }
+
+    MultiplayerMode StringToMultiplayerMode(const std::string& str) {
+        if (str == MULTIPLAYER_MODE_COOP) {
+            return MultiplayerMode::COOP;
+        } else if (str == MULTIPLAYER_MODE_VERSUS) {
+            return MultiplayerMode::VERSUS;
+        } else {
+            return MultiplayerMode::END;
+        }
+    }
+
+    std::string MultiplayerModeToString(MultiplayerMode mode) {
+        switch (mode) {
+            case MultiplayerMode::COOP:
+                return MULTIPLAYER_MODE_COOP;
+            case MultiplayerMode::VERSUS:
+                return MULTIPLAYER_MODE_VERSUS;
+            case MultiplayerMode::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
     }
 };

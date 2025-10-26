@@ -41,11 +41,14 @@ public:
   #define OBJECTIVE_GAME_ID "game_id"
   #define OBJECTIVE_ACHIEVEMENT_ID "achievement_id"
   #define OBJECTIVE_OBJECTIVE_TYPES "objective_types"
+  #define OBJECTIVE_NUM_PLAYERS "num_players"
+  #define OBJECTIVE_MULTIPLAYER_MODE "multiplayer_mode"
   #define OBJECTIVE_DESCRIPTION "description"
   #define OBJECTIVE_GAME_GENRES "game_genres"
   #define OBJECTIVE_DIFFICULTY "difficulty"
   #define OBJECTIVE_TIME "time"
   #define OBJECTIVE_CREATOR_USERNAME "creator_username"
+  
 
   // Objective history extension; these have default values so aren't necessary to be set,
   // but offer extra data if you want it :)

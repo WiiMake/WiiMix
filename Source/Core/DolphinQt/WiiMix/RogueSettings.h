@@ -16,7 +16,7 @@
 class WiiMixRogueSettings : public WiiMixCommonSettings 
 {
 public:
-  static WiiMixRogueSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_ROGUE_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_ROGUE_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES, WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH) {
+  static WiiMixRogueSettings* instance(WiiMixEnums::Difficulty difficulty = DEFAULT_ROGUE_DIFFICULTY, WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_ROGUE_SAVE_STATE_BANK, std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> genres = DEFAULT_GAME_GENRES, WiiMixEnums::RogueLength rogue_length = DEFAULT_ROGUE_LENGTH, int num_players = DEFAULT_NUM_PLAYERS_ROGUE, WiiMixEnums::MultiplayerMode multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_ROGUE) {
     // Check if difficulty or save state bank are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_ROGUE_DIFFICULTY);
     if (difficulty == DEFAULT_ROGUE_DIFFICULTY && config_difficulty != DEFAULT_ROGUE_DIFFICULTY) {
@@ -44,12 +44,13 @@ public:
     return s_instance;
   }
 
-  explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length);
+  explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length, int num_players = DEFAULT_NUM_PLAYERS_ROGUE, WiiMixEnums::MultiplayerMode multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_ROGUE);
 
   #define ROGUE_SETTINGS_SEED "SEED"
   #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
   #define ROGUE_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
   #define ROGUE_SETTINGS_LENGTH "LENGTH"
+  #define ROGUE_SETTINGS_NUM_PLAYERS "NUM_PLAYERS"
 
   // Seeds will be encoded and decoded using Qt
   QString GetSeed();
@@ -99,6 +100,11 @@ public:
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
   void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) override;
   void SetGameGenres(std::vector<WiiMixEnums::GameGenre> genres) override;
+
+  int GetNumPlayers() const;
+  void SetNumPlayers(int value);
+  WiiMixEnums::MultiplayerMode GetMultiplayerMode() const;
+  void SetMultiplayerMode(WiiMixEnums::MultiplayerMode multiplayer_mode);
   
   QJsonDocument ToJson();
   void FromJson(QJsonDocument json);
@@ -111,6 +117,8 @@ private:
   WiiMixEnums::RogueLength m_length;
   // Endless can potentially come later
   // bool m_endless;
+  int m_num_players;
+  WiiMixEnums::MultiplayerMode m_multiplayer_mode = WiiMixEnums::MultiplayerMode::COOP;
   QString m_seed = QStringLiteral("");
 
 };

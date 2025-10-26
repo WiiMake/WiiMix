@@ -11,23 +11,55 @@
 #include "DolphinQt/WiiMix/Enums.h"
 
 WiiMixRogueSettings::WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types,
- std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length) : WiiMixCommonSettings(
+ std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length, int num_players, WiiMixEnums::MultiplayerMode multiplayer_mode) : WiiMixCommonSettings(
     difficulty,
     bank,
     objectives,
     types,
     genres
-), m_length(length) {
+), m_length(length), m_num_players(num_players), m_multiplayer_mode(multiplayer_mode) {
+    #ifdef QT_GUI_LIB
     if (length != DEFAULT_ROGUE_LENGTH) {
         m_length = length;
     }
-    #ifdef QT_GUI_LIB
-        else if (Config::Get(Config::WIIMIX_ROGUE_LENGTH) != DEFAULT_ROGUE_LENGTH) {
-            m_length = Config::Get(Config::WIIMIX_ROGUE_LENGTH);
-        }
-    #endif
+    else if (Config::Get(Config::WIIMIX_ROGUE_LENGTH) != DEFAULT_ROGUE_LENGTH) {
+        m_length = Config::Get(Config::WIIMIX_ROGUE_LENGTH);
+    }
     else {
         m_length = DEFAULT_ROGUE_LENGTH;
+    }
+    #endif
+
+    if (length != DEFAULT_ROGUE_LENGTH) {
+        m_length = length;
+    }
+
+    #ifdef QT_GUI_LIB
+    if (num_players != DEFAULT_NUM_PLAYERS_ROGUE) {
+        m_num_players = num_players;
+    } else if (Config::Get(Config::WIIMIX_NUM_PLAYERS_ROGUE) != DEFAULT_NUM_PLAYERS_ROGUE) {
+        m_num_players = Config::Get(Config::WIIMIX_NUM_PLAYERS_ROGUE);
+    } else {
+        m_num_players = DEFAULT_NUM_PLAYERS_ROGUE;
+    }
+    #endif
+
+    if (num_players != DEFAULT_NUM_PLAYERS_ROGUE) {
+        m_num_players = num_players;
+    }
+
+    #ifdef QT_GUI_LIB
+    if (multiplayer_mode != DEFAULT_MULTIPLAYER_MODE_ROGUE) {
+        m_multiplayer_mode = multiplayer_mode;
+    } else if (Config::Get(Config::WIIMIX_MULTIPLAYER_MODE_ROGUE) != DEFAULT_MULTIPLAYER_MODE_ROGUE) {
+        m_multiplayer_mode = Config::Get(Config::WIIMIX_MULTIPLAYER_MODE_ROGUE);
+    } else {
+        m_multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_ROGUE;
+    }
+    #endif
+
+    if (multiplayer_mode != DEFAULT_MULTIPLAYER_MODE_ROGUE) {
+        m_multiplayer_mode = multiplayer_mode;
     }
 }
 
@@ -145,6 +177,26 @@ WiiMixEnums::RogueLength WiiMixRogueSettings::StringToLength(QString length)
     }
 }
 
+int WiiMixRogueSettings::GetNumPlayers() const
+{
+    return m_num_players;
+}
+
+void WiiMixRogueSettings::SetNumPlayers(int value)
+{
+    m_num_players = value;
+}
+
+WiiMixEnums::MultiplayerMode WiiMixRogueSettings::GetMultiplayerMode() const
+{
+    return m_multiplayer_mode;
+}
+
+void WiiMixRogueSettings::SetMultiplayerMode(WiiMixEnums::MultiplayerMode multiplayer_mode)
+{
+    m_multiplayer_mode = multiplayer_mode;
+}
+
 QJsonDocument WiiMixRogueSettings::ToJson()
 {
     // Take care of the common settings first
@@ -153,24 +205,18 @@ QJsonDocument WiiMixRogueSettings::ToJson()
     json[QStringLiteral(ROGUE_SETTINGS_DIFFICULTY)] = static_cast<int>(m_difficulty);
     json[QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK)] = static_cast<int>(m_save_state_bank);
     json[QStringLiteral(ROGUE_SETTINGS_LENGTH)] = static_cast<int>(m_length);
+    json[QStringLiteral(ROGUE_SETTINGS_NUM_PLAYERS)] = m_num_players;
     return QJsonDocument(json);
 }
 
 void WiiMixRogueSettings::FromJson(QJsonDocument json)
 {
     QJsonObject jsonObject = json.object();
-    if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_SEED))) {
-        m_seed = jsonObject[QStringLiteral(ROGUE_SETTINGS_SEED)].toString();
-    }
-    if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_DIFFICULTY))) {
-        m_difficulty = static_cast<WiiMixEnums::Difficulty>(jsonObject[QStringLiteral(ROGUE_SETTINGS_DIFFICULTY)].toInt());
-    }
-    if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK))) {
-        m_save_state_bank = static_cast<WiiMixEnums::SaveStateBank>(jsonObject[QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK)].toInt());
-    }
-    if (jsonObject.contains(QStringLiteral(ROGUE_SETTINGS_LENGTH))) {
-        m_length = static_cast<WiiMixEnums::RogueLength>(jsonObject[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt());
-    }
+    m_seed = jsonObject[QStringLiteral(ROGUE_SETTINGS_SEED)].toString();
+    m_difficulty = static_cast<WiiMixEnums::Difficulty>(jsonObject[QStringLiteral(ROGUE_SETTINGS_DIFFICULTY)].toInt());
+    m_save_state_bank = static_cast<WiiMixEnums::SaveStateBank>(jsonObject[QStringLiteral(ROGUE_SETTINGS_SAVE_STATE_BANK)].toInt());
+    m_length = static_cast<WiiMixEnums::RogueLength>(jsonObject[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt());
+    m_num_players = jsonObject[QStringLiteral(ROGUE_SETTINGS_NUM_PLAYERS)].toInt();
 }
 
 // returns true when seed is correct

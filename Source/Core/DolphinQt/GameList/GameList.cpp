@@ -161,6 +161,57 @@ void GameList::PurgeCache()
   m_model.PurgeCache();
 }
 
+void GameList::ToggleSelectAllWiiMix()
+{
+  // Determine the new state
+  bool all_selected = true;
+  for (int row = 0; row < m_model.rowCount(QModelIndex()); row++) {
+    auto game = m_model.GetGameFile(row);
+    // Only consider checkable games
+    if (game && game->GetObjectives() > 0 && !game->GetWiiMix()) {
+        all_selected = false;
+        break;
+    }
+  }
+
+  // Tell the model we are about to batch-update
+  // This stops the view from trying to redraw for every single row
+  m_model.layoutAboutToBeChanged();
+
+  // Apply the new state
+  for (int row = 0; row < m_model.rowCount(QModelIndex()); row++) {
+    auto game_const = m_model.GetGameFile(row);
+    if (game_const && game_const->GetObjectives() > 0)
+    {
+      auto game = std::const_pointer_cast<UICommon::GameFile>(game_const);
+      game->SetWiiMix(!all_selected);
+    }
+  }
+
+  m_model.layoutChanged();
+}
+
+bool GameList::eventFilter(QObject* object, QEvent* event) {
+    if (object == m_list->horizontalHeader()->viewport()) {
+      // Check if the event is a mouse button press
+      if (event->type() == QEvent::MouseButtonPress) 
+      {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        int logicalIndex = m_list->horizontalHeader()->logicalIndexAt(mouseEvent->pos());
+
+        if (logicalIndex == static_cast<int>(GameListModel::Column::WiiMix)) 
+        {
+            // Instead of sorting, select or deselect all WiiMix games
+            ToggleSelectAllWiiMix();
+            
+            // ...and tell Qt "This event is handled."
+            return true; 
+        }
+      }
+    }
+    return QStackedWidget::eventFilter(object, event);
+}
+
 void GameList::MakeListView()
 {
   m_list = new GameListTableView(this);
@@ -190,6 +241,8 @@ void GameList::MakeListView()
   connect(hor_header, &QHeaderView::sectionCountChanged, this, &GameList::OnHeaderViewChanged);
   connect(hor_header, &QHeaderView::sectionMoved, this, &GameList::OnHeaderViewChanged);
   connect(hor_header, &QHeaderView::sectionResized, this, &GameList::OnSectionResized);
+
+  hor_header->viewport()->installEventFilter(this);
 
   if (!Settings::GetQSettings().contains(QStringLiteral("tableheader/state")))
     m_list->sortByColumn(static_cast<int>(GameListModel::Column::Title), Qt::AscendingOrder);
@@ -1024,7 +1077,8 @@ void GameList::OnColumnVisibilityToggled(const QString& row, bool visible)
 {
   using Column = GameListModel::Column;
   static const QMap<QString, Column> rowname_to_column = {
-      {tr("Mix"), Column::WiiMix},
+      // Extra spaces for padding
+      {tr("Mix  "), Column::WiiMix},
       {tr("Objectives"), Column::Objectives},
       {tr("Platform"), Column::Platform},
       {tr("Banner"), Column::Banner},

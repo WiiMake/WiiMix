@@ -35,6 +35,7 @@ public:
   std::shared_ptr<const UICommon::GameFile> FindGame(const std::string& path) const;
   std::shared_ptr<const UICommon::GameFile> FindSecondDisc(const UICommon::GameFile& game) const;
   std::string GetNetPlayName(const UICommon::GameFile& game) const;
+  void ToggleSelectAllWiiMix();
 
   void SetListView() { SetPreferredView(true); }
   void SetGridView() { SetPreferredView(false); }
@@ -113,4 +114,5 @@ private:
 
 protected:
   void keyPressEvent(QKeyEvent* event) override;
+  bool eventFilter(QObject* object, QEvent* event) override;
 };

@@ -21,7 +21,7 @@ public:
       int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
       int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
       int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME,
-      int num_players = DEFAULT_NUM_PLAYERS,
+      int num_players = DEFAULT_NUM_PLAYERS_SHUFFLE,
       bool endless = DEFAULT_IS_ENDLESS) {
     // Check if difficulty, save state bank, objective types, or game genres are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_SHUFFLE_DIFFICULTY);
@@ -54,14 +54,17 @@ public:
   #define SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH "MIN_TIME_BETWEEN_SWITCH"
   #define SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH "MAX_TIME_BETWEEN_SWITCH"
   #define SHUFFLE_SETTINGS_IS_ENDLESS "IS_ENDLESS"
+  #define SHUFFLE_SETTINGS_NUM_PLAYERS "NUM_PLAYERS"
+  #define SHUFFLE_SETTINGS_MULTIPLAYER_MODE "MULTIPLAYER_MODE"
 
   explicit WiiMixShuffleSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_SHUFFLE_DIFFICULTY,
       WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_SHUFFLE_SAVE_STATE_BANK,
       std::vector<WiiMixObjective> objectives = DEFAULT_OBJECTIVES, std::vector<WiiMixEnums::ObjectiveType> objective_types = DEFAULT_OBJECTIVE_TYPES, std::vector<WiiMixEnums::GameGenre> game_genres = DEFAULT_GAME_GENRES, int number_of_switches = DEFAULT_NUMBER_OF_SWITCHES, 
     int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
     int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME, 
-    int num_players = DEFAULT_NUM_PLAYERS,
-    bool endless = DEFAULT_IS_ENDLESS);
+    int num_players = DEFAULT_NUM_PLAYERS_SHUFFLE,
+    bool endless = DEFAULT_IS_ENDLESS,
+    WiiMixEnums::MultiplayerMode multiplayer_mode = WiiMixEnums::MultiplayerMode::VERSUS);
 
   // Note that EITHER the number of switches OR the number of objectives gets set
   // It doesn't make sense for both to be set
@@ -73,6 +76,8 @@ public:
   void SetMaxTimeBetweenSwitch(int value);
   int GetNumPlayers() const;
   void SetNumPlayers(int value);
+  WiiMixEnums::MultiplayerMode GetMultiplayerMode() const;
+  void SetMultiplayerMode(WiiMixEnums::MultiplayerMode multiplayer_mode);
   bool GetEndless() const; // The user(s) can play as long as they want
   void SetEndless(bool value);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
@@ -91,4 +96,5 @@ private:
   int m_max_time_between_switch;
   int m_num_players;
   bool m_endless;
+  WiiMixEnums::MultiplayerMode m_multiplayer_mode = WiiMixEnums::MultiplayerMode::VERSUS;
 };

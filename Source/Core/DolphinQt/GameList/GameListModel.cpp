@@ -133,6 +133,14 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
     if (role == Qt::TextAlignmentRole) {
         return Qt::AlignHCenter;
     }
+
+    // Disable the checkbox for this row if there's no objectives for the game
+    if (game.GetObjectives() == 0) {
+        if (role == Qt::CheckStateRole) {
+            return QVariant(); // Disable the checkbox
+        }
+    }
+
     // if (role == Qt::TextAlignmentRole)
     // {
     //     // Align center horizontally and vertically
