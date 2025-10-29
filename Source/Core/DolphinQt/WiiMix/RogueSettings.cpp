@@ -70,6 +70,11 @@ struct WiiMixRogueSettings::RogueTile{
     int objectiveId;
 };
 
+QString WiiMixRogueSettings::GetSeed()
+{
+    return m_seed;
+}
+
 void WiiMixRogueSettings::SetSeed(QString seed) {
     m_seed = seed;
 }
@@ -219,110 +224,237 @@ void WiiMixRogueSettings::FromJson(QJsonDocument json)
     m_num_players = jsonObject[QStringLiteral(ROGUE_SETTINGS_NUM_PLAYERS)].toInt();
 }
 
-// returns true when seed is correct
+// returns true when seed is valid
+// A valid seed is: "052%00000101%00000202$01%00000303%00000404@000003"
 bool WiiMixRogueSettings::VerifyRogueSeed(std::string seed) {
-    try {
-        char current_type;
-        int id_len = -1;
-        int length = std::stoi(seed.substr(0, 2));
-        int factual_length = 0;
-        for (int i = 2; i < seed.length(); i++) {
-            if (seed[i] == '%') {
-                if (id_len == -1 ||
-                ( (current_type == '%' && id_len == 8)
-                || (current_type == '$' && id_len == 2)
-                || (current_type == '@' && id_len == 6))) {
-                    id_len = 0;
-                } else {
-                    return false;
-                }
-                current_type = '%';
-                factual_length++;
-            } else if (seed[i] == '$') {
-                if (id_len == -1 ||
-                ( (current_type == '%' && id_len == 8)
-                || (current_type == '$' && id_len == 2)
-                || (current_type == '@' && id_len == 6))) {
-                    id_len = 0;
-                } else {
-                    return false;
-                }
-                current_type = '$';
-                factual_length++;
-            } else if (seed[i] == '@') {
-                if (id_len == -1 ||
-                ( (current_type == '%' && id_len == 8)
-                || (current_type == '$' && id_len == 2)
-                || (current_type == '@' && id_len == 6))) {
-                    id_len = 0;
-                } else {
-                    return false;
-                }
-                current_type = '@';
-                factual_length++;
-            } else if (seed[i] < 48 || seed[i] > 57) {
+    // Seed must start with a length (2 digits) and num_players (1 digit)
+    if (seed.size() < 3 || !isdigit(seed[0]) || !isdigit(seed[1]) || !isdigit(seed[2]))
+        return false;
+
+    int expected_tile_count = std::stoi(seed.substr(0, 2));
+    int num_players = seed[2] - '0';
+    int actual_tile_count = 0;
+    size_t i = 3;
+
+    // Parse tiles
+    while (i < seed.size()) {
+        if (seed[i] == '%') {
+            // Event tile: '%' + 6 digits (objectiveId) + 2 digits (event)
+            if (i + 8 >= seed.size())
                 return false;
-            } else {
-                if ((id_len > 8 && current_type == '%')
-                || (id_len > 2 && current_type == '$')
-                || (id_len > 6 && current_type == '@')) {
+            for (int j = 1; j <= 8; ++j)
+                if (!isdigit(seed[i + j]))
                     return false;
+            i += 9;
+            actual_tile_count++;
+        } else if (seed[i] == '$') {
+            // Item tile: '$' + 2 digits (item id)
+            if (i + 2 >= seed.size())
+                return false;
+            if (!isdigit(seed[i + 1]) || !isdigit(seed[i + 2]))
+                return false;
+            i += 3;
+            actual_tile_count++;
+        } else if (seed[i] == '@') {
+            // Boss tiles: '@' + (6 or more digits, but always at end)
+            i++;
+            // Accept any number of boss tiles, each 6 digits (objectiveId) or 6+2 digits (objectiveId+event)
+            while (i + 5 < seed.size()) {
+                // Check for 6 digits
+                for (int j = 0; j < 6; ++j)
+                    if (!isdigit(seed[i + j]))
+                        return false;
+                i += 6;
+                // Optionally, check for 2 more digits (event id)
+                if (i + 1 < seed.size() && isdigit(seed[i]) && isdigit(seed[i + 1])) {
+                    i += 2;
                 }
-                id_len += 1;
+                actual_tile_count++;
             }
-        }
-        if (length != factual_length) {
+            break; // Boss tiles are always at the end
+        } else {
+            // Invalid character
             return false;
         }
-    } catch (std::out_of_range e) {
-        return false;
     }
+
+    // Only count non-boss tiles for expected_tile_count
+    // Boss tiles are handled at the end and not part of the initial count
+    if (actual_tile_count < expected_tile_count)
+        return false;
+
     return true;
 }
 
-std::string WiiMixRogueSettings::RogueTilesToSeed(std::vector<WiiMixRogueSettings::RogueTile> tiles) {
+std::string WiiMixRogueSettings::RogueTilesToSeed(std::vector<WiiMixRogueSettings::RogueTile> tiles, WiiMixEnums::Difficulty difficulty, int num_players, WiiMixEnums::RogueLength length) {
     std::string seed;
+    // First two digits: tile count, third digit: num_players
     if (tiles.size() < 10) {
         seed = "0" + std::to_string(tiles.size());
     } else {
         seed = std::to_string(tiles.size());
     }
+    seed += std::to_string(num_players);
+
+    std::vector<WiiMixRogueSettings::RogueTile> boss_tiles;
     for (auto tile : tiles) {
         if (tile.type == '%') {
+            // If the tile is an event
+            // Append an objective id (6 digits) and event id (2 digits)
             seed += "%";
             char temp_str[9];
             snprintf(temp_str, 9, "%06d%02d", tile.objectiveId, static_cast<int>(tile.event));
             seed += temp_str;
         } else if (tile.type == '$') {
+            // If the tile is an item
+            // Append item id (2 digits)
             seed += "$";
             char temp_str[3];
             snprintf(temp_str, 3, "%02d", static_cast<int>(tile.item));
             seed += temp_str;
-        } else {
-            seed += "@";
-            char temp_str[7];
-            snprintf(temp_str, 7, "%06d", tile.objectiveId);
-            seed += temp_str;
+        } else if (tile.type == '@') {
+            boss_tiles.push_back(tile);
+        }
+    }
+    // Handle boss tiles at the end
+    if (!boss_tiles.empty()) {
+        seed += "@";
+        for (auto tile : boss_tiles) {
+            // If the tile is a boss
+            // Append objective id (6 digits)
+            // On normal, there's just a single boss with an event
+            // On hard, there's 3 consecutive bosses with events
+            // On wiisanity, there's 3 consecutive bosses with events PLUS an extra custom final boss against the emulator itself
+            if (difficulty == WiiMixEnums::Difficulty::NORMAL) {
+                // Single boss
+                char temp_str[7];
+                snprintf(temp_str, 7, "%06d", tile.objectiveId);
+                seed += temp_str;
+            } else if ((difficulty == WiiMixEnums::Difficulty::HARD || difficulty == WiiMixEnums::Difficulty::WIISANITY) && length == WiiMixEnums::RogueLength::MARATHON) {
+                // Multiple bosses
+                // Handled outside this function by adding multiple boss tiles
+                // WiiSanity final boss is not seeded; it's always the same
+                char temp_str[25];
+                snprintf(temp_str, 25, "%06d%02d", tile.objectiveId, static_cast<int>(tile.event));
+                seed += temp_str;
+            }
         }
     }
     return seed;
 }
 
+// Return a new instance of rogue settings from the seed
+// The seed should determine everything about the rogue run
+WiiMixRogueSettings* WiiMixRogueSettings::SettingsFromSeed(QString seed) {
+    std::string str_seed = seed.toStdString();
+    if (!VerifyRogueSeed(str_seed)) {
+        return nullptr; // Invalid seed
+    }
+
+    // Parse length and num_players from seed
+    int expected_tile_count = std::stoi(str_seed.substr(0, 2));
+    int num_players = str_seed[2] - '0';
+
+    std::vector<RogueTile> tiles;
+    size_t i = 3;
+
+    // Parse tiles
+    while (i < str_seed.size()) {
+        if (str_seed[i] == '%') {
+            // Event tile: '%' + 6 digits (objectiveId) + 2 digits (event)
+            int objectiveId = std::stoi(str_seed.substr(i + 1, 6));
+            WiiMixEnums::RogueEvent event = static_cast<WiiMixEnums::RogueEvent>(std::stoi(str_seed.substr(i + 7, 2)));
+            tiles.push_back({WiiMixEnums::RogueItem::END, '%', event, objectiveId});
+            i += 9;
+        } else if (str_seed[i] == '$') {
+            // Item tile: '$' + 2 digits (item id)
+            WiiMixEnums::RogueItem item = static_cast<WiiMixEnums::RogueItem>(std::stoi(str_seed.substr(i + 1, 2)));
+            tiles.push_back({item, '$', WiiMixEnums::RogueEvent::END, -1});
+            i += 3;
+        } else if (str_seed[i] == '@') {
+            // Boss tiles: '@' + (6 or more digits, but always at end)
+            i++;
+            while (i + 5 < str_seed.size()) {
+                int objectiveId = std::stoi(str_seed.substr(i, 6));
+                WiiMixEnums::RogueEvent event = WiiMixEnums::RogueEvent::END;
+                i += 6;
+                // Optionally, check for 2 more digits (event id)
+                if (i + 1 < str_seed.size() && isdigit(str_seed[i]) && isdigit(str_seed[i + 1])) {
+                    event = static_cast<WiiMixEnums::RogueEvent>(std::stoi(str_seed.substr(i, 2)));
+                    i += 2;
+                }
+                tiles.push_back({WiiMixEnums::RogueItem::END, '@', event, objectiveId});
+            }
+            break; // Boss tiles are always at the end
+        } else {
+            // Invalid character (should not happen due to prior verification)
+            break;
+        }
+    }
+
+    // Determine length based on expected_tile_count
+    WiiMixEnums::RogueLength length;
+    if (expected_tile_count == 5) {
+        length = WiiMixEnums::RogueLength::SHORT;
+    } else if (expected_tile_count == 7) {
+        length = WiiMixEnums::RogueLength::MEDIUM;
+    } else if (expected_tile_count == 10) {
+        length = WiiMixEnums::RogueLength::MARATHON;
+    } else {
+        length = WiiMixEnums::RogueLength::END;
+    }
+
+    // Extract objectives and events from tiles
+    std::vector<WiiMixEnums::ObjectiveType> objective_types;
+    std::vector<WiiMixEnums::GameGenre> genres;
+    QList<WiiMixEnums::RogueEvent> events;
+    QList<WiiMixEnums::RogueItem> items;
+    WiiMixEnums::Difficulty difficulty = WiiMixEnums::Difficulty::NORMAL; // Default, could be encoded in seed in future
+    WiiMixEnums::SaveStateBank save_state_bank = WiiMixEnums::SaveStateBank::END; // Default
+
+    // Create the settings object
+    WiiMixRogueSettings* settings = new WiiMixRogueSettings(
+        difficulty,
+        save_state_bank,
+        {},
+        objective_types,
+        genres,
+        length,
+        num_players,
+        WiiMixEnums::MultiplayerMode::END // Default, could be encoded in seed
+    );
+    settings->SetSeed(seed);
+    settings->SetEvents(events);
+    settings->SetItems(items);
+    settings->SetNumPlayers(num_players);
+    settings->SetLength(length);
+
+    return settings;
+}
+
 std::vector<int> WiiMixRogueSettings::SeedToObjectives(QString seed) {
     std::string str_seed = seed.toStdString();
     std::vector<int> objectives;
-    std::string objective;
-    int k = -1;
-    for (char c : str_seed) {
-        if (c == '%' || k != -1) {
-            if (k != -1) {
-                objective += c;
+    size_t i = 2; // skip length prefix
+    while (i < str_seed.size()) {
+        if (str_seed[i] == '%') {
+            // Event tile: '%' + 6 digits (objectiveId) + 2 digits (event)
+            if (i + 8 < str_seed.size()) {
+                std::string obj_id = str_seed.substr(i + 1, 6);
+                objectives.push_back(std::stoi(obj_id));
+                i += 9;
+            } else {
+                break;
             }
-            k++;
-        }
-        if (k == 6) {
-            objectives.push_back(std::stoi(objective));
-            k = -1;
+        } else if (str_seed[i] == '$') {
+            // Item tile: skip
+            i += 3;
+        } else if (str_seed[i] == '@') {
+            // Boss tiles start here, break
+            break;
+        } else {
+            // Invalid character, skip
+            i++;
         }
     }
     return objectives;
@@ -332,18 +464,17 @@ std::vector<int> WiiMixRogueSettings::SeedToObjectives(QString seed) {
 std::vector<int> WiiMixRogueSettings::SeedToBossObjectives(QString seed) {
     std::string str_seed = seed.toStdString();
     std::vector<int> bossObjectives;
-    std::string objective;
-    int k = -1;
-    for (char c : str_seed) {
-        if (c == '@' || k != -1) {
-            if (k != -1) {
-                objective += c;
-            }
-            k++;
-        }
-        if (k == 6) {
-            bossObjectives.push_back(std::stoi(objective));
-            k = -1;
+    size_t at_pos = str_seed.find('@');
+    if (at_pos == std::string::npos)
+        return bossObjectives;
+    size_t i = at_pos + 1;
+    while (i + 5 < str_seed.size()) {
+        std::string obj_id = str_seed.substr(i, 6);
+        bossObjectives.push_back(std::stoi(obj_id));
+        i += 6;
+        // Optionally skip event id if present
+        if (i + 1 < str_seed.size() && isdigit(str_seed[i]) && isdigit(str_seed[i + 1])) {
+            i += 2;
         }
     }
     return bossObjectives;

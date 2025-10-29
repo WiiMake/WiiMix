@@ -344,6 +344,15 @@ bool WiiMixClient::IsConnected() const {
 }
 
 bool WiiMixClient::SendData(QJsonObject obj, WiiMixEnums::Action action) {
+    // Just in case the action is not set
+    #ifdef _NDEBUG
+        if (obj.contains(QStringLiteral(SERVER_ACTION))) {
+            if action != obj[QStringLiteral(SERVER_ACTION)].toInt() {
+                qWarning() << "Action mismatch in SendData";
+                return false;
+            }
+        }
+    #endif
     obj[QStringLiteral(SERVER_ACTION)] = static_cast<int>(action);
 
     m_data = {};
@@ -552,15 +561,31 @@ void WiiMixClient::BytesWritten() {
 bool WiiMixClient::ReceiveData(QJsonDocument json) {
     WiiMixEnums::Response response;
     if (json.object().contains(QStringLiteral(CLIENT_RESPONSE))) {
+        // Extract the response from the object
         response = static_cast<WiiMixEnums::Response>(json.object()[QStringLiteral(CLIENT_RESPONSE)].toInt());
     }
     else {
-        response = static_cast<WiiMixEnums::Response>(json.array()[0].toObject()[QStringLiteral(CLIENT_RESPONSE)].toInt());
+        qWarning() << "Received json object without response from server";
+        return false;
     }
+    // Deprecating the weird array stuff
+    // else {
+    //     // Extract the response from the first object in the array
+    //     if (json.array().isEmpty()) {
+    //         qWarning() << "Received empty json array from server";
+    //         return false;
+    //     }
+    //     if (!json.array()[0].toObject().contains(QStringLiteral(CLIENT_RESPONSE))) {
+    //         qWarning() << "Received json array without response from server";
+    //         return false;
+    //     }
+    //     response = static_cast<WiiMixEnums::Response>(json.array()[0].toObject()[QStringLiteral(CLIENT_RESPONSE)].toInt());
+    // }
+    QJsonDocument data(QJsonObject(json.object()[QStringLiteral(PAYLOAD)].toObject()));
     qDebug() << QStringLiteral("Received response ") << QString::number(static_cast<int>(response));
     if (response == WiiMixEnums::Response::UPDATE_BINGO_CONFIG) {
         // Update the settings
-        WiiMixBingoSettings::instance()->FromJson(json);
+        WiiMixBingoSettings::instance()->FromJson(data);
         // Update the UI
         qDebug() << QStringLiteral("Emitting onUpdateBingoConfig");
         emit onUpdateBingoConfig(WiiMixBingoSettings::instance());
@@ -570,12 +595,11 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         emit onGetPlayers({});
     }
     else if (response == WiiMixEnums::Response::GET_PLAYER) {
-        QJsonDocument jsonDoc = QJsonDocument(json.array()[0].toObject());
-        if (!jsonDoc.toJson().contains(QStringLiteral(PLAYER_USERNAME).toUtf8())) {
+        if (!data.toJson().contains(QStringLiteral(PLAYER_USERNAME).toUtf8())) {
             emit onError(QStringLiteral("No players returned"));
         }
         else {
-            WiiMixPlayer player = WiiMixPlayer::FromJson(jsonDoc);
+            WiiMixPlayer player = WiiMixPlayer::FromJson(data);
             emit onGetPlayer(player);
         }
     }
@@ -584,7 +608,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         emit onGetObjectiveHistory({});
     }
     else if (response == WiiMixEnums::Response::GET_OBJECTIVES) {
-        // Iterate over each json objective and create an array of WiiMixObjectives
+        // TODOx: Iterate over each json objective and create an array of WiiMixObjectives
         // std::vector<WiiMixObjective> objectives;
         // for (int i = 0; i < json.array().size(); ++i) {
         //     QJsonObject obj = json.array()[i].toObject();
@@ -601,7 +625,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
         //     WiiMixObjective objective = WiiMixObjective::FromJson(obj);
         //     objectives.push_back(objective);
         // }
-        if (m_objectives.size() < json[QStringLiteral(BINGO_SETTINGS_CARD_SIZE)].toInt()) {
+        if (m_objectives.size() < data[QStringLiteral(BINGO_SETTINGS_CARD_SIZE)].toInt()) {
             ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
             return false;
         }
@@ -617,7 +641,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     }
     else if (response == WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES) {
         qDebug() << "Updating rogue objectives";
-        if (m_objectives.size() < json[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt()) {
+        if (m_objectives.size() < data[QStringLiteral(ROGUE_SETTINGS_LENGTH)].toInt()) {
             ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
             return false;
         }
@@ -632,7 +656,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     }
     else if (response == WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES) {
         qDebug() << "Updating shuffle objectives";
-        if (m_objectives.size() < json[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt()) {
+        if (m_objectives.size() < data[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt()) {
             ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
             return false;
         }

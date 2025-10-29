@@ -114,7 +114,7 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
   if (!index.isValid())
     return QVariant();
 
-  const UICommon::GameFile& game = *m_games[index.row()];
+  UICommon::GameFile& game = *std::const_pointer_cast<UICommon::GameFile>(m_games[index.row()]);
 
   switch (static_cast<Column>(index.column()))
   {

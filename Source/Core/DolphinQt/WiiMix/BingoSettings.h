@@ -47,6 +47,7 @@ public:
     return s_instance;
   }
 
+  #define BINGO_SETTINGS "BINGO_SETTINGS"
   #define BINGO_SETTINGS_BINGO_TYPE "BINGO_TYPE"
   #define BINGO_SETTINGS_TEAMS "TEAMS"
   #define BINGO_SETTINGS_CARD_SIZE "CARD_SIZE"
@@ -111,7 +112,7 @@ public:
   void SetPlayersReady(QMap<WiiMixEnums::Player, bool> value);
   void UpdatePlayerReady(WiiMixEnums::Player player, bool value);
 
-  static std::vector<int> SeedToObjectives(QString seed);
+  static std::vector<int> SeedToObjectivesIds(QString seed);
   static std::string ObjectivesToSeed(std::vector<WiiMixObjective*> objectives);
   static bool VerifySeed(std::string seed);
   

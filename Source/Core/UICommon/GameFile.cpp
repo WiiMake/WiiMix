@@ -50,6 +50,9 @@
 #include "DiscIO/Volume.h"
 #include "DiscIO/WiiSaveBanner.h"
 #include <iostream>
+#include <DolphinQt/WiiMix/Client.h>
+
+#include "DolphinQt/WiiMix/QueryBuilder.h"
 
 namespace UICommon
 {
@@ -124,7 +127,7 @@ void GameFile::GetGameFileById(std::string id, GameFile* gameRef) {
   }
 }
 
-GameFile::GameFile(std::string path) : m_file_path(std::move(path))
+GameFile::GameFile(std::string path) : m_file_path(std::move(path)), m_num_objectives(0 ), m_retrieved_num_objectives(false)
 {
   m_file_name = PathToFileName(m_file_path);
 
@@ -427,9 +430,25 @@ bool GameFile::XMLMetadataChanged()
          m_pending.custom_description != m_custom_description;
 }
 
-int GameFile::GetObjectives() const //TODO: why
+int GameFile::GetObjectives()
 {
-  // @gyoder
+  // If a database call has already been made, return the cached value
+  if (m_retrieved_num_objectives)
+    return m_num_objectives;
+
+  // Else make a request to the server if connected to get the number of objectives for this game
+  if (WiiMixClient::instance()->IsConnected()) {
+    QJsonObject json;
+    // DB def:                 query += " WHERE " + std::accumulate(std::next(conditions.begin()), conditions.end(), conditions[0], [](std::string a, std::string b) { return a + " AND " + b; });
+    // Use QueryBuilder to construct a COUNT query for objectives by game ID
+    QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE, WiiMixEnums::Response::GET_OBJECTIVES);
+    query.selectWhere(OBJECTIVE_GAME_ID, QString::fromStdString(GetGameID())).asCount();
+    
+    m_num_objectives = WiiMixClient::instance()->SendData(query.build(), WiiMixEnums::Action::GET_OBJECTIVE);
+  } else {
+    m_num_objectives = 0; // Not connected, return 0 objectives
+  }
+  m_retrieved_num_objectives = true;
   return 1;
 }
 

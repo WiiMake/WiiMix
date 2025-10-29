@@ -46,6 +46,7 @@ public:
 
   explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length, int num_players = DEFAULT_NUM_PLAYERS_ROGUE, WiiMixEnums::MultiplayerMode multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_ROGUE);
 
+  #define ROGUE_SETTINGS "ROGUE_SETTINGS"
   #define ROGUE_SETTINGS_SEED "SEED"
   #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
   #define ROGUE_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
@@ -75,10 +76,11 @@ public:
   void SetSeed(QString string);
   struct RogueTile;
 
+  static WiiMixRogueSettings* SettingsFromSeed(QString seed);
   static std::vector<int> SeedToObjectives(QString seed);
   static std::vector<int> SeedToBossObjectives(QString seed);
   static bool VerifyRogueSeed(std::string seed);
-  static std::string RogueTilesToSeed(std::vector<RogueTile> tiles);
+  static std::string RogueTilesToSeed(std::vector<RogueTile> tiles, WiiMixEnums::Difficulty difficulty, int num_players, WiiMixEnums::RogueLength length);
 
   static QString LengthToString(WiiMixEnums::RogueLength length);
   static WiiMixEnums::RogueLength StringToLength(QString length);

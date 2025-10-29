@@ -25,6 +25,9 @@ add_library(uicommon
   USBUtils.h
 )
 
+# Qt is required for GameFile.cpp (WiiMix integration)
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
+
 target_link_libraries(uicommon
 PUBLIC
   common
@@ -32,6 +35,8 @@ PUBLIC
   cpp-optparse
   minizip::minizip
   pugixml
+  Qt::Core
+  Qt::Network
 
 PRIVATE
   fmt::fmt

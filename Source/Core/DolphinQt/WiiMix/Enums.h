@@ -45,6 +45,12 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    std::string SaveStateBankToString(SaveStateBank bank);
+    SaveStateBank SaveStateBankFromString(const std::string& str);
+
+    #define SAVE_STATE_BANK_VERIFIED "VERIFIED"
+    #define SAVE_STATE_BANK_UNVERIFIED "UNVERIFIED"
+
     enum class Color {
         RED,
         BLUE,
@@ -167,36 +173,38 @@ namespace WiiMixEnums {
         CONNECT_TO_BINGO_LOBBY,
         UPDATE_BINGO_LOBBY,
         LEAVE_BINGO_LOBBY,
-        UPDATE_OBJECTIVE_DB,
+
         ADD_OBJECTIVE, // Also adds the state
-        DELETE_OBJECTIVE_DB,
-        REMOVE_GENRE_FROM_OBJECTIVE_DB,
-        ADD_GENRE_TO_OBJECTIVE_DB,
-        REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
-        ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
+        UPDATE_OBJECTIVE,
+        GET_OBJECTIVE,
+        GET_OBJECTIVE_AND_STATE,
+        DELETE_OBJECTIVE,
+        
+        // Deprecated: not a common enough usecase
+        // REMOVE_GENRE_FROM_OBJECTIVE_DB,
+        // ADD_GENRE_TO_OBJECTIVE_DB,
+        // REMOVE_OBJECTIVE_TYPE_FROM_OBJECTIVE_DB,
+        // ADD_OBJECTIVE_TYPE_TO_OBJECTIVE_DB,
+
         ADD_OBJECTIVE_HISTORY,
-        UPDATE_PLAYER,
-        GET_PLAYERS, // you can search by username
-        INCREMENT_PLAYER_STATS,
-        GET_OBJECTIVE_HISTORY, // you can provide any of the objective history fields
-        // GET_COMPLETED_OBJECTIVES_BY_PLAYER,
-        // GET_FAILED_OBJECTIVES_BY_PLAYER,
+        UPDATE_OBJECTIVE_HISTORY,
+        GET_OBJECTIVE_HISTORY,
+        DELETE_OBJECTIVE_HISTORY,
+
         ADD_PLAYER,
-        DELETE_PLAYER,
-        MARK_OBJECTIVE_AS_COMPLETED,
-        MARK_OBJECTIVE_AS_UNCOMPLETED,
-        GET_OBJECTIVE_BY_ID,
-        // GET_OBJECTIVES_BY_GAME_ID,
-        // GET_OBJECTIVES_BY_RETROACHIEVEMENTS_GAME_ID,
-        // GET_OBJECTIVES_BY_ACHIEVEMENT_ID,
-        // GET_OBJECTIVES_BY_PLAYER_ID,
-        // GET_OBJECTIVES_BY_GENRE,
-        // GET_OBJECTIVES_BY_TYPE,
-        // GET_OBJECTIVES_BY_DIFFICULTY,
-        // GET_OBJECTIVES_BY_TIME,
-        // GET_OBJECTIVES_BY_CREATOR,
-        GET_OBJECTIVES, // you can provide any of the objective fields
-        GET_OBJECTIVES_AND_STATES, // returns the json plus the save states; supports any objective field specifiers
+        UPDATE_PLAYER, // can only update your own account
+        GET_PLAYER, // can search by username
+        DELETE_PLAYER, // can only delete your own account
+
+        ADD_OBJECTIVE_REVIEW,
+        UPDATE_OBJECTIVE_REVIEW,
+        GET_OBJECTIVE_REVIEW,
+        DELETE_OBJECTIVE_REVIEW,
+
+        // Common helpers
+
+        // MARK_OBJECTIVE_AS_COMPLETED,
+        // MARK_OBJECTIVE_AS_UNCOMPLETED,
         END // Default/size value
     };
 
@@ -221,9 +229,15 @@ namespace WiiMixEnums {
     #define SORT_DESC "SORT_DESC"
     #define FILTER_GREATER_THAN "FILTER_GREATER_THAN"
     #define FILTER_LESS_THAN "FILTER_LESS_THAN"
+    #define FILTER_INCLUDES "FILTER_INCLUDES"
+    #define FILTER_OR_INCLUDES "FILTER_OR_INCLUDES"
     #define SELECT "SELECT"
     #define WHERE "WHERE"
-    #define NUM_ROWS "NUM_ROWS"
+    #define LIMIT_NUM_ROWS "NUM_ROWS"
+    #define RANDOM "RANDOM"
+    #define COUNT_NUM_ROWS "COUNT"
+
+    #define PAYLOAD "PAYLOAD" // Used for response data
 
     // Response is an enum class that represents the different responses that can be sent by the server
     // This is included in the server response json to instruct the client what to do

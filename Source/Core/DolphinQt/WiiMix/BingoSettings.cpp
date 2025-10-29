@@ -272,18 +272,21 @@ int WiiMixBingoSettings::StringToCardSize(QString size) {
 }
 
 // seed structure for bingo:
-// number of objectives (always 2-digit), objective id's (check zeros) in order left-right top-bottom
-std::vector<int> WiiMixBingoSettings::SeedToObjectives(QString seed) {
+// number of objectives (always 2-digit, i.e. 09 for 3x3 board), objective id's (check zeros) in order left-right top-bottom
+std::vector<int> WiiMixBingoSettings::SeedToObjectivesIds(QString seed) {
     std::vector<int> objectives;
     std::string str_seed = seed.toStdString();
+    // First two characters are number of objectives
     int num_objectives = std::stoi(str_seed.substr(0, 2));
     objectives.reserve(num_objectives);
     for (int i = 0; i < num_objectives; i++) {
-        int achievement_id = std::stoi(str_seed.substr(2 + i * 6, 6));
-        objectives.push_back(achievement_id);
+        // Pad each objective id to be 6 characters long with leading zeros
+        int objective_id = std::stoi(str_seed.substr(2 + i * 6, 6));
+        objectives.push_back(objective_id);
     }
     return objectives;
 }
+
 std::string WiiMixBingoSettings::ObjectivesToSeed(std::vector<WiiMixObjective *> objectives) {
     if (pow((int) sqrt(objectives.size()), 2) != objectives.size()) {
         return "-1";
@@ -292,15 +295,17 @@ std::string WiiMixBingoSettings::ObjectivesToSeed(std::vector<WiiMixObjective *>
     if (objectives.size() >= 10) {
         seed = std::to_string(objectives.size());
     } else {
+        // Append a 0 for the 3x3 case (09 objectives)
         seed = "0" + std::to_string(objectives.size());
     }
     for (auto objective : objectives) {
         char temp_str[7];
-        snprintf(temp_str, 7, "%06d", objective->GetAchievementId());
+        snprintf(temp_str, 7, "%06d", objective->GetId());
         seed += temp_str;
     }
     return seed;
 }
+
 // returns true if seed is correct
 bool WiiMixBingoSettings::VerifySeed(std::string seed) {
     int num_objectives;

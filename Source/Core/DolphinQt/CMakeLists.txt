@@ -55,6 +55,8 @@ if (BUILD_WIIMIX_SERVER_ONLY)
     WiiMix/Objective.cpp
     WiiMix/Player.cpp
     WiiMix/Player.h
+    WiiMix/QueryBuilder.cpp
+    WiiMix/QueryBuilder.h
     WiiMix/RogueSettings.cpp
     WiiMix/RogueSettings.h
     WiiMix/Server/BingoSettings.cpp
@@ -424,6 +426,8 @@ else()
     WiiMix/Objective.h
     WiiMix/Player.cpp
     WiiMix/Player.h
+    WiiMix/QueryBuilder.cpp
+    WiiMix/QueryBuilder.h
     WiiMix/RogueSettings.cpp
     WiiMix/RogueSettings.h
     WiiMix/RogueWindow.cpp
@@ -533,6 +537,8 @@ else()
       WiiMix/Objective.cpp
       WiiMix/Player.cpp
       WiiMix/Player.h
+      WiiMix/QueryBuilder.cpp
+      WiiMix/QueryBuilder.h
       WiiMix/RogueSettings.cpp
       WiiMix/RogueSettings.h
       WiiMix/Server/BingoSettings.cpp

@@ -73,9 +73,11 @@ public:
   void SetSaveStateBank(QString value);
   std::vector<WiiMixEnums::ObjectiveType> GetObjectiveTypes();
   void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> objective_types);
+  void UpdateObjectiveType(bool value, int idx);
   std::vector<WiiMixEnums::GameGenre> GetGameGenres();
   void SetGameGenres(std::vector<WiiMixEnums::GameGenre> game_genres);
-  
+  void UpdateGameGenre(bool value, int idx);
+
   // Bingo
   WiiMixEnums::BingoType GetBingoType() const;
   void SetBingoType(WiiMixEnums::BingoType value);
@@ -105,7 +107,6 @@ public:
   // void SetTeamSelectorStates(std::array<std::string, MAX_PLAYERS> value);
   // QList<std::string> GetBingoPlayerName() const;
   // void SetBingoPlayerNames(QList<std::string> value);
-
   
   WiiMixBingoSettings* GetBingoSettings(WiiMixEnums::Action action = WiiMixEnums::Action::END);
 

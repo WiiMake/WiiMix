@@ -166,8 +166,9 @@ void GameList::ToggleSelectAllWiiMix()
   // Determine the new state
   bool all_selected = true;
   for (int row = 0; row < m_model.rowCount(QModelIndex()); row++) {
-    auto game = m_model.GetGameFile(row);
+    auto game_const = m_model.GetGameFile(row);
     // Only consider checkable games
+    auto game = std::const_pointer_cast<UICommon::GameFile>(game_const);
     if (game && game->GetObjectives() > 0 && !game->GetWiiMix()) {
         all_selected = false;
         break;
@@ -181,10 +182,13 @@ void GameList::ToggleSelectAllWiiMix()
   // Apply the new state
   for (int row = 0; row < m_model.rowCount(QModelIndex()); row++) {
     auto game_const = m_model.GetGameFile(row);
-    if (game_const && game_const->GetObjectives() > 0)
+    if (game_const)
     {
       auto game = std::const_pointer_cast<UICommon::GameFile>(game_const);
-      game->SetWiiMix(!all_selected);
+      if (game->GetObjectives() > 0)
+      {
+        game->SetWiiMix(!all_selected);
+      }
     }
   }
 

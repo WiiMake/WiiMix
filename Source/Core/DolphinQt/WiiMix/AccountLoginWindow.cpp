@@ -3,6 +3,7 @@
 #include "DolphinQt/WiiMix/Player.h"
 #include "DolphinQt/WiiMix/Enums.h"
 #include "DolphinQt/WiiMix/GlobalSettings.h"
+#include "DolphinQt/WiiMix/QueryBuilder.h"
 
 #include <QVBoxLayout>
 #include <QLabel>
@@ -23,11 +24,14 @@ void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
     // Make a request to the server to add the player (fails if the player already exists, which is ok because nothing needs to be returned)
     WiiMixPlayer player = WiiMixPlayer(-1, username.toStdString(), password.toStdString());
     QJsonObject player_json = player.ToJson();
+    // No need for a client response on adding a player
     WiiMixClient::instance()->SendData(player_json, WiiMixEnums::Action::ADD_PLAYER);
-    // Make a request to retrieve the player and all the player data
-    player_json[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::GET_PLAYER);   
-    player_json[QStringLiteral(SELECT)] = QStringLiteral(PLAYER_USERNAME);
-    player_json[QStringLiteral(WHERE)] = username;
+    
+    // Make a request to retrieve the player and all the player data (server will initialize any undefined data)
+    QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_PLAYER, WiiMixEnums::Response::GET_PLAYER);
+    QJsonObject request_json = query
+        .selectWhere(QStringLiteral(PLAYER_USERNAME), username)
+        .build();
     // connect the client for the response
     connect(WiiMixClient::instance(), &WiiMixClient::onGetPlayer, this, [this](WiiMixPlayer player) {
         qDebug() << "Player received";
@@ -38,7 +42,7 @@ void WiiMixAccountLoginWindow::OnLogin(QString username, QString password) {
         close();
         emit WiiMixAccountLoginWindow::onLogin();
     });
-    WiiMixClient::instance()->SendData(player_json, WiiMixEnums::Action::GET_PLAYERS);
+    WiiMixClient::instance()->SendData(request_json, WiiMixEnums::Action::GET_PLAYER);
     return;
 }
 

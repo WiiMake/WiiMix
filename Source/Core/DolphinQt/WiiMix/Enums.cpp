@@ -34,6 +34,28 @@ namespace WiiMixEnums {
         }
     }
 
+    std::string SaveStateBankToString(SaveStateBank bank) {
+        switch (bank) {
+            case SaveStateBank::VERIFIED:
+                return SAVE_STATE_BANK_VERIFIED;
+            case SaveStateBank::UNVERIFIED:
+                return SAVE_STATE_BANK_UNVERIFIED;
+            case SaveStateBank::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    SaveStateBank SaveStateBankFromString(const std::string& str) {
+        if (str == SAVE_STATE_BANK_VERIFIED) {
+            return SaveStateBank::VERIFIED;
+        } else if (str == SAVE_STATE_BANK_UNVERIFIED) {
+            return SaveStateBank::UNVERIFIED;
+        } else {
+            return SaveStateBank::END;
+        }
+    }
 
     // Color StringToColor(const std::string& color) {
     //     if (color == WII_MIX_RED) {

@@ -141,6 +141,7 @@
 #include "DolphinQt/WiiMix/Overlay.h"
 // #include "DolphinQt/WiiMix/ScreenSaver.h"
 #include "DolphinQt/WiiMix/ConfigWidget.h"
+#include "DolphinQt/WiiMix/QueryBuilder.h"
 
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/GCAdapter.h"
@@ -1092,9 +1093,37 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
   WiiMixGameManager::instance()->ClearLiveStates();
   // Start the wiimix
   qDebug() << "Populating bingo objectives";
-  QJsonObject obj = settings->ToJson().object();
-  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
+  QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_BINGO_OBJECTIVES);
+
+  // Include relevant bingo information
+  query.with(QStringLiteral(BINGO_SETTINGS_LOBBY_ID), settings->GetLobbyID());
+  query.with(QStringLiteral(BINGO_SETTINGS_LOBBY_PASSWORD), settings->GetLobbyPassword());
+
+  // If seeded, return the specific relevant objectives, no need to include any other information
+  if (settings->GetSeed() != QStringLiteral("")) {
+    query.with(QStringLiteral(BINGO_SETTINGS_SEED), settings->GetSeed());
+  }
+  else {
+    // filterIncludes - AND conditions
+    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+    query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), 1);
+
+    if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
+        query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+    }
+
+    // filterOrIncludes - OR conditions
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES), QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(settings->GetObjectiveTypes())));
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_GAME_GENRES), QString::fromStdString(WiiMixEnums::GameGenresToString(settings->GetGameGenres())));
+
+    // Other options
+    query.limit(settings->GetCardSize());
+    query.random();
+  }
+
+  // Build the final json
+  QJsonObject json = query.build();
+  m_wiimix_client->SendData(json, WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE);
 }
 
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
@@ -1127,9 +1156,33 @@ void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
   // Start the wiimix
   qDebug() << "Populating rogue objectives";
   // Populate the objectives
-  QJsonObject obj = settings->ToJson().object();
-  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
+  QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_ROGUE_OBJECTIVES);
+
+  // If seeded, no other information is needed
+  if (settings->GetSeed() != QStringLiteral("")) {
+    query.with(QStringLiteral(ROGUE_SETTINGS_SEED), settings->GetSeed());
+  }
+  else {
+    // And conditions
+    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+    query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), settings->GetNumPlayers());
+
+    if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
+        query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+    }
+
+    // OR conditions
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES), QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(settings->GetObjectiveTypes())));
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_GAME_GENRES), QString::fromStdString(WiiMixEnums::GameGenresToString(settings->GetGameGenres())));
+
+    // Other options
+    query.limit(WiiMixRogueSettings::LengthToNumObjectives(settings->GetLength()));
+    query.random();
+  }
+
+  // Build and send
+  QJsonObject json = query.build();
+  m_wiimix_client->SendData(json, WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE);
 }
 
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
@@ -1148,11 +1201,32 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
    // Start the wiimix
   qDebug() << "Populating shuffle objectives";
   // Populate the objectives
-  QJsonObject obj = settings->ToJson().object();
-  obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
-  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVES_AND_STATES);
-  // connect(WiiMixGameManager::instance(), &WiiMixGameManager::StartObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective)>(&MainWindow::WiiMixStartObjective));
-  // connect(WiiMixGameManager::instance(), &WiiMixGameManager::SwapObjective, this, static_cast<void (MainWindow::*)(WiiMixObjective, WiiMixObjective)>(&MainWindow::WiiMixSwapObjective));
+  // Build the query for shuffle objectives
+  QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
+
+  // AND conditions
+  query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+  query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), settings->GetNumPlayers());
+  
+  if (settings->GetNumPlayers() != 1) {
+    query.filterIncludes(QStringLiteral(OBJECTIVE_MULTIPLAYER_MODE), QString::fromStdString(WiiMixEnums::MultiplayerModeToString(settings->GetMultiplayerMode())));
+  }
+
+  if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
+    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+  }
+
+  // OR conditions
+  query.filterOrIncludes(QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES), QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(settings->GetObjectiveTypes())));
+  query.filterOrIncludes(QStringLiteral(OBJECTIVE_GAME_GENRES), QString::fromStdString(WiiMixEnums::GameGenresToString(settings->GetGameGenres())));
+
+  // Other options
+  query.limit(settings->GetNumberOfSwitches());
+  query.random();
+
+  // Build and send
+  QJsonObject obj = query.build();
+  m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE);
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
@@ -1930,10 +2004,6 @@ void MainWindow::ObjectiveResetSlotAt(int slot) {
     WiiMixRestartObjective(WiiMixBingoSettings::instance()->GetObjectives()[slot]);
     // Update settings using the hardcoded player_num`
     WiiMixBingoSettings::instance()->UpdateCurrentObjectives(static_cast<WiiMixEnums::Player>(m_player_num), slot);
-    // SendData to the server containing the objective loaded mapped to the player that loaded it
-    // if (WiiMixClient::instance()->IsConnected()) {
-    //   WiiMixClient::instance()->SendData(*m_bingo_settings, WiiMixEnums::Action::UPDATE);
-    // }
   }
   return;
 }
@@ -1964,10 +2034,28 @@ void MainWindow::BingoReady() {
   }
   WiiMixBingoSettings::instance()->UpdatePlayerReady(static_cast<WiiMixEnums::Player>(m_player_num), m_player_ready);
   // SendData to the server containing the objective loaded mapped to the player that loaded it
-  if (WiiMixClient::instance()->IsConnected()) {
-    QJsonObject obj = WiiMixBingoSettings::instance()->ToJson().object();
-    obj[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
-    WiiMixClient::instance()->SendData(obj, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+  // Build the data directly for simple updates and deletes
+  if (WiiMixClient::instance()->IsConnected() && WiiMixBingoSettings::instance()->GetLobbyID() != QStringLiteral("")) {
+    QJsonObject settingsData = WiiMixBingoSettings::instance()->ToJson().object();
+
+    QString lobbyId = WiiMixBingoSettings::instance()->GetLobbyID(); 
+
+    // Build a new request object
+    QJsonObject requestJson;
+
+    // Define server action
+    requestJson[QStringLiteral(SERVER_ACTION)] = static_cast<int>(WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
+
+    // Define client response
+    requestJson[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
+
+    // Define lobby id
+    requestJson[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)] = lobbyId; 
+
+    // Define settings to update
+    requestJson[QStringLiteral(BINGO_SETTINGS)] = settingsData;
+
+    WiiMixClient::instance()->SendData(requestJson, WiiMixEnums::Action::UPDATE_BINGO_LOBBY);
   }
   return;
 }
@@ -2006,24 +2094,47 @@ void MainWindow::StopWiiMix() {
     // TODO: clearing objectives should be handled by the end screen
     switch (WiiMixGlobalSettings::instance()->GetMode()) {
       case WiiMixEnums::Mode::BINGO:
+      {
         // Leave the bingo game
-        m_wiimix_client->SendData(WiiMixBingoSettings::instance()->ToJson().object(), WiiMixEnums::Action::LEAVE_BINGO_LOBBY);
-        // Clear bingo objectives
-        // WiiMixBingoSettings::instance()->SetObjectives({});
+        QJsonObject settingsData = WiiMixBingoSettings::instance()->ToJson().object();
+
+        QJsonObject requestJson;
+
+        // Define server action
+        requestJson[QStringLiteral(SERVER_ACTION)] = static_cast<int>(WiiMixEnums::Action::LEAVE_BINGO_LOBBY);
+
+        // Define client response
+        // TODOx: not sure if UPDATE_BINGO_CONFIG is the right response here
+        requestJson[QStringLiteral(CLIENT_RESPONSE)] = static_cast<int>(WiiMixEnums::Response::UPDATE_BINGO_CONFIG);
+
+        // Define lobby id
+        QString lobbyId = WiiMixBingoSettings::instance()->GetLobbyID();
+        requestJson[QStringLiteral(BINGO_SETTINGS_LOBBY_ID)] = lobbyId;
+
+        // Define player information
+        requestJson[QStringLiteral(BINGO_SETTINGS_PLAYER_NUM)] = settingsData[QStringLiteral(BINGO_SETTINGS_PLAYER_NUM)];
+        requestJson[QStringLiteral(BINGO_SETTINGS_PLAYERS)] = settingsData[QStringLiteral(BINGO_SETTINGS_PLAYERS)];
+
+        m_wiimix_client->SendData(requestJson, WiiMixEnums::Action::LEAVE_BINGO_LOBBY);
         break;
+      }
       case WiiMixEnums::Mode::ROGUE:
-        // TODO: Close any rogue windows currently open
+      {
+        // TODOx: Close any rogue windows currently open
         // Show the rogue end screen
 
         // Clear rogue objectives
         // WiiMixRogueSettings::instance()->SetObjectives({});
         break;
+      }
       case WiiMixEnums::Mode::SHUFFLE:
-        // Show the shuffle end screen
+      {
+        // TODOx: Show the shuffle end screen
 
         // Stop the shuffle
         // WiiMixShuffleSettings::instance()->SetObjectives({});
         break;
+      }
     }
   // }
   // Reset state
@@ -2097,6 +2208,7 @@ void MainWindow::StateSend(WiiMixObjective objective) {
   qDebug() << "Sending objective and state to the server";
   connect(m_wiimix_client, &WiiMixClient::onBytesWritten, this, &MainWindow::TrackStateSendProgress, Qt::QueuedConnection);
   // connect(this, &MainWindow::onStateSendProgressUpdate, m_state_send_menu, &WiiMixStateSendMenu::SetProgressText);
+  // No client response needed
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::ADD_OBJECTIVE);
   return;
 }
@@ -2182,6 +2294,7 @@ void MainWindow::HandleAchievementGet(std::set<u32> achievements)
   }
   objective.SetCompletionTime(time_to_complete);
   // Update the objective history on the server
+  // No client response needed
   WiiMixClient::instance()->SendData(objective.ToJson(), WiiMixEnums::Action::ADD_OBJECTIVE_HISTORY);
 }
 
