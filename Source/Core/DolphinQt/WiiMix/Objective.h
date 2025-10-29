@@ -27,6 +27,7 @@ public:
     int time,
     std::string creator_username = NULL,
     std::string verifier_username = NULL,
+    WiiMixEnums::SaveStateBank save_state_bank = WiiMixEnums::SaveStateBank::END,
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
     int num_times_attempted = 0,
@@ -153,6 +154,7 @@ private:
   int m_time;
   std::string m_creator_username;
   std::string m_verifier_username;
+  WiiMixEnums::SaveStateBank m_save_state_bank;
 
   // For bingo -> might refactor
   WiiMixEnums::Player m_player_completed;
