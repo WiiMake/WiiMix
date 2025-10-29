@@ -17,7 +17,7 @@ WiiMixObjective::WiiMixObjective(int id, std::string file_hash, std::string titl
                                  std::vector<WiiMixEnums::ObjectiveType> objective_type,
                                  std::string objective_description,
                                  std::vector<WiiMixEnums::GameGenre> game_genres,
-                                 WiiMixEnums::Difficulty difficulty, int time, std::string creator_username,
+                                 WiiMixEnums::Difficulty difficulty, int time, std::string creator_username, std::string verifier_username,
                                  WiiMixEnums::ObjectiveStatus status, int num_times_completed,
                                  int num_times_attempted, WiiMixEnums::Player completed, int completion_time, std::chrono::system_clock::time_point last_attempted) {
         m_id = id;
@@ -32,6 +32,7 @@ WiiMixObjective::WiiMixObjective(int id, std::string file_hash, std::string titl
         m_difficulty = difficulty;
         m_time = time;
         m_creator_username = creator_username;
+        m_verifier_username = verifier_username;
         m_status = status;
         m_num_times_completed = num_times_completed;
         m_num_times_attempted = num_times_attempted;
@@ -100,6 +101,11 @@ std::string WiiMixObjective::GetCreatorUsername()
   return m_creator_username;
 }
 
+std::string WiiMixObjective::GetVerifierUsername()
+{
+  return m_verifier_username;
+}
+
 QJsonObject WiiMixObjective::ToJson()
 {
   QJsonObject obj;
@@ -130,7 +136,15 @@ QJsonObject WiiMixObjective::ToJson()
   }
   else
   {
-    obj[QStringLiteral(OBJECTIVE_CREATOR_USERNAME)] = QString::fromStdString(m_creator_username);
+    obj[QStringLiteral(OBJECTIVE_VERIFIER_USERNAME)] = QString::fromStdString(m_verifier_username);
+  }
+  if (m_verifier_username.empty())
+  {
+    obj[QStringLiteral(OBJECTIVE_VERIFIER_USERNAME)] = QJsonValue::Null;
+  }
+  else
+  {
+    obj[QStringLiteral(OBJECTIVE_VERIFIER_USERNAME)] = QString::fromStdString(m_verifier_username);
   }
   obj[QStringLiteral(OBJECTIVE_HISTORY_MOST_RECENT_STATUS)] = QString::fromStdString(WiiMixEnums::ObjectiveStatusToString(m_status));
   obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_COMPLETED)] = m_num_times_completed;
@@ -161,6 +175,7 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
     obj[QStringLiteral(OBJECTIVE_DIFFICULTY)].toString().toStdString());
   int time = obj[QStringLiteral(OBJECTIVE_TIME)].toInt();
   std::string creator_username = obj[QStringLiteral(OBJECTIVE_CREATOR_USERNAME)].isNull() ? "" : obj[QStringLiteral(OBJECTIVE_CREATOR_USERNAME)].toString().toStdString();
+  std::string verifier_username = obj[QStringLiteral(OBJECTIVE_VERIFIER_USERNAME)].isNull() ? "" : obj[QStringLiteral(OBJECTIVE_VERIFIER_USERNAME)].toString().toStdString();
   auto status = WiiMixEnums::ObjectiveStatusFromString(obj[QStringLiteral(OBJECTIVE_HISTORY_MOST_RECENT_STATUS)].toString().toStdString());
   int num_times_completed = obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_COMPLETED)].toInt();
   int num_times_attempted = obj[QStringLiteral(OBJECTIVE_HISTORY_NUM_TIMES_ATTEMPTED)].toInt();
@@ -171,7 +186,7 @@ WiiMixObjective WiiMixObjective::FromJson(const QJsonObject& obj)
 
   return WiiMixObjective(
     id, md5sum, title, retro_id, game_id, achievement_id, objective_types, description,
-    game_genres, difficulty, time, creator_username, status, num_times_completed,
+    game_genres, difficulty, time, creator_username, verifier_username, status, num_times_completed,
     num_times_attempted, bingo_settings_completed, bingo_settings_completion_time, last_attempted);
 }
 

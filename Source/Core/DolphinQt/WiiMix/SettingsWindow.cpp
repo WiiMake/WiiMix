@@ -206,7 +206,7 @@ bool WiiMixSettingsWindow::VerifyPlayerInput(bool different_console_types, int p
   if (console == DiscIO::Platform::GameCubeDisc) {
     // Check GameCube controller for player
     // Check if GameCube controller for player is mapped (0 source means none)
-    if (Config::Get(Config::GetInfoForSIDevice(player_number)) == SerialInterface::SIDEVICE_NONE) 
+    if (Config::Get(Config::GetInfoForSIDevice(player_number - 1)) == SerialInterface::SIDEVICE_NONE) 
     {
       emit ErrorLoadingSettings(QStringLiteral("Player %1 GameCube controller is not mapped. Please configure the controller before starting WiiMix.").arg(player_number));
       return false;
@@ -215,7 +215,7 @@ bool WiiMixSettingsWindow::VerifyPlayerInput(bool different_console_types, int p
   else if (console == DiscIO::Platform::WiiDisc || console == DiscIO::Platform::WiiWAD) {
     // Check Wii controller for player 1
     // Check if Wiimote for player 1 is mapped
-    if (Config::Get(Config::GetInfoForWiimoteSource(player_number)) == WiimoteSource::None) 
+    if (Config::Get(Config::GetInfoForWiimoteSource(player_number - 1)) == WiimoteSource::None) 
     {
       emit ErrorLoadingSettings(QStringLiteral("Player %1 Wii controller is not mapped. Please configure the controller before starting WiiMix.").arg(player_number));
       return false;
@@ -225,8 +225,8 @@ bool WiiMixSettingsWindow::VerifyPlayerInput(bool different_console_types, int p
   if (different_console_types) {
     // Check if the user is using the same input device and the same wiimix input device for both consoles
     // Get emulated (or real) gamecube controller and emulated wii controller
-    ciface::Core::DeviceQualifier gcdevice = Pad::GetConfig()->GetController(player_number)->GetDefaultDevice();
-    ciface::Core::DeviceQualifier wiimotedevice = Wiimote::GetConfig()->GetController(player_number)->GetDefaultDevice();
+    ciface::Core::DeviceQualifier gcdevice = Pad::GetConfig()->GetController(player_number - 1)->GetDefaultDevice();
+    ciface::Core::DeviceQualifier wiimotedevice = Wiimote::GetConfig()->GetController(player_number - 1)->GetDefaultDevice();
     // TODO: add wiimix err handling later
     // const ciface::Core::DeviceQualifier& wiimix_device = GetDefaultWiiMixDevice();
 

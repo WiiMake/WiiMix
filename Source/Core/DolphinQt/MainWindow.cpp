@@ -1105,11 +1105,11 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
   }
   else {
     // filterIncludes - AND conditions
-    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+    query.filterIncludes(QStringLiteral(OBJECTIVE_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
     query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), 1);
 
     if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
-        query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+        query.filterIncludes(QStringLiteral(OBJECTIVE_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
     }
 
     // filterOrIncludes - OR conditions
@@ -1164,11 +1164,11 @@ void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
   }
   else {
     // And conditions
-    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+    query.filterIncludes(QStringLiteral(OBJECTIVE_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
     query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), settings->GetNumPlayers());
 
     if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
-        query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+        query.filterIncludes(QStringLiteral(OBJECTIVE_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
     }
 
     // OR conditions
@@ -1205,7 +1205,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
 
   // AND conditions
-  query.filterIncludes(QStringLiteral(COMMON_SETTINGS_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+  query.filterIncludes(QStringLiteral(OBJECTIVE_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
   query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), settings->GetNumPlayers());
   
   if (settings->GetNumPlayers() != 1) {
@@ -1213,7 +1213,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   }
 
   if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
-    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+    query.filterIncludes(QStringLiteral(OBJECTIVE_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
   }
 
   // OR conditions

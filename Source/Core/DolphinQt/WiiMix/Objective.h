@@ -26,6 +26,7 @@ public:
     WiiMixEnums::Difficulty difficulty,
     int time,
     std::string creator_username = NULL,
+    std::string verifier_username = NULL,
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
     int num_times_attempted = 0,
@@ -46,9 +47,10 @@ public:
   #define OBJECTIVE_DESCRIPTION "description"
   #define OBJECTIVE_GAME_GENRES "game_genres"
   #define OBJECTIVE_DIFFICULTY "difficulty"
+  #define OBJECTIVE_SAVE_STATE_BANK "save_state_bank"
+  #define OBJECTIVE_VERIFIER_USERNAME "verifier_username"
   #define OBJECTIVE_TIME "time"
   #define OBJECTIVE_CREATOR_USERNAME "creator_username"
-  
 
   // Objective history extension; these have default values so aren't necessary to be set,
   // but offer extra data if you want it :)
@@ -101,6 +103,7 @@ public:
   WiiMixEnums::Difficulty GetDifficulty();
   int GetTime();
   std::string GetCreatorUsername();
+  std::string GetVerifierUsername();
   WiiMixEnums::ObjectiveStatus GetStatus();
   int GetNumTimesCompleted();
   int GetNumTimesAttempted();
@@ -149,6 +152,7 @@ private:
   WiiMixEnums::Difficulty m_difficulty;
   int m_time;
   std::string m_creator_username;
+  std::string m_verifier_username;
 
   // For bingo -> might refactor
   WiiMixEnums::Player m_player_completed;
