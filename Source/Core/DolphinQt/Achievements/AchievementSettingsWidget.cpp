@@ -85,14 +85,16 @@ void AchievementSettingsWidget::CreateLayout()
   m_common_api_token = new QLineEdit(QString::fromStdString(Config::Get(Config::RA_API_TOKEN)));
   connect(m_common_api_token, &QLineEdit::editingFinished, this, [this]() {
     // Validate token
-    bool res = WiiMixWebAPI::basicRequest(m_common_api_token->text().toStdString());
+    bool res = WiiMixWebAPI::instance()->basicRequest(m_common_api_token->text().toStdString());
     if (!res)
     {
       m_common_login_failed->setText(tr("Invalid API Token"));
       m_common_login_failed->setVisible(true);
+      emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
       return;
     }
     // Save token
+    emit WiiMixWebAPI::instance()->onRetroachievementsConnection(true);
     Config::SetBaseOrCurrent(Config::RA_API_TOKEN, m_common_api_token->text().toStdString());
   });
   m_common_api_token->setEchoMode(QLineEdit::PasswordEchoOnEdit);

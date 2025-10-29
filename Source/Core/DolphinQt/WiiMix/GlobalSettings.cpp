@@ -181,20 +181,6 @@ const std::vector<std::shared_ptr<const UICommon::GameFile>> WiiMixGlobalSetting
     return m_games;
 }
 
-QString WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode mode) {
-    switch (mode)
-    {
-        case WiiMixEnums::Mode::BINGO:
-            return QStringLiteral("Bingo");
-        case WiiMixEnums::Mode::SHUFFLE:
-            return QStringLiteral("Shuffle");
-        case WiiMixEnums::Mode::ROGUE:
-            return QStringLiteral("Rogue");
-        default:
-            return QStringLiteral("");
-    }
-}
-
 QString WiiMixGlobalSettings::ModeToDescription(WiiMixEnums::Mode mode) {
     switch (mode)
     {
@@ -207,17 +193,6 @@ QString WiiMixGlobalSettings::ModeToDescription(WiiMixEnums::Mode mode) {
         default:
             return QStringLiteral("");
     }
-}
-
-WiiMixEnums::Mode WiiMixGlobalSettings::StringToMode(QString mode) {
-    if (mode == QStringLiteral("Bingo"))
-        return WiiMixEnums::Mode::BINGO;
-    else if (mode == QStringLiteral("Shuffle"))
-        return WiiMixEnums::Mode::SHUFFLE;
-    else if (mode == QStringLiteral("Rogue"))
-        return WiiMixEnums::Mode::ROGUE;
-    else
-        return WiiMixEnums::Mode::BINGO; // Default case
 }
 
 void WiiMixGlobalSettings::SetMode(WiiMixEnums::Mode mode) {

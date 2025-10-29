@@ -121,6 +121,7 @@ int main(int argc, char* argv[])
 {
     //qDebug() << qgetenv("QT_DEBUG_PLUGINS");
     qDebug() << qputenv("QT_DEBUG_PLUGINS", "1");
+    qDebug() << qputenv("QT_LOGGING_RULES", "qt.qpa.xcb.clipboard.debug=true");
     qDebug() << qVersion();
     //qDebug() << qputenv("QT_MEDIA_BACKEND", "avfoundation");
 #ifdef _WIN32

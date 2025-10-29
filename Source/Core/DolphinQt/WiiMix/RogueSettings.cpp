@@ -156,11 +156,13 @@ QString WiiMixRogueSettings::LengthToString(WiiMixEnums::RogueLength length)
 {
     switch (length) {
         case WiiMixEnums::RogueLength::SHORT:
-            return QStringLiteral("Short");
+            return QStringLiteral(ROGUE_LENGTH_SHORT);
         case WiiMixEnums::RogueLength::MEDIUM:
-            return QStringLiteral("Medium");
+            return QStringLiteral(ROGUE_LENGTH_MEDIUM);
+        case WiiMixEnums::RogueLength::LONGLENGTH:
+            return QStringLiteral(ROGUE_LENGTH_LONGLENGTH);
         case WiiMixEnums::RogueLength::MARATHON:
-            return QStringLiteral("Marathon");
+            return QStringLiteral(ROGUE_LENGTH_MARATHON);
         default:
             return QStringLiteral("");
     }
@@ -168,13 +170,16 @@ QString WiiMixRogueSettings::LengthToString(WiiMixEnums::RogueLength length)
 
 WiiMixEnums::RogueLength WiiMixRogueSettings::StringToLength(QString length)
 {
-    if (length == QStringLiteral("Short")) {
+    if (length == QStringLiteral(ROGUE_LENGTH_SHORT)) {
         return WiiMixEnums::RogueLength::SHORT;
     }
-    else if (length == QStringLiteral("Medium")) {
+    else if (length == QStringLiteral(ROGUE_LENGTH_MEDIUM)) {
         return WiiMixEnums::RogueLength::MEDIUM;
     }
-    else if (length == QStringLiteral("Long") || length == QStringLiteral("MARATHON")) {
+    else if (length == QStringLiteral(ROGUE_LENGTH_LONGLENGTH)) {
+        return WiiMixEnums::RogueLength::LONGLENGTH;
+    }
+    else if (length == QStringLiteral(ROGUE_LENGTH_MARATHON)) {
         return WiiMixEnums::RogueLength::MARATHON;
     }
     else {
@@ -394,11 +399,13 @@ WiiMixRogueSettings* WiiMixRogueSettings::SettingsFromSeed(QString seed) {
 
     // Determine length based on expected_tile_count
     WiiMixEnums::RogueLength length;
-    if (expected_tile_count == 5) {
+    if (expected_tile_count == 3) {
         length = WiiMixEnums::RogueLength::SHORT;
-    } else if (expected_tile_count == 7) {
+    } else if (expected_tile_count == 6) {
         length = WiiMixEnums::RogueLength::MEDIUM;
-    } else if (expected_tile_count == 10) {
+    } else if (expected_tile_count == 9) {
+        length = WiiMixEnums::RogueLength::LONGLENGTH;
+    }else if (expected_tile_count == 18) {
         length = WiiMixEnums::RogueLength::MARATHON;
     } else {
         length = WiiMixEnums::RogueLength::END;
@@ -483,11 +490,13 @@ std::vector<int> WiiMixRogueSettings::SeedToBossObjectives(QString seed) {
 int WiiMixRogueSettings::LengthToNumObjectives(WiiMixEnums::RogueLength length) {
     switch (length) {
         case WiiMixEnums::RogueLength::SHORT:
-            return 5;
+            return 3;
         case WiiMixEnums::RogueLength::MEDIUM:
-            return 7;
+            return 6;
+        case WiiMixEnums::RogueLength::LONGLENGTH:
+            return 9;
         case WiiMixEnums::RogueLength::MARATHON:
-            return 10;
+            return 18;
         default:
             return -1;
     }

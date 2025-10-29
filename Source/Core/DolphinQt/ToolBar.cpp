@@ -17,6 +17,7 @@
 #include "DolphinQt/Settings.h"
 
 #include "DolphinQt/WiiMix/Client.h"
+#include "DolphinQt/WiiMix/WebAPI.h"
 
 static QSize ICON_SIZE(32, 32);
 
@@ -55,13 +56,29 @@ ToolBar::ToolBar(QWidget* parent) : QToolBar(parent)
           [this] { m_refresh_action->setEnabled(true); });
   connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
           [this] { OnWiiMixStateChanged(); });
+  connect(WiiMixWebAPI::instance(), &WiiMixWebAPI::onRetroachievementsConnection, this,
+          [this] { OnRetroachievementsAPIStateChanged(); });
 
   OnEmulationStateChanged(Core::GetState(Core::System::GetInstance()));
   OnDebugModeToggled(Settings::Instance().IsDebugModeEnabled());
 }
 
 void ToolBar::OnWiiMixStateChanged() {
-  m_wiimix_action->setEnabled(WiiMixClient::instance()->IsConnected());
+  if (WiiMixWebAPI::instance()->isConnected() && WiiMixClient::instance()->IsConnected()) {
+    m_wiimix_action->setEnabled(true);
+  }
+  else {
+    m_wiimix_action->setEnabled(false);
+  }
+}
+
+void ToolBar::OnRetroachievementsAPIStateChanged() {
+  if (WiiMixWebAPI::instance()->isConnected() && WiiMixClient::instance()->IsConnected()) {
+    m_wiimix_action->setEnabled(true);
+  }
+  else {
+    m_wiimix_action->setEnabled(false);
+  }
 }
 
 void ToolBar::OnEmulationStateChanged(Core::State state)

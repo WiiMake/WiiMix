@@ -377,6 +377,7 @@ extern const Info<std::string> WIIMIX_BINGO_GAME_GENRES; // std::vector<WiiMixEn
 extern const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE;
 extern const Info<int> WIIMIX_CARD_SIZE;
 extern const Info<bool> WIIMIX_TEAMS;
+extern const Info<std::string> WIIMIX_BINGO_SEED;
 
 // WiiMix (rogue)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY;
@@ -386,6 +387,7 @@ extern const Info<std::string> WIIMIX_ROGUE_GAME_GENRES;
 extern const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH;
 extern const Info<int> WIIMIX_NUM_PLAYERS_ROGUE;
 extern const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_ROGUE;
+extern const Info<std::string> WIIMIX_ROGUE_SEED;
 
 // WiiMix (shuffle)
 extern const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY;

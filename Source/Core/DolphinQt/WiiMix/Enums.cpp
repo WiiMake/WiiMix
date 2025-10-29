@@ -34,6 +34,33 @@ namespace WiiMixEnums {
         }
     }
 
+    std::string ModeToString(Mode mode) {
+        switch (mode) {
+            case Mode::BINGO:
+                return MODE_BINGO;
+            case Mode::SHUFFLE:
+                return MODE_SHUFFLE;
+            case Mode::ROGUE:
+                return MODE_ROGUE;
+            case Mode::END:
+                return WII_MIX_UNKNOWN;
+            default:
+                return WII_MIX_UNKNOWN;
+        }
+    }
+
+    Mode StringToMode(const std::string& str) {
+        if (str == MODE_BINGO) {
+            return Mode::BINGO;
+        } else if (str == MODE_ROGUE) {
+            return Mode::ROGUE;
+        } else if (str == MODE_SHUFFLE) {
+            return Mode::SHUFFLE;
+        } else {
+            return Mode::END;
+        }
+    }
+
     std::string SaveStateBankToString(SaveStateBank bank) {
         switch (bank) {
             case SaveStateBank::VERIFIED:
@@ -41,6 +68,7 @@ namespace WiiMixEnums {
             case SaveStateBank::UNVERIFIED:
                 return SAVE_STATE_BANK_UNVERIFIED;
             case SaveStateBank::END:
+                // NOTE: the "user" save state bank is deprecated
                 return WII_MIX_UNKNOWN;
             default:
                 return WII_MIX_UNKNOWN;

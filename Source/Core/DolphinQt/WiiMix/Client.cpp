@@ -182,19 +182,16 @@ void WiiMixClient::BytesRead() {
         // If all the json was read in
         if (m_json_buffer.size() == m_json_size) {
             m_json = QJsonDocument::fromJson(m_json_buffer);
-            qDebug() << "Json size: " << m_json_buffer;
             qDebug() << m_json;
-            qDebug() << "Json array size: " << m_json.array().size();
+            QJsonArray json_array = m_json[QStringLiteral(PAYLOAD)].toArray();
+            qDebug() << "Json array size: " << json_array.size();
             // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
             // As achievement ids should only be paired with objectives
-            for (int i = 0; i < m_json.array().size(); ++i) {
-                QJsonObject obj = m_json.array()[i].toObject();
+            for (int i = 0; i < json_array.size(); ++i) {
+                QJsonObject obj = json_array[i].toObject();
                 if (obj.contains(QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID))) {
                     WiiMixObjective objective = WiiMixObjective::FromJson(obj);
                     m_objectives.push_back(objective);
-                    if (i == 0) {
-                        qDebug() << "Response " << m_json.array()[0][QStringLiteral(CLIENT_RESPONSE)].toInt();
-                    }
                 }
                 else {
                     break;
@@ -236,16 +233,14 @@ void WiiMixClient::BytesRead() {
             m_json_buffer.append(data.mid(current_pos, remaining_json_size));
             current_pos += remaining_json_size;
             m_json = QJsonDocument::fromJson(m_json_buffer);
+            QJsonArray json_array = m_json[QStringLiteral(PAYLOAD)].toArray();
             // Check if the data sent is WiiMixObjectives by checking if the json contains an achievement id
             // As achievement ids should only be paired with objectives
-            for (int i = 0; i < m_json.array().size(); ++i) {
-                QJsonObject obj = m_json.array()[i].toObject();
+            for (int i = 0; i < json_array.size(); ++i) {
+                QJsonObject obj = json_array[i].toObject();
                 if (obj.contains(QStringLiteral(OBJECTIVE_ACHIEVEMENT_ID))) {
                     WiiMixObjective objective = WiiMixObjective::FromJson(obj);
                     m_objectives.push_back(objective);
-                    if (i == 0) {
-                        qDebug() << "Responser " << m_json.array()[0][QStringLiteral(CLIENT_RESPONSE)].toInt();
-                    }
                 }
                 else {
                     break;
@@ -299,6 +294,13 @@ void WiiMixClient::BytesRead() {
         if (m_file.size() == m_file_sizes[m_current_file]) {
             // File completely read, save it
             qDebug() << "Saving file";
+            qDebug() << m_objectives.size();
+            for (WiiMixObjective objective : m_objectives)
+            {
+                qDebug() << QString::fromStdString(objective.GetTitle());
+            }
+            assert(m_objectives.size() != 0);
+            qDebug() << m_current_file;
             QString file_path = QString::fromStdString(WiiMixGlobalSettings::GetSaveStatePath(m_objectives[m_current_file]));
             qDebug() << "Saving file to " << file_path;
             QFile file(file_path);

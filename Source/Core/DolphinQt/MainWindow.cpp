@@ -980,7 +980,7 @@ void MainWindow::WiiMixStartObjective(WiiMixObjective new_objective, std::string
       }
       // Add message for objective image, title, and description
       // Get the icon from retroachievements
-      std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
+      std::vector<u8> img_data = WiiMixWebAPI::instance()->getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
       VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
       VideoCommon::LoadPNGTexture(icon, img_data);
       // icon->height = sqrt(img_data.size() / 4);
@@ -1038,7 +1038,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     return;
   }
   State::LoadAs(Core::System::GetInstance(), savestate_file);
-  std::vector<u8> img_data = WiiMixWebAPI::getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
+  std::vector<u8> img_data = WiiMixWebAPI::instance()->getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
   VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
   VideoCommon::LoadPNGTexture(icon, img_data);
   // icon->row_length = icon->width;
@@ -1199,7 +1199,7 @@ void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
 void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings) {
   WiiMixGameManager::instance()->ClearLiveStates();
    // Start the wiimix
-  qDebug() << "Populating shuffle objectives";
+  qDebug() << "Populating shuffle objectives from settings";
   // Populate the objectives
   // Build the query for shuffle objectives
   QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
@@ -1213,7 +1213,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   }
 
   if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
-    query.filterIncludes(QStringLiteral(OBJECTIVE_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
   }
 
   // OR conditions
@@ -1602,7 +1602,6 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters) {
 void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::string save_path)
 {
 
-  //TODOx: for @gyoder, clean up all these qdebug statements
   if (parameters && std::holds_alternative<BootParameters::Disc>(parameters->parameters))
   {
     if (std::get<BootParameters::Disc>(parameters->parameters).volume->IsNKit())

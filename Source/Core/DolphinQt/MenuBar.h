@@ -161,7 +161,8 @@ private:
   void AddMovieMenu();
   void AddJITMenu();
   void AddSymbolsMenu();
-  void AddWiiMixServerStatusIndicator();
+  void AddWiiMixServerStatusIndicator(QHBoxLayout* layout);
+  void AddRetroachievementsStatusIndicator(QHBoxLayout* layout);
 
   void UpdateStateSlotMenu();
 
@@ -311,5 +312,8 @@ private:
   // Status widget + label for wiimix server connection status
   StatusCircle* m_wiimix_server_status_widget;
   QLabel* m_wiimix_server_status_label;
+
+  StatusCircle* m_retroachievements_api_status_widget;
+  QLabel* m_retroachievements_api_status_label;
   // QHBoxLayout* m_wiimix_server_status_layout;
 };

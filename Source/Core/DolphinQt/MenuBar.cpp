@@ -71,6 +71,7 @@
 #include "UICommon/GameFile.h"
 
 #include "DolphinQt/WiiMix/Client.h"
+#include "DolphinQt/WiiMix/WebAPI.h"
 
 QPointer<MenuBar> MenuBar::s_menu_bar;
 
@@ -94,7 +95,15 @@ MenuBar::MenuBar(QWidget* parent) : QMenuBar(parent)
   AddJITMenu();
   AddSymbolsMenu();
   AddHelpMenu();
-  AddWiiMixServerStatusIndicator();
+  auto* serverStatusLayout = new QHBoxLayout();
+  serverStatusLayout->setContentsMargins(0, 0, 0, 0);
+  serverStatusLayout->setSpacing(0);
+  AddRetroachievementsStatusIndicator(serverStatusLayout);
+  AddWiiMixServerStatusIndicator(serverStatusLayout);
+  
+  auto* containerWidget = new QWidget();
+  containerWidget->setLayout(serverStatusLayout);
+  s_menu_bar->setCornerWidget(containerWidget, Qt::TopRightCorner);
 
   connect(&Settings::Instance(), &Settings::EmulationStateChanged, this,
           [=, this](Core::State state) { OnEmulationStateChanged(state); });
@@ -1118,10 +1127,10 @@ void MenuBar::AddSymbolsMenu()
   m_symbols->addAction(tr("&Patch HLE Functions"), this, &MenuBar::PatchHLEFunctions);
 }
 
-void MenuBar::AddWiiMixServerStatusIndicator() {
+void MenuBar::AddWiiMixServerStatusIndicator(QHBoxLayout* layout) {
   // Create a colored circle widget for server status
   m_wiimix_server_status_label = new QLabel(this);
-  m_wiimix_server_status_label->setText(tr("Server Status: Unknown"));
+  m_wiimix_server_status_label->setText(tr("WiiMix Server Status: Unknown"));
   m_wiimix_server_status_label->setMargin(5);
 
   m_wiimix_server_status_widget = new StatusCircle(this);
@@ -1129,36 +1138,72 @@ void MenuBar::AddWiiMixServerStatusIndicator() {
   // Provide server reconnection logic
   connect(m_wiimix_server_status_widget, &StatusCircle::StatusCircleClicked, this, [this]() {
     m_wiimix_server_status_widget->setColor(Qt::yellow);
-    m_wiimix_server_status_label->setText(tr("Server Status: Reconnecting..."));
+    m_wiimix_server_status_label->setText(tr("WiiMix Server Status: Reconnecting..."));
     if (!WiiMixClient::instance()->ConnectToServer()) {
       QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
     }
   });
 
   // Create a horizontal layout to add widgets side by side
-  auto* layout = new QHBoxLayout();
-  auto* containerWidget = new QWidget();
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(0);
   layout->addWidget(m_wiimix_server_status_widget);
   layout->addWidget(m_wiimix_server_status_label);
-
-  containerWidget->setLayout(layout);
-  s_menu_bar->setCornerWidget(containerWidget, Qt::TopRightCorner);
-
-  // layout->setSizeConstraint(QLayout::SetFixedSize);
 
   // Update setWiiMixServerStatus to change circle color
   connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
     [this](bool connected) {
       if (connected) {
-        m_wiimix_server_status_label->setText(tr("Server Status: Connected"));
+        m_wiimix_server_status_label->setText(tr("WiiMix Server Status: Connected"));
         m_wiimix_server_status_widget->setColor(Qt::green);
       } else {
-        m_wiimix_server_status_label->setText(tr("Server Status: Disconnected"));
+        m_wiimix_server_status_label->setText(tr("WiiMix Server Status: Disconnected"));
         m_wiimix_server_status_widget->setColor(Qt::red);
       }
     });
+}
+
+void MenuBar::AddRetroachievementsStatusIndicator(QHBoxLayout* layout) {
+  // Create a colored circle widget for server status
+  m_retroachievements_api_status_label = new QLabel(this);
+  m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Unknown"));
+  m_retroachievements_api_status_label->setMargin(5);
+
+  m_retroachievements_api_status_widget = new StatusCircle(this);
+
+  auto updateRetroachievementsStatusIndicator = [this]() {
+    bool basic_request = WiiMixWebAPI::instance()->basicRequest("");
+    if (basic_request) {
+      if (Config::Get(Config::RA_API_TOKEN).empty()) {
+        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: API Key not Set"));
+        m_retroachievements_api_status_widget->setColor(QColor(255, 165, 0)); // Orange
+        WiiMixWebAPI::instance()->setConnected(false);
+        emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
+      } else {
+        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Connected"));
+        m_retroachievements_api_status_widget->setColor(Qt::green);
+        WiiMixWebAPI::instance()->setConnected(true);
+        emit WiiMixWebAPI::instance()->onRetroachievementsConnection(true);
+      }
+    } else {
+      m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Disconnected"));
+      m_retroachievements_api_status_widget->setColor(Qt::red);
+      WiiMixWebAPI::instance()->setConnected(false);
+      emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
+    }
+  };
+
+  // Provide server reconnection logic
+  connect(m_retroachievements_api_status_widget, &StatusCircle::StatusCircleClicked, this, [this, updateRetroachievementsStatusIndicator]() {
+    m_retroachievements_api_status_widget->setColor(Qt::yellow);
+    m_retroachievements_api_status_label->setText(tr("Server Status: Reconnecting..."));
+    updateRetroachievementsStatusIndicator();
+  });
+
+  // Add widgets to horizontal layout
+  layout->addWidget(m_retroachievements_api_status_widget);
+  layout->addWidget(m_retroachievements_api_status_label);
+
+  // Call once on first load
+  updateRetroachievementsStatusIndicator();
 }
 
 void MenuBar::UpdateToolsMenu(bool emulation_started)

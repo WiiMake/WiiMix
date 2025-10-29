@@ -142,7 +142,6 @@ private:
   inline static WiiMixBingoSettings* s_instance = nullptr; // Singleton instance
   WiiMixEnums::BingoType m_bingo_type;
   int m_card_size;
-  // TODOx: teams hasn't been tested at all
   bool m_teams;
   QMap<WiiMixEnums::Player, QPair<WiiMixEnums::Color, QString>> m_players = {};
   WiiMixEnums::Player m_player_num = WiiMixEnums::Player::ONE;

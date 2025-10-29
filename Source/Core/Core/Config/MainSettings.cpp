@@ -551,6 +551,7 @@ const Info<std::string> WIIMIX_BINGO_GAME_GENRES{{System::Main, "WiiMix", "Bingo
 const Info<WiiMixEnums::BingoType> WIIMIX_BINGO_TYPE{{System::Main, "WiiMix", "BingoType"}, DEFAULT_BINGO_TYPE};
 const Info<int> WIIMIX_CARD_SIZE{{System::Main, "WiiMix", "CardSize"}, DEFAULT_CARD_SIZE};
 const Info<bool> WIIMIX_TEAMS{{System::Main, "WiiMix", "Teams"}, DEFAULT_TEAMS};
+const Info<std::string> WIIMIX_BINGO_SEED{{System::Main, "WiiMix", "BingoSeed"}, ""};
 
 // WiiMix (rogue)
 const Info<WiiMixEnums::Difficulty> WIIMIX_ROGUE_DIFFICULTY{{System::Main, "WiiMix", "RogueDifficulty"}, DEFAULT_DIFFICULTY};
@@ -560,6 +561,7 @@ const Info<std::string> WIIMIX_ROGUE_GAME_GENRES{{System::Main, "WiiMix", "Rogue
 const Info<WiiMixEnums::RogueLength> WIIMIX_ROGUE_LENGTH{{System::Main, "WiiMix", "RogueLength"}, DEFAULT_ROGUE_LENGTH};
 const Info<int> WIIMIX_NUM_PLAYERS_ROGUE{{System::Main, "WiiMix", "NumPlayersRogue"}, DEFAULT_NUM_PLAYERS_ROGUE};
 const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_ROGUE{{System::Main, "WiiMix", "MultiplayerModeRogue"}, DEFAULT_MULTIPLAYER_MODE_ROGUE};
+const Info<std::string> WIIMIX_ROGUE_SEED{{System::Main, "WiiMix", "RogueSeed"}, ""};
 
 // WiiMix (shuffle)
 const Info<WiiMixEnums::Difficulty> WIIMIX_SHUFFLE_DIFFICULTY{{System::Main, "WiiMix", "ShuffleDifficulty"}, DEFAULT_DIFFICULTY};

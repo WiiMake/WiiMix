@@ -57,7 +57,7 @@ void WiiMixModesWidget::CreateLayout() {
     descriptionFont.setPointSize(16);
 
     for (int i = 0; i < static_cast<int>(WiiMixEnums::Mode::END); i++) {
-        QString titleText = WiiMixGlobalSettings::ModeToTitle(WiiMixEnums::Mode(i));
+        QString titleText = QString::fromStdString(WiiMixEnums::ModeToString(WiiMixEnums::Mode(i)));
         if (titleText == QStringLiteral("")) {
             continue;
         }

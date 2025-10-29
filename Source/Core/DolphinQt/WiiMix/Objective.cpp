@@ -260,6 +260,39 @@ void WiiMixObjective::SetCompletionTime(int completion_time)
   m_completion_time = completion_time;
 }
 
+void WiiMixObjective::PrintObjective()
+{
+    qDebug() << "Objective ID: " << m_id;
+    qDebug() << "File Hash: " << QString::fromStdString(m_file_hash);
+    qDebug() << "Title: " << QString::fromStdString(m_title);
+    qDebug() << "RetroAchievements Game ID: " << m_retroachievements_game_id;
+    qDebug() << "Game ID: " << QString::fromStdString(m_game_id);
+    qDebug() << "Achievement ID: " << m_achievement_id;
+    qDebug() << "Objective Types: ";
+    for (const auto& type : m_objective_types)
+    {
+        qDebug() << "  - " << QString::fromStdString(WiiMixEnums::ObjectiveTypeToString(type));
+    }
+    qDebug() << "Description: " << QString::fromStdString(m_objective_description);
+    qDebug() << "Game Genres: ";
+    for (const auto& genre : m_game_genres)
+    {
+        qDebug() << "  - " << QString::fromStdString(WiiMixEnums::GameGenreToString(genre));
+    }
+    qDebug() << "Difficulty: " << QString::fromStdString(WiiMixEnums::DifficultyToString(m_difficulty));
+    qDebug() << "Time: " << m_time;
+    qDebug() << "Creator Username: " << QString::fromStdString(m_creator_username);
+    qDebug() << "Verifier Username: " << QString::fromStdString(m_verifier_username);
+    qDebug() << "Save State Bank: " << QString::fromStdString(WiiMixEnums::SaveStateBankToString(m_save_state_bank));
+    qDebug() << "Status: " << QString::fromStdString(WiiMixEnums::ObjectiveStatusToString(m_status));
+    qDebug() << "Number of Times Completed: " << m_num_times_completed;
+    qDebug() << "Number of Times Attempted: " << m_num_times_attempted;
+    qDebug() << "Last Attempted: " << static_cast<qint64>(std::chrono::duration_cast<std::chrono::seconds>(
+        m_last_attempted.time_since_epoch()).count());
+    qDebug() << "Player Completed: " << static_cast<int>(m_player_completed);
+    qDebug() << "Completion Time: " << m_completion_time;
+}
+
 // // -------- stopwatch -----------
 // void WiiMixObjective::StartCompletionTimer()
 // {

@@ -27,7 +27,7 @@ public:
     int time,
     std::string creator_username = NULL,
     std::string verifier_username = NULL,
-    WiiMixEnums::SaveStateBank save_state_bank = WiiMixEnums::SaveStateBank::END,
+    WiiMixEnums::SaveStateBank save_state_bank = WiiMixEnums::SaveStateBank::UNVERIFIED,
     WiiMixEnums::ObjectiveStatus status = WiiMixEnums::ObjectiveStatus::UNCOMPLETED,
     int num_times_completed = 0,
     int num_times_attempted = 0,
@@ -139,6 +139,8 @@ public:
 
   static std::string GetLocalObjectiveString();
   static QList<int> GetLocalObjectiveList(QString local_objectives);
+
+  void PrintObjective();
 
 private:
   int m_id;

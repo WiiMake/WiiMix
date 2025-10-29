@@ -48,24 +48,26 @@ QString WiiMixCommonSettings::DifficultyToString(WiiMixEnums::Difficulty difficu
     switch (difficulty)
     {
         case WiiMixEnums::Difficulty::EASY:
-            return QStringLiteral("Easy");
+            return QStringLiteral(DIFFICULTY_EASY);
         case WiiMixEnums::Difficulty::NORMAL:
-            return QStringLiteral("Normal");
+            return QStringLiteral(DIFFICULTY_NORMAL);
         case WiiMixEnums::Difficulty::HARD:
-            return QStringLiteral("Hard");
+            return QStringLiteral(DIFFICULTY_HARD);
         case WiiMixEnums::Difficulty::WIISANITY:
-            return QStringLiteral("Wiisanity");
+            return QStringLiteral(DIFFICULTY_WIISANITY);
         default:
             return QStringLiteral("");
     }
 }
 
 WiiMixEnums::Difficulty WiiMixCommonSettings::StringToDifficulty(QString difficulty) {
-    if (difficulty == QStringLiteral("Normal"))
+    if (difficulty == QStringLiteral(DIFFICULTY_EASY))
+        return WiiMixEnums::Difficulty::EASY;
+    else if (difficulty == QStringLiteral(DIFFICULTY_NORMAL))
         return WiiMixEnums::Difficulty::NORMAL;
-    else if (difficulty == QStringLiteral("Hard"))
+    else if (difficulty == QStringLiteral(DIFFICULTY_HARD))
         return WiiMixEnums::Difficulty::HARD;
-    else if (difficulty == QStringLiteral("Wiisanity"))
+    else if (difficulty == QStringLiteral(DIFFICULTY_WIISANITY))
         return WiiMixEnums::Difficulty::WIISANITY;
     else
         return WiiMixEnums::Difficulty::NORMAL; // Default case
@@ -74,26 +76,27 @@ WiiMixEnums::Difficulty WiiMixCommonSettings::StringToDifficulty(QString difficu
 QString WiiMixCommonSettings::SaveStateBankToString(WiiMixEnums::SaveStateBank bank) {
     switch (bank)
     {
-        case WiiMixEnums::SaveStateBank::USER:
-            return QStringLiteral("User");
+        // case WiiMixEnums::SaveStateBank::USER:
+        //     return QStringLiteral("User");
         case WiiMixEnums::SaveStateBank::VERIFIED:
-            return QStringLiteral("Verified");
+            return QStringLiteral(SAVE_STATE_BANK_VERIFIED);
         case WiiMixEnums::SaveStateBank::UNVERIFIED:
-            return QStringLiteral("Unverified");
+            return QStringLiteral(SAVE_STATE_BANK_UNVERIFIED);
         default:
             return QStringLiteral("");
     }
 }
 
 WiiMixEnums::SaveStateBank WiiMixCommonSettings::StringToSaveStateBank(QString bank) {
-    if (bank == QStringLiteral("User"))
-        return WiiMixEnums::SaveStateBank::USER;
-    else if (bank == QStringLiteral("Verified"))
+    // if (bank == QStringLiteral("User"))
+    //     return WiiMixEnums::SaveStateBank::USER;
+    if (bank == QStringLiteral(SAVE_STATE_BANK_VERIFIED))
         return WiiMixEnums::SaveStateBank::VERIFIED;
-    else if (bank == QStringLiteral("Unverified"))
+    else if (bank == QStringLiteral(SAVE_STATE_BANK_UNVERIFIED))
         return WiiMixEnums::SaveStateBank::UNVERIFIED;
     else
-        return WiiMixEnums::SaveStateBank::USER; // Default case
+        return WiiMixEnums::SaveStateBank::UNVERIFIED;
+        // return WiiMixEnums::SaveStateBank::USER; // Default case
 }
 
 void WiiMixCommonSettings::SetSaveStateBank(WiiMixEnums::SaveStateBank bank) {

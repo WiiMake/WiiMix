@@ -26,6 +26,13 @@ namespace WiiMixEnums {
         END, // Default/size value
     };
 
+    #define MODE_BINGO "BINGO"
+    #define MODE_SHUFFLE "SHUFFLE"
+    #define MODE_ROGUE "ROGUE"
+
+    std::string ModeToString(Mode mode);
+    Mode StringToMode(const std::string& str);
+
     enum class MultiplayerMode {
         VERSUS,
         COOP,
@@ -39,7 +46,7 @@ namespace WiiMixEnums {
     std::string MultiplayerModeToString(MultiplayerMode mode);
 
     enum class SaveStateBank {
-        USER,
+        // USER,
         VERIFIED,
         UNVERIFIED,
         END, // Default/size value
@@ -321,11 +328,17 @@ namespace WiiMixEnums {
         END
     };
     enum class RogueLength {
-        SHORT, // 5
-        MEDIUM, // 7
-        MARATHON, // 10
+        SHORT, // 3
+        MEDIUM, // 6
+        LONGLENGTH, // 9
+        MARATHON, // 18
         END
     };
+
+    #define ROGUE_LENGTH_SHORT "SHORT"
+    #define ROGUE_LENGTH_MEDIUM "MEDIUM"
+    #define ROGUE_LENGTH_LONGLENGTH "LONGLENGTH"
+    #define ROGUE_LENGTH_MARATHON "MARATHON"
 
     std::string GameGenreToString(GameGenre genre);
     GameGenre GameGenreFromString(const std::string& str);
@@ -378,7 +391,7 @@ namespace WiiMixEnums {
 #define MAX_NUM_OBJECTIVES 1000
 constexpr WiiMixEnums::Difficulty DEFAULT_DIFFICULTY = WiiMixEnums::Difficulty::NORMAL;
 constexpr WiiMixEnums::Mode DEFAULT_MODE = WiiMixEnums::Mode::BINGO;
-constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::SaveStateBank::USER;
+constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::SaveStateBank::UNVERIFIED;
 #define DEFAULT_TIME 0
 #define DEFAULT_GAMES {}
 #define MAX_GAMES 10

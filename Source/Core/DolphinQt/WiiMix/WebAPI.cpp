@@ -12,17 +12,21 @@
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/AchievementSettings.h"
 
-// TODO: after testing remove the hardcoded token: "RoBoYefRsnxjSNiYdU2i8Coah9JaCRr5"
-std::string WiiMixWebAPI::m_username = "WiiMix";
-// std::string WiiMixWebAPI::m_token = Config::Get(Config::RA_API_TOKEN);
-
-// void WiiMixWebAPI::setToken(std::string token) {
-//   m_token = token;
-// }
+WiiMixWebAPI::WiiMixWebAPI(QObject *parent, std::string username, std::string token, bool connected) : QObject(parent), m_username(username), m_token(token), m_is_connected(connected) {}
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   ((std::string*)userp)->append((char*)contents, size * nmemb);
   return size * nmemb;
+}
+
+bool WiiMixWebAPI::isConnected()
+{
+  return m_is_connected;
+}
+
+void WiiMixWebAPI::setConnected(bool connected)
+{
+  m_is_connected = connected;
 }
 
 std::map<int, std::string> WiiMixWebAPI::getGameAchievements(int game_id) {
@@ -166,7 +170,6 @@ std::vector<uint8_t> WiiMixWebAPI::getAchievementIcon(int rgame_id, int achievem
     // rgame_id, achievement_id: 9602, 41890
     printf("rgame_id, achievement_id: %d, %d\n", rgame_id, achievement_id);
     int badge_id = getBadgeID(rgame_id, achievement_id);
-    printf("Badge ID: %d\n", badge_id);
     printf("Badge ID: %d\n", badge_id);
     std::string url = "https://retroachievements.org/Badge/" + std::to_string(badge_id) + "_lock.png";
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
