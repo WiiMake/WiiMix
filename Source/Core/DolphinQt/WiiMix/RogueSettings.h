@@ -47,7 +47,7 @@ public:
   explicit WiiMixRogueSettings(WiiMixEnums::Difficulty difficulty, WiiMixEnums::SaveStateBank bank, std::vector<WiiMixObjective> objectives, std::vector<WiiMixEnums::ObjectiveType> types, std::vector<WiiMixEnums::GameGenre> genres, WiiMixEnums::RogueLength length, int num_players = DEFAULT_NUM_PLAYERS_ROGUE, WiiMixEnums::MultiplayerMode multiplayer_mode = DEFAULT_MULTIPLAYER_MODE_ROGUE);
 
   #define ROGUE_SETTINGS "ROGUE_SETTINGS"
-  #define ROGUE_SETTINGS_SEED "SEED"
+  #define ROGUE_SETTINGS_SEED "ROGUE_SEED"
   #define ROGUE_SETTINGS_DIFFICULTY "DIFFICULTY"
   #define ROGUE_SETTINGS_SAVE_STATE_BANK "SAVE_STATE_BANK"
   #define ROGUE_SETTINGS_LENGTH "LENGTH"

@@ -864,6 +864,20 @@ void WiiMixConfigWidget::CreateLayout(WiiMixEnums::Mode mode) {
     
     CreateCommonLayout();
 
+    // Set seeds after creating common layout to grey out accordingly
+    if (mode == WiiMixEnums::Mode::SHUFFLE) {
+        std::string shuffle_seed = Config::Get(Config::WIIMIX_SHUFFLE_SEED);
+        SetShuffleSeed(QString::fromStdString(shuffle_seed));
+    }
+    else if (mode == WiiMixEnums::Mode::ROGUE) {
+        std::string rogue_seed = Config::Get(Config::WIIMIX_ROGUE_SEED);
+        SetRogueSeed(QString::fromStdString(rogue_seed));
+    }
+    else if (mode == WiiMixEnums::Mode::BINGO) {
+        std::string bingo_seed = Config::Get(Config::WIIMIX_BINGO_SEED);
+        SetBingoSeed(QString::fromStdString(bingo_seed));
+    }
+
     setLayout(m_config_layout);
 }
 

@@ -55,7 +55,7 @@ ToolBar::ToolBar(QWidget* parent) : QToolBar(parent)
   connect(&Settings::Instance(), &Settings::GameListRefreshStarted, this,
           [this] { m_refresh_action->setEnabled(true); });
   connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
-          [this] { OnWiiMixStateChanged(); });
+          [this](bool connected) { OnWiiMixStateChanged(); });
   connect(WiiMixWebAPI::instance(), &WiiMixWebAPI::onRetroachievementsConnection, this,
           [this](bool connected) { OnRetroachievementsAPIStateChanged(connected); });
 

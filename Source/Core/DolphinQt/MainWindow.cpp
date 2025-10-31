@@ -1148,6 +1148,25 @@ void MainWindow::PopulateWiiMixBingoObjectives(WiiMixBingoSettings* settings) {
 void MainWindow::StartWiiMixBingo(WiiMixBingoSettings* settings) {
   // Start the wiimix
   qDebug() << "Bingo calls";
+
+  // Check if there are objectives
+  if (WiiMixBingoSettings::instance()->GetObjectives().size() == 0) {
+    qDebug() << "No objectives to start bingo!";
+    QMessageBox::critical(this, QStringLiteral("Error"),
+      QStringLiteral("No objectives for bingo. Please verify that your settings are correct!"));
+    m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(0, 10);
+    m_wiimix_window->getWiiMixLogoButton()->setDisabled(false);
+    WiiMixGameManager::instance()->SetWiiMixStarted(false);
+    WiiMixGameManager::instance()->SetIsRunning(false);
+    return;
+  }
+
+  if (WiiMixGameManager::instance()->IsRunning()) {
+    qDebug() << "Game is already running";
+    QMessageBox::warning(this, QStringLiteral("Warning"), QStringLiteral("A wiimix game is already running. Please stop the current game before starting a new one."));
+    return;
+  }
+
   WiiMixGameManager::instance()->SetIsRunning(true);
 }
 
@@ -1207,6 +1226,26 @@ void MainWindow::PopulateWiiMixRogueObjectives(WiiMixRogueSettings* settings) {
 void MainWindow::StartWiiMixRogue(WiiMixRogueSettings* settings) {
   // Start the wiimix
   qDebug() << "Rogue calls";
+
+  // Check if there are objectives
+  if (WiiMixRogueSettings::instance()->GetObjectives().size() == 0) {
+    qDebug() << "No objectives to start bingo!";
+    QMessageBox::critical(this, QStringLiteral("Error"),
+      QStringLiteral("No objectives for rogue. Please verify that your settings are correct!"));
+    // reset wiimix state (global settings, wiimix button)
+    m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(0, 10);
+    m_wiimix_window->getWiiMixLogoButton()->setDisabled(false);
+    WiiMixGameManager::instance()->SetWiiMixStarted(false);
+    WiiMixGameManager::instance()->SetIsRunning(false);
+    return;
+  }
+
+  if (WiiMixGameManager::instance()->IsRunning()) {
+    qDebug() << "Game is already running";
+    QMessageBox::warning(this, QStringLiteral("Warning"), QStringLiteral("A wiimix game is already running. Please stop the current game before starting a new one."));
+    return;
+  }
+
   // Connect handler for rogue objectives
   connect(m_objective_timer, &QTimer::timeout, this, [this]() {
     // TODOx
@@ -1224,24 +1263,28 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   QueryBuilder query = QueryBuilder(WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE, WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES);
 
   // AND conditions
-  query.filterIncludes(QStringLiteral(OBJECTIVE_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
   query.filterIncludes(QStringLiteral(OBJECTIVE_NUM_PLAYERS), settings->GetNumPlayers());
   
   if (settings->GetNumPlayers() != 1) {
     query.filterIncludes(QStringLiteral(OBJECTIVE_MULTIPLAYER_MODE), QString::fromStdString(WiiMixEnums::MultiplayerModeToString(settings->GetMultiplayerMode())));
   }
 
-  if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
-    query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+  if (settings->GetSeed() != "") {
+    query.with(QStringLiteral(SHUFFLE_SETTINGS_SEED), QString::fromStdString(settings->GetSeed()));
   }
+  else {
+    query.filterIncludes(QStringLiteral(OBJECTIVE_DIFFICULTY), QString::fromStdString(WiiMixEnums::DifficultyToString(settings->GetDifficulty())));
+    if (settings->GetSaveStateBank() != WiiMixEnums::SaveStateBank::UNVERIFIED) {
+      query.filterIncludes(QStringLiteral(COMMON_SETTINGS_SAVE_STATE_BANK), QString::fromStdString(WiiMixEnums::SaveStateBankToString(settings->GetSaveStateBank())));
+    }
+    // OR conditions
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES), QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(settings->GetObjectiveTypes())));
+    query.filterOrIncludes(QStringLiteral(OBJECTIVE_GAME_GENRES), QString::fromStdString(WiiMixEnums::GameGenresToString(settings->GetGameGenres())));
 
-  // OR conditions
-  query.filterOrIncludes(QStringLiteral(OBJECTIVE_OBJECTIVE_TYPES), QString::fromStdString(WiiMixEnums::ObjectiveTypesToString(settings->GetObjectiveTypes())));
-  query.filterOrIncludes(QStringLiteral(OBJECTIVE_GAME_GENRES), QString::fromStdString(WiiMixEnums::GameGenresToString(settings->GetGameGenres())));
-
-  // Other options
-  query.limit(settings->GetNumberOfSwitches());
-  query.random();
+    // Other options
+    query.limit(settings->GetNumberOfSwitches());
+    query.random();
+  }
 
   // Build and send
   QJsonObject obj = query.build();
@@ -1254,12 +1297,20 @@ void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {
   m_mode = WiiMixEnums::Mode::SHUFFLE;
   if (WiiMixShuffleSettings::instance()->GetObjectives().empty()) {
     qDebug() << "No objectives to shuffle";
+    // Show an error window if there are no objectives to shuffle
+    QMessageBox::critical(this, QStringLiteral("Error"),
+      QStringLiteral("No objectives to shuffle. If you are using a seed, please verify that the number of players is correct for each objective."));
+    m_wiimix_window->getWiiMixLogoButton()->trackStateReadProgress(0, 10);
+    m_wiimix_window->getWiiMixLogoButton()->setDisabled(false);
+    WiiMixGameManager::instance()->SetWiiMixStarted(false);
+    WiiMixGameManager::instance()->SetIsRunning(false);
     return;
   }
 
   WiiMixGameManager *game_manager = WiiMixGameManager::instance();
-  if (game_manager->IsRunning()) {
+  if (WiiMixGameManager::instance()->IsRunning()) {
     qDebug() << "Game is already running";
+    QMessageBox::warning(this, QStringLiteral("Warning"), QStringLiteral("A wiimix game is already running. Please stop the current game before starting a new one."));
     return;
   }
 
