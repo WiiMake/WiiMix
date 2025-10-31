@@ -59,8 +59,10 @@ public:
   void SetMaxTimeBetweenSwitch(int value);
   int GetNumPlayersShuffle() const;
   void SetNumPlayersShuffle(int value);
-  bool GetEndless() const;
-  void SetEndless(bool value);
+  // bool GetEndless() const;
+  // void SetEndless(bool value);
+  QString GetShuffleSeed() const;
+  void SetShuffleSeed(QString value);
   int GetNumSwitches() const;
   void SetNumSwitches(int value);
   WiiMixEnums::MultiplayerMode GetMultiplayerModeShuffle() const;
@@ -156,7 +158,9 @@ private:
   QLabel* m_num_players_shuffle_label;
   QComboBox* m_num_players_shuffle_dropdown; 
   QLineEdit* m_num_switches;
-  QCheckBox* m_endless_mode;
+  // QCheckBox* m_endless_mode;
+  QLabel* m_shuffle_seed_label;
+  QLineEdit* m_shuffle_seed;
   QLabel* m_multiplayer_mode_shuffle_label;
   QComboBox* m_multiplayer_mode_shuffle_dropdown;
 

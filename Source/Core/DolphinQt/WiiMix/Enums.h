@@ -387,8 +387,8 @@ namespace WiiMixEnums {
 #define WII_MIX_PURPLE "#a961e8"
 #define WII_MIX_GREEN "#61e873"
 
-#define MIN_NUM_OBJECTIVES 1
-#define MAX_NUM_OBJECTIVES 1000
+#define MIN_NUM_OBJECTIVES 2
+#define MAX_NUM_OBJECTIVES 20
 constexpr WiiMixEnums::Difficulty DEFAULT_DIFFICULTY = WiiMixEnums::Difficulty::NORMAL;
 constexpr WiiMixEnums::Mode DEFAULT_MODE = WiiMixEnums::Mode::BINGO;
 constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::SaveStateBank::UNVERIFIED;
@@ -429,4 +429,5 @@ constexpr WiiMixEnums::SaveStateBank DEFAULT_SAVE_STATE_BANK = WiiMixEnums::Save
 #define DEFAULT_NUM_PLAYERS_SHUFFLE 1
 #define DEFAULT_MULTIPLAYER_MODE_SHUFFLE WiiMixEnums::MultiplayerMode::VERSUS
 #define DEFAULT_NUMBER_OF_SWITCHES 10
-#define DEFAULT_IS_ENDLESS false
+// #define DEFAULT_IS_ENDLESS false
+#define DEFAULT_SHUFFLE_SEED ""

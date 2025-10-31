@@ -81,6 +81,11 @@ void AchievementsWindow::ConnectWidgets()
 
 void AchievementsWindow::UpdateData(AchievementManager::UpdatedItems updated_items)
 {
+  qDebug() << "Update data called";
+  qDebug() << updated_items.achievements.size();
+  qDebug() << updated_items.leaderboards.size();
+  qDebug() << updated_items.failed_login_code;
+
   m_settings_widget->UpdateData(updated_items.failed_login_code);
   if (updated_items.all)
   {

@@ -44,7 +44,7 @@ signals:
 private:
   void OnEmulationStateChanged(Core::State state);
   void OnWiiMixStateChanged();
-  void OnRetroachievementsAPIStateChanged();
+  void OnRetroachievementsAPIStateChanged(bool connected);
   void OnDebugModeToggled(bool enabled);
 
   void MakeActions();

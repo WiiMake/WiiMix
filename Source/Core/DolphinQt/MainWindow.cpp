@@ -294,6 +294,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
 
 #ifdef USE_RETRO_ACHIEVEMENTS
   AchievementManager::GetInstance().Init();
+  
 #endif  // USE_RETRO_ACHIEVEMENTS
 
 #if defined(__unix__) || defined(__unix) || defined(__APPLE__)
@@ -410,6 +411,24 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
     // QMessageBox::critical(this, QStringLiteral("Error"), QStringLiteral("Failed to connect to the wiimix server"));
     qDebug() << QStringLiteral("Failed to connect to the wiimix server");
   }
+
+
+  WiiMixWebAPI::instance()->secureGet(QStringLiteral(RETROACHIEVEMENTS_API_TOKEN), [this](const QString& value) {
+    bool connected = false;
+    if (!value.isEmpty()) {
+      WiiMixWebAPI::instance()->setToken(value.toStdString());
+      Config::SetCurrent(Config::RA_API_TOKEN, value.toStdString());
+      connected = WiiMixWebAPI::instance()->basicRequest(WiiMixWebAPI::instance()->getToken());
+      // AchievementManager::GetInstance().Login(value.toStdString(), ""); // API Token login currently disabled
+    }
+    emit WiiMixWebAPI::instance()->onRetroachievementsConnection(connected);
+  });
+  WiiMixWebAPI::instance()->secureGet(QStringLiteral(RETROCACHIEVEMENTS_PASSWORD), [this](const QString& value) {
+    if (!value.isEmpty()) {
+      WiiMixWebAPI::instance()->setPassword(value.toStdString());
+      AchievementManager::GetInstance().Login(value.toStdString(), "");
+    }
+  });
 }
 
 // void MainWindow::DisplayClientError(QString error) {
@@ -2875,6 +2894,7 @@ void MainWindow::ShowWiiMixAccountWindow() {
 void MainWindow::ShowAchievementsWindow()
 {
   qDebug() << "Showing achievements window";
+  
   if (!m_achievements_window)
   {
     m_achievements_window = new AchievementsWindow(this);

@@ -39,7 +39,6 @@ message(STATUS "BUILD_WIIMIX_SERVER_ONLY: ${BUILD_WIIMIX_SERVER_ONLY}")
 if (BUILD_WIIMIX_SERVER_ONLY)
   message("Building WiiMix Server Only")
   find_package(Qt6 REQUIRED COMPONENTS Core Network)
-
   find_package(CURL REQUIRED)
 
   # Define libraries to link for the server
@@ -59,14 +58,14 @@ if (BUILD_WIIMIX_SERVER_ONLY)
     WiiMix/QueryBuilder.h
     WiiMix/RogueSettings.cpp
     WiiMix/RogueSettings.h
+    WiiMix/ShuffleSettings.cpp
+    WiiMix/ShuffleSettings.h
     WiiMix/Server/BingoSettings.cpp
     WiiMix/Server/BingoSettings.h
     WiiMix/Server/DBApi.cpp
     WiiMix/Server/DBApi.h
     WiiMix/Server/Server.cpp
     WiiMix/Server/Server.h
-    WiiMix/ShuffleSettings.cpp
-    WiiMix/ShuffleSettings.h
   )
 
   # Set target properties for the executable
@@ -87,8 +86,23 @@ if (BUILD_WIIMIX_SERVER_ONLY)
   # Install properties
   install(TARGETS wiimix-server RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 else()
+
+  # On Linux, also search /usr for Qt
+  if(UNIX AND NOT APPLE)
+    
+    # TODO: this is harcoded for Ubuntu/Debian, make it more general
+    set(Qt6Keychain_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6Keychain")
+
+  endif()
+
+  find_package(Qt6Keychain REQUIRED)
   find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets Svg Core5Compat Multimedia MultimediaWidgets)
   message(STATUS "Found Qt version ${Qt6_VERSION}")
+
+  # if(TARGET qt6keychain AND NOT TARGET Qt6::Keychain)
+  #   add_library(Qt6::Keychain ALIAS qt6keychain)
+  #   message(STATUS "Found Qt::Keychain, created alias Qt6::Keychain")
+  # endif()
 
   set_property(TARGET Qt6::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
 
@@ -514,6 +528,14 @@ else()
 		WiiMix/WebAPI.h
   )
 
+  if(UNIX AND NOT APPLE)
+    set_source_files_properties(
+      "WiiMix/WebAPI.cpp"
+      PROPERTIES
+        COMPILE_FLAGS "-I/usr/include"
+    )
+  endif()
+
   set_target_properties(dolphin-emu PROPERTIES OUTPUT_NAME "wiimix")
 
   # Build the bingo server if it exists
@@ -521,7 +543,6 @@ else()
     message("Wiimix-server executable added")
 
     find_package(Qt6 REQUIRED COMPONENTS Core Network)
-
     find_package(CURL REQUIRED)
 
     # Define libraries to link for the server
@@ -618,6 +639,7 @@ else()
       Qt6::Core5Compat
       Qt6::Multimedia
       Qt6::MultimediaWidgets
+      qt6keychain # Qt6::Keychain
       uicommon
       imgui
       implot

@@ -18,6 +18,7 @@ class AchievementSettingsWidget final : public QWidget
   Q_OBJECT
 public:
   explicit AchievementSettingsWidget(QWidget* parent);
+  ~AchievementSettingsWidget();
   void UpdateData(int login_failed_code);
 
 private:

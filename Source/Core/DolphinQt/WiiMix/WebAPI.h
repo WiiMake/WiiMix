@@ -25,6 +25,17 @@ class WiiMixWebAPI : public QObject  {
     bool isConnected();
     void setConnected(bool connected);
     // void WiiMixWebAPI::setToken(std::string token);
+    void secureSet(const QString& key, const QString& value);
+    void secureGet(const QString& key, std::function<void(const QString& value)> onLoaded);
+    void setToken(std::string token) { m_token = token; }
+    std::string getToken() { return m_token; }
+    std::string getUsername() { return m_username; }
+    void setUsername(std::string username) { m_username = username; }
+    void setPassword(std::string password) { m_password = password; }
+    std::string getPassword() { return m_password; }
+
+    #define RETROACHIEVEMENTS_API_TOKEN "RA_API_TOKEN"
+    #define RETROCACHIEVEMENTS_PASSWORD "RA_PASSWORD"
 
   signals:
     void onRetroachievementsConnection(bool connected);
@@ -37,5 +48,6 @@ class WiiMixWebAPI : public QObject  {
   private:
     std::string m_username;
     std::string m_token;
+    std::string m_password;
     bool m_is_connected;
 };

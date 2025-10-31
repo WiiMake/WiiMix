@@ -22,7 +22,8 @@ public:
       int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
       int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME,
       int num_players = DEFAULT_NUM_PLAYERS_SHUFFLE,
-      bool endless = DEFAULT_IS_ENDLESS) {
+      std::string seed = DEFAULT_SHUFFLE_SEED
+    ) {
     // Check if difficulty, save state bank, objective types, or game genres are different from the default
     WiiMixEnums::Difficulty config_difficulty = Config::Get(Config::WIIMIX_SHUFFLE_DIFFICULTY);
     if (difficulty == DEFAULT_SHUFFLE_DIFFICULTY && config_difficulty != DEFAULT_SHUFFLE_DIFFICULTY) {
@@ -45,7 +46,7 @@ public:
     }
 
     if (!s_instance) {
-        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, types, genres, number_of_switches, min_time_between_switch, max_time_between_switch, num_players, endless);
+        s_instance = new WiiMixShuffleSettings(difficulty, save_state_bank, objectives, types, genres, number_of_switches, min_time_between_switch, max_time_between_switch, num_players, seed);
     }
     return s_instance;
   }
@@ -54,9 +55,10 @@ public:
   #define SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES "NUMBER_OF_SWITCHES"
   #define SHUFFLE_SETTINGS_MIN_TIME_BETWEEN_SWITCH "MIN_TIME_BETWEEN_SWITCH"
   #define SHUFFLE_SETTINGS_MAX_TIME_BETWEEN_SWITCH "MAX_TIME_BETWEEN_SWITCH"
-  #define SHUFFLE_SETTINGS_IS_ENDLESS "IS_ENDLESS"
   #define SHUFFLE_SETTINGS_NUM_PLAYERS "NUM_PLAYERS"
   #define SHUFFLE_SETTINGS_MULTIPLAYER_MODE "MULTIPLAYER_MODE"
+  // #define SHUFFLE_SETTINGS_IS_ENDLESS "IS_ENDLESS"
+  #define SHUFFLE_SETTINGS_SEED "SEED"
 
   explicit WiiMixShuffleSettings(WiiMixEnums::Difficulty difficulty = DEFAULT_SHUFFLE_DIFFICULTY,
       WiiMixEnums::SaveStateBank save_state_bank = DEFAULT_SHUFFLE_SAVE_STATE_BANK,
@@ -64,7 +66,7 @@ public:
     int min_time_between_switch = DEFAULT_MIN_SWITCH_TIME, 
     int max_time_between_switch = DEFAULT_MAX_SWITCH_TIME, 
     int num_players = DEFAULT_NUM_PLAYERS_SHUFFLE,
-    bool endless = DEFAULT_IS_ENDLESS,
+    std::string seed = DEFAULT_SHUFFLE_SEED,
     WiiMixEnums::MultiplayerMode multiplayer_mode = WiiMixEnums::MultiplayerMode::VERSUS);
 
   // Note that EITHER the number of switches OR the number of objectives gets set
@@ -79,8 +81,14 @@ public:
   void SetNumPlayers(int value);
   WiiMixEnums::MultiplayerMode GetMultiplayerMode() const;
   void SetMultiplayerMode(WiiMixEnums::MultiplayerMode multiplayer_mode);
-  bool GetEndless() const; // The user(s) can play as long as they want
-  void SetEndless(bool value);
+  // bool GetEndless() const; // DEPRECATED: endless doesn't really make sense for shuffle
+  // void SetEndless(bool value);
+  std::string GetSeed() const;
+  void SetSeed(std::string value);
+  bool VerifySeed(std::string seed) const;
+  static int GetNumPlayersFromSeed(std::string seed);
+  static int GetNumSwitchesFromSeed(std::string seed);
+  static std::vector<int> SeedToObjectivesIds(std::string seed);
   void SetDifficulty(WiiMixEnums::Difficulty difficulty) override;
   void SetSaveStateBank(WiiMixEnums::SaveStateBank save_state_bank) override;
   void SetObjectiveTypes(std::vector<WiiMixEnums::ObjectiveType> types) override;
@@ -96,6 +104,7 @@ private:
   int m_min_time_between_switch;
   int m_max_time_between_switch;
   int m_num_players;
-  bool m_endless;
+  // bool m_endless;
+  std::string m_seed;
   WiiMixEnums::MultiplayerMode m_multiplayer_mode = WiiMixEnums::MultiplayerMode::VERSUS;
 };

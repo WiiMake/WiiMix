@@ -247,7 +247,11 @@ void WiiMixClient::BytesRead() {
                 }
             }
             qDebug() << "Number of objectives" << m_objectives.size();
-            assert(m_objectives.size() > 0);
+            if (m_objectives.size() == 0) {
+                qCritical() << "No objectives received; exiting process. If you were using a seed, please ensure the seed is valid for the number of players.";
+                emit onError(QStringLiteral("No objectives were received from the server; if you were using a seed, please ensure the seed is valid for the number of players."));
+                return;
+            }
         }
     }
     // Check if all data has been read in

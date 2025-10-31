@@ -398,7 +398,8 @@ extern const Info<int> WIIMIX_NUMBER_OF_SWITCHES;
 extern const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH;
 extern const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH;
 extern const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE;
-extern const Info<bool> WIIMIX_IS_ENDLESS;
+// extern const Info<bool> WIIMIX_IS_ENDLESS;
+extern const Info<std::string> WIIMIX_SHUFFLE_SEED;
 extern const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE;
 
 // GameCube path utility functions

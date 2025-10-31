@@ -1170,24 +1170,42 @@ void MenuBar::AddRetroachievementsStatusIndicator(QHBoxLayout* layout) {
   m_retroachievements_api_status_widget = new StatusCircle(this);
 
   auto updateRetroachievementsStatusIndicator = [this]() {
-    bool basic_request = WiiMixWebAPI::instance()->basicRequest("");
-    if (basic_request) {
-      if (Config::Get(Config::RA_API_TOKEN).empty()) {
-        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: API Key not Set"));
-        m_retroachievements_api_status_widget->setColor(QColor(255, 165, 0)); // Orange
-        WiiMixWebAPI::instance()->setConnected(false);
-        emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
-      } else {
+    if (WiiMixWebAPI::instance()->getToken().size() == 0) {
+      m_retroachievements_api_status_label->setText(tr("Retroachievements Status: API Key not Set"));
+      m_retroachievements_api_status_widget->setColor(QColor(255, 165, 0)); // Orange
+      WiiMixWebAPI::instance()->setConnected(false);
+      emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
+    }
+    else {
+      bool basic_request = WiiMixWebAPI::instance()->basicRequest(WiiMixWebAPI::instance()->getToken());
+      if (basic_request) {
         m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Connected"));
         m_retroachievements_api_status_widget->setColor(Qt::green);
         WiiMixWebAPI::instance()->setConnected(true);
         emit WiiMixWebAPI::instance()->onRetroachievementsConnection(true);
+      } else {
+        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Disconnected"));
+        m_retroachievements_api_status_widget->setColor(Qt::red);
+        WiiMixWebAPI::instance()->setConnected(false);
+        emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
       }
-    } else {
-      m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Disconnected"));
-      m_retroachievements_api_status_widget->setColor(Qt::red);
-      WiiMixWebAPI::instance()->setConnected(false);
-      emit WiiMixWebAPI::instance()->onRetroachievementsConnection(false);
+    }
+  };
+
+  auto updateRetroachievementsStatusIndicatorWithBoolean = [this](bool connected) {
+    if (connected) {
+      m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Connected"));
+      m_retroachievements_api_status_widget->setColor(Qt::green);
+    }
+    else {
+      if (WiiMixWebAPI::instance()->getToken().size() == 0) {
+        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: API Key not Set"));
+        m_retroachievements_api_status_widget->setColor(QColor(255, 165, 0)); // Orange
+      }
+      else {
+        m_retroachievements_api_status_label->setText(tr("Retroachievements Status: Disconnected"));
+        m_retroachievements_api_status_widget->setColor(Qt::red);
+      }
     }
   };
 
@@ -1198,12 +1216,18 @@ void MenuBar::AddRetroachievementsStatusIndicator(QHBoxLayout* layout) {
     updateRetroachievementsStatusIndicator();
   });
 
+  connect(WiiMixWebAPI::instance(), &WiiMixWebAPI::onRetroachievementsConnection, this, [this, updateRetroachievementsStatusIndicatorWithBoolean](bool connected) {
+    m_retroachievements_api_status_widget->setColor(Qt::yellow);
+    m_retroachievements_api_status_label->setText(tr("Server Status: Reconnecting..."));
+    updateRetroachievementsStatusIndicatorWithBoolean(connected);
+  });
+
   // Add widgets to horizontal layout
   layout->addWidget(m_retroachievements_api_status_widget);
   layout->addWidget(m_retroachievements_api_status_label);
 
-  // Call once on first load
-  updateRetroachievementsStatusIndicator();
+  // Call once on first load (not needed because of secureGet token call)
+  // updateRetroachievementsStatusIndicator();
 }
 
 void MenuBar::UpdateToolsMenu(bool emulation_started)

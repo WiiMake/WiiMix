@@ -543,23 +543,32 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     QVBoxLayout* shuffle_settings_layout = new QVBoxLayout(); 
 
     int num_switches = Config::Get(Config::WIIMIX_NUMBER_OF_SWITCHES);
-    QHBoxLayout* num_switches_layout = new QHBoxLayout();
+    QHBoxLayout* inputs_layout = new QHBoxLayout();
 
-    QLabel*num_switches_label = new QLabel(tr("Number of Objectives:"));
+    QVBoxLayout* num_switches_layout = new QVBoxLayout();
+    QLabel* num_switches_label = new QLabel(tr("Num Objectives"));
     m_num_switches = new QLineEdit();
     m_num_switches->setText(QString::number(num_switches));
     QIntValidator* int_validator = new QIntValidator(MIN_NUM_OBJECTIVES, MAX_NUM_OBJECTIVES, this);
     m_num_switches->setValidator(int_validator);
 
-    m_endless_mode = new QCheckBox(tr("Endless Mode"));
-    m_endless_mode->setChecked(Config::Get(Config::WIIMIX_IS_ENDLESS));
-    m_num_switches->setDisabled(m_endless_mode->isChecked());
-
+    num_switches_layout->addWidget(num_switches_label);
     num_switches_layout->addWidget(m_num_switches);
-    num_switches_layout->addWidget(m_endless_mode);
 
-    shuffle_settings_layout->addWidget(num_switches_label);
-    shuffle_settings_layout->addLayout(num_switches_layout);
+    QVBoxLayout* shuffle_seed_layout = new QVBoxLayout();
+
+    m_shuffle_seed_label = new QLabel(tr("Shuffle Seed"));
+    m_shuffle_seed = new QLineEdit();
+    std::string shuffle_seed = Config::Get(Config::WIIMIX_SHUFFLE_SEED);
+    m_shuffle_seed->setText(QString::fromStdString(shuffle_seed));
+
+    shuffle_seed_layout->addWidget(m_shuffle_seed_label);
+    shuffle_seed_layout->addWidget(m_shuffle_seed);
+
+    inputs_layout->addLayout(num_switches_layout);
+    inputs_layout->addLayout(shuffle_seed_layout);
+
+    shuffle_settings_layout->addLayout(inputs_layout);
 
     int min_time = Config::Get(Config::WIIMIX_MIN_TIME_BETWEEN_SWITCH);
     m_min_switch_time_label = new QLabel(tr("Min Time Between Shuffles: " ) + QString::number(min_time));
@@ -619,8 +628,12 @@ void WiiMixConfigWidget::CreateShuffleLayout() {
     });
 
     // Connect endless_mode to disable/enable number of switches
-    connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
-        SetEndless(checked);
+    // connect(m_endless_mode, &QCheckBox::toggled, this, [this](bool checked) {
+    //     SetEndless(checked);
+    // });
+
+    connect(m_shuffle_seed, &QLineEdit::textChanged, this, [this](const QString& text) {
+        SetShuffleSeed(text);
     });
 
     // Connect slider value change to update the label
@@ -967,9 +980,9 @@ int WiiMixConfigWidget::GetNumSwitches() const {
     return m_num_switches->text().toInt();
 }
 
-bool WiiMixConfigWidget::GetEndless() const {
-    return m_endless_mode->isChecked();
-}
+// bool WiiMixConfigWidget::GetEndless() const {
+//     return m_endless_mode->isChecked();
+// }
 
 WiiMixEnums::BingoType WiiMixConfigWidget::GetBingoType() const {
     if (m_bingo_button->isChecked()) {
@@ -1077,6 +1090,14 @@ WiiMixEnums::RogueLength WiiMixConfigWidget::GetRogueLength() const {
 
 QString WiiMixConfigWidget::GetRogueSeed() const{
     return m_rogue_seed->text();
+}
+
+QString WiiMixConfigWidget::GetBingoSeed() const{
+    return m_bingo_seed->text();
+}
+
+QString WiiMixConfigWidget::GetShuffleSeed() const{
+    return m_shuffle_seed->text();
 }
 
 int WiiMixConfigWidget::GetNumPlayersRogue() const {
@@ -1224,10 +1245,52 @@ void WiiMixConfigWidget::SetNumSwitches(int num_switches) {
     m_num_switches->setText(QString::number(num_switches));
 }
 
-void WiiMixConfigWidget::SetEndless(bool endless) {
-    m_endless_mode->setChecked(endless);
-    m_num_switches->setDisabled(endless);
-    Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
+// void WiiMixConfigWidget::SetEndless(bool endless) {
+//     m_endless_mode->setChecked(endless);
+//     m_num_switches->setDisabled(endless);
+//     Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, endless);
+// }
+
+void WiiMixConfigWidget::SetShuffleSeed(QString seed) {
+    if (seed == QStringLiteral("")) {
+        // Re-enable relevant controls if seed is cleared
+        m_objective_types->setDisabled(false);
+        m_game_genres->setDisabled(false);
+        m_difficulty->setDisabled(false);
+        m_save_state_bank->setDisabled(false);
+        m_num_switches->setDisabled(false);
+        m_num_players_shuffle_dropdown->setDisabled(false);
+        QSignalBlocker blocker(m_shuffle_seed);
+        m_shuffle_seed->clear();
+        blocker.unblock();
+        return;
+    }
+    // Validate the shuffle seed
+    if (!WiiMixShuffleSettings::instance()->VerifySeed(seed.toStdString())) {
+        QMessageBox::warning(this, tr("Invalid Seed"), tr("The provided Shuffle seed %1 is invalid. Please enter a valid seed.").arg(seed));
+        QSignalBlocker blocker(m_shuffle_seed);
+        m_shuffle_seed->clear();
+        m_objective_types->setDisabled(false);
+        m_game_genres->setDisabled(false);
+        m_difficulty->setDisabled(false);
+        m_save_state_bank->setDisabled(false);
+        m_num_switches->setDisabled(false);
+        m_num_players_shuffle_dropdown->setDisabled(false);
+        blocker.unblock();
+        return;
+    }
+    // If valid, set the seed, set num players, set num switches, and disable relevant controls
+    int num_players = WiiMixShuffleSettings::instance()->GetNumPlayersFromSeed(seed.toStdString());
+    int num_switches = WiiMixShuffleSettings::instance()->GetNumSwitchesFromSeed(seed.toStdString());
+    SetNumPlayersShuffle(num_players - 1); // -1 for zero-based index
+    SetNumSwitches(num_switches);
+    m_shuffle_seed->setText(seed);
+    m_objective_types->setDisabled(true);
+    m_game_genres->setDisabled(true);
+    m_difficulty->setDisabled(true);
+    m_save_state_bank->setDisabled(true);
+    m_num_switches->setDisabled(true);
+    m_num_players_shuffle_dropdown->setDisabled(true);
 }
 
 void WiiMixConfigWidget::SetBingoType(WiiMixEnums::BingoType type) {

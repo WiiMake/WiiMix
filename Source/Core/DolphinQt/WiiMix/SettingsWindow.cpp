@@ -358,7 +358,9 @@ void WiiMixSettingsWindow::ConnectWidgets()
           WiiMixShuffleSettings::instance()->SetNumberOfSwitches(m_config->GetNumSwitches());
           WiiMixShuffleSettings::instance()->SetMinTimeBetweenSwitch(m_config->GetMinTimeBetweenSwitch());
           WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(m_config->GetMaxTimeBetweenSwitch());
-          WiiMixShuffleSettings::instance()->SetEndless(m_config->GetEndless());
+          WiiMixShuffleSettings::instance()->SetSeed(m_config->GetShuffleSeed().toStdString());
+          WiiMixShuffleSettings::instance()->SetNumPlayers(m_config->GetNumPlayersShuffle());
+          // WiiMixShuffleSettings::instance()->SetEndless(m_config->GetEndless());
           emit StartWiiMixShuffle(WiiMixShuffleSettings::instance());
         }
         else if (WiiMixGlobalSettings::instance()->GetMode() == WiiMixEnums::Mode::ROGUE) {
@@ -517,13 +519,20 @@ void WiiMixSettingsWindow::LoadSettings() {
           WiiMixShuffleSettings::instance()->SetMaxTimeBetweenSwitch(std::stoi(val));
           Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch());
 
-          section->Get("Endless", &val, "");
+          // section->Get("Endless", &val, "");
+          // if (val.empty()) {
+          //   QMessageBox::warning(this, tr("Warning"), tr("Endless not found in WiiMix settings file"));
+          //   return;
+          // }
+          // WiiMixShuffleSettings::instance()->SetEndless(val == std::string("true"));
+          // Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
+          section->Get("ShuffleSeed", &val, "");
           if (val.empty()) {
-            QMessageBox::warning(this, tr("Warning"), tr("Endless not found in WiiMix settings file"));
+            QMessageBox::warning(this, tr("Warning"), tr("ShuffleSeed not found in WiiMix settings file"));
             return;
           }
-          WiiMixShuffleSettings::instance()->SetEndless(val == std::string("true"));
-          Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
+          WiiMixShuffleSettings::instance()->SetSeed(val);
+          Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SEED, WiiMixShuffleSettings::instance()->GetSeed());
 
           section->Get("ObjectiveTypes", &val, "");
           if (val.empty()) {
@@ -675,8 +684,11 @@ void WiiMixSettingsWindow::SaveSettings() {
       section->Set("MaxTimeBetweenSwitch", WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch());
       Config::Set(Config::LayerType::Base, Config::WIIMIX_MAX_TIME_BETWEEN_SWITCH, WiiMixShuffleSettings::instance()->GetMaxTimeBetweenSwitch());
 
-      section->Set("Endless", WiiMixShuffleSettings::instance()->GetEndless());
-      Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
+      // section->Set("Endless", WiiMixShuffleSettings::instance()->GetEndless());
+      // Config::Set(Config::LayerType::Base, Config::WIIMIX_IS_ENDLESS, WiiMixShuffleSettings::instance()->GetEndless());
+
+      section->Set("ShuffleSeed", WiiMixShuffleSettings::instance()->GetSeed());
+      Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SEED, WiiMixShuffleSettings::instance()->GetSeed());
 
       // Also set
       // Objective types

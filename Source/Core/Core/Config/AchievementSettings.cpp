@@ -14,6 +14,7 @@ namespace Config
 const Info<bool> RA_ENABLED{{System::Achievements, "Achievements", "Enabled"}, false};
 const Info<std::string> RA_HOST_URL{{System::Achievements, "Achievements", "HostUrl"}, ""};
 const Info<std::string> RA_USERNAME{{System::Achievements, "Achievements", "Username"}, ""};
+// Eventually will be deprecated in favor of secure storage
 const Info<std::string> RA_API_TOKEN{{System::Achievements, "Achievements", "ApiToken"}, ""};
 const Info<bool> RA_HARDCORE_ENABLED{{System::Achievements, "Achievements", "HardcoreEnabled"},
                                      true};

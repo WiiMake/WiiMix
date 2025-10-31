@@ -65,8 +65,8 @@ void AchievementManager::Init()
     m_queue.Reset("AchievementManagerQueue", [](const std::function<void()>& func) { func(); });
     m_image_queue.Reset("AchievementManagerImageQueue",
                         [](const std::function<void()>& func) { func(); });
-    if (HasAPIToken())
-      Login("");
+    // if (HasAPIToken())
+    //   Login("");
     INFO_LOG_FMT(ACHIEVEMENTS, "Achievement Manager Initialized");
   }
 }
@@ -108,8 +108,9 @@ void AchievementManager::SetUpdateCallback(UpdateCallback callback)
   m_update_callback(UpdatedItems{.all = true});
 }
 
-void AchievementManager::Login(const std::string& password)
+void AchievementManager::Login(const std::string& password, const std::string& token)
 {
+  printf("Logging into retroachievements\n");
   if (!m_client)
   {
     ERROR_LOG_FMT(
@@ -117,10 +118,12 @@ void AchievementManager::Login(const std::string& password)
         "Attempted login to RetroAchievements server without achievement client initialized.");
     return;
   }
-  if (password.empty())
+  printf("Checking token %s\n", token.c_str());
+  if (!token.empty())
   {
+    printf("Logging into retroachievements with API token\n");
     rc_client_begin_login_with_token(m_client, Config::Get(Config::RA_USERNAME).c_str(),
-                                     Config::Get(Config::RA_API_TOKEN).c_str(), LoginCallback,
+                                     token.c_str(), LoginCallback,
                                      nullptr);
   }
   else
@@ -609,7 +612,6 @@ void AchievementManager::Logout()
     m_player_badge.width = 0;
     m_player_badge.height = 0;
     m_player_badge.data.clear();
-    Config::SetBaseOrCurrent(Config::RA_API_TOKEN, "");
   }
 
   m_update_callback(UpdatedItems{.all = true});
@@ -748,6 +750,7 @@ void AchievementManager::LoginCallback(int result, const char* error_message, rc
   {
     WARN_LOG_FMT(ACHIEVEMENTS, "Failed to login {} to RetroAchievements server.",
                  Config::Get(Config::RA_USERNAME));
+    printf("Login failed with error code %d\n", result);
     AchievementManager::GetInstance().m_update_callback({.failed_login_code = result});
     return;
   }
@@ -760,6 +763,7 @@ void AchievementManager::LoginCallback(int result, const char* error_message, rc
   if (!user)
   {
     WARN_LOG_FMT(ACHIEVEMENTS, "Failed to retrieve user information from client.");
+    printf("Login failed: could not get user info\n");
     AchievementManager::GetInstance().m_update_callback({.failed_login_code = RC_INVALID_STATE});
     return;
   }
@@ -785,8 +789,8 @@ void AchievementManager::LoginCallback(int result, const char* error_message, rc
   }
   INFO_LOG_FMT(ACHIEVEMENTS, "Successfully logged in {} to RetroAchievements server.",
                user->username);
+  printf("Login successful for user %s\n", user->username);
   std::lock_guard lg{AchievementManager::GetInstance().GetLock()};
-  Config::SetBaseOrCurrent(Config::RA_API_TOKEN, user->token);
   AchievementManager::GetInstance().FetchPlayerBadge();
 }
 

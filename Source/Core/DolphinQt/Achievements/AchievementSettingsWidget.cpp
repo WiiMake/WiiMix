@@ -41,6 +41,11 @@ AchievementSettingsWidget::AchievementSettingsWidget(QWidget* parent) : QWidget(
     ToggleHardcore();
 }
 
+// Save the achievement config on exit
+AchievementSettingsWidget::~AchievementSettingsWidget() {
+  Config::Save();
+}
+
 void AchievementSettingsWidget::UpdateData(int login_failed_code)
 {
   if (login_failed_code != RC_OK)
@@ -72,7 +77,9 @@ void AchievementSettingsWidget::CreateLayout()
          "leaderboards.<br><br>Must log in with a RetroAchievements account to use. Dolphin does "
          "not save your password locally and uses an API token to maintain login."));
   m_common_username_label = new QLabel(tr("Username"));
-  m_common_username_input = new QLineEdit(QStringLiteral(""));
+  m_common_username_input = new QLineEdit();
+  m_common_username_input->setText(
+      QString::fromStdString(Config::Get(Config::RA_USERNAME)));
   m_common_password_label = new QLabel(tr("Password"));
   m_common_password_input = new QLineEdit(QStringLiteral(""));
   m_common_password_input->setEchoMode(QLineEdit::PasswordEchoOnEdit);
@@ -82,8 +89,12 @@ void AchievementSettingsWidget::CreateLayout()
   m_common_login_failed->setStyleSheet(QStringLiteral("QLabel { color : red; }"));
   m_common_login_failed->setVisible(false);
   m_common_api_token_label = new QLabel(tr("API Token"));
-  m_common_api_token = new QLineEdit(QString::fromStdString(Config::Get(Config::RA_API_TOKEN)));
+  m_common_api_token = new QLineEdit();
+  m_common_api_token->setText(WiiMixWebAPI::instance()->getToken().empty() ? QStringLiteral("") : QString::fromStdString(WiiMixWebAPI::instance()->getToken()));
+  qDebug() << "API token";
+  qDebug() << QString::fromStdString(WiiMixWebAPI::instance()->getToken());
   connect(m_common_api_token, &QLineEdit::editingFinished, this, [this]() {
+    qDebug() << "API Token changed, validating...";
     // Validate token
     bool res = WiiMixWebAPI::instance()->basicRequest(m_common_api_token->text().toStdString());
     if (!res)
@@ -94,13 +105,15 @@ void AchievementSettingsWidget::CreateLayout()
       return;
     }
     // Save token
-    emit WiiMixWebAPI::instance()->onRetroachievementsConnection(true);
-    Config::SetBaseOrCurrent(Config::RA_API_TOKEN, m_common_api_token->text().toStdString());
+    qDebug() << "API Token valid, updating...";
+    std::string token = m_common_api_token->text().toStdString();
+    WiiMixWebAPI::instance()->secureSet(QStringLiteral(RETROACHIEVEMENTS_API_TOKEN), QString::fromStdString(token));
+    // emit WiiMixWebAPI::instance()->onRetroachievementsConnection(true);
   });
   m_common_api_token->setEchoMode(QLineEdit::PasswordEchoOnEdit);
   m_common_hardcore_enabled_input = new ToolTipCheckBox(tr("Enable Hardcore Mode"));
   m_common_hardcore_enabled_input->SetDescription(
-      tr("Enable Hardcore Mode on RetroAchievements.<br><br>Hardcore Mode is intended to provide "
+      tr("HARDCODE MODE IS DISABLED FOR WIIMIX! Hardcore Mode on RetroAchievements.<br><br>Hardcore Mode is intended to provide "
          "an experience as close to gaming on the original hardware as possible. RetroAchievements "
          "rankings are primarily oriented towards Hardcore points (Softcore points are tracked but "
          "not as heavily emphasized) and leaderboards require Hardcore Mode to be on.<br><br>To "
@@ -112,6 +125,8 @@ void AchievementSettingsWidget::CreateLayout()
          "playing.</dolphin_emphasis><br>Close your current game before enabling.<br>Be aware that "
          "turning Hardcore Mode off while a game is running requires the game to be closed before "
          "re-enabling."));
+  m_common_hardcore_enabled_input->setEnabled(false);
+  m_common_hardcore_enabled_input->setDisabled(true);
   m_common_unofficial_enabled_input = new ToolTipCheckBox(tr("Enable Unofficial Achievements"));
   m_common_unofficial_enabled_input->SetDescription(
       tr("Enable unlocking unofficial achievements as well as official "
@@ -198,7 +213,7 @@ void AchievementSettingsWidget::LoadSettings()
 {
   bool enabled = Config::Get(Config::RA_ENABLED);
   bool hardcore_enabled = Config::Get(Config::RA_HARDCORE_ENABLED);
-  bool logged_out = Config::Get(Config::RA_API_TOKEN).empty();
+  bool logged_out = WiiMixWebAPI::instance()->getPassword().empty();
   std::string username = Config::Get(Config::RA_USERNAME);
 
   SignalBlocking(m_common_integration_enabled_input)->setChecked(enabled);
@@ -228,10 +243,11 @@ void AchievementSettingsWidget::LoadSettings()
   SignalBlocking(m_common_hardcore_enabled_input)
       ->setChecked(Config::Get(Config::RA_HARDCORE_ENABLED));
   auto& system = Core::System::GetInstance();
-  SignalBlocking(m_common_hardcore_enabled_input)
-      ->setEnabled(enabled &&
-                   (hardcore_enabled || (Core::GetState(system) == Core::State::Uninitialized &&
-                                         !system.GetMovie().IsPlayingInput())));
+  SignalBlocking(m_common_hardcore_enabled_input)->setEnabled(false);
+  SignalBlocking(m_common_hardcore_enabled_input)->setDisabled(true);
+      // ->setEnabled(enabled &&
+      //              (hardcore_enabled || (Core::GetState(system) == Core::State::Uninitialized &&
+      //                                    !system.GetMovie().IsPlayingInput())));
 
   SignalBlocking(m_common_unofficial_enabled_input)
       ->setChecked(Config::Get(Config::RA_UNOFFICIAL_ENABLED));
@@ -288,6 +304,7 @@ void AchievementSettingsWidget::Login()
   m_common_login_failed->setVisible(false);
   Config::SetBaseOrCurrent(Config::RA_USERNAME, m_common_username_input->text().toStdString());
   AchievementManager::GetInstance().Login(m_common_password_input->text().toStdString());
+  WiiMixWebAPI::instance()->secureSet(QStringLiteral(RETROCACHIEVEMENTS_PASSWORD), m_common_password_input->text());
   m_common_password_input->setText(QString());
   SaveSettings();
 }

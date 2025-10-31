@@ -55,6 +55,7 @@ public:
 
   // Seeds will be encoded and decoded using Qt
   QString GetSeed();
+  static int GetNumPlayersFromSeed(QString seed);
   // Example seed: 50402523039501042031012343722364155 (34 digits long)
   // 5: Length; the number of events before the finale
   // 040252: the id of achievement 1

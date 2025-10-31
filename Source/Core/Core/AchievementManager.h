@@ -105,7 +105,7 @@ public:
   static AchievementManager& GetInstance();
   void Init();
   void SetUpdateCallback(UpdateCallback callback);
-  void Login(const std::string& password);
+  void Login(const std::string& password, const std::string& token = "");
   bool HasAPIToken() const;
   void LoadGame(const std::string& file_path, const DiscIO::Volume* volume);
   bool IsGameLoaded() const;

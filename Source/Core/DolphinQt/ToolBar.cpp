@@ -57,7 +57,7 @@ ToolBar::ToolBar(QWidget* parent) : QToolBar(parent)
   connect(WiiMixClient::instance(), &WiiMixClient::onClientConnection, this,
           [this] { OnWiiMixStateChanged(); });
   connect(WiiMixWebAPI::instance(), &WiiMixWebAPI::onRetroachievementsConnection, this,
-          [this] { OnRetroachievementsAPIStateChanged(); });
+          [this](bool connected) { OnRetroachievementsAPIStateChanged(connected); });
 
   OnEmulationStateChanged(Core::GetState(Core::System::GetInstance()));
   OnDebugModeToggled(Settings::Instance().IsDebugModeEnabled());
@@ -72,8 +72,9 @@ void ToolBar::OnWiiMixStateChanged() {
   }
 }
 
-void ToolBar::OnRetroachievementsAPIStateChanged() {
-  if (WiiMixWebAPI::instance()->isConnected() && WiiMixClient::instance()->IsConnected()) {
+void ToolBar::OnRetroachievementsAPIStateChanged(bool retroachievements_connected) {
+  qDebug() << "Retroachievements connection state changed:" << retroachievements_connected;
+  if (retroachievements_connected && WiiMixClient::instance()->IsConnected()) {
     m_wiimix_action->setEnabled(true);
   }
   else {

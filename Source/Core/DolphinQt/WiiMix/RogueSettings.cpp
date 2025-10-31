@@ -79,6 +79,14 @@ void WiiMixRogueSettings::SetSeed(QString seed) {
     m_seed = seed;
 }
 
+int WiiMixRogueSettings::GetNumPlayersFromSeed(QString seed)
+{
+    std::string str_seed = seed.toStdString();
+    if (str_seed.size() < 3 || !isdigit(str_seed[2]))
+        return -1;
+    return str_seed[2] - '0';
+}
+
 QList<WiiMixEnums::RogueEvent> WiiMixRogueSettings::GetEvents()
 {
     return m_events; // TODOx: temp to build

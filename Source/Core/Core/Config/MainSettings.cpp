@@ -572,7 +572,8 @@ const Info<int> WIIMIX_NUMBER_OF_SWITCHES{{System::Main, "WiiMix", "NumSwitches"
 const Info<int> WIIMIX_MIN_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MinTimeBetweenSwitch"}, DEFAULT_MIN_SWITCH_TIME};
 const Info<int> WIIMIX_MAX_TIME_BETWEEN_SWITCH{{System::Main, "WiiMix", "MaxTimeBetweenSwitch"}, DEFAULT_MAX_SWITCH_TIME};
 const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE{{System::Main, "WiiMix", "NumPlayersShuffle"}, DEFAULT_NUM_PLAYERS_SHUFFLE};
-const Info<bool> WIIMIX_IS_ENDLESS{{System::Main, "WiiMix", "IsEndless"}, DEFAULT_IS_ENDLESS};
+// const Info<bool> WIIMIX_IS_ENDLESS{{System::Main, "WiiMix", "IsEndless"}, DEFAULT_IS_ENDLESS};
+const Info<std::string> WIIMIX_SHUFFLE_SEED{{System::Main, "WiiMix", "ShuffleSeed"}, DEFAULT_SHUFFLE_SEED};
 const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE{{System::Main, "WiiMix", "MultiplayerModeShuffle"}, DEFAULT_MULTIPLAYER_MODE_SHUFFLE};
 
 static std::set<std::pair<u16, u16>> LoadUSBWhitelistFromString(const std::string& devices_string)

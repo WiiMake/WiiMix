@@ -38,6 +38,8 @@ WiiMixBingoSettings::WiiMixBingoSettings(WiiMixEnums::Difficulty difficulty, Wii
     } else {
         m_teams = DEFAULT_TEAMS;
     }
+
+
 }
 
 WiiMixEnums::BingoType WiiMixBingoSettings::GetBingoType() const
