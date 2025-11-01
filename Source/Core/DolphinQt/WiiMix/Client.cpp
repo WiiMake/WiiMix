@@ -663,6 +663,7 @@ bool WiiMixClient::ReceiveData(QJsonDocument json) {
     else if (response == WiiMixEnums::Response::UPDATE_SHUFFLE_OBJECTIVES) {
         qDebug() << "Updating shuffle objectives";
         if (m_objectives.size() < data[QStringLiteral(SHUFFLE_SETTINGS_NUMBER_OF_SWITCHES)].toInt()) {
+            qDebug() << "Not enough objectives received";
             ModalMessageBox::critical(nullptr, tr("Error"), tr("Did not retrieve enough objectives; try selecting more games for wiimix to increase the objective pool"));
             return false;
         }

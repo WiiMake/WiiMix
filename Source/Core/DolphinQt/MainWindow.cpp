@@ -1289,6 +1289,7 @@ void MainWindow::PopulateWiiMixShuffleObjectives(WiiMixShuffleSettings* settings
   // Build and send
   QJsonObject obj = query.build();
   m_wiimix_client->SendData(obj, WiiMixEnums::Action::GET_OBJECTIVE_AND_STATE);
+  qDebug() << "Sent shuffle objective request";
 }
 
 void MainWindow::StartWiiMixShuffle(WiiMixShuffleSettings* settings) {

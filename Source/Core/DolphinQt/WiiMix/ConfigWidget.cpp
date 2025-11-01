@@ -53,6 +53,7 @@ void WiiMixConfigWidget::SetRogueSeed(QString seed) {
         m_save_state_bank->setEnabled(true);
         m_objective_types->setEnabled(true);
         m_game_genres->setEnabled(true);
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SEED, "");
         return;
     }
 
@@ -69,6 +70,7 @@ void WiiMixConfigWidget::SetRogueSeed(QString seed) {
         m_save_state_bank->setEnabled(true);
         m_objective_types->setEnabled(true);
         m_game_genres->setEnabled(true);
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SEED, "");
         return;
     }
     // If the seed is valid, parse it and set and disable relevant options
@@ -114,6 +116,7 @@ void WiiMixConfigWidget::SetRogueSeed(QString seed) {
 
     QSignalBlocker blocker_seed(m_rogue_seed);
     m_rogue_seed->setText(seed);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_ROGUE_SEED, seed.toStdString());
     blocker_seed.unblock();
 
     m_rogue_length->setEnabled(false);
@@ -1148,6 +1151,7 @@ void WiiMixConfigWidget::SetBingoSeed(QString seed) {
         m_card_size->setDisabled(false);
         QSignalBlocker blocker(m_bingo_seed);
         m_bingo_seed->clear();
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SEED, "");
         blocker.unblock();
         return;
     }
@@ -1157,6 +1161,7 @@ void WiiMixConfigWidget::SetBingoSeed(QString seed) {
         QMessageBox::warning(this, tr("Invalid Seed"), tr("The provided Bingo seed %1 is invalid. Please enter a valid seed.").arg(seed));
         QSignalBlocker blocker(m_bingo_seed);
         m_bingo_seed->clear();
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SEED, "");
         m_objective_types->setDisabled(false);
         m_game_genres->setDisabled(false);
         m_difficulty->setDisabled(false);
@@ -1167,6 +1172,7 @@ void WiiMixConfigWidget::SetBingoSeed(QString seed) {
     }
     // Then, if it is a valid seed, disable objective selections and set card size accordingly
     m_bingo_seed->setText(seed);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_BINGO_SEED, seed.toStdString());
     // Disable objective selections
     m_objective_types->setDisabled(true);
     // Set card size based on seed
@@ -1276,6 +1282,7 @@ void WiiMixConfigWidget::SetShuffleSeed(QString seed) {
         m_num_players_shuffle_dropdown->setDisabled(false);
         QSignalBlocker blocker(m_shuffle_seed);
         m_shuffle_seed->clear();
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SEED, "");
         blocker.unblock();
         return;
     }
@@ -1290,6 +1297,7 @@ void WiiMixConfigWidget::SetShuffleSeed(QString seed) {
         m_save_state_bank->setDisabled(false);
         m_num_switches->setDisabled(false);
         m_num_players_shuffle_dropdown->setDisabled(false);
+        Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SEED, "");
         blocker.unblock();
         return;
     }
@@ -1299,6 +1307,7 @@ void WiiMixConfigWidget::SetShuffleSeed(QString seed) {
     SetNumPlayersShuffle(num_players - 1); // -1 for zero-based index
     SetNumSwitches(num_switches);
     m_shuffle_seed->setText(seed);
+    Config::Set(Config::LayerType::Base, Config::WIIMIX_SHUFFLE_SEED, seed.toStdString());
     m_objective_types->setDisabled(true);
     m_game_genres->setDisabled(true);
     m_difficulty->setDisabled(true);

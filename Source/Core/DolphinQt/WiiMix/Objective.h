@@ -34,6 +34,10 @@ public:
     WiiMixEnums::Player completed = WiiMixEnums::Player::END,
     int completion_time = 0,
     std::chrono::system_clock::time_point last_attempted = std::chrono::system_clock::now()
+    // failure_address,
+    // failure_value,
+    // failure_comparison_type,
+    // failure_data_type
   );
 
   #define OBJECTIVE_ID "id"

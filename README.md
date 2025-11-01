@@ -23,9 +23,10 @@ By combining objectives with extra functionality such as game swapping, WiiMix t
 ### Creating Objectives
 
 Objectives are the core behind every WiiMix. That's why we have a system in place so anyone can easily create them! There's just a couple simple steps:
+
 1. Determine the achievement that you want to target on [Retroachievements](https://retroachievements.org/).
 2. Create the save state for the achievement. The slot that you save it to doesn't matter, just make sure that you note which slot you save it to!
-3. Click ```Emulation -> Send State -> Send Slot X```, where X is the slot that you saved your state to
+3. Click `Emulation -> Send State -> Send Slot X`, where X is the slot that you saved your state to
 
 From there, you'll see the following menu:
 
@@ -34,6 +35,7 @@ From there, you'll see the following menu:
 </p>
 
 To make it easy for people to filter and sort objectives, we recommend that you follow a couple guidelines when filling out this information:
+
 - Title: copy the achievement title
 - Description: copy the achievement description and append information about the state
 - Achievement id: copy the achievement id (you can find it in the corresponding url, for example for https://retroachievements.org/achievement/460837, the achievement id would be 460837)
@@ -54,3 +56,8 @@ To keep up with the latest and greatest in WiiMix development, join the [Discord
 ## Contributing
 
 The project is still in it's early stages. As such, we appreciate any help that you can provide, whether it's documenting a bug on the [Issues](https://github.com/WiiMake/WiiMix/issues) tab, [creating objectives](#creating-objectives), or [adding new features/fixing bugs in line with our contribution guidelines](https://github.com/WiiMake/WiiMix/blob/master/Contributing.md). If you are contributing or using the project, please follow the [code of conduct](https://github.com/WiiMake/WiiMix/blob/master/CODE_OF_CONDUCT.md); we follow the exact same policies as Dolphin Emulator and encourage people to be respectful and make positive contributions to our efforts to relive our favorite games and experience hidden gems through WiiMix.
+
+## Documentation Notes that I will add eventually once things have been developed
+
+- Run with -d flag to enable debugging
+- dolphin-memory-engine -d wiimix

@@ -43,6 +43,11 @@ void WiiMixLogoButton::paintEvent(QPaintEvent *event) {
 }
 void WiiMixLogoButton::trackStateReadProgress(qint64 bytesWritten, qint64 totalBytes) {
     totalBytesWritten = bytesWritten;
+    if (totalBytes == 0) {
+        progress_width = 0;
+        repaint();
+        return;
+    }
     // printf("totalBytesWritten: %lld, totalBytes: %lld\n", totalBytesWritten, totalBytes);
     progress_width = totalBytesWritten * size().width() / totalBytes;
     repaint();

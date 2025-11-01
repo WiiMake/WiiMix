@@ -166,6 +166,32 @@ namespace WiiMixEnums {
     #define HOURS_24 86400000
     #define LOADING_TIME_OFFSET 2500
 
+    enum class ComparisonOperator {
+        EQUAL,
+        NOT_EQUAL,
+        GREATER_THAN,
+        LESS_THAN,
+        GREATER_THAN_OR_EQUAL,
+        LESS_THAN_OR_EQUAL,
+        // CHANGED,
+        // DECREASED,
+        // INCREASED,
+        END // Default/size value
+    };
+
+    #define COMPARISON_OPERATOR_EQUAL "EQUAL"
+    #define COMPARISON_OPERATOR_NOT_EQUAL "NOT_EQUAL"
+    #define COMPARISON_OPERATOR_GREATER_THAN "GREATER_THAN"
+    #define COMPARISON_OPERATOR_LESS_THAN "LESS_THAN"
+    #define COMPARISON_OPERATOR_GREATER_THAN_OR_EQUAL "GREATER_THAN_OR_EQUAL"
+    #define COMPARISON_OPERATOR_LESS_THAN_OR_EQUAL "LESS_THAN_OR_EQUAL"
+    #define COMPARISON_OPERATOR_CHANGED "CHANGED"
+    #define COMPARISON_OPERATOR_DECREASED "DECREASED"
+    #define COMPARISON_OPERATOR_INCREASED "INCREASED"
+
+    std::string ComparisonOperatorToString(ComparisonOperator op);
+    ComparisonOperator ComparisonOperatorFromString(const std::string& str);
+
     // NOTE: instead of storing genres ourselves, we'll be pulling tags from the Retroachievements API
     // To populate genre
 
