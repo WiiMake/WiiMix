@@ -85,9 +85,11 @@ struct CompressAndDumpState_args
 // Protects against simultaneous reads and writes to the final savestate location from multiple
 // threads.
 static std::mutex s_save_thread_mutex;
+// static std::mutex s_wiimix_save_thread_mutex;
 
 // Queue for compressing and writing savestates to disk.
 static Common::WorkQueueThread<CompressAndDumpState_args> s_save_thread;
+static Common::WorkQueueThread<CompressAndDumpState_args> s_wiimix_save_thread;
 
 // Keeps track of savestate writes that are currently happening, so we don't load a state while
 // another one is still saving. This is particularly important so if you save to a slot and then
@@ -204,6 +206,79 @@ static void DoState(Core::System& system, PointerWrap& p)
 #endif  // USE_RETRO_ACHIEVEMENTS
 }
 
+// DoWiiMixState is a custom savestate function that removes host data from savestates
+// Making savestates more portable between different WiiMix configurations
+static void DoWiiMixState(Core::System& system, PointerWrap& p)
+{
+    bool is_wii = system.IsWii() || system.IsMIOS();
+  const bool is_wii_currently = is_wii;
+  p.Do(is_wii);
+  if (is_wii != is_wii_currently)
+  {
+    OSD::AddMessage(fmt::format("Cannot load a savestate created under {} mode in {} mode",
+                                is_wii ? "Wii" : "GC", is_wii_currently ? "Wii" : "GC"),
+                    OSD::Duration::NORMAL, OSD::Color::RED);
+    p.SetMeasureMode();
+    return;
+  }
+
+  // Check to make sure the emulated memory sizes are the same as the savestate
+  auto& memory = system.GetMemory();
+  u32 state_mem1_size = memory.GetRamSizeReal();
+  u32 state_mem2_size = memory.GetExRamSizeReal();
+  p.Do(state_mem1_size);
+  p.Do(state_mem2_size);
+  if (state_mem1_size != memory.GetRamSizeReal() || state_mem2_size != memory.GetExRamSizeReal())
+  {
+    OSD::AddMessage(fmt::format("Memory size mismatch!\n"
+                                "Current | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)\n"
+                                "State   | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)",
+                                memory.GetRamSizeReal(), memory.GetRamSizeReal() / 0x100000U,
+                                memory.GetExRamSizeReal(), memory.GetExRamSizeReal() / 0x100000U,
+                                state_mem1_size, state_mem1_size / 0x100000U, state_mem2_size,
+                                state_mem2_size / 0x100000U));
+    p.SetMeasureMode();
+    return;
+  }
+
+  // Movie must be done before the video backend, because the window is redrawn in the video backend
+  // state load, and the frame number must be up-to-date.
+  system.GetMovie().DoState(p);
+  p.DoMarker("Movie");
+
+  // Begin with video backend, so that it gets a chance to clear its caches and writeback modified
+  // things to RAM
+  
+  // TODOx: video backend is a non-portable, host-specific component, so we skip it here
+  // g_video_backend->DoState(p);
+  // p.DoMarker("video_backend");
+
+  // CoreTiming needs to be restored before restoring Hardware because
+  // the controller code might need to schedule an event if the controller has changed.
+  system.GetCoreTiming().DoState(p);
+  p.DoMarker("CoreTiming");
+
+  // HW needs to be restored before PowerPC because the data cache might need to be flushed.
+  // TODOx: HW::DoState may include host-specific data, so we may need to modify it for WiiMix
+  HW::DoState(system, p);
+  p.DoMarker("HW");
+
+  // TODOx: PowerPC::DoState serializes JIT, so we should include a flag to skip that for WiiMix savestates
+  system.GetPowerPC().DoState(p);
+  p.DoMarker("PowerPC");
+
+  // TODOx: Likely has bluetooth host-specific data
+  if (system.IsWii())
+    Wiimote::DoState(p);
+  p.DoMarker("Wiimote");
+  Gecko::DoState(p);
+  p.DoMarker("Gecko");
+
+  #ifdef USE_RETRO_ACHIEVEMENTS
+    AchievementManager::GetInstance().DoState(p);
+  #endif  // USE_RETRO_ACHIEVEMENTS
+}
+
 void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
 {
   if (NetPlay::IsNetPlayRunning())
@@ -228,6 +303,37 @@ void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
       true);
 }
 
+bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
+{
+  if (NetPlay::IsNetPlayRunning())
+  {
+    OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+    return;
+  }
+
+  if (AchievementManager::GetInstance().IsHardcoreModeActive())
+  {
+    OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+    return;
+  }
+
+  bool success = false;
+  Core::RunOnCPUThread(
+      system,
+      [&] {
+        u8* ptr = buffer.data();
+        PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+        DoWiiMixState(system, p);
+
+        if (p.IsReadMode())
+        {
+          success = WiiMixHostReinitialization();
+        }
+      },
+      true);
+  return success;
+}
+
 void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
 {
   Core::RunOnCPUThread(
@@ -243,6 +349,25 @@ void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
         ptr = buffer.data();
         PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
         DoState(system, p);
+      },
+      true);
+}
+
+void WiiMixSaveToBuffer(Core::System& system, std::vector<u8>& buffer)
+{
+  Core::RunOnCPUThread(
+      system,
+      [&] {
+        u8* ptr = nullptr;
+        PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+
+        DoWiiMixState(system, p_measure);
+        const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+        buffer.resize(buffer_size);
+
+        ptr = buffer.data();
+        PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+        DoWiiMixState(system, p);
       },
       true);
 }
@@ -369,7 +494,29 @@ static void WriteHeadersToFile(size_t uncompressed_size, File::IOFile& f)
                                           std::size(header.legacy_header.game_id));
   header.legacy_header.time = GetSystemTimeAsDouble();
 
-  header.version_header.version_cookie = COOKIE_BASE + STATE_VERSION;
+  header.version_header.version_cookie = WIIMIX_COOKIE_BASE + WIIMIX_STATE_VERSION;
+  header.version_string = Common::GetScmRevStr();
+  header.version_header.version_string_length = static_cast<u32>(header.version_string.length());
+
+  StateExtendedHeader extended_header{};
+  CreateExtendedHeader(extended_header, uncompressed_size);
+
+  f.WriteArray(&header.legacy_header, 1);
+  f.WriteArray(&header.version_header, 1);
+  f.WriteString(header.version_string);
+
+  f.WriteArray(&extended_header.base_header, 1);
+  // If StateExtendedHeader is amended to include more than the base, add WriteBytes() calls here.
+}
+
+static void WriteWiiMixHeadersToFile(size_t uncompressed_size, File::IOFile& f)
+{
+  StateHeader header{};
+  SConfig::GetInstance().GetGameID().copy(header.legacy_header.game_id,
+                                          std::size(header.legacy_header.game_id));
+  header.legacy_header.time = GetSystemTimeAsDouble();
+
+  header.version_header.version_cookie = WIIMIX_COOKIE_BASE + WIIMIX_STATE_VERSION;
   header.version_string = Common::GetScmRevStr();
   header.version_header.version_string_length = static_cast<u32>(header.version_string.length());
 
@@ -471,6 +618,93 @@ static void CompressAndDumpState(Core::System& system, CompressAndDumpState_args
   safe_to_quit = true;
 }
 
+static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpState_args& save_args)
+{
+  const u8* const buffer_data = save_args.buffer_vector.data();
+  const size_t buffer_size = save_args.buffer_vector.size();
+  const std::string& filename = save_args.filename;
+
+  // Find free temporary filename.
+  // TODO: The file exists check and the actual opening of the file should be atomic, we don't have
+  // functions for that.
+  std::string temp_filename;
+  size_t temp_counter = static_cast<size_t>(Common::CurrentThreadId());
+  do
+  {
+    temp_filename = fmt::format("{}{}.tmp", filename, temp_counter);
+    ++temp_counter;
+  } while (File::Exists(temp_filename));
+
+  File::IOFile f(temp_filename, "wb");
+  if (!f)
+  {
+    Core::DisplayMessage("Failed to create state file", 2000);
+    return;
+  }
+
+  WriteWiiMixHeadersToFile(buffer_size, f);
+
+  if (s_use_compression)
+    CompressBufferToFile(buffer_data, buffer_size, f);
+  else
+    f.WriteBytes(buffer_data, buffer_size);
+
+  if (!f.IsGood())
+    Core::DisplayMessage("Failed to write state file", 2000);
+
+  const std::string last_state_filename = File::GetUserPath(D_STATESAVES_IDX) + "lastState." + WIIMIX_STATE_EXTENSION;
+  const std::string last_state_dtmname = last_state_filename + ".dtm";
+  const std::string dtmname = filename + ".dtm";
+
+  {
+    std::lock_guard lk(s_save_thread_mutex);
+
+    // Backup existing state (overwriting an existing backup, if any).
+    if (File::Exists(filename))
+    {
+      if (File::Exists(last_state_filename))
+        File::Delete((last_state_filename));
+      if (File::Exists(last_state_dtmname))
+        File::Delete((last_state_dtmname));
+
+      if (!File::Rename(filename, last_state_filename))
+      {
+        Core::DisplayMessage("Failed to move previous state to state undo backup", 1000);
+      }
+      else if (File::Exists(dtmname))
+      {
+        if (!File::Rename(dtmname, last_state_dtmname))
+          Core::DisplayMessage("Failed to move previous state's dtm to state undo backup", 1000);
+      }
+    }
+
+    auto& movie = system.GetMovie();
+    if ((movie.IsMovieActive()) && !movie.IsJustStartingRecordingInputFromSaveState())
+      movie.SaveRecording(dtmname);
+    else if (!movie.IsMovieActive())
+      File::Delete(dtmname);
+
+    // Move written state to final location.
+    // TODO: This should also be atomic. This is possible on all systems, but needs a special
+    // implementation of IOFile on Windows.
+    if (!f.Close())
+      Core::DisplayMessage("Failed to close state file", 2000);
+
+    if (!File::Rename(temp_filename, filename))
+    {
+      Core::DisplayMessage("Failed to rename state file", 2000);
+    }
+    else
+    {
+      const std::filesystem::path temp_path(filename);
+      Core::DisplayMessage(fmt::format("Saved State to {}", temp_path.filename().string()), 2000);
+    }
+  }
+
+  Host_UpdateMainFrame();
+  safe_to_quit = true;
+}
+
 void SaveAs(Core::System& system, const std::string& filename, bool wait)
 {
   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
@@ -515,6 +749,71 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
           }
 
           s_save_thread.EmplaceItem(std::move(save_args));
+
+          if (sync_event)
+            sync_event->Wait();
+        }
+        else
+        {
+          // someone aborted the save by changing the mode?
+          {
+            // Note: The worker thread takes care of this in the other branch.
+            std::lock_guard lk_(s_state_writes_in_queue_mutex);
+            if (--s_state_writes_in_queue == 0)
+              s_state_write_queue_is_empty.notify_all();
+          }
+          Core::DisplayMessage("Unable to save: Internal DoState Error", 4000);
+        }
+        Core::safe_to_quit = true;
+      },
+      true);
+  // safe_to_quit = true;
+}
+
+void SaveAsWiiMix(Core::System& system, const std::string& filename, bool wait)
+{
+  std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+  if (!lk)
+    return;
+  safe_to_quit = false;
+  Core::RunOnCPUThread(
+      system,
+      [&] {
+        Core::safe_to_quit = false;
+        {
+          std::lock_guard lk_(s_state_writes_in_queue_mutex);
+          ++s_state_writes_in_queue;
+        }
+
+        // Measure the size of the buffer.
+        u8* ptr = nullptr;
+        PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+        DoWiiMixState(system, p_measure);
+        const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+
+        // Then actually do the write.
+        std::vector<u8> current_buffer;
+        current_buffer.resize(buffer_size);
+        ptr = current_buffer.data();
+        PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+        DoWiiMixState(system, p);
+
+        if (p.IsWriteMode())
+        {
+          Core::DisplayMessage("Saving State...", 1000);
+
+          std::shared_ptr<Common::Event> sync_event;
+
+          CompressAndDumpState_args save_args;
+          save_args.buffer_vector = std::move(current_buffer);
+          save_args.filename = filename;
+          if (wait)
+          {
+            sync_event = std::make_shared<Common::Event>();
+            save_args.state_write_done_event = sync_event;
+          }
+
+          s_wiimix_save_thread.EmplaceItem(std::move(save_args));
 
           if (sync_event)
             sync_event->Wait();
@@ -637,6 +936,54 @@ static bool ReadStateHeaderFromFile(StateHeader& header, File::IOFile& f,
   return true;
 }
 
+static bool ReadWiiMixStateHeaderFromFile(StateHeader& header, File::IOFile& f,
+                                    bool get_version_header = true)
+{
+  if (!f.IsOpen())
+  {
+    Core::DisplayMessage("State not found", 2000);
+    return false;
+  }
+
+  if (!f.ReadArray(&header.legacy_header, 1))
+  {
+    Core::DisplayMessage("Failed to read state legacy header", 2000);
+    return false;
+  }
+
+  // Bail out if we only care for retrieving the legacy header.
+  // This is the case with ReadHeader() calls.
+  if (!get_version_header)
+    return true;
+
+  if (header.legacy_header.lzo_size != 0)
+  {
+    // Parse out version from legacy LZO compressed states
+    if (!GetVersionFromLZO(header, f))
+      return false;
+  }
+  else
+  {
+    if (!f.ReadArray(&header.version_header, 1))
+    {
+      Core::DisplayMessage("Failed to read state version header", 2000);
+      return false;
+    }
+
+    auto version_buffer = std::make_unique<char[]>(header.version_header.version_string_length);
+    if (!f.ReadBytes(version_buffer.get(), header.version_header.version_string_length))
+    {
+      Core::DisplayMessage("Failed to read state version string", 2000);
+      return false;
+    }
+
+    header.version_string =
+        std::string(version_buffer.get(), header.version_header.version_string_length);
+  }
+
+  return true;
+}
+
 bool ReadHeader(const std::string& filename, StateHeader& header)
 {
   // ensure that the savestate write thread isn't moving around states while we do this
@@ -645,6 +992,16 @@ bool ReadHeader(const std::string& filename, StateHeader& header)
   File::IOFile f(filename, "rb");
   bool get_version_header = false;
   return ReadStateHeaderFromFile(header, f, get_version_header);
+}
+
+bool ReadWiiMixHeader(const std::string& filename, StateHeader& header)
+{
+  // ensure that the savestate write thread isn't moving around states while we do this
+  std::lock_guard lk(s_save_thread_mutex);
+
+  File::IOFile f(filename, "rb");
+  bool get_version_header = false;
+  return ReadWiiMixStateHeaderFromFile(header, f, get_version_header);
 }
 
 std::string GetInfoStringOfSlot(int slot, bool translate)
@@ -774,6 +1131,53 @@ static bool ValidateHeaders(const StateHeader& header)
   return success;
 }
 
+static bool ValidateWiiMixHeaders(const StateHeader& header)
+{
+  bool success = true;
+
+  // Game ID
+  if (strncmp(SConfig::GetInstance().GetGameID().c_str(), header.legacy_header.game_id, 6))
+  {
+    Core::DisplayMessage(fmt::format("State belongs to a different game (ID {})",
+                                     std::string_view{header.legacy_header.game_id,
+                                                      std::size(header.legacy_header.game_id)}),
+                         2000);
+    return false;
+  }
+
+  // Check both the state version and the revision string
+  std::string current_str = Common::GetScmRevStr();
+  std::string loaded_str = header.version_string;
+  const u32 loaded_version = header.version_header.version_cookie - WIIMIX_COOKIE_BASE;
+
+  if (s_old_versions.contains(loaded_version))
+  {
+    // This is a REALLY old version, before we started writing the version string to file
+    success = false;
+
+    std::pair<std::string, std::string> version_range = s_old_versions.find(loaded_version)->second;
+    std::string oldest_version = version_range.first;
+    std::string newest_version = version_range.second;
+
+    loaded_str = "Dolphin " + oldest_version + " - " + newest_version;
+  }
+  else if (loaded_version != STATE_VERSION)
+  {
+    success = false;
+  }
+
+  if (!success)
+  {
+    const std::string message =
+        loaded_str.empty() ?
+            "This savestate was created using an incompatible version of Dolphin" :
+            "This savestate was created using the incompatible version " + loaded_str;
+    Core::DisplayMessage(message, OSD::Duration::NORMAL);
+  }
+
+  return success;
+}
+
 static void LoadFileStateData(const std::string& filename, std::vector<u8>& ret_data)
 {
   File::IOFile f;
@@ -854,6 +1258,93 @@ static void LoadFileStateData(const std::string& filename, std::vector<u8>& ret_
 
   // all good
   ret_data.swap(buffer);
+}
+
+static void LoadWiiMixFileStateData(const std::string& filename, std::vector<u8>& ret_data)
+{
+  File::IOFile f;
+
+  {
+    // If a state is currently saving, wait for that to end or time out.
+    std::unique_lock lk(s_state_writes_in_queue_mutex);
+    if (s_state_writes_in_queue != 0)
+    {
+      if (!s_state_write_queue_is_empty.wait_for(lk, std::chrono::seconds(3),
+                                                 []() { return s_state_writes_in_queue == 0; }))
+      {
+        Core::DisplayMessage(
+            "A previous state saving operation is still in progress, cancelling load.", 2000);
+        return;
+      }
+    }
+    f.Open(filename, "rb");
+  }
+
+  StateHeader header;
+  if (!ReadWiiMixStateHeaderFromFile(header, f) || !ValidateWiiMixHeaders(header))
+    return;
+
+  StateExtendedHeader extended_header;
+  if (!f.ReadArray(&extended_header.base_header, 1))
+  {
+    PanicAlertFmt("Unable to read state header");
+    return;
+  }
+  // If StateExtendedHeader is amended to include more than the base, add ReadBytes() calls here.
+
+  if (extended_header.base_header.header_version != EXTENDED_HEADER_VERSION)
+  {
+    PanicAlertFmt("State header corrupted");
+    return;
+  }
+
+  std::vector<u8> buffer;
+
+  switch (extended_header.base_header.compression_type)
+  {
+  case CompressionType::LZ4:
+  {
+    Core::DisplayMessage("Decompressing State...", 500);
+    if (!DecompressLZ4(buffer, extended_header.base_header.uncompressed_size, f))
+      return;
+
+    break;
+  }
+  case CompressionType::Uncompressed:
+  {
+    u64 header_len = sizeof(StateHeaderLegacy) + sizeof(StateHeaderVersion) +
+                     header.version_header.version_string_length + sizeof(StateExtendedBaseHeader) +
+                     extended_header.base_header.payload_offset;
+
+    u64 file_size = f.GetSize();
+    if (file_size < header_len)
+    {
+      PanicAlertFmt("State header length corrupted");
+      return;
+    }
+
+    const auto size = static_cast<size_t>(file_size - header_len);
+    buffer.resize(size);
+
+    if (!f.ReadBytes(buffer.data(), size))
+    {
+      PanicAlertFmt("Error reading bytes: {0}", size);
+      return;
+    }
+    break;
+  }
+  default:
+    PanicAlertFmt("Unknown compression type {0}", extended_header.base_header.compression_type);
+    return;
+  }
+
+  // all good
+  ret_data.swap(buffer);
+}
+
+// TODOx
+bool WiiMixHostReinitialization() {
+  return true;
 }
 
 void LoadAs(Core::System& system, const std::string& filename)
@@ -939,6 +1430,86 @@ void LoadAs(Core::System& system, const std::string& filename)
       true);
 }
 
+void LoadAsWiiMix(Core::System& system, const std::string& filename)
+{
+  if (!Core::IsRunningOrStarting(system))
+    return;
+
+  if (NetPlay::IsNetPlayRunning())
+  {
+    OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+    return;
+  }
+
+  if (AchievementManager::GetInstance().IsHardcoreModeActive())
+  {
+    OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+    return;
+  }
+
+  std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+  if (!lk)
+    return;
+
+  Core::RunOnCPUThread(
+      system,
+      [&] {
+        // Save temp buffer for undo load state
+        auto& movie = system.GetMovie();
+        if (!movie.IsJustStartingRecordingInputFromSaveState())
+        {
+          std::lock_guard lk2(s_undo_load_buffer_mutex);
+          WiiMixSaveToBuffer(system, s_undo_load_buffer);
+          const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+          if (movie.IsMovieActive())
+            movie.SaveRecording(dtmpath);
+          else if (File::Exists(dtmpath))
+            File::Delete(dtmpath);
+        }
+
+        bool loaded = false;
+        bool loadedSuccessfully = false;
+
+        // brackets here are so buffer gets freed ASAP
+        {
+          std::vector<u8> buffer;
+          LoadWiiMixFileStateData(filename, buffer);
+
+          if (!buffer.empty())
+          {
+            loadedSuccessfully = WiiMixLoadFromBuffer(system, buffer);
+            loaded = true;
+          }
+        }
+
+        if (loaded)
+        {
+          if (loadedSuccessfully)
+          {
+            std::filesystem::path tempfilename(filename);
+            Core::DisplayMessage(
+                fmt::format("Loaded State from {}", tempfilename.filename().string()), 2000);
+            if (File::Exists(filename + ".dtm"))
+              movie.LoadInput(filename + ".dtm");
+            else if (!movie.IsJustStartingRecordingInputFromSaveState() &&
+                     !movie.IsJustStartingPlayingInputFromSaveState())
+              movie.EndPlayInput(false);
+          }
+          else
+          {
+            Core::DisplayMessage("The savestate could not be loaded", OSD::Duration::NORMAL);
+
+            // since we could be in an inconsistent state now (and might crash or whatever), undo.
+            UndoWiiMixLoadState(system);
+          }
+        }
+
+        if (s_on_after_load_callback)
+          s_on_after_load_callback();
+      },
+      true);
+}
+
 void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback)
 {
   s_on_after_load_callback = std::move(callback);
@@ -958,11 +1529,26 @@ void Init(Core::System& system)
     if (args.state_write_done_event)
       args.state_write_done_event->Set();
   });
+
+  s_wiimix_save_thread.Reset("WiiMix Savestate Worker", [&system](CompressAndDumpState_args args) {
+    // Tell it to call your new dump function
+    CompressAndDumpWiiMixState(system, args);
+
+    {
+      std::lock_guard lk(s_state_writes_in_queue_mutex);
+      if (--s_state_writes_in_queue == 0)
+        s_state_write_queue_is_empty.notify_all();
+    }
+
+    if (args.state_write_done_event)
+      args.state_write_done_event->Set();
+  });
 }
 
 void Shutdown()
 {
   s_save_thread.Shutdown();
+  s_wiimix_save_thread.Shutdown();
 
   // swapping with an empty vector, rather than clear()ing
   // this gives a better guarantee to free the allocated memory right NOW (as opposed to, actually,
@@ -1055,10 +1641,147 @@ void UndoLoadState(Core::System& system)
   }
 }
 
+void UndoWiiMixLoadState(Core::System& system)
+{
+  std::lock_guard lk(s_undo_load_buffer_mutex);
+  if (!s_undo_load_buffer.empty())
+  {
+    auto& movie = system.GetMovie();
+    if (movie.IsMovieActive())
+    {
+      const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+      if (File::Exists(dtmpath))
+      {
+        WiiMixLoadFromBuffer(system, s_undo_load_buffer);
+        movie.LoadInput(dtmpath);
+      }
+      else
+      {
+        PanicAlertFmtT("No undo.dtm found, aborting undo load state to prevent movie desyncs");
+      }
+    }
+    else
+    {
+      WiiMixLoadFromBuffer(system, s_undo_load_buffer);
+    }
+  }
+  else
+  {
+    PanicAlertFmtT("There is nothing to undo!");
+  }
+}
+
 // Load the state that the last save state overwritten on
 void UndoSaveState(Core::System& system)
 {
   LoadAs(system, File::GetUserPath(D_STATESAVES_IDX) + "lastState.sav");
+}
+
+void UndoWiiMixSaveState(Core::System& system)
+{
+  LoadAsWiiMix(system, File::GetUserPath(D_STATESAVES_IDX) + "lastState." + WIIMIX_STATE_EXTENSION);
+}
+
+// -----------------------------------------------------------------
+// WiiMix Determinism Diff Test
+// -----------------------------------------------------------------
+// This is your primary debugging tool.
+// It proves that your save/load functions are working correctly.
+// 1. Saves a "portable" state to buffer (A)
+// 2. Steps the emulator one frame, saves the result (B)
+// 3. Loads state (A) back (which must trigger host re-init)
+// 4. Steps the emulator one frame, saves the result (C)
+// 5. Compares B and C. If they match, your functions are deterministic.
+//
+void WiiMixDiffTest(Core::System& system)
+{
+  if (!Core::IsRunningOrStarting(system))
+  {
+    OSD::AddMessage("WiiMix Diff Test: Emulator is not running.", 5000, OSD::Color::RED);
+    return;
+  }
+
+  OSD::AddMessage("Running WiiMix Diff Test...", 3000, OSD::Color::CYAN);
+
+  Core::RunOnCPUThread(
+      system,
+      [&] {
+        std::vector<u8> buffer_A;
+        std::vector<u8> buffer_B;
+        std::vector<u8> buffer_C;
+
+        // --- Step 1: Get State A (The Start) ---
+        // We use the buffer function directly for speed.
+        WiiMixSaveToBuffer(system, buffer_A);
+        if (buffer_A.empty())
+        {
+          OSD::AddMessage("Diff Test FAILED: State A was empty.", 10000, OSD::Color::RED);
+          return;
+        }
+
+        // --- Step 2 & 3: Get State B (The "Control" Frame) ---
+        Core::DoFrameStep(system);
+        WiiMixSaveToBuffer(system, buffer_B);
+        if (buffer_B.empty())
+        {
+          OSD::AddMessage("Diff Test FAILED: State B was empty.", 10000, OSD::Color::RED);
+          return;
+        }
+
+        // --- Step 4: Load State A (The "Reset") ---
+        // This is the most critical part. This function MUST
+        // contain your host re-initialization logic.
+        WiiMixLoadFromBuffer(system, buffer_A);
+
+        // --- Step 5 & 6: Get State C (The "Test" Frame) ---
+        Core::DoFrameStep(system);
+        WiiMixSaveToBuffer(system, buffer_C);
+        if (buffer_C.empty())
+        {
+          OSD::AddMessage("Diff Test FAILED: State C was empty.", 10000, OSD::Color::RED);
+          return;
+        }
+
+        // --- Step 7: Compare B and C ---
+        if (buffer_B.size() != buffer_C.size())
+        {
+          OSD::AddMessage(fmt::format("Diff Test FAILED: Size mismatch! B={} C={}",
+                                      buffer_B.size(), buffer_C.size()),
+                          10000, OSD::Color::RED);
+          return;
+        }
+
+        if (buffer_B == buffer_C)
+        {
+          OSD::AddMessage("Diff Test PASSED! State is deterministic.", 10000, OSD::Color::GREEN);
+        }
+        else
+        {
+          // Find the first mismatch
+          size_t mismatch_index = 0;
+          for (size_t i = 0; i < buffer_B.size(); ++i)
+          {
+            if (buffer_B[i] != buffer_C[i])
+            {
+              mismatch_index = i;
+              break;
+            }
+          }
+          OSD::AddMessage(
+              fmt::format("Diff Test FAILED: Mismatch at byte {}. "
+                          "Your save/load logic is not deterministic.",
+                          mismatch_index),
+              10000, OSD::Color::RED);
+
+          // TODOx: Add a helper function to dump these buffers to
+          // files (e.g., "diff_B.bin", "diff_C.bin") so you can
+          // analyze them with a hex editor.
+          // e.g.,
+          // File::WriteBytes(File::GetUserPath(D_DUMP_IDX) + "diff_B.bin", buffer_B.data(), buffer_B.size());
+          // File::WriteBytes(File::GetUserPath(D_DUMP_IDX) + "diff_C.bin", buffer_C.data(), buffer_C.size());
+        }
+      },
+      true); // true = wait for it to finish
 }
 
 }  // namespace State
