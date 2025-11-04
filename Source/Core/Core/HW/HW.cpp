@@ -84,37 +84,44 @@ void Shutdown(Core::System& system)
 
 void DoState(Core::System& system, PointerWrap& p)
 {
+  // ONLY save memory for testing for now
   system.GetMemory().DoState(p);
   p.DoMarker("Memory");
-  system.GetMemoryInterface().DoState(p);
-  p.DoMarker("MemoryInterface");
-  system.GetVideoInterface().DoState(p);
-  p.DoMarker("VideoInterface");
-  system.GetSerialInterface().DoState(p);
-  p.DoMarker("SerialInterface");
-  system.GetProcessorInterface().DoState(p);
-  p.DoMarker("ProcessorInterface");
-  system.GetDSP().DoState(p);
-  p.DoMarker("DSP");
-  system.GetDVDInterface().DoState(p);
-  p.DoMarker("DVDInterface");
-  system.GetGPFifo().DoState(p);
-  p.DoMarker("GPFifo");
-  system.GetExpansionInterface().DoState(p);
-  p.DoMarker("ExpansionInterface");
-  system.GetAudioInterface().DoState(p);
-  p.DoMarker("AudioInterface");
-  system.GetHSP().DoState(p);
-  p.DoMarker("HSP");
+  if (!WIIMIX_STATE) {
+    system.GetMemoryInterface().DoState(p);
+    p.DoMarker("MemoryInterface");
+    system.GetVideoInterface().DoState(p);
+    p.DoMarker("VideoInterface");
+    system.GetSerialInterface().DoState(p);
+    p.DoMarker("SerialInterface");
+    system.GetProcessorInterface().DoState(p);
+    p.DoMarker("ProcessorInterface");
+    if (!WIIMIX_STATE) {
+      system.GetDSP().DoState(p);
+      p.DoMarker("DSP");
+    }
+    system.GetDVDInterface().DoState(p);
+    p.DoMarker("DVDInterface");
+    system.GetGPFifo().DoState(p);
+    p.DoMarker("GPFifo");
+    system.GetExpansionInterface().DoState(p);
+    p.DoMarker("ExpansionInterface");
+    if (!WIIMIX_STATE) {
+      system.GetAudioInterface().DoState(p);
+      p.DoMarker("AudioInterface");
+    }
+    system.GetHSP().DoState(p);
+    p.DoMarker("HSP");
 
-  if (system.IsWii())
-  {
-    system.GetWiiIPC().DoState(p);
-    p.DoMarker("IOS");
-    system.GetIOS()->DoState(p);
-    p.DoMarker("IOS::HLE");
+    if (system.IsWii())
+    {
+      system.GetWiiIPC().DoState(p);
+      p.DoMarker("IOS");
+      system.GetIOS()->DoState(p);
+      p.DoMarker("IOS::HLE");
+    }
+
+    p.DoMarker("WIIHW");
   }
-
-  p.DoMarker("WIIHW");
 }
 }  // namespace HW

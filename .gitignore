@@ -53,3 +53,5 @@ Source/**/*/Server.cpp
 Source/**/*/Server.h
 Source/**/*/*.env
 .env
+B.bin
+C.bin

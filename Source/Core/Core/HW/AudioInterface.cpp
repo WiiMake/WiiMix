@@ -201,7 +201,8 @@ void AudioInterfaceManager::Init()
 
   m_last_cpu_time = 0;
 
-  m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
+  if (!WIIMIX_STATE)
+    m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
 }
 
 void AudioInterfaceManager::Shutdown()

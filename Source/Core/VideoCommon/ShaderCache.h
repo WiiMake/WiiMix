@@ -114,12 +114,13 @@ public:
   const AbstractShader* GetTextureDecodingShader(TextureFormat format,
                                                  std::optional<TLUTFormat> palette_format);
 
+  void ClearCaches();
+
 private:
   static constexpr size_t NUM_PALETTE_CONVERSION_SHADERS = 3;
 
   void WaitForAsyncCompiler();
   void LoadCaches();
-  void ClearCaches();
   void LoadPipelineUIDCache();
   void ClosePipelineUIDCache();
   void CompileMissingPipelines();

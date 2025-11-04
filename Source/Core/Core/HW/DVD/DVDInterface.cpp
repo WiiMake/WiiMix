@@ -121,6 +121,8 @@ void DVDInterface::DoState(PointerWrap& p)
 
   p.Do(m_disc_path_to_insert);
 
+  // Skip DVD thread state when saving/loading WiiMix states
+  // if (WIIMIX_STATE)
   m_system.GetDVDThread().DoState(p);
 
   m_adpcm_decoder.DoState(p);

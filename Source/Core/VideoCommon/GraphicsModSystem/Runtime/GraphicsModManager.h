@@ -36,10 +36,10 @@ public:
   const std::vector<GraphicsModAction*>& GetXFBActions(const FBInfo& xfb) const;
 
   void Load(const GraphicsModGroupConfig& config);
+  void Reset();
 
 private:
   void EndOfFrame();
-  void Reset();
 
   class DecoratedAction;
 

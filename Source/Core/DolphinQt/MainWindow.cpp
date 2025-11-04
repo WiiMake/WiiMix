@@ -240,6 +240,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
                        const std::string& movie_path)
     : QMainWindow(nullptr)
 {
+
   qDebug() << "Beginning of main window";
   qDebug() << qgetenv("QT_DEBUG_PLUGINS");
   qDebug() << qputenv("QT_DEBUG_PLUGINS", "1");
@@ -358,7 +359,7 @@ MainWindow::MainWindow(std::unique_ptr<BootParameters> boot_parameters,
 
   m_objective_timer = new QTimer(this);
   m_objective_timer->setSingleShot(true);
-
+  
   // // Initialize bingo settings
   // // Add all games to the default bingo settings using the map
   // for (const auto& [game_id, game_file] : WiiMixObjective::m_games_cache) {
@@ -672,7 +673,7 @@ void MainWindow::ConnectMenuBar()
   // connect(m_menu_bar, &MenuBar::GameSwapSlotAt, this, &MainWindow::GameSwapSlotAt);
   connect(m_menu_bar, &MenuBar::StateLoadUndo, this, &MainWindow::StateLoadUndo);
   connect(m_menu_bar, &MenuBar::StateSaveUndo, this, &MainWindow::StateSaveUndo);
-  connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
+  // connect(m_menu_bar, &MenuBar::StateSaveOldest, this, &MainWindow::StateSaveOldest);
   connect(m_menu_bar, &MenuBar::SetStateSlot, this, &MainWindow::SetStateSlot);
 
   // Options
@@ -1047,7 +1048,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
     if (Core::safe_to_quit) {
       qDebug() << "Saving state to:" << QString::fromStdString(savestate_file);
-      State::SaveAs(Core::System::GetInstance(), savestate_file);
+      State::SaveAsWiiMix(Core::System::GetInstance(), savestate_file);
     }
     else {
       while (Core::safe_to_quit == false) {
@@ -1056,7 +1057,7 @@ void MainWindow::WiiMixSwapObjective(WiiMixObjective new_objective, WiiMixObject
     }
     return;
   }
-  State::LoadAs(Core::System::GetInstance(), savestate_file);
+  State::LoadAsWiiMix(Core::System::GetInstance(), savestate_file);
   std::vector<u8> img_data = WiiMixWebAPI::instance()->getAchievementIcon(new_objective.GetRetroAchievementsGameId(), new_objective.GetAchievementId());
   VideoCommon::CustomTextureData::ArraySlice::Level *icon = new VideoCommon::CustomTextureData::ArraySlice::Level();
   VideoCommon::LoadPNGTexture(icon, img_data);
@@ -1097,12 +1098,12 @@ void MainWindow::WiiMixRestartObjective(WiiMixObjective new_objective, WiiMixObj
   sprintf(buf, "%d", current_objective.GetId());
   std::string savestate_file = WiiMixGlobalSettings::GetLiveSaveStatePath(current_objective);
   if (Core::IsRunning(Core::System::GetInstance())) {
-    State::SaveAs(Core::System::GetInstance(), savestate_file);
+    State::SaveAsWiiMix(Core::System::GetInstance(), savestate_file);
     while (Core::safe_to_quit == false)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
   }
   if (new_objective.GetGameId() == current_objective.GetGameId()) {
-    State::LoadAs(Core::System::GetInstance(), savestate_file);
+    State::LoadAsWiiMix(Core::System::GetInstance(), savestate_file);
     return;
   }
   WiiMixRestartObjective(new_objective);
@@ -1688,7 +1689,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     qDebug() << "saveas";
     // std::cout << save_path << std::endl;
     if (!save_path.empty() && Core::safe_to_quit == true) {
-      State::SaveAs(Core::System::GetInstance(), save_path);
+      State::SaveAsWiiMix(Core::System::GetInstance(), save_path);
     }
     qDebug() << "AAAAAAAAAAAAAA     just saved";
     while (Core::safe_to_quit == false)
@@ -1732,6 +1733,9 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     Host::GetInstance()->SetRenderFullscreen(true);
     Config::Set(Config::LayerType::Base, Config::MAIN_FULLSCREEN_DISPLAY_RES, "FullscreenDisplayRes");
     qDebug() << Config::Get(Config::MAIN_FULLSCREEN_DISPLAY_RES).c_str();
+
+    // Run Diff Test (remove this once state saving/loading is stable)
+    State::WiiMixDiffTest(Core::System::GetInstance());
   });
 }
 
@@ -2012,7 +2016,7 @@ void MainWindow::StateLoad()
       this, tr("Select a File"), dialog_path, tr("All Save States (*.sav *.s##);; All Files (*)"));
   Config::SetBase(Config::MAIN_CURRENT_STATE_PATH, QFileInfo(path).dir().path().toStdString());
   if (!path.isEmpty())
-    State::LoadAs(Core::System::GetInstance(), path.toStdString());
+    State::LoadAsWiiMix(Core::System::GetInstance(), path.toStdString());
 }
 
 void MainWindow::StateSave()
@@ -2024,17 +2028,17 @@ void MainWindow::StateSave()
       this, tr("Select a File"), dialog_path, tr("All Save States (*.sav *.s##);; All Files (*)"));
   Config::SetBase(Config::MAIN_CURRENT_STATE_PATH, QFileInfo(path).dir().path().toStdString());
   if (!path.isEmpty())
-    State::SaveAs(Core::System::GetInstance(), path.toStdString());
+    State::SaveAsWiiMix(Core::System::GetInstance(), path.toStdString());
 }
 
 void MainWindow::StateLoadSlot()
 {
-  State::Load(Core::System::GetInstance(), m_state_slot);
+  State::LoadWiiMix(Core::System::GetInstance(), m_state_slot);
 }
 
 void MainWindow::StateSaveSlot()
 {
-  State::Save(Core::System::GetInstance(), m_state_slot);
+  State::SaveWiiMix(Core::System::GetInstance(), m_state_slot);
 }
 
 void MainWindow::StateSendSlot()
@@ -2050,17 +2054,17 @@ void MainWindow::StateSendSlot()
 
 void MainWindow::StateLoadSlotAt(int slot)
 {
-  State::Load(Core::System::GetInstance(), slot);
+  State::LoadWiiMix(Core::System::GetInstance(), slot);
 }
 
 void MainWindow::StateLoadLastSavedAt(int slot)
 {
-  State::LoadLastSaved(Core::System::GetInstance(), slot);
+  State::LoadLastSavedWiiMix(Core::System::GetInstance(), slot);
 }
 
 void MainWindow::StateSaveSlotAt(int slot)
 {
-  State::Save(Core::System::GetInstance(), slot);
+  State::SaveWiiMix(Core::System::GetInstance(), slot);
 }
 
 void MainWindow::ObjectiveResetSlotAt(int slot) {
@@ -2370,17 +2374,20 @@ void MainWindow::HandleAchievementGet(std::set<u32> achievements)
 
 void MainWindow::StateLoadUndo()
 {
-  State::UndoLoadState(Core::System::GetInstance());
+  // State::UndoLoadState(Core::System::GetInstance());
+  State::UndoWiiMixLoadState(Core::System::GetInstance());
 }
 
 void MainWindow::StateSaveUndo()
 {
-  State::UndoSaveState(Core::System::GetInstance());
+  // State::UndoSaveState(Core::System::GetInstance());
+  State::UndoWiiMixSaveState(Core::System::GetInstance());
 }
 
 void MainWindow::StateSaveOldest()
 {
-  State::SaveFirstSaved(Core::System::GetInstance());
+  State::SaveFirstSavedWiiMix(Core::System::GetInstance());
+  // State::SaveFirstSaved(Core::System::GetInstance());
 }
 
 void MainWindow::SetStateSlot(int slot)

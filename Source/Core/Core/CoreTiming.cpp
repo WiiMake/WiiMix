@@ -150,6 +150,24 @@ void CoreTimingManager::RefreshConfig()
   m_emulation_speed = Config::Get(Config::MAIN_EMULATION_SPEED);
 }
 
+void CoreTimingManager::WiiMixReset()
+{
+  // We're already on the CPU thread, so this is safe.
+  std::lock_guard lk(m_ts_write_lock);
+  m_event_queue.clear();
+}
+
+static bool CompareEventsForState(const CoreTiming::Event& a, const CoreTiming::Event& b)
+{
+  if (a.time != b.time)
+    return a.time < b.time;
+  if (a.fifo_order != b.fifo_order)
+    return a.fifo_order < b.fifo_order;
+  if (a.userdata != b.userdata)
+    return a.userdata < b.userdata;
+  return *a.type->name < *b.type->name; // Final tie-breaker
+}
+
 void CoreTimingManager::DoState(PointerWrap& p)
 {
   std::lock_guard lk(m_ts_write_lock);
@@ -166,24 +184,28 @@ void CoreTimingManager::DoState(PointerWrap& p)
 
   p.DoMarker("CoreTimingData");
 
-  MoveEvents();
-  p.DoEachElement(m_event_queue, [this](PointerWrap& pw, Event& ev) {
-    pw.Do(ev.time);
-    pw.Do(ev.fifo_order);
+  if (!WIIMIX_STATE)
+    MoveEvents();
+    
+  size_t event_count;
+  if (!p.IsReadMode())
+    event_count = m_event_queue.size();
+  
+  p.Do(event_count); // Save/load the event count
 
-    // this is why we can't have (nice things) pointers as userdata
-    pw.Do(ev.userdata);
-
-    // we can't savestate ev.type directly because events might not get registered in the same
-    // order (or at all) every time.
-    // so, we savestate the event's type's name, and derive ev.type from that when loading.
-    std::string name;
-    if (!pw.IsReadMode())
-      name = *ev.type->name;
-
-    pw.Do(name);
-    if (pw.IsReadMode())
+  if (p.IsReadMode())
+  {
+    // --- LOAD SIDE ---
+    m_event_queue.resize(event_count);
+    for (size_t i = 0; i < event_count; ++i)
     {
+      Event& ev = m_event_queue[i];
+      p.Do(ev.time);
+      p.Do(ev.fifo_order);
+      p.Do(ev.userdata);
+
+      std::string name;
+      p.Do(name);
       auto itr = m_event_types.find(name);
       if (itr != m_event_types.end())
       {
@@ -197,7 +219,27 @@ void CoreTimingManager::DoState(PointerWrap& p)
         ev.type = m_ev_lost;
       }
     }
-  });
+  }
+  else
+  {
+    // --- SAVE SIDE ---
+    // Create a sorted copy to guarantee a deterministic binary file
+    std::vector<Event> sorted_queue = m_event_queue;
+    std::sort(sorted_queue.begin(), sorted_queue.end(), CompareEventsForState);
+
+    // Save each event from the *sorted* copy
+    for (const Event& ev : sorted_queue)
+    {
+      // p.Do wants a non-const ref, so we must const_cast
+      p.Do(ev.time);
+      p.Do(ev.fifo_order);
+      p.Do(ev.userdata);
+
+      std::string name = *ev.type->name;
+      p.Do(name);
+    }
+  }
+
   p.DoMarker("CoreTimingEvents");
 
   if (p.IsReadMode())

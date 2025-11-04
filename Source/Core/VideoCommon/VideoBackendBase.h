@@ -73,6 +73,7 @@ public:
 
   // Wrapper function which pushes the event to the GPU thread.
   void DoState(PointerWrap& p);
+  void WiiMixReset();
 
 protected:
   // For hardware backends

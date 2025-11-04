@@ -71,6 +71,20 @@ void DVDThread::Stop()
   m_disc.reset();
 }
 
+void DVDThread::WiiMixReset() {
+  // We're already on the CPU thread, and WaitUntilIdle
+  // has been called, so the DVD thread is stopped.
+  // It is now safe to clear all "dirty" state.
+  m_result_map.clear();
+
+  // Drain and clear the "dirty" result queue
+  ReadResult result;
+  while (m_result_queue.Pop(result))
+  {
+    // do nothing, just drain it
+  }
+}
+
 void DVDThread::StopDVDThread()
 {
   ASSERT(m_dvd_thread.joinable());
@@ -89,7 +103,55 @@ void DVDThread::DoState(PointerWrap& p)
   // By waiting for the DVD thread to be done working, we ensure
   // that request_queue will be empty and that the DVD thread
   // won't be touching anything while this function runs.
-  WaitUntilIdle();
+  if (!WIIMIX_STATE) {
+    WaitUntilIdle();
+
+    // Don't savestate requests reliant on host
+
+    // Move all results from result_queue to result_map because
+    // PointerWrap::Do supports std::map but not Common::SPSCQueue.
+    // This won't affect the behavior of FinishRead.
+    ReadResult result;
+    while (m_result_queue.Pop(result))
+      m_result_map.emplace(result.first.id, std::move(result));
+  }
+
+  // Both queues are now empty, so we don't need to savestate them.
+  p.Do(m_result_map);
+  p.Do(m_next_id);
+
+  // m_disc isn't savestated (because it points to files on the
+  // local system). Instead, we check that the status of the disc
+  // is the same as when the savestate was made. This won't catch
+  // cases of having the wrong disc inserted, though.
+  // TODO: Check the game ID, disc number, revision?
+  bool had_disc = HasDisc();
+  p.Do(had_disc);
+  if (had_disc != HasDisc())
+  {
+    if (had_disc)
+      PanicAlertFmtT("An inserted disc was expected but not found.");
+    else
+      m_disc.reset();
+  }
+
+  // TODO: Savestates can be smaller if the buffers of results aren't saved,
+  // but instead get re-read from the disc when loading the savestate.
+
+  // TODO: It would be possible to create a savestate faster by stopping
+  // the DVD thread regardless of whether there are pending requests.
+
+  // After loading a savestate, the debug log in FinishRead will report
+  // screwed up times for requests that were submitted before the savestate
+  // was made. Handling that properly may be more effort than it's worth.
+}
+
+void DVDThread::DoWiiMixState(PointerWrap& p)
+{
+  // By waiting for the DVD thread to be done working, we ensure
+  // that request_queue will be empty and that the DVD thread
+  // won't be touching anything while this function runs.
+  // WaitUntilIdle();
 
   // Move all results from result_queue to result_map because
   // PointerWrap::Do supports std::map but not Common::SPSCQueue.
@@ -200,7 +262,8 @@ bool DVDThread::UpdateRunningGameMetadata(const DiscIO::Partition& partition,
 
 void DVDThread::WaitUntilIdle()
 {
-  ASSERT(Core::IsCPUThread());
+  if (!WIIMIX_STATE)
+    ASSERT(Core::IsCPUThread());
 
   while (!m_request_queue.Empty())
     m_result_queue_expanded.Wait();

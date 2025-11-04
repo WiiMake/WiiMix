@@ -63,6 +63,8 @@ public:
   void Start();
   void Stop();
   void DoState(PointerWrap& p);
+  void DoWiiMixState(PointerWrap& p);
+  void WiiMixReset();
 
   void SetDisc(std::unique_ptr<DiscIO::Volume> disc);
   bool HasDisc() const;
@@ -85,11 +87,11 @@ public:
   void StartReadToEmulatedRAM(u32 output_address, u64 dvd_offset, u32 length,
                               const DiscIO::Partition& partition, DVD::ReplyType reply_type,
                               s64 ticks_until_completion);
+  void WaitUntilIdle();
 
 private:
   void StartDVDThread();
   void StopDVDThread();
-  void WaitUntilIdle();
 
   void StartReadInternal(bool copy_to_ram, u32 output_address, u64 dvd_offset, u32 length,
                          const DiscIO::Partition& partition, DVD::ReplyType reply_type,

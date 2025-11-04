@@ -189,10 +189,10 @@ void EmulatedController::LoadConfig(Common::IniFile::Section* sec, const std::st
   }
 
   std::string defdevwiimix = GetDefaultWiiMixDevice().ToString();
-  printf("Loading wiimix device: %s\n", defdevwiimix.c_str());
+  // printf("Loading wiimix device: %s\n", defdevwiimix.c_str());
   if (base.empty())
   {
-    printf("Actually loading now\n");
+    // printf("Actually loading now\n");
     sec->Get(base + "WiiMixDevice", &defdevwiimix, "");
     SetDefaultWiiMixDevice(defdevwiimix);
   }
@@ -200,7 +200,7 @@ void EmulatedController::LoadConfig(Common::IniFile::Section* sec, const std::st
   for (auto& cg : groups) {
     cg->LoadConfigWiiMix(sec, defdev, defdevwiimix, base);
   }
-  printf("Default WiiMix Device is now: %s\n", GetDefaultWiiMixDevice().name.c_str());
+  // printf("Default WiiMix Device is now: %s\n", GetDefaultWiiMixDevice().name.c_str());
 }
 
 void EmulatedController::SaveConfig(Common::IniFile::Section* sec, const std::string& base)

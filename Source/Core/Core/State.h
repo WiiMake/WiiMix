@@ -108,7 +108,9 @@ u64 GetUnixTimeOfSlot(int slot);
 //    because some things (like Lua) need them to run immediately.
 // Slots from 0-99.
 void Save(Core::System& system, int slot, bool wait = false);
+void SaveWiiMix(Core::System& system, int slot, bool wait = false);
 void Load(Core::System& system, int slot);
+void LoadWiiMix(Core::System& system, int slot);
 
 void SaveAs(Core::System& system, const std::string& filename, bool wait = false);
 void SaveAsWiiMix(Core::System& system, const std::string& filename, bool wait = false);
@@ -122,7 +124,9 @@ void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer);
 bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer);
 
 void LoadLastSaved(Core::System& system, int i = 1);
+void LoadLastSavedWiiMix(Core::System& system, int i = 1);
 void SaveFirstSaved(Core::System& system);
+void SaveFirstSavedWiiMix(Core::System& system);
 void UndoSaveState(Core::System& system);
 void UndoWiiMixSaveState(Core::System& system);
 void UndoLoadState(Core::System& system);
@@ -133,9 +137,9 @@ using AfterLoadCallbackFunc = std::function<void()>;
 void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback);
 
 // Primary tool for debugging states
-void WiiMixDiffTest(Core::System& system);
+int WiiMixDiffTest(Core::System& system);
 
-bool WiiMixHostReinitialization();
+bool WiiMixHostReinitialization(Core::System& system);
 
 }  // namespace State
 

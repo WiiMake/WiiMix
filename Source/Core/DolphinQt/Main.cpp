@@ -218,6 +218,7 @@ int main(int argc, char* argv[])
     boot = BootParameters::GenerateFromFile(
         paths, BootSessionData(save_state_path, DeleteSavestateAfterBoot::No));
     game_specified = true;
+    
   }
   else if (options.is_set("nand_title"))
   {
@@ -255,6 +256,7 @@ int main(int argc, char* argv[])
         nullptr, QObject::tr("Error"),
         QObject::tr("Batch mode cannot be used without specifying a game to launch."));
     retval = 1;
+    
   }
   else if (!boot && (Settings::Instance().IsBatchModeEnabled() || save_state_path))
   {

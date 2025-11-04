@@ -14,6 +14,8 @@ struct Sram;
 class VertexShaderManager;
 class XFStateManager;
 
+#define WIIMIX_STATE true
+
 namespace AudioInterface
 {
 class AudioInterfaceManager;

@@ -61,3 +61,4 @@ The project is still in it's early stages. As such, we appreciate any help that 
 
 - Run with -d flag to enable debugging
 - dolphin-memory-engine -d wiimix
+- ./Binaries/wiimix -e ~/dolphingames/GC-Controller-Test.dol (-e is start with game)

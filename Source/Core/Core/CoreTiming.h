@@ -91,6 +91,7 @@ public:
   void RefreshConfig();
 
   void DoState(PointerWrap& p);
+  void WiiMixReset();
 
   // Returns the event_type identifier. if name is not unique, an existing event_type will be
   // discarded.

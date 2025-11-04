@@ -260,6 +260,7 @@ public:
   void Reset();
   void Shutdown();
   void DoState(PointerWrap& p);
+  void DoWiiMixState(PointerWrap& p);
   void ScheduleInvalidateCacheThreadSafe(u32 address);
 
   CoreMode GetMode() const;

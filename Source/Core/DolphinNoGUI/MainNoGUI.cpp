@@ -35,6 +35,8 @@
 #include "InputCommon/GCAdapter.h"
 
 #include "VideoCommon/VideoBackendBase.h"
+#include <Core/State.h>
+#include <DolphinQt/Host.h>
 
 static std::unique_ptr<Platform> s_platform;
 
@@ -216,6 +218,9 @@ int main(int argc, char* argv[])
             "macos"
 #endif
       });
+  parser->add_option("--diff-test")
+      .action("store_true")
+      .help("Run in headless diff test mode (for automated testing)");
 
   optparse::Values& options = CommandLineParse::ParseArguments(parser.get(), argc, argv);
   std::vector<std::string> args = parser->args();
@@ -277,7 +282,6 @@ int main(int argc, char* argv[])
 
   UICommon::SetUserDirectory(user_directory);
   UICommon::Init();
-  UICommon::InitControllers(wsi);
 
   Common::ScopeGuard ui_common_guard([] {
     UICommon::ShutdownControllers();
@@ -310,6 +314,8 @@ int main(int argc, char* argv[])
 
   DolphinAnalytics::Instance().ReportDolphinStart("nogui");
 
+  UICommon::InitControllers(wsi);
+
   if (!BootManager::BootCore(Core::System::GetInstance(), std::move(boot), wsi))
   {
     fprintf(stderr, "Could not boot the specified file\n");
@@ -319,6 +325,21 @@ int main(int argc, char* argv[])
 #ifdef USE_DISCORD_PRESENCE
   Discord::UpdateDiscordPresence();
 #endif
+
+  // --- Step 2: Run the correct application type ---
+  if (options.is_set("diff_test"))
+  {
+    // This function will call QCoreApplication::exit() with the final pass/fail code.
+    int test_result = State::WiiMixDiffTest(Core::System::GetInstance());
+    printf("WiiMix Diff Test completed with code %d.\n", test_result);
+    // Core::Stop(Core::System::GetInstance());
+    // Core::Shutdown(Core::System::GetInstance());
+
+    // s_platform.reset();
+    fflush(stdout);
+    fflush(stderr);
+    std::exit(test_result);
+  }
 
   s_platform->MainLoop();
   Core::Stop(Core::System::GetInstance());
