@@ -22,6 +22,7 @@
 #include "Core/Boot/Boot.h"
 #include "Core/BootManager.h"
 #include "Core/Core.h"
+#include "Core/Config/MainSettings.h"
 #include "Core/DolphinAnalytics.h"
 #include "Core/Host.h"
 #include "Core/System.h"
@@ -37,6 +38,8 @@
 #include "VideoCommon/VideoBackendBase.h"
 #include <Core/State.h>
 #include <DolphinQt/Host.h>
+#include <chrono>
+#include <thread> 
 
 static std::unique_ptr<Platform> s_platform;
 
@@ -312,6 +315,9 @@ int main(int argc, char* argv[])
   sigaction(SIGTERM, &sa, nullptr);
 #endif
 
+  // Force enable MMU for WiiMix savestate compatibility
+  Config::SetBaseOrCurrent(Config::MAIN_MMU, true); 
+
   DolphinAnalytics::Instance().ReportDolphinStart("nogui");
 
   UICommon::InitControllers(wsi);
@@ -327,19 +333,55 @@ int main(int argc, char* argv[])
 #endif
 
   // --- Step 2: Run the correct application type ---
-  if (options.is_set("diff_test"))
+  // if (options.is_set("diff_test"))
+  // {
+  // THIS SHOULD BE CALLED IN THE EMUTHREAD; OTHERWISE THERE WON'T BE PROPER INITIALIZATION
+  State::diff_test = options.is_set("diff_test");
+  if (State::diff_test)
   {
-    // This function will call QCoreApplication::exit() with the final pass/fail code.
-    int test_result = State::WiiMixDiffTest(Core::System::GetInstance());
-    printf("WiiMix Diff Test completed with code %d.\n", test_result);
-    // Core::Stop(Core::System::GetInstance());
-    // Core::Shutdown(Core::System::GetInstance());
+    // We (the MainThread) must wait for the EmuThread to finish booting
+    // and enter its 'Running' state. This polling loop
+    // solves the race condition.
+    int retries = 0;
+    while (!Core::IsRunning(Core::System::GetInstance()) && retries < 100) // 5-second timeout
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      retries++;
+    }
 
-    // s_platform.reset();
+    // Check if the emulator successfully booted
+    if (!Core::IsRunning(Core::System::GetInstance()))
+    {
+       fprintf(stderr, "Diff Test FAILED: Emulator failed to start running.\n");
+       fflush(stderr);
+       return 1; // Return a fail code
+    }
+    
+    // Now the emulator is fully booted and running.
+    // It is safe to call the test function from the MainThread.
+    int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance());
+    
+    // Core::Shutdown(Core::System::GetInstance()); 
+    s_platform.reset(); // Clean up platform resources
+
     fflush(stdout);
     fflush(stderr);
-    std::exit(test_result);
+    
+    // The test is done. The EmuThread is now paused.
+    // We can just return the test result, and the OS will
+    // clean up all threads, avoiding all deadlocks.
+    return test_result;
   }
+    // int test_result = State::WiiMixDiffTest(Core::System::GetInstance());
+    // printf("WiiMix Diff Test completed with code %d.\n", test_result);
+    // // Core::Stop(Core::System::GetInstance());
+    // // Core::Shutdown(Core::System::GetInstance());
+
+    // // s_platform.reset();
+    // fflush(stdout);
+    // fflush(stderr);
+    // std::exit(test_result);
+  // }
 
   s_platform->MainLoop();
   Core::Stop(Core::System::GetInstance());

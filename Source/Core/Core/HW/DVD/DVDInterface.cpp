@@ -119,7 +119,10 @@ void DVDInterface::DoState(PointerWrap& p)
   p.Do(m_read_buffer_start_offset);
   p.Do(m_read_buffer_end_offset);
 
-  p.Do(m_disc_path_to_insert);
+  // File path is host-specific
+  if (!WIIMIX_STATE) {
+    p.Do(m_disc_path_to_insert);
+  } 
 
   // Skip DVD thread state when saving/loading WiiMix states
   // if (WIIMIX_STATE)

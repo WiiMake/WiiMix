@@ -205,8 +205,11 @@ void SerialInterfaceManager::DoState(PointerWrap& p)
     {
       AddDevice(SIDevice_Create(m_system, type, i));
     }
-
-    device->DoState(p);
+    
+    // Device information is host-specific
+    if (!WIIMIX_STATE) {
+      device->DoState(p);
+    }
   }
 
   p.Do(m_poll);

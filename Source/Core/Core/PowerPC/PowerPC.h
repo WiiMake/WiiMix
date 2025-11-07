@@ -260,7 +260,7 @@ public:
   void Reset();
   void Shutdown();
   void DoState(PointerWrap& p);
-  void DoWiiMixState(PointerWrap& p);
+  // void DoWiiMixState(PointerWrap& p);
   void ScheduleInvalidateCacheThreadSafe(u32 address);
 
   CoreMode GetMode() const;
@@ -303,7 +303,7 @@ public:
   const PPCSymbolDB& GetSymbolDB() const { return m_symbol_db; }
   Core::BranchWatch& GetBranchWatch() { return m_branch_watch; }
   const Core::BranchWatch& GetBranchWatch() const { return m_branch_watch; }
-
+  
 private:
   void InitializeCPUCore(CPUCore cpu_core);
   void ApplyMode();

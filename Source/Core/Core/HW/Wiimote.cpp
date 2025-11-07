@@ -237,10 +237,13 @@ void DoState(PointerWrap& p)
 
     if (p.IsReadMode())
     {
-      // If using a real wiimote or the save-state source does not match the current source,
-      // then force a reconnection on load.
-      if (source == WiimoteSource::Real || source != WiimoteSource(state_wiimote_source))
-        WiimoteCommon::UpdateSource(i);
+      // 
+      if (!WIIMIX_STATE) {
+        // If using a real wiimote or the save-state source does not match the current source,
+        // then force a reconnection on load.
+        if (source == WiimoteSource::Real || source != WiimoteSource(state_wiimote_source))
+          WiimoteCommon::UpdateSource(i);
+      }
     }
   }
 }

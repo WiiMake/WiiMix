@@ -154,7 +154,17 @@ void CoreTimingManager::WiiMixReset()
 {
   // We're already on the CPU thread, so this is safe.
   std::lock_guard lk(m_ts_write_lock);
-  m_event_queue.clear();
+  // DO NOT clear the event queue; 
+  // MoveEvents();
+  // m_event_queue.clear();
+  // UnregisterAllEvents();
+  m_event_types.clear();
+
+  // Reregister the lost event callback
+  // This is a fallback for any events that were scheduled before the reset
+  // but whose types are not reregistered after the reset.
+  // m_event_fifo_id = 0;
+  m_ev_lost = RegisterEvent("_lost_event", &EmptyTimedCallback);
 }
 
 static bool CompareEventsForState(const CoreTiming::Event& a, const CoreTiming::Event& b)

@@ -67,9 +67,10 @@ void AdvancedPane::CreateLayout()
   }
 
   // Disabled for save state compatibility
+  Config::SetBaseOrCurrent(Config::MAIN_MMU, true);
   m_enable_mmu_checkbox = new ConfigBool(tr("Enable MMU"), Config::MAIN_MMU);
-  m_enable_mmu_checkbox->setEnabled(false);
-  m_enable_mmu_checkbox->setCheckable(false);
+  m_enable_mmu_checkbox->setEnabled(true); // Force enable the MMU for WiiMix savestate compatibility
+  m_enable_mmu_checkbox->setDisabled(true);
   m_enable_mmu_checkbox->SetDescription(tr("Disabled for save state compatibility"));
   // m_enable_mmu_checkbox->SetDescription(
   //     tr("Enables the Memory Management Unit, needed for some games. (ON = Compatible, OFF = "

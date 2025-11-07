@@ -16,6 +16,8 @@
 
 #include "Common/CommonTypes.h"
 
+#include "Core/State.h"
+
 struct BootParameters;
 struct WindowSystemInfo;
 
@@ -31,6 +33,7 @@ double GetActualEmulationSpeed();
 
 void Callback_FramePresented(double actual_emulation_speed = 1.0);
 void Callback_NewField(Core::System& system);
+namespace Savestate = ::State;
 
 enum class State
 {

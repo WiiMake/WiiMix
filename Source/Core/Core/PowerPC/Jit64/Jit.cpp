@@ -120,7 +120,14 @@ Jit64::Jit64(Core::System& system) : JitBase(system), QuantizedMemoryRoutines(*t
 {
 }
 
-Jit64::~Jit64() = default;
+// Jit64::~Jit64() = default;
+Jit64::~Jit64() {
+  if (WIIMIX_STATE) {
+    return;
+  }
+
+  // TODO: default destructor body
+} // Experimental destructor that does nothing
 
 bool Jit64::HandleFault(uintptr_t access_address, SContext* ctx)
 {
@@ -300,14 +307,26 @@ void Jit64::ClearCache()
 {
   blocks.Clear();
   blocks.ClearRangesToFree();
-  trampolines.ClearCodeSpace();
-  m_far_code.ClearCodeSpace();
-  m_const_pool.Clear();
-  ClearCodeSpace();
-  Clear();
-  RefreshConfig();
-  asm_routines.Regenerate();
-  ResetFreeMemoryRanges();
+
+  // if (!WIIMIX_STATE) {
+    trampolines.ClearCodeSpace();
+    m_far_code.ClearCodeSpace();
+    m_const_pool.Clear();
+    ClearCodeSpace();
+    Clear();
+    RefreshConfig();
+    asm_routines.Regenerate();
+    ResetFreeMemoryRanges();
+  // }
+  // else {
+    // For a hot-reset of JIT rather than a shutdown
+    // asm_routines.Regenerate();
+    // m_const_pool.Clear();
+    // ClearCodeSpace();
+    // Clear();
+    // RefreshConfig();
+    // ResetFreeMemoryRanges();
+  // }
 }
 
 void Jit64::ResetFreeMemoryRanges()
@@ -321,14 +340,19 @@ void Jit64::ResetFreeMemoryRanges()
 
 void Jit64::Shutdown()
 {
-  FreeCodeSpace();
-
+  // NOTE: reordered mem & FreeCodeSpace
   auto& memory = m_system.GetMemory();
   memory.ShutdownFastmemArena();
 
   blocks.Shutdown();
-  m_far_code.Shutdown();
-  m_const_pool.Shutdown();
+
+  FreeCodeSpace();
+
+  // The memory of these is already freed by reinitialization
+  if (!WIIMIX_STATE) {
+    m_far_code.Shutdown();
+    m_const_pool.Shutdown();
+  }
 }
 
 void Jit64::FallBackToInterpreter(UGeckoInstruction inst)

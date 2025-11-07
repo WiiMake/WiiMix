@@ -50,6 +50,15 @@ void JitInterface::DoState(PointerWrap& p)
 
 CPUCoreBase* JitInterface::InitJitCore(PowerPC::CPUCore core)
 {
+  if (WIIMIX_STATE) {
+    // Shutdown existing JIT core for a WiiMix hot reset
+    if (m_jit)
+    {
+      m_jit->Shutdown();
+      m_jit.reset();
+    }
+  }
+
   switch (core)
   {
 #ifdef _M_X86_64

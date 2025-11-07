@@ -104,86 +104,32 @@ void PowerPCManager::DoState(PointerWrap& p)
   m_ppc_state.iCache.DoState(memory, p);
   m_ppc_state.dCache.DoState(memory, p);
 
-  if (p.IsReadMode())
-  {
-    if (!m_ppc_state.m_enable_dcache)
+  if (!WIIMIX_STATE) {
+    // Handle reinitialization in the State::WiiMixLoadFromBufferEmuThread function instead 
+    if (p.IsReadMode())
     {
-      INFO_LOG_FMT(POWERPC, "Flushing data cache");
-      m_ppc_state.dCache.FlushAll(memory);
+      if (!m_ppc_state.m_enable_dcache)
+      {
+        INFO_LOG_FMT(POWERPC, "Flushing data cache");
+        m_ppc_state.dCache.FlushAll(memory);
+      }
+
+      RoundingModeUpdated(m_ppc_state);
+      RecalculateAllFeatureFlags(m_ppc_state);
+
+      auto& mmu = m_system.GetMMU();
+      mmu.IBATUpdated();
+      mmu.DBATUpdated();
     }
-
-    RoundingModeUpdated(m_ppc_state);
-    RecalculateAllFeatureFlags(m_ppc_state);
-
-    auto& mmu = m_system.GetMMU();
-    mmu.IBATUpdated();
-    mmu.DBATUpdated();
   }
 
   // SystemTimers::DecrementerSet();
   // SystemTimers::TimeBaseSet();
 
-  m_system.GetJitInterface().DoState(p);
-}
-
-void PowerPCManager::DoWiiMixState(PointerWrap& p)
-{
-  // some of this code has been disabled, because
-  // it changes registers even in Mode::Measure (which is suspicious and seems like it could cause
-  // desyncs)
-  // and because the values it's changing have been added to CoreTiming::DoState, so it might
-  // conflict to mess with them here.
-
-  // m_ppc_state.spr[SPR_DEC] = SystemTimers::GetFakeDecrementer();
-  // *((u64 *)&TL(m_ppc_state)) = SystemTimers::GetFakeTimeBase(); //works since we are little
-  // endian and TL comes first :)
-
-  p.DoArray(m_ppc_state.gpr);
-  p.Do(m_ppc_state.pc);
-  p.Do(m_ppc_state.npc);
-  p.DoArray(m_ppc_state.cr.fields);
-  p.Do(m_ppc_state.msr);
-  p.Do(m_ppc_state.fpscr);
-  p.Do(m_ppc_state.Exceptions);
-  p.Do(m_ppc_state.downcount);
-  p.Do(m_ppc_state.xer_ca);
-  p.Do(m_ppc_state.xer_so_ov);
-  p.Do(m_ppc_state.xer_stringctrl);
-  p.DoArray(m_ppc_state.ps);
-  p.DoArray(m_ppc_state.sr);
-  p.DoArray(m_ppc_state.spr);
-  p.DoArray(m_ppc_state.tlb);
-  p.Do(m_ppc_state.pagetable_base);
-  p.Do(m_ppc_state.pagetable_hashmask);
-
-  p.Do(m_ppc_state.reserve);
-  p.Do(m_ppc_state.reserve_address);
-
-  auto& memory = m_system.GetMemory();
-  m_ppc_state.iCache.DoState(memory, p);
-  m_ppc_state.dCache.DoState(memory, p);
-
-  if (p.IsReadMode())
-  {
-    if (!m_ppc_state.m_enable_dcache)
-    {
-      INFO_LOG_FMT(POWERPC, "Flushing data cache");
-      m_ppc_state.dCache.FlushAll(memory);
-    }
-
-    RoundingModeUpdated(m_ppc_state);
-    RecalculateAllFeatureFlags(m_ppc_state);
-
-    auto& mmu = m_system.GetMMU();
-    mmu.IBATUpdated();
-    mmu.DBATUpdated();
+  // Ignore the entire JIT compiler; meaningless for different architectures/wiimix savestate compatibility
+  if (!WIIMIX_STATE) {
+    m_system.GetJitInterface().DoState(p);
   }
-
-  // SystemTimers::DecrementerSet();
-  // SystemTimers::TimeBaseSet();
-
-  // WiiMix state skips JIT, since it is not deterministic
-  // m_system.GetJitInterface().DoState(p);
 }
 
 void PowerPCManager::ResetRegisters()

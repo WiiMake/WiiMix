@@ -94,8 +94,8 @@ void GameConfigWidget::CreateWidgets()
 
   m_enable_dual_core = new QCheckBox(tr("Enable Dual Core"));
   m_enable_mmu = new QCheckBox(tr("Enable MMU"));
-  m_enable_mmu->setEnabled(false);
-  m_enable_mmu->setCheckable(false);
+  m_enable_mmu->setEnabled(true); 
+  m_enable_mmu->setDisabled(true);
   m_enable_mmu->setToolTip(tr("Disabled for save state compatibility"));
   m_enable_fprf = new QCheckBox(tr("Enable FPRF"));
   m_sync_gpu = new QCheckBox(tr("Synchronize GPU thread"));

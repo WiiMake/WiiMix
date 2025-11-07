@@ -388,8 +388,8 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
   Common::IniFile inifile;
   if (inifile.Load(File::GetUserPath(D_CONFIG_IDX) + "Hotkeys.ini"))
   {
-    printf("Inifile loaded\n");
-    printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
+    // printf("Hotkeys Inifile loaded\n");
+    // printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
     if (!inifile.Exists("Hotkeys") && inifile.Exists("Hotkeys1"))
     {
       auto sec = inifile.GetOrCreateSection("Hotkeys1");
@@ -425,7 +425,7 @@ static void LoadLegacyConfig(ControllerEmu::EmulatedController* controller)
       controller->UpdateReferences(g_controller_interface);
     }
   }
-  printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
+  // printf("Current default wiimix device (load legacy config): %s\n", controller->GetDefaultWiiMixDevice().name.c_str());
 }
 
 void Initialize()

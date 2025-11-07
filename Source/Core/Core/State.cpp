@@ -22,6 +22,8 @@
 #include <lz4.h>
 #include <lzo/lzo1x.h>
 
+#include "AudioCommon/AudioCommon.h"
+
 #include "Common/ChunkFile.h"
 #include "Common/CommonTypes.h"
 #include "Common/Event.h"
@@ -77,6 +79,8 @@ static const u32 IN_LEN = 60 * 1024u;
 #else
 static const u32 IN_LEN = 128 * 1024u;
 #endif
+
+bool diff_test = false;
 
 static const u32 OUT_LEN = IN_LEN + (IN_LEN / 16) + 64 + 3;
 
@@ -216,9 +220,9 @@ static void DoState(Core::System& system, PointerWrap& p)
   Gecko::DoState(p);
   p.DoMarker("Gecko");
 
-#ifdef USE_RETRO_ACHIEVEMENTS
-  AchievementManager::GetInstance().DoState(p);
-#endif  // USE_RETRO_ACHIEVEMENTS
+  #ifdef USE_RETRO_ACHIEVEMENTS
+    AchievementManager::GetInstance().DoState(p);
+  #endif  // USE_RETRO_ACHIEVEMENTS
 }
 
 // DoWiiMixState is a custom savestate function that removes host data from savestates
@@ -259,24 +263,24 @@ static void DoWiiMixState(Core::System& system, PointerWrap& p)
   // Movie must be done before the video backend, because the window is redrawn in the video backend
   // state load, and the frame number must be up-to-date.
   
-  // Don't need movie support in WiiMix savestates
-  // system.GetMovie().DoState(p);
-  // p.DoMarker("Movie");
+  // 100% pure emulated data; can be saved, may be useful in other places other than just Movie
+  system.GetMovie().DoState(p);
+  p.DoMarker("Movie");
 
   // Begin with video backend, so that it gets a chance to clear its caches and writeback modified
   // things to RAM
   
-  // TODOx: video backend is a non-portable, host-specific component, so we skip it here
-  // g_video_backend->DoState(p);
-  // p.DoMarker("video_backend");
+  // video backend is a MIX of emulated and host-specific data, so we need to modify it to only save emulated data
+  g_video_backend->DoState(p);
+  p.DoMarker("video_backend");
 
   // CoreTiming needs to be restored before restoring Hardware because
   // the controller code might need to schedule an event if the controller has changed.
-  // if (!WIIMIX_STATE)
-  // {
+  // CoreTiming has 2 distinct parts:
+  // - Emulated data (timing, scheduled events)
+  // - Host data (m_event_types (maps events to function pointers; host-specific))
   system.GetCoreTiming().DoState(p);
   p.DoMarker("CoreTiming");
-  // }
 
   // HW needs to be restored before PowerPC because the data cache might need to be flushed.
   // TODOx: HW::DoState may include host-specific data, so we may need to modify it for WiiMix
@@ -290,15 +294,17 @@ static void DoWiiMixState(Core::System& system, PointerWrap& p)
   p.DoMarker("PowerPC");
 
   // TODOx: Likely has bluetooth host-specific data
-  // if (system.IsWii())
-  //   Wiimote::DoState(p);
-  // p.DoMarker("Wiimote");
-  // Gecko::DoState(p);
-  // p.DoMarker("Gecko");
+  if (system.IsWii())
+    Wiimote::DoState(p);
+  p.DoMarker("Wiimote");
+  Gecko::DoState(p);
+  p.DoMarker("Gecko");
 
-  // #ifdef USE_RETRO_ACHIEVEMENTS
-  //   AchievementManager::GetInstance().DoState(p);
-  // #endif  // USE_RETRO_ACHIEVEMENTS
+  // Retroachievements DoState is actually required
+  // It only saves emulated data (achievement progress)
+  #ifdef USE_RETRO_ACHIEVEMENTS
+    AchievementManager::GetInstance().DoState(p);
+  #endif  // USE_RETRO_ACHIEVEMENTS
 }
 
 void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
@@ -350,6 +356,53 @@ bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
     success = WiiMixHostReinitialization(system);
   }
   return success;
+}
+
+bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer)
+{
+  if (NetPlay::IsNetPlayRunning())
+  {
+    OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+    return false;
+  }
+
+  if (AchievementManager::GetInstance().IsHardcoreModeActive())
+  {
+    OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+    return false;
+  }
+
+  // This should only be called from the CPU thread
+  bool success = false;
+  u8* ptr = buffer.data();
+  PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+  
+  // Reset JIT cache before loading state
+  // Loading state will force JIT EmuThread JIT cache to reload
+  // NOTE: don't call shutdown() as it will result in a use after free error
+  auto& power_pc = system.GetPowerPC();
+  const PowerPC::CPUCore active_core =
+      static_cast<PowerPC::CPUCore>(Config::Get(Config::MAIN_CPU_CORE));
+  power_pc.Init(active_core);
+  DoWiiMixState(system, p);
+
+  auto& ppc_state = power_pc.GetPPCState();
+  auto& memory = system.GetMemory();
+
+  if (!ppc_state.m_enable_dcache)
+  {
+    INFO_LOG_FMT(POWERPC, "Flushing data cache");
+    ppc_state.dCache.FlushAll(memory);
+  }
+
+  PowerPC::RoundingModeUpdated(ppc_state);
+  PowerPC::RecalculateAllFeatureFlags(ppc_state);
+
+  auto& mmu = system.GetMMU();
+  mmu.IBATUpdated();
+  mmu.DBATUpdated();
+
+  return p.IsReadMode();
 }
 
 void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
@@ -1364,12 +1417,29 @@ static void LoadWiiMixFileStateData(const std::string& filename, std::vector<u8>
 // - Memory::DoState
 // - CoreTiming::DoState
 bool WiiMixHostReinitialization(Core::System& system) {
-  JitInterface& jit = system.GetJitInterface();
+  // This MUST run on the main thread (not the EmuThread)
 
-  // 1. Invalidate GameCube RAM (24MB)
-  // Provide appropriate arguments for ClearCache; for example, pass 'false' if it expects a bool.
-  Core::CPUThreadGuard guard(system);
-  jit.ClearCache(guard);
+  // JitInterface& jit = system.GetJitInterface();
+
+  // // 1. Invalidate GameCube RAM (24MB)
+  // // Provide appropriate arguments for ClearCache; for example, pass 'false' if it expects a bool.
+  // Core::CPUThreadGuard guard(system);
+
+  // Reset any core timing events after saving them
+  // That way proper function pointers can be loaded on the corresponding system when reregistering events
+  system.GetCoreTiming().WiiMixReset();
+
+  // // Reset the entire host-side JIT by re-initializing the PowerPCManager.
+  // auto& power_pc = system.GetPowerPC();
+  // power_pc.Shutdown();
+
+  // // Get the active CPU core from the config (this is the "source of truth")
+  // const PowerPC::CPUCore active_core = 
+  //     static_cast<PowerPC::CPUCore>(Config::Get(Config::MAIN_CPU_CORE));
+
+  // // Re-initialize the PowerPCManager and its JIT.
+  // // This will re-register its events into the clean CoreTiming map.
+  // power_pc.Init(active_core);
 
   // 2. Invalidate Wii MEM2 if it's a Wii game (64MB)
   // if (system.IsWii())
@@ -1379,10 +1449,19 @@ bool WiiMixHostReinitialization(Core::System& system) {
 
   // Reset video components
   // Refer to ShutdownShared to work backwards to find what needs to be reset
-  // g_video_backend->WiiMixReset();
+  g_video_backend->WiiMixReset();
 
-  auto& ppc_state = system.GetPowerPC().GetPPCState();
-  Common::FPU::SetSIMDMode(ppc_state.fpscr.RN, ppc_state.fpscr.NI);
+  AudioCommon::ShutdownSoundStream(system); // Destroy the old host audio state
+  AudioCommon::InitSoundStream(system);     // Create a new, fresh one
+  AudioCommon::PostInitSoundStream(system);
+
+  if (system.IsWii()) {
+    // Reset all Wiimotes
+    Wiimote::ResetAllWiimotes();
+  }
+
+  // auto& ppc_state = system.GetPowerPC().GetPPCState();
+  // Common::FPU::SetSIMDMode(ppc_state.fpscr.RN, ppc_state.fpscr.NI);
 
   // system.GetDVDThread().WaitUntilIdle(); // Pass 'true' to skip the ASSERT
   // system.GetDVDThread().WiiMixReset();
@@ -1396,11 +1475,6 @@ bool WiiMixHostReinitialization(Core::System& system) {
   //   system.GetSoundStream()->SetRunning(true);
   // }
   
-  // Reset the *emulated registers* to a clean state.
-
-  // system.GetCoreTiming().ClearPendingEvents();
-  // system.GetCoreTiming().WiiMixReset();
-
   // TODOx: Reset audio components (later)
   // g_audio_backend.Reset();
   return true;
@@ -1796,104 +1870,182 @@ void UndoWiiMixSaveState(Core::System& system)
 // 4. Steps the emulator one frame, saves the result (C)
 // 5. Compares B and C. If they match, your functions are deterministic.
 //
+// int WiiMixDiffTest(Core::System& system)
+// {
+//   if (!Core::IsRunningOrStarting(system))
+//   {
+//     TEST_FAIL(1, "WiiMix Diff Test: Emulator is not running.");
+//     return 1;
+//   }
+
+//   printf("Starting WiiMix Diff Test...\n");
+//   OSD::AddMessage("Running WiiMix Diff Test...", 3000, OSD::Color::CYAN);
+
+//   int exit_code = 1;
+
+//   Core::RunOnCPUThread(
+//       system,
+//       [&] {
+//         std::vector<u8> buffer_A;
+//         std::vector<u8> buffer_B;
+//         std::vector<u8> buffer_C;
+
+//         // --- Step 1: Get State A (The Start) ---
+//         WiiMixSaveToBuffer(system, buffer_A);
+//         if (buffer_A.empty())
+//         {
+//           TEST_FAIL(2, "Diff Test FAILED: State A was empty.");
+//           Core::Stop(system);
+//           exit_code = 2;
+//           return;
+//         }
+
+//         // --- Step 2 & 3: Get State B (The \"Control\" Frame) ---
+//         Core::DoFrameStep(system);
+//         WiiMixSaveToBuffer(system, buffer_B);
+//         if (buffer_B.empty())
+//         {
+//           TEST_FAIL(3, "Diff Test FAILED: State B was empty.");
+//           Core::Stop(system);
+//           exit_code = 3;
+//           return;
+//         }
+
+//         // --- Step 4: Load State A (The \"Reset\") ---
+//         WiiMixLoadFromBuffer(system, buffer_A);
+
+//         // --- Step 5 & 6: Get State C (The \"Test\" Frame) ---
+//         Core::DoFrameStep(system);
+//         WiiMixSaveToBuffer(system, buffer_C);
+//         if (buffer_C.empty())
+//         {
+//           TEST_FAIL(4, "Diff Test FAILED: State C was empty.");
+//           Core::Stop(system);
+//           exit_code = 4;
+//           return;
+//         }
+
+//         // --- Step 7: Compare B and C ---
+//         if (buffer_B.size() != buffer_C.size())
+//         {
+//           TEST_FAIL(5, "Diff Test FAILED: Size mismatch! B=%zu, C=%zu.", buffer_B.size(), buffer_C.size());
+//           Core::Stop(system);
+//           exit_code = 5;
+//           return;
+//         }
+
+//         if (buffer_B == buffer_C)
+//         {
+//           printf("Diff Test PASSED! State is deterministic.\n");
+//           OSD::AddMessage("Diff Test PASSED! State is deterministic.", 10000, OSD::Color::GREEN);
+//           exit_code = 0;
+//         }
+//         else
+//         {
+//           // Find the first mismatch
+//           size_t mismatch_index = 0;
+//           for (size_t i = 0; i < buffer_B.size(); ++i)
+//           {
+//             if (buffer_B[i] != buffer_C[i])
+//             {
+//               mismatch_index = i;
+//               break;
+//             }
+//           }
+//           TEST_FAIL(6, "Diff Test FAILED: Mismatch at byte %zu. Your save/load logic is not deterministic.", mismatch_index);
+//           // QCoreApplication::exit(test_result);
+//           exit_code = 6;
+//         }
+//         Core::Stop(system);
+//         // Dump buffers to files (e.g., "diff_B.bin", "diff_C.bin") so you can analyze them with a hex editor.
+//         {
+//           File::IOFile file_b("B.bin", "wb");
+//           if (file_b)
+//             file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+//           File::IOFile file_c("C.bin", "wb");
+//           if (file_c)
+//             file_c.WriteBytes(buffer_C.data(), buffer_C.size());
+//         }
+//       },
+//       true); // true = wait for it to finish
+//     return exit_code;
+//   }
+
 int WiiMixDiffTest(Core::System& system)
 {
-  if (!Core::IsRunningOrStarting(system))
-  {
-    TEST_FAIL(1, "WiiMix Diff Test: Emulator is not running.");
-    return 1;
-  }
-
   printf("Starting WiiMix Diff Test...\n");
-  OSD::AddMessage("Running WiiMix Diff Test...", 3000, OSD::Color::CYAN);
-
   int exit_code = 1;
+  std::vector<u8> buffer_A, buffer_B, buffer_C;
+  bool emu_thread_ok = true;
 
-  Core::RunOnCPUThread(
-      system,
-      [&] {
-        std::vector<u8> buffer_A;
-        std::vector<u8> buffer_B;
-        std::vector<u8> buffer_C;
+  // --- Steps 1, 2, 3 (on EmuThread) ---
+  Core::RunOnCPUThread(system, [&] {
+    WiiMixSaveToBuffer(system, buffer_A);
+    if (buffer_A.empty()) { emu_thread_ok = false; return; }
+    Core::DoFrameStep(system);
+    WiiMixSaveToBuffer(system, buffer_B);
+    if (buffer_B.empty()) { emu_thread_ok = false; return; }
+  }, true); // Wait
 
-        // --- Step 1: Get State A (The Start) ---
-        WiiMixSaveToBuffer(system, buffer_A);
-        if (buffer_A.empty())
-        {
-          TEST_FAIL(2, "Diff Test FAILED: State A was empty.");
-          Core::Stop(system);
-          exit_code = 2;
-          return;
-        }
-
-        // --- Step 2 & 3: Get State B (The \"Control\" Frame) ---
-        Core::DoFrameStep(system);
-        WiiMixSaveToBuffer(system, buffer_B);
-        if (buffer_B.empty())
-        {
-          TEST_FAIL(3, "Diff Test FAILED: State B was empty.");
-          Core::Stop(system);
-          exit_code = 3;
-          return;
-        }
-
-        // --- Step 4: Load State A (The \"Reset\") ---
-        WiiMixLoadFromBuffer(system, buffer_A);
-
-        // --- Step 5 & 6: Get State C (The \"Test\" Frame) ---
-        Core::DoFrameStep(system);
-        WiiMixSaveToBuffer(system, buffer_C);
-        if (buffer_C.empty())
-        {
-          TEST_FAIL(4, "Diff Test FAILED: State C was empty.");
-          Core::Stop(system);
-          exit_code = 4;
-          return;
-        }
-
-        // --- Step 7: Compare B and C ---
-        if (buffer_B.size() != buffer_C.size())
-        {
-          TEST_FAIL(5, "Diff Test FAILED: Size mismatch! B=%zu, C=%zu.", buffer_B.size(), buffer_C.size());
-          Core::Stop(system);
-          exit_code = 5;
-          return;
-        }
-
-        if (buffer_B == buffer_C)
-        {
-          printf("Diff Test PASSED! State is deterministic.\n");
-          OSD::AddMessage("Diff Test PASSED! State is deterministic.", 10000, OSD::Color::GREEN);
-          exit_code = 0;
-        }
-        else
-        {
-          // Find the first mismatch
-          size_t mismatch_index = 0;
-          for (size_t i = 0; i < buffer_B.size(); ++i)
-          {
-            if (buffer_B[i] != buffer_C[i])
-            {
-              mismatch_index = i;
-              break;
-            }
-          }
-          TEST_FAIL(6, "Diff Test FAILED: Mismatch at byte %zu. Your save/load logic is not deterministic.", mismatch_index);
-          // QCoreApplication::exit(test_result);
-          exit_code = 6;
-        }
-        Core::Stop(system);
-        // Dump buffers to files (e.g., "diff_B.bin", "diff_C.bin") so you can analyze them with a hex editor.
-        {
-          File::IOFile file_b("B.bin", "wb");
-          if (file_b)
-            file_b.WriteBytes(buffer_B.data(), buffer_B.size());
-          File::IOFile file_c("C.bin", "wb");
-          if (file_c)
-            file_c.WriteBytes(buffer_C.data(), buffer_C.size());
-        }
-      },
-      true); // true = wait for it to finish
-    return exit_code;
+  if (!emu_thread_ok) {
+    TEST_FAIL(2, "Diff Test FAILED: State A or B was empty.");
+    return 2;
   }
+
+  // Part B: Re-init host state (on Main Thread - THIS THREAD)
+  // This is now thread-safe and will not crash.
+  // NOTE: I thought it would make more sense to do this after load,
+  // but that screws up the event queue
+  if (!WiiMixHostReinitialization(system)) {
+    TEST_FAIL(4, "Diff Test FAILED: Host Re-initialization failed.");
+    return 4;
+  }
+
+  // --- Step 4 (The Fix) ---
+  // Part A: Load emulated state (on EmuThread)
+  Core::RunOnCPUThread(system, [&] {
+    if (!WiiMixLoadFromBufferEmuThread(system, buffer_A)) {
+      emu_thread_ok = false;
+    }
+  }, true); // Wait
+
+  if (!emu_thread_ok) {
+    TEST_FAIL(3, "Diff Test FAILED: Loading Emulated State failed.");
+    return 3;
+  }
+
+  // --- Steps 5, 6, 7 (on EmuThread) ---
+  Core::RunOnCPUThread(system, [&] {
+    Core::DoFrameStep(system);
+    WiiMixSaveToBuffer(system, buffer_C);
+    if (buffer_C.empty()) {
+      TEST_FAIL(5, "Diff Test FAILED: State C was empty.");
+      exit_code = 5;
+    } else if (buffer_B.size() != buffer_C.size()) {
+      TEST_FAIL(6, "Diff Test FAILED: Size mismatch! B=%zu, C=%zu.", buffer_B.size(), buffer_C.size());
+      exit_code = 6;
+    } else if (buffer_B == buffer_C) {
+      printf("Diff Test PASSED! State is deterministic.\n");
+      exit_code = 0;
+    } else {
+      auto mismatch = std::mismatch(buffer_B.begin(), buffer_B.end(), buffer_C.begin()).first;
+      TEST_FAIL(7, "Diff Test FAILED: Mismatch at byte 0x%zX Your save/load logic is not deterministic.",
+        static_cast<size_t>(mismatch - buffer_B.begin()));
+      exit_code = 7;
+    }
+    
+    // Dump files...
+    {
+      File::IOFile file_b("B.bin", "wb");
+      if (file_b)
+        file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+      File::IOFile file_c("C.bin", "wb");
+      if (file_c)
+        file_c.WriteBytes(buffer_C.data(), buffer_C.size());
+    }
+    Core::Stop(system);
+  }, true); // Wait
+    
+  return exit_code;
+}
 }  // namespace State

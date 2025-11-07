@@ -31,13 +31,15 @@
 
 void VideoCommon_DoState(PointerWrap& p)
 {
-  bool software = false;
-  p.Do(software);
+  if (!WIIMIX_STATE) {
+    bool software = false;
+    p.Do(software);
 
-  if (p.IsReadMode() && software == true)
-  {
-    // change mode to abort load of incompatible save state.
-    p.SetVerifyMode();
+    if (p.IsReadMode() && software == true)
+    {
+      // change mode to abort load of incompatible save state.
+      p.SetVerifyMode();
+    }
   }
 
   // BP Memory
@@ -87,24 +89,42 @@ void VideoCommon_DoState(PointerWrap& p)
   system.GetGeometryShaderManager().DoState(p);
   p.DoMarker("GeometryShaderManager");
 
-  g_vertex_manager->DoState(p);
-  p.DoMarker("VertexManager");
+  // Do not save the host's vertex cache for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_vertex_manager->DoState(p);
+    p.DoMarker("VertexManager");
+  }
 
-  g_framebuffer_manager->DoState(p);
-  p.DoMarker("FramebufferManager");
+  // Do not save the host's framebuffer cache for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_framebuffer_manager->DoState(p);
+    p.DoMarker("FramebufferManager");
+  }
 
-  g_texture_cache->DoState(p);
-  p.DoMarker("TextureCache");
+  // Do not save the host's texture cache for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_texture_cache->DoState(p);
+    p.DoMarker("TextureCache");
+  }
 
-  g_presenter->DoState(p);
-  g_frame_dumper->DoState(p);
-  p.DoMarker("Presenter");
+  // Do not save host-specific rendering logic for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_presenter->DoState(p);
+    g_frame_dumper->DoState(p);
+    p.DoMarker("Presenter");
+  }
 
-  g_bounding_box->DoState(p);
-  p.DoMarker("Bounding Box");
+  // Do not save host's bounding box state (host optimization) for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_bounding_box->DoState(p);
+    p.DoMarker("Bounding Box");
+  }
 
-  g_widescreen->DoState(p);
-  p.DoMarker("Widescreen");
+  // Do not save host's widescreen config for WiiMix states
+  if (!WIIMIX_STATE) {
+    g_widescreen->DoState(p);
+    p.DoMarker("Widescreen");
+  }
 
   system.GetXFStateManager().DoState(p);
   p.DoMarker("XFStateManager");

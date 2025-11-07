@@ -145,6 +145,10 @@ void GeneralPane::CreateBasic()
   basic_group_layout->addWidget(m_checkbox_dualcore);
 
   m_checkbox_cheats = new ConfigBool(tr("Enable Cheats"), Config::MAIN_ENABLE_CHEATS);
+  // Cheats are currently disabled for wiimix savestate compatibility
+  // It's possible to re-enable this in the future with some work
+  m_checkbox_cheats->setEnabled(false);
+  m_checkbox_cheats->setDisabled(true);
   basic_group_layout->addWidget(m_checkbox_cheats);
 
   m_checkbox_override_region_settings =

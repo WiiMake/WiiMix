@@ -637,7 +637,8 @@ static void EmuThread(Core::System& system, std::unique_ptr<BootParameters> boot
     wiifs_guard.Dismiss();
 
   // This adds the SyncGPU handler to CoreTiming, so now CoreTiming::Advance might block.
-  system.GetFifo().Prepare();
+  if (!WIIMIX_STATE)
+    system.GetFifo().Prepare();
 
   // Setup our core
   if (Config::Get(Config::MAIN_CPU_CORE) != PowerPC::CPUCore::Interpreter)
@@ -650,6 +651,22 @@ static void EmuThread(Core::System& system, std::unique_ptr<BootParameters> boot
   }
 
   UpdateTitle(system);
+
+  // This actually causes a deadlock if we try to do it in WiiMix Diff Test mode.
+  // if (Savestate::diff_test)
+  // {
+  //   // We are already on the EmuThread, so we don't need RunOnCPUThread.
+  //   // We call the function *directly*.
+    
+  //   int test_result = Savestate::WiiMixDiffTest(system);
+    
+  //   printf("WiiMix Diff Test completed with code %d.\n", test_result);
+  //   fflush(stdout);
+  //   fflush(stderr);
+    
+  //   // The test is done. Return and join main process.
+  //   return;
+  // }
 
   // ENTER THE VIDEO THREAD LOOP
   if (system.IsDualCoreMode())
@@ -687,6 +704,9 @@ static void EmuThread(Core::System& system, std::unique_ptr<BootParameters> boot
   INFO_LOG_FMT(CONSOLE, "{}", StopMessage(true, "Stopping GDB ..."));
   GDBStub::Deinit();
   INFO_LOG_FMT(CONSOLE, "{}", StopMessage(true, "GDB stopped."));
+
+  // This adds the SyncGPU handler to CoreTiming...
+  system.GetFifo().Prepare();
 }
 
 // Set or get the running state

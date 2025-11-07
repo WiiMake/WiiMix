@@ -89,8 +89,13 @@ void AudioInterfaceManager::DoState(PointerWrap& p)
   p.Do(m_aid_sample_rate_divisor);
   p.Do(m_cpu_cycles_per_sample);
 
-  SoundStream* sound_stream = m_system.GetSoundStream();
-  sound_stream->GetMixer()->DoState(p);
+  // Sound Stream and Mixer are the host interacting with the PCs speakers
+  // I don't believe this logic is portable, so they are ignored for WiiMix savestates
+  // and reinitialized on load.
+  if (!WIIMIX_STATE) {
+    SoundStream* sound_stream = m_system.GetSoundStream();
+    sound_stream->GetMixer()->DoState(p);
+  }
 }
 
 void AudioInterfaceManager::UpdateInterrupts()

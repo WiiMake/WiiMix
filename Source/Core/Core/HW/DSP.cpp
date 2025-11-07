@@ -109,6 +109,7 @@ DSPEmulator* DSPManager::GetDSPEmulator()
 
 void DSPManager::Init(bool hle)
 {
+  printf("Initializing DSP...\n");
   Reinit(hle);
   auto& core_timing = m_system.GetCoreTiming();
   m_event_type_generate_dsp_interrupt =

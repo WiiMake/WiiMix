@@ -100,6 +100,15 @@ void DVDThread::StopDVDThread()
 
 void DVDThread::DoState(PointerWrap& p)
 {
+
+  // m_disc isn't savestated (because it points to files on the
+  // local system). Instead, we check that the status of the disc
+  // is the same as when the savestate was made. This won't catch
+  // cases of having the wrong disc inserted, though.
+  // TODO: Check the game ID, disc number, revision?
+  bool had_disc = HasDisc();
+  p.Do(had_disc);
+
   // By waiting for the DVD thread to be done working, we ensure
   // that request_queue will be empty and that the DVD thread
   // won't be touching anything while this function runs.
@@ -114,19 +123,12 @@ void DVDThread::DoState(PointerWrap& p)
     ReadResult result;
     while (m_result_queue.Pop(result))
       m_result_map.emplace(result.first.id, std::move(result));
+  
+    // Both queues are now empty, so we don't need to savestate them.
+    p.Do(m_result_map);
+    p.Do(m_next_id);
   }
 
-  // Both queues are now empty, so we don't need to savestate them.
-  p.Do(m_result_map);
-  p.Do(m_next_id);
-
-  // m_disc isn't savestated (because it points to files on the
-  // local system). Instead, we check that the status of the disc
-  // is the same as when the savestate was made. This won't catch
-  // cases of having the wrong disc inserted, though.
-  // TODO: Check the game ID, disc number, revision?
-  bool had_disc = HasDisc();
-  p.Do(had_disc);
   if (had_disc != HasDisc())
   {
     if (had_disc)

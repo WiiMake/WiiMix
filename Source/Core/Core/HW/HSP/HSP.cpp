@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "Core/HW/HSP/HSP.h"
+#include "Core/System.h"
 
 #include <memory>
 
@@ -48,7 +49,10 @@ void HSPManager::DoState(PointerWrap& p)
   if (type != m_device->GetDeviceType())
     AddDevice(type);
 
-  m_device->DoState(p);
+  // Device state is host-specific; ignore for WiiMix savestates
+  if (!WIIMIX_STATE) {
+    m_device->DoState(p);
+  }
 }
 
 void HSPManager::AddDevice(std::unique_ptr<IHSPDevice> device)

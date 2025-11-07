@@ -122,6 +122,7 @@ void WiiMixSaveToBuffer(Core::System& system, std::vector<u8>& buffer);
 
 void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer);
 bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer);
+bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer);
 
 void LoadLastSaved(Core::System& system, int i = 1);
 void LoadLastSavedWiiMix(Core::System& system, int i = 1);
@@ -140,8 +141,8 @@ void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback);
 int WiiMixDiffTest(Core::System& system);
 
 bool WiiMixHostReinitialization(Core::System& system);
+extern bool diff_test;
 
 }  // namespace State
-
 
 static bool safe_to_quit = true;

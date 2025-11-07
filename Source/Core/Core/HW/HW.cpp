@@ -32,6 +32,7 @@ namespace HW
 {
 void Init(Core::System& system, const Sram* override_sram)
 {
+  printf("Initializing HW...\n");
   system.GetCoreTiming().Init();
   system.GetSystemTimers().PreInit();
 
@@ -82,46 +83,88 @@ void Shutdown(Core::System& system)
   system.GetCoreTiming().Shutdown();
 }
 
+// void DoState(Core::System& system, PointerWrap& p)
+// {
+//   // ONLY save memory for testing for now
+//   system.GetMemory().DoState(p);
+//   p.DoMarker("Memory");
+//   system.GetMemoryInterface().DoState(p);
+//   p.DoMarker("MemoryInterface");
+//   system.GetVideoInterface().DoState(p);
+//   p.DoMarker("VideoInterface");
+//   // SerialInterface was crashing due to a null ptr; skipping it for now
+//   // I'm not sure if it contains data necessary for state saving yet
+//   if (!WIIMIX_STATE) {
+//     system.GetSerialInterface().DoState(p);
+//     p.DoMarker("SerialInterface");
+//   }
+//   system.GetProcessorInterface().DoState(p);
+//   p.DoMarker("ProcessorInterface");
+//   // TODO: left off here; DSP nullptr crash on acube.dol
+//   system.GetDSP().DoState(p);
+//   p.DoMarker("DSP");
+//   if (!WIIMIX_STATE) {
+//     system.GetDVDInterface().DoState(p);
+//     p.DoMarker("DVDInterface");
+//     system.GetGPFifo().DoState(p);
+//     p.DoMarker("GPFifo");
+//     system.GetExpansionInterface().DoState(p);
+//     p.DoMarker("ExpansionInterface");
+//     if (!WIIMIX_STATE) {
+//       system.GetAudioInterface().DoState(p);
+//       p.DoMarker("AudioInterface");
+//     }
+//     system.GetHSP().DoState(p);
+//     p.DoMarker("HSP");
+
+//     if (system.IsWii())
+//     {
+//       system.GetWiiIPC().DoState(p);
+//       p.DoMarker("IOS");
+//       system.GetIOS()->DoState(p);
+//       p.DoMarker("IOS::HLE");
+//     }
+
+//     p.DoMarker("WIIHW");
+//   }
+// }
+
 void DoState(Core::System& system, PointerWrap& p)
 {
-  // ONLY save memory for testing for now
+  // NOTE: all of these are emulated components, however the states being saved
+  // MAY contain host-specific data
   system.GetMemory().DoState(p);
   p.DoMarker("Memory");
-  if (!WIIMIX_STATE) {
-    system.GetMemoryInterface().DoState(p);
-    p.DoMarker("MemoryInterface");
-    system.GetVideoInterface().DoState(p);
-    p.DoMarker("VideoInterface");
-    system.GetSerialInterface().DoState(p);
-    p.DoMarker("SerialInterface");
-    system.GetProcessorInterface().DoState(p);
-    p.DoMarker("ProcessorInterface");
-    if (!WIIMIX_STATE) {
-      system.GetDSP().DoState(p);
-      p.DoMarker("DSP");
-    }
-    system.GetDVDInterface().DoState(p);
-    p.DoMarker("DVDInterface");
-    system.GetGPFifo().DoState(p);
-    p.DoMarker("GPFifo");
-    system.GetExpansionInterface().DoState(p);
-    p.DoMarker("ExpansionInterface");
-    if (!WIIMIX_STATE) {
-      system.GetAudioInterface().DoState(p);
-      p.DoMarker("AudioInterface");
-    }
-    system.GetHSP().DoState(p);
-    p.DoMarker("HSP");
+  system.GetMemoryInterface().DoState(p);
+  p.DoMarker("MemoryInterface");
+  system.GetVideoInterface().DoState(p);
+  p.DoMarker("VideoInterface");
+  system.GetSerialInterface().DoState(p);
+  p.DoMarker("SerialInterface");
+  system.GetProcessorInterface().DoState(p);
+  p.DoMarker("ProcessorInterface");
+  system.GetDSP().DoState(p);
+  p.DoMarker("DSP");
+  system.GetDVDInterface().DoState(p);
+  p.DoMarker("DVDInterface");
+  system.GetGPFifo().DoState(p);
+  p.DoMarker("GPFifo");
+  system.GetExpansionInterface().DoState(p);
+  p.DoMarker("ExpansionInterface");
+  system.GetAudioInterface().DoState(p);
+  p.DoMarker("AudioInterface");
+  system.GetHSP().DoState(p);
+  p.DoMarker("HSP");
 
-    if (system.IsWii())
-    {
-      system.GetWiiIPC().DoState(p);
-      p.DoMarker("IOS");
-      system.GetIOS()->DoState(p);
-      p.DoMarker("IOS::HLE");
-    }
-
-    p.DoMarker("WIIHW");
+  if (system.IsWii())
+  {
+    system.GetWiiIPC().DoState(p);
+    p.DoMarker("IOS");
+    system.GetIOS()->DoState(p);
+    p.DoMarker("IOS::HLE");
   }
+
+  p.DoMarker("WIIHW");
 }
+
 }  // namespace HW

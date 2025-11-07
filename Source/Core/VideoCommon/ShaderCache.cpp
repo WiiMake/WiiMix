@@ -5,6 +5,8 @@
 
 #include <fmt/format.h>
 
+#include "Core/System.h"
+
 #include "Common/Assert.h"
 #include "Common/FileUtil.h"
 #include "Common/MsgHandler.h"
@@ -413,6 +415,12 @@ void ShaderCache::ClearCaches()
   SETSTAT(g_stats.num_pixel_shaders_alive, 0);
   SETSTAT(g_stats.num_vertex_shaders_created, 0);
   SETSTAT(g_stats.num_vertex_shaders_alive, 0);
+
+  // TODOx: wiimix added this
+  if (!WIIMIX_STATE) {
+    if (m_async_shader_compiler)
+      m_async_shader_compiler->StopWorkerThreads();
+  }
 }
 
 void ShaderCache::CompileMissingPipelines()

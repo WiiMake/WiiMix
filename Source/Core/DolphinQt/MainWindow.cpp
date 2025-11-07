@@ -1735,7 +1735,8 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters, std::st
     qDebug() << Config::Get(Config::MAIN_FULLSCREEN_DISPLAY_RES).c_str();
 
     // Run Diff Test (remove this once state saving/loading is stable)
-    State::WiiMixDiffTest(Core::System::GetInstance());
+    // MIGRATED TO TESTING USING WIIMIX-NOGUI
+    // State::WiiMixDiffTest(Core::System::GetInstance());
   });
 }
 
