@@ -52,7 +52,7 @@ void DummyNetworkCaptureLogger::LogBBA(const void* data, std::size_t length)
 
 NetworkCaptureType DummyNetworkCaptureLogger::GetCaptureType() const
 {
-  return NetworkCaptureType::None;
+  return NetworkCaptureType::NotValid;
 }
 
 void BinarySSLCaptureLogger::LogSSLRead(const void* data, std::size_t length, s32 socket)

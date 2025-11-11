@@ -253,13 +253,17 @@ void CEXIChannel::DoState(PointerWrap& p)
 
     if (type == device->m_device_type)
     {
-      device->DoState(p);
+      if (!WIIMIX_STATE) {
+        device->DoState(p);
+      }
     }
     else
     {
       std::unique_ptr<IEXIDevice> save_device =
           EXIDevice_Create(m_system, type, m_channel_id, m_memcard_header_data);
-      save_device->DoState(p);
+      if (!WIIMIX_STATE) {
+        save_device->DoState(p);
+      }
       AddDevice(std::move(save_device), device_index, false);
     }
 

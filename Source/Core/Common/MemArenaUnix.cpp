@@ -16,6 +16,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "Core/System.h"
 #include "Common/Assert.h"
 #include "Common/CommonFuncs.h"
 #include "Common/CommonTypes.h"
@@ -114,7 +115,9 @@ LazyMemoryRegion::LazyMemoryRegion() = default;
 
 LazyMemoryRegion::~LazyMemoryRegion()
 {
-  Release();
+  if (!WIIMIX_STATE) {
+    Release();
+  }
 }
 
 #if !defined MAP_NORESERVE && (defined __FreeBSD__ || defined __OpenBSD__ || defined __NetBSD__)

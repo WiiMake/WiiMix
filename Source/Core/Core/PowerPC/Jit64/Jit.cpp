@@ -120,14 +120,14 @@ Jit64::Jit64(Core::System& system) : JitBase(system), QuantizedMemoryRoutines(*t
 {
 }
 
-// Jit64::~Jit64() = default;
-Jit64::~Jit64() {
-  if (WIIMIX_STATE) {
-    return;
-  }
+Jit64::~Jit64() = default;
+// Jit64::~Jit64() {
+//   if (WIIMIX_STATE) {
+//     return;
+//   }
 
   // TODO: default destructor body
-} // Experimental destructor that does nothing
+// } // Experimental destructor that does nothing
 
 bool Jit64::HandleFault(uintptr_t access_address, SContext* ctx)
 {

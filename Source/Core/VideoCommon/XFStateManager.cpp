@@ -4,6 +4,7 @@
 #include "VideoCommon/XFStateManager.h"
 
 #include "Common/ChunkFile.h"
+#include "Core/System.h"
 
 #include "VideoCommon/FramebufferManager.h"
 #include "VideoCommon/VertexManagerBase.h"
@@ -43,7 +44,7 @@ void XFStateManager::DoState(PointerWrap& p)
   p.Do(m_tex_mtx_info_changed);
   p.Do(m_lighting_config_changed);
 
-  if (p.IsReadMode())
+  if (p.IsReadMode() && !WIIMIX_STATE)
   {
     // This is called after a savestate is loaded.
     // Any constants that can changed based on settings should be re-calculated

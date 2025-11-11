@@ -520,7 +520,7 @@ std::shared_ptr<Core::NetworkCaptureLogger> PPCDebugInterface::NetworkLogger()
       return Core::NetworkCaptureType::PCAP;
     if (has_ssl)
       return Core::NetworkCaptureType::Raw;
-    return Core::NetworkCaptureType::None;
+    return Core::NetworkCaptureType::NotValid;
   }();
 
   if (m_network_logger && m_network_logger->GetCaptureType() == current_capture_type)
@@ -534,7 +534,7 @@ std::shared_ptr<Core::NetworkCaptureLogger> PPCDebugInterface::NetworkLogger()
   case Core::NetworkCaptureType::Raw:
     m_network_logger = std::make_shared<Core::BinarySSLCaptureLogger>();
     break;
-  case Core::NetworkCaptureType::None:
+  case Core::NetworkCaptureType::NotValid:
     m_network_logger = std::make_shared<Core::DummyNetworkCaptureLogger>();
     break;
   }

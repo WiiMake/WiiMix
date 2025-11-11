@@ -13,7 +13,6 @@
 
 #include "Common/Assert.h"
 #include "Common/ChunkFile.h"
-#include "Common/Logging/Log.h"
 #include "Common/SPSCQueue.h"
 
 #include "Core/AchievementManager.h"
@@ -154,8 +153,19 @@ void CoreTimingManager::WiiMixReset()
 {
   // We're already on the CPU thread, so this is safe.
   std::lock_guard lk(m_ts_write_lock);
-  // DO NOT clear the event queue; 
-  // MoveEvents();
+
+  m_last_oc_factor = m_config_oc_factor;
+  m_globals.last_OC_factor_inverted = m_config_oc_inv_factor;
+  m_globals.global_timer = 0;
+  m_globals.slice_length = MAX_SLICE_LENGTH;
+  m_idled_cycles = 0;
+
+  m_system.GetPPCState().downcount = CyclesToDowncount(MAX_SLICE_LENGTH);
+
+  m_is_global_timer_sane = true;
+  ResetThrottle(0);
+
+  MoveEvents();
   // m_event_queue.clear();
   // UnregisterAllEvents();
   m_event_types.clear();
@@ -163,7 +173,7 @@ void CoreTimingManager::WiiMixReset()
   // Reregister the lost event callback
   // This is a fallback for any events that were scheduled before the reset
   // but whose types are not reregistered after the reset.
-  // m_event_fifo_id = 0;
+  m_event_fifo_id = 0;
   m_ev_lost = RegisterEvent("_lost_event", &EmptyTimedCallback);
 }
 
@@ -181,22 +191,35 @@ static bool CompareEventsForState(const CoreTiming::Event& a, const CoreTiming::
 void CoreTimingManager::DoState(PointerWrap& p)
 {
   std::lock_guard lk(m_ts_write_lock);
-  p.Do(m_globals.slice_length);
-  p.Do(m_globals.global_timer);
-  p.Do(m_idled_cycles);
-  p.Do(m_fake_dec_start_value);
-  p.Do(m_fake_dec_start_ticks);
-  p.Do(m_globals.fake_TB_start_value);
-  p.Do(m_globals.fake_TB_start_ticks);
-  p.Do(m_last_oc_factor);
-  m_globals.last_OC_factor_inverted = 1.0f / m_last_oc_factor;
-  p.Do(m_event_fifo_id);
-
-  p.DoMarker("CoreTimingData");
-
+  // Treat slice length as volatile for WiiMix states
+  // if (!WIIMIX_STATE) {
+    // printf("Why is slice length being loaded? THIS IS WRONG\n");
+    p.Do(m_globals.slice_length);
+  // }
+  p.Do(m_globals.global_timer); // 8
+  // m_idled_cycles is host-dependent, volatile data.
+  // It is not part of the pure emulated state.
   if (!WIIMIX_STATE)
-    MoveEvents();
-    
+  {
+    p.Do(m_idled_cycles);
+    p.Do(m_last_oc_factor); // 4
+  }
+  p.Do(m_fake_dec_start_value); // 4
+  p.Do(m_fake_dec_start_ticks); // 8
+  p.Do(m_globals.fake_TB_start_value); // 8
+  p.Do(m_globals.fake_TB_start_ticks); // 8
+  if (p.IsReadMode() && !WIIMIX_STATE) {
+    m_globals.last_OC_factor_inverted = 1.0f / m_last_oc_factor;
+  }
+
+  // if (!WIIMIX_STATE) {
+    p.Do(m_event_fifo_id); // 8
+  // }
+
+  p.DoMarker("CoreTimingData"); // 4
+
+  // Serialize event queue
+  MoveEvents();
   size_t event_count;
   if (!p.IsReadMode())
     event_count = m_event_queue.size();
@@ -224,8 +247,8 @@ void CoreTimingManager::DoState(PointerWrap& p)
       else
       {
         WARN_LOG_FMT(POWERPC,
-                     "Lost event from savestate because its type, \"{}\", has not been registered.",
-                     name);
+                    "Lost event from savestate because its type, \"{}\", has not been registered.",
+                    name);
         ev.type = m_ev_lost;
       }
     }
@@ -381,8 +404,22 @@ void CoreTimingManager::Advance()
 
   auto& power_pc = m_system.GetPowerPC();
   auto& ppc_state = power_pc.GetPPCState();
-
   int cyclesExecuted = m_globals.slice_length - DowncountToCycles(ppc_state.downcount);
+  // printf("CoreTiming Advance:\n");
+  // printf("  Cycles Executed: %d\n", cyclesExecuted);
+  // printf("  Global Timer: %ld\n", m_globals.global_timer);
+  // printf("  Slice Length: %d\n", m_globals.slice_length);
+  // printf("  OC Factor: %f\n", m_last_oc_factor);
+  // printf("  Last OC Inv Factor: %f\n", m_globals.last_OC_factor_inverted);
+  // printf("  downcount: %d\n", ppc_state.downcount);
+  // printf("  Pending Events: %zu\n", m_event_queue.size());
+  // for (const auto& ev : m_event_queue)
+  // {
+  //   printf("    Event: %s, Time: %ld, Fifo Order: %ld, Userdata: %ld\n",
+  //          ev.type && ev.type->name ? ev.type->name->c_str() : "(null)",
+  //          ev.time, ev.fifo_order, ev.userdata);
+  // }
+
   m_globals.global_timer += cyclesExecuted;
   m_last_oc_factor = m_config_oc_factor;
   m_globals.last_OC_factor_inverted = m_config_oc_inv_factor;
@@ -416,6 +453,20 @@ void CoreTimingManager::Advance()
   // until the next slice:
   //        Pokemon Box refuses to boot if the first exception from the audio DMA is received late
   power_pc.CheckExternalExceptions();
+
+  // printf("End of CoreTiming Advance:\n");
+  // printf("  Global Timer: %ld\n", m_globals.global_timer);
+  // printf("  Slice Length: %d\n", m_globals.slice_length);
+  // printf("  OC Factor: %f\n", m_last_oc_factor);
+  // printf("  Last OC Inv Factor: %f\n", m_globals.last_OC_factor_inverted);
+  // printf("  downcount: %d\n", ppc_state.downcount);
+  // printf("  Pending Events: %zu\n", m_event_queue.size());
+  // for (const auto& ev : m_event_queue)
+  // {
+  //   printf("    Event: %s, Time: %ld, Fifo Order: %ld, Userdata: %ld\n",
+  //          ev.type && ev.type->name ? ev.type->name->c_str() : "(null)",
+  //          ev.time, ev.fifo_order, ev.userdata);
+  // }
 }
 
 void CoreTimingManager::Throttle(const s64 target_cycle)
@@ -581,6 +632,12 @@ u64 CoreTimingManager::GetFakeTBStartTicks() const
 void CoreTimingManager::SetFakeTBStartTicks(u64 val)
 {
   m_globals.fake_TB_start_ticks = val;
+}
+
+void CoreTimingManager::LogTimingState(const char* event_name)
+{
+  printf("TIMING_LOG (%s): slice_length = %d, global_timer = %ld\n", event_name,
+         m_globals.slice_length, m_globals.global_timer);
 }
 
 void GlobalAdvance()

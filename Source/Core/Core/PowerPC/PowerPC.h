@@ -303,10 +303,10 @@ public:
   const PPCSymbolDB& GetSymbolDB() const { return m_symbol_db; }
   Core::BranchWatch& GetBranchWatch() { return m_branch_watch; }
   const Core::BranchWatch& GetBranchWatch() const { return m_branch_watch; }
+  void ApplyMode();
   
 private:
   void InitializeCPUCore(CPUCore cpu_core);
-  void ApplyMode();
   void ResetRegisters();
   void RefreshConfig();
 

@@ -490,9 +490,7 @@ void VideoBackendBase::ShutdownShared()
 
 void VideoBackendBase::WiiMixReset()
 {
-
-  // 2. Clear Caches
-  // (Your existing code)
+  // 1. Clear Caches
   if (g_texture_cache)
     g_texture_cache->Invalidate();
   if (g_framebuffer_manager)
@@ -502,4 +500,26 @@ void VideoBackendBase::WiiMixReset()
   if (g_shader_cache)
     g_shader_cache->ClearCaches();
   VertexLoaderManager::Clear();
+
+  // 2. Reset Pure Emulated GPU State
+  // These are the raw memory buffers serialized by VideoCommon_DoState
+  memset(reinterpret_cast<u8*>(&g_main_cp_state), 0, sizeof(g_main_cp_state));
+  memset(reinterpret_cast<u8*>(&g_preprocess_cp_state), 0, sizeof(g_preprocess_cp_state));
+  s_tex_mem.fill(0);
+  memset(reinterpret_cast<u8*>(&xfmem), 0, sizeof(xfmem));
+  
+  // These are the other emulated GPU components. We must
+  // re-initialize them to their default boot state.
+  auto& system = Core::System::GetInstance();
+  // system.GetFifo().Shutdown(); // Must shutdown before re-init
+  system.GetFifo().Init();
+  system.GetCommandProcessor().Init();
+  system.GetPixelEngine().Init();
+  system.GetXFStateManager().Init();
+  BPInit(); // Resets bpmem
+  TMEM::Init();
+
+  system.GetPixelShaderManager().Init();
+  system.GetVertexShaderManager().Init();
+  system.GetGeometryShaderManager().Init();
 }

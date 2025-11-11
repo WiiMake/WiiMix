@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "Common/CommonTypes.h"
+#include "Common/Logging/Log.h"
 #include "Common/SPSCQueue.h"
 #include "Core/CPUThreadConfigCallback.h"
 
@@ -153,6 +154,8 @@ public:
   bool GetVISkip() const;                           // Used By VideoInterface
 
   bool UseSyncOnSkipIdle() const;
+  void LogTimingState(const char* event_name);
+  int CyclesToDowncount(int cycles) const;
 
 private:
   Globals m_globals;
@@ -202,7 +205,6 @@ private:
   void ResetThrottle(s64 cycle);
 
   int DowncountToCycles(int downcount) const;
-  int CyclesToDowncount(int cycles) const;
 };
 
 }  // namespace CoreTiming

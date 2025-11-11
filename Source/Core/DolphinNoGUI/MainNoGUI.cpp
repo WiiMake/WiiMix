@@ -36,7 +36,7 @@
 #include "InputCommon/GCAdapter.h"
 
 #include "VideoCommon/VideoBackendBase.h"
-#include <Core/State.h>
+#include "Core/State.h"
 #include <DolphinQt/Host.h>
 #include <chrono>
 #include <thread> 
@@ -221,9 +221,13 @@ int main(int argc, char* argv[])
             "macos"
 #endif
       });
-  parser->add_option("--diff-test")
+  parser->add_option("-dt", "--diff-test")
       .action("store_true")
       .help("Run in headless diff test mode (for automated testing)");
+
+  parser->add_option("-i", "--interpreter")
+      .action("store_true")
+      .help("Use the interpreter core for PowerPC emulation; otherwise use JIT for the corresponding architecture");
 
   optparse::Values& options = CommandLineParse::ParseArguments(parser.get(), argc, argv);
   std::vector<std::string> args = parser->args();
@@ -336,9 +340,24 @@ int main(int argc, char* argv[])
   // if (options.is_set("diff_test"))
   // {
   // THIS SHOULD BE CALLED IN THE EMUTHREAD; OTHERWISE THERE WON'T BE PROPER INITIALIZATION
-  State::diff_test = options.is_set("diff_test");
-  if (State::diff_test)
+  bool diff_test = options.is_set("diff_test");
+  if (diff_test)
   {
+    // Set the corresponding interpreter
+    if (options.is_set("interpreter"))
+    {
+      State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::Interpreter;
+    }
+    else
+    {
+      #if defined(__aarch64__) || defined(_M_ARM64)
+        State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::JITARM64;
+      #else
+        State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::JIT64;
+      #endif
+    }
+    Config::SetCurrent(Config::MAIN_CPU_CORE, State::WIIMIX_DIFF_TEST_CPU_CORE);
+
     // We (the MainThread) must wait for the EmuThread to finish booting
     // and enter its 'Running' state. This polling loop
     // solves the race condition.
@@ -360,8 +379,10 @@ int main(int argc, char* argv[])
     // Now the emulator is fully booted and running.
     // It is safe to call the test function from the MainThread.
     int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance());
+
+    Core::Shutdown(Core::System::GetInstance());
     
-    // Core::Shutdown(Core::System::GetInstance()); 
+    printf("s_platform.reset() in main\n");
     s_platform.reset(); // Clean up platform resources
 
     fflush(stdout);

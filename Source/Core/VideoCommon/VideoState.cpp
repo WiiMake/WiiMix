@@ -63,8 +63,11 @@ void VideoCommon_DoState(PointerWrap& p)
   p.DoMarker("texMem");
 
   // TMEM
-  TMEM::DoState(p);
-  p.DoMarker("TMEM");
+  // if (!WIIMIX_STATE) {
+    // TMEM is a voltatile cache, so we don't save it in WiiMix states
+    TMEM::DoState(p);
+    p.DoMarker("TMEM");
+  // }
 
   // FIFO
   auto& system = Core::System::GetInstance();
@@ -80,14 +83,16 @@ void VideoCommon_DoState(PointerWrap& p)
 
   // the old way of replaying current bpmem as writes to push side effects to pixel shader manager
   // doesn't really work.
-  system.GetPixelShaderManager().DoState(p);
-  p.DoMarker("PixelShaderManager");
+  // if (!WIIMIX_STATE) {
+    system.GetPixelShaderManager().DoState(p);
+    p.DoMarker("PixelShaderManager");
 
-  system.GetVertexShaderManager().DoState(p);
-  p.DoMarker("VertexShaderManager");
+    system.GetVertexShaderManager().DoState(p);
+    p.DoMarker("VertexShaderManager");
 
-  system.GetGeometryShaderManager().DoState(p);
-  p.DoMarker("GeometryShaderManager");
+    system.GetGeometryShaderManager().DoState(p);
+    p.DoMarker("GeometryShaderManager");
+  // }
 
   // Do not save the host's vertex cache for WiiMix states
   if (!WIIMIX_STATE) {
@@ -130,6 +135,7 @@ void VideoCommon_DoState(PointerWrap& p)
   p.DoMarker("XFStateManager");
 
   // Refresh state.
+  // Already handled in WiiMixHostReinitialization
   if (p.IsReadMode())
   {
     // Inform backend of new state from registers.

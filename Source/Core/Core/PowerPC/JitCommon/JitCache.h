@@ -150,7 +150,8 @@ public:
   static constexpr u32 FAST_BLOCK_MAP_FALLBACK_MASK = FAST_BLOCK_MAP_FALLBACK_ELEMENTS - 1;
 
   explicit JitBaseBlockCache(JitBase& jit);
-  virtual ~JitBaseBlockCache();
+  // virtual ~JitBaseBlockCache();
+  ~JitBaseBlockCache();
 
   virtual void Init();
   void Shutdown();

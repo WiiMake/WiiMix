@@ -29,9 +29,9 @@ namespace Core
 {
 enum class NetworkCaptureType
 {
-  None,
+  NotValid,
   Raw,
-  PCAP,
+  PCAP
 };
 
 class NetworkCaptureLogger

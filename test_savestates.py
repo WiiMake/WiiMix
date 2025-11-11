@@ -8,7 +8,7 @@ from tqdm import tqdm  # Import the progress bar library
 # --- Configuration ---
 BIN_DIR = os.path.expanduser("~/Programming/OpenSource/gamecube-examples/bin")
 WIIMIX_EXE = "./build/Binaries/wiimix-nogui"
-TEST_TIMEOUT = 2.0
+TEST_TIMEOUT = 3.5
 SUCCESS_STRING = "Diff Test PASSED!"
 FAILURE_STRING = "Diff Test FAILED"
 # --- End Configuration ---

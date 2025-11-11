@@ -86,7 +86,9 @@ void PowerPCManager::DoState(PointerWrap& p)
   p.Do(m_ppc_state.msr);
   p.Do(m_ppc_state.fpscr);
   p.Do(m_ppc_state.Exceptions);
-  p.Do(m_ppc_state.downcount);
+  if (!WIIMIX_STATE) {
+    p.Do(m_ppc_state.downcount);
+  }
   p.Do(m_ppc_state.xer_ca);
   p.Do(m_ppc_state.xer_so_ov);
   p.Do(m_ppc_state.xer_stringctrl);
@@ -101,10 +103,10 @@ void PowerPCManager::DoState(PointerWrap& p)
   p.Do(m_ppc_state.reserve_address);
 
   auto& memory = m_system.GetMemory();
-  m_ppc_state.iCache.DoState(memory, p);
-  m_ppc_state.dCache.DoState(memory, p);
 
   if (!WIIMIX_STATE) {
+    m_ppc_state.iCache.DoState(memory, p);
+    m_ppc_state.dCache.DoState(memory, p);
     // Handle reinitialization in the State::WiiMixLoadFromBufferEmuThread function instead 
     if (p.IsReadMode())
     {
@@ -127,7 +129,8 @@ void PowerPCManager::DoState(PointerWrap& p)
   // SystemTimers::TimeBaseSet();
 
   // Ignore the entire JIT compiler; meaningless for different architectures/wiimix savestate compatibility
-  if (!WIIMIX_STATE) {
+  // if (!WIIMIX_STATE) {
+  if (Config::Get(Config::MAIN_CPU_CORE) != CPUCore::Interpreter) {
     m_system.GetJitInterface().DoState(p);
   }
 }
@@ -270,9 +273,11 @@ void PowerPCManager::Init(CPUCore cpu_core)
   m_invalidate_cache_thread_safe =
       m_system.GetCoreTiming().RegisterEvent("invalidateEmulatedCache", InvalidateCacheThreadSafe);
 
+  // Swapped InitializeCPUCore and Reset to avoid issues with JIT reinitialization 
+  InitializeCPUCore(cpu_core);
+
   Reset();
 
-  InitializeCPUCore(cpu_core);
   auto& memory = m_system.GetMemory();
   m_ppc_state.iCache.Init(memory);
   m_ppc_state.dCache.Init(memory);

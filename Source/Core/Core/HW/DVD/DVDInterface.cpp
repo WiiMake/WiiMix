@@ -114,10 +114,14 @@ void DVDInterface::DoState(PointerWrap& p)
   p.Do(m_drive_state);
   p.Do(m_error_code);
 
-  p.Do(m_read_buffer_start_time);
-  p.Do(m_read_buffer_end_time);
-  p.Do(m_read_buffer_start_offset);
-  p.Do(m_read_buffer_end_offset);
+  // This used to be not ignored
+  if (!WIIMIX_STATE)
+  {
+    p.Do(m_read_buffer_start_time);
+    p.Do(m_read_buffer_end_time);
+    p.Do(m_read_buffer_start_offset);
+    p.Do(m_read_buffer_end_offset);
+  }
 
   // File path is host-specific
   if (!WIIMIX_STATE) {
@@ -125,8 +129,10 @@ void DVDInterface::DoState(PointerWrap& p)
   } 
 
   // Skip DVD thread state when saving/loading WiiMix states
-  // if (WIIMIX_STATE)
-  m_system.GetDVDThread().DoState(p);
+  // This used to be not ignored
+  if (!WIIMIX_STATE) {
+    m_system.GetDVDThread().DoState(p);
+  }
 
   m_adpcm_decoder.DoState(p);
 }
