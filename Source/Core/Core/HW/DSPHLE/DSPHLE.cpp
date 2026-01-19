@@ -139,6 +139,13 @@ void DSPHLE::DoState(PointerWrap& p)
   m_mail_handler.DoState(p);
 }
 
+void DSPHLE::WiiMixStartThread()
+{
+  // Noop
+  return;
+}
+
+
 // Mailbox functions
 u16 DSPHLE::DSP_ReadMailBoxHigh(bool cpu_mailbox)
 {

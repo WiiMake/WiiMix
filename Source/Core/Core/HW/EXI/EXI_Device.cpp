@@ -99,6 +99,10 @@ void IEXIDevice::TransferByte(u8& byte)
 {
 }
 
+void IEXIDevice::PoisonState()
+{
+}
+
 // F A C T O R Y
 std::unique_ptr<IEXIDevice> EXIDevice_Create(Core::System& system, const EXIDeviceType device_type,
                                              const int channel_num,

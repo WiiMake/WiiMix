@@ -4,6 +4,10 @@
 #include "Core/System.h"
 
 #include <memory>
+#include <vector>
+#include <random>
+#include <chrono>
+#include <thread>
 
 #include "AudioCommon/SoundStream.h"
 #include "Core/Config/MainSettings.h"
@@ -332,4 +336,81 @@ VideoCommon::CustomAssetLoader& System::GetCustomAssetLoader() const
 {
   return m_impl->m_custom_asset_loader;
 }
+
+void System::PoisonState(PoisonModule mask)
+{
+    if (mask == PoisonModule::None) return;
+
+    // --- Core & Timing ---
+    if ((u32)mask & (u32)PoisonModule::CoreTiming)         m_impl->m_core_timing.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::SystemTimers)       m_impl->m_system_timers.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::ProcessorInterface) m_impl->m_processor_interface.PoisonState();
+
+    // --- Main Hardware ---
+    if ((u32)mask & (u32)PoisonModule::PowerPC)            m_impl->m_power_pc.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::Memory)             m_impl->m_memory.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::MemoryInterface)    m_impl->m_memory_interface.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::Dsp)                m_impl->m_dsp.PoisonState();
+
+    // --- Peripherals ---
+    if ((u32)mask & (u32)PoisonModule::Exi)
+    {
+      // Poison the SRAM struct with garbage
+      std::memset(&m_impl->m_sram, 0xCC, sizeof(Sram));
+      m_impl->m_expansion_interface.PoisonState();
+    }
+    if ((u32)mask & (u32)PoisonModule::Si)                 m_impl->m_serial_interface.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::Audio)              m_impl->m_audio_interface.PoisonState();
+
+    // --- Storage ---
+    if ((u32)mask & (u32)PoisonModule::DvdInterface)       m_impl->m_dvd_interface.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::DvdThread)          m_impl->m_dvd_thread.PoisonState();
+
+    // --- Graphics ---
+    if ((u32)mask & (u32)PoisonModule::VideoInterface)     m_impl->m_video_interface.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::GpFifo)             m_impl->m_gp_fifo.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::Fifo)               m_impl->m_fifo.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::CommandProcessor)   m_impl->m_command_processor.PoisonState();
+    if ((u32)mask & (u32)PoisonModule::PixelEngine)        m_impl->m_pixel_engine.PoisonState();
+
+    // --- Misc ---
+    if ((u32)mask & (u32)PoisonModule::Hsp)                m_impl->m_hsp.PoisonState();
+    // Movie doesn't strictly have a PoisonState usually, but if it does:
+    // if ((u32)mask & (u32)PoisonModule::Movie)           m_impl->m_movie.PoisonState();
+}
+
+void System::JitterHostEnvironment()
+{
+    // 1. Memory Jitter (ASLR Simulation)
+    // We create a static vector to hold "leaked" memory. 
+    // By resizing it to a random large size, we force the heap allocator 
+    // to move the 'break' point, ensuring subsequent `new` calls (during ReInit)
+    // return addresses completely different from the Save phase.
+    
+    static std::vector<u8> memory_jitter_buffer;
+    
+    // Seed generator
+    static std::mt19937 gen(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()));
+    std::uniform_int_distribution<size_t> dist(1 * 1024 * 1024, 64 * 1024 * 1024); // 1MB to 64MB
+    
+    size_t new_size = dist(gen);
+    
+    // Force a reallocation if we are shrinking, or just grow
+    memory_jitter_buffer.clear();
+    memory_jitter_buffer.shrink_to_fit(); 
+    memory_jitter_buffer.resize(new_size);
+    
+    // Fill with garbage pattern (0xAA) to catch uninitialized reads in the jitter area
+    std::memset(memory_jitter_buffer.data(), 0xAA, new_size);
+    
+    printf("JITTER: Shifted Heap by %zu MB. Old pointers are now invalid.\n", new_size / 1024 / 1024);
+
+    // 2. Thread Jitter (Optional delay)
+    // Adding a random small sleep changes the timing of thread creation/scheduling
+    // relative to the "wall clock", potentially catching race conditions or 
+    // reliance on absolute timestamps.
+    std::uniform_int_distribution<int> sleep_dist(10, 100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_dist(gen)));
+}
+
 }  // namespace Core

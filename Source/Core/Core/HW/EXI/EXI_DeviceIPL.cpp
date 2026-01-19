@@ -404,23 +404,27 @@ u32 CEXIIPL::GetEmulatedTime(Core::System& system, u32 epoch)
   u64 ltime = 0;
 
   auto& movie = system.GetMovie();
-  if (movie.IsMovieActive())
-  {
-    ltime = movie.GetRecordingStartTime();
 
-    // let's keep time moving forward, regardless of what it starts at
-    ltime += system.GetCoreTiming().GetTicks() / system.GetSystemTimers().GetTicksPerSecond();
-  }
-  else if (NetPlay::IsNetPlayRunning())
+  // FIX: Added || Core::WantsDeterminism()
+  if (movie.IsMovieActive() || NetPlay::IsNetPlayRunning() || Core::WantsDeterminism() || WIIMIX_STATE)
   {
-    ltime = NetPlay_GetEmulatedTime();
+    if (movie.IsMovieActive()) {
+        ltime = movie.GetRecordingStartTime();
+    } else if (NetPlay::IsNetPlayRunning()) {
+        ltime = NetPlay_GetEmulatedTime();
+    } else {
+        // FIX: Provide a deterministic start time (e.g., Jan 1, 2010)
+        // matches the fixed value used in SystemTimers.cpp
+        ltime = 1262304000; 
+    }
 
-    // let's keep time moving forward, regardless of what it starts at
+    // This calculates time based on CPU cycles (Deterministic)
     ltime += system.GetCoreTiming().GetTicks() / system.GetSystemTimers().GetTicksPerSecond();
   }
   else
   {
-    ASSERT(!Core::WantsDeterminism());
+    // This calculates time based on Wall Clock (Non-Deterministic)
+    // ASSERT(!Core::WantsDeterminism());
     ltime = Common::Timer::GetLocalTimeSinceJan1970() -
             system.GetSystemTimers().GetLocalTimeRTCOffset();
   }

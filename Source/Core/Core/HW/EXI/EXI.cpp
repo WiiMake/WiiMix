@@ -150,6 +150,28 @@ void ExpansionInterfaceManager::Init(const Sram* override_sram)
       core_timing.RegisterEvent("EXIUpdateInterrupts", UpdateInterruptsCallback);
 }
 
+void ExpansionInterfaceManager::WiiMixReset() {
+  auto& core_timing = m_system.GetCoreTiming();
+
+  CEXIMemoryCard::Init(core_timing);
+  m_event_type_change_device = core_timing.RegisterEvent("ChangeEXIDevice", ChangeDeviceCallback);
+  m_event_type_update_interrupts =
+      core_timing.RegisterEvent("EXIUpdateInterrupts", UpdateInterruptsCallback);
+
+  // We intentionally SKIP the Job 2 parts:
+  // - SRAM init
+  // - AddMemoryCard(...)
+  // - m_channels[...]->AddDevice(...)
+  
+  // Manually reset the channels to clear dirty registers from the previous run
+  // while preserving the attached devices.
+  for (auto& channel : m_channels) {
+    if (channel) {
+      channel->WiiMixReset();
+    }
+  }
+}
+
 void ExpansionInterfaceManager::Shutdown()
 {
   for (auto& channel : m_channels)
@@ -250,6 +272,14 @@ void ExpansionInterfaceManager::ScheduleUpdateInterrupts(CoreTiming::FromThread 
                                                          int cycles_late)
 {
   m_system.GetCoreTiming().ScheduleEvent(cycles_late, m_event_type_update_interrupts, 0, from);
+}
+
+void ExpansionInterfaceManager::PoisonState()
+{
+    // Poison Channels
+    for (auto& channel : m_channels) {
+        if (channel) channel->PoisonState();
+    }
 }
 
 }  // namespace ExpansionInterface

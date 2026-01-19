@@ -72,6 +72,20 @@ EventType* CoreTimingManager::RegisterEvent(const std::string& name, TimedCallba
 {
   // check for existing type with same name.
   // we want event type names to remain unique so that we can use them for serialization.
+  // ASSERT_MSG(POWERPC, !m_event_types.contains(name),
+  //            "CoreTiming Event \"{}\" is already registered. Events should only be registered "
+  //            "during Init to avoid breaking save states.",
+  //            name);
+
+  // If the event already exists, return the existing pointer.
+  auto itr = m_event_types.find(name);
+  if (itr != m_event_types.end())
+  {
+      // Optional: Check if the callback function matches if you want to be extra safe
+      // ASSERT(itr->second.callback == callback); 
+      return &itr->second;
+  }
+
   ASSERT_MSG(POWERPC, !m_event_types.contains(name),
              "CoreTiming Event \"{}\" is already registered. Events should only be registered "
              "during Init to avoid breaking save states.",
@@ -166,7 +180,7 @@ void CoreTimingManager::WiiMixReset()
   ResetThrottle(0);
 
   MoveEvents();
-  // m_event_queue.clear();
+  m_event_queue.clear();
   // UnregisterAllEvents();
   m_event_types.clear();
 
@@ -188,33 +202,95 @@ static bool CompareEventsForState(const CoreTiming::Event& a, const CoreTiming::
   return *a.type->name < *b.type->name; // Final tie-breaker
 }
 
+s64 CoreTimingManager::GetNextEventTime() const {
+  if (m_event_queue.empty()) return m_globals.global_timer + 20000;
+  return m_event_queue.front().time;
+}
+
+void CoreTimingManager::LogEventQueues(const char* event_name)
+{
+  // This lock is critical to get a safe snapshot of both queues
+  std::lock_guard lk(m_ts_write_lock);
+  
+  printf("--- EVENT QUEUE LOG at: %s ---\n", event_name);
+  printf("  global_timer = %ld\n", m_globals.global_timer);
+
+  // 1. Log m_event_queue (the main CPU-thread queue)
+  printf("  m_event_queue (%zu events):\n", m_event_queue.size());
+  if (m_event_queue.empty())
+  {
+    printf("    [EMPTY]\n");
+  }
+  else
+  {
+    // We need to copy and sort to print, because the queue is a heap
+    auto sorted_queue = m_event_queue;
+    std::sort(sorted_queue.begin(), sorted_queue.end(), CompareEventsForState);
+    for (const Event& ev : sorted_queue)
+    {
+      printf("    Event: %s, Time: %ld, Userdata: %ld\n",
+             ev.type->name->c_str(), ev.time, ev.userdata);
+    }
+  }
+
+  // 2. Log m_ts_queue (the thread-safe queue for other threads)
+  // We have to pop them into a temp vector to read them, then push them back.
+  std::vector<Event> temp_ts_events;
+  Event ev_ts;
+  while (m_ts_queue.Pop(ev_ts))
+  {
+    temp_ts_events.push_back(std::move(ev_ts));
+  }
+
+  printf("  m_ts_queue (%zu events):\n", temp_ts_events.size());
+  if (temp_ts_events.empty())
+  {
+    printf("    [EMPTY]\n");
+  }
+  else
+  {
+    for (const Event& ev : temp_ts_events)
+    {
+      printf("    Event: %s, Time: %ld, Userdata: %ld\n",
+             ev.type->name->c_str(), ev.time, ev.userdata);
+    }
+  }
+
+  // Push them all back in (order doesn't matter for SPSCQueue)
+  for (auto& ev : temp_ts_events)
+  {
+    m_ts_queue.Push(std::move(ev));
+  }
+  
+  printf("---------------------------------------\n");
+}
+
 void CoreTimingManager::DoState(PointerWrap& p)
 {
   std::lock_guard lk(m_ts_write_lock);
   // Treat slice length as volatile for WiiMix states
-  // if (!WIIMIX_STATE) {
-    // printf("Why is slice length being loaded? THIS IS WRONG\n");
-    p.Do(m_globals.slice_length);
-  // }
+  p.Do(m_globals.slice_length);
   p.Do(m_globals.global_timer); // 8
   // m_idled_cycles is host-dependent, volatile data.
   // It is not part of the pure emulated state.
-  if (!WIIMIX_STATE)
-  {
-    p.Do(m_idled_cycles);
-    p.Do(m_last_oc_factor); // 4
-  }
+  // if (!WIIMIX_STATE)
+  // {
+  p.Do(m_idled_cycles);
+  // }
+  p.Do(m_last_oc_factor); // 4
   p.Do(m_fake_dec_start_value); // 4
   p.Do(m_fake_dec_start_ticks); // 8
   p.Do(m_globals.fake_TB_start_value); // 8
   p.Do(m_globals.fake_TB_start_ticks); // 8
-  if (p.IsReadMode() && !WIIMIX_STATE) {
+  if (p.IsReadMode()) {
+    // if (WIIMIX_STATE) {
     m_globals.last_OC_factor_inverted = 1.0f / m_last_oc_factor;
+    if (WIIMIX_STATE) {
+      m_idled_cycles = 0;
+    }
   }
 
-  // if (!WIIMIX_STATE) {
-    p.Do(m_event_fifo_id); // 8
-  // }
+  p.Do(m_event_fifo_id); // 8
 
   p.DoMarker("CoreTimingData"); // 4
 
@@ -246,6 +322,9 @@ void CoreTimingManager::DoState(PointerWrap& p)
       }
       else
       {
+        if (WIIMIX_STATE) {
+          printf("TIMING_LOG (Load Event): *** LOST EVENT: '%s' *** because it's type has not been registered\n", name.c_str());
+        }
         WARN_LOG_FMT(POWERPC,
                     "Lost event from savestate because its type, \"{}\", has not been registered.",
                     name);
@@ -257,6 +336,7 @@ void CoreTimingManager::DoState(PointerWrap& p)
   {
     // --- SAVE SIDE ---
     // Create a sorted copy to guarantee a deterministic binary file
+    printf("TIMING_LOG (Event Queue): event_count = %zu\n", event_count);
     std::vector<Event> sorted_queue = m_event_queue;
     std::sort(sorted_queue.begin(), sorted_queue.end(), CompareEventsForState);
 
@@ -273,6 +353,13 @@ void CoreTimingManager::DoState(PointerWrap& p)
     }
   }
 
+  for (const auto& ev : m_event_queue)
+  {
+    printf("    Event: %s, Time: %ld, Fifo Order: %ld, Userdata: %ld\n",
+           ev.type && ev.type->name ? ev.type->name->c_str() : "(null)",
+           ev.time, ev.fifo_order, ev.userdata);
+  }
+
   p.DoMarker("CoreTimingEvents");
 
   if (p.IsReadMode())
@@ -285,6 +372,8 @@ void CoreTimingManager::DoState(PointerWrap& p)
     // The stave state has changed the time, so our previous Throttle targets are invalid.
     // Especially when global_time goes down; So we create a fake throttle update.
     ResetThrottle(m_globals.global_timer);
+
+    m_is_global_timer_sane = false;
   }
 }
 
@@ -398,12 +487,33 @@ void CoreTimingManager::MoveEvents()
 
 void CoreTimingManager::Advance()
 {
+  if (m_skip_next_advance)
+  {
+    m_skip_next_advance = false;
+    // Skip next advance to resume a restored slice. 
+    // m_is_global_timer_sane is typically false here (set by DoState), 
+    // which ensures GetTicks() calculates correctly using the decrementing downcount.
+    return; 
+  }
+
   CPUThreadConfigCallback::CheckForConfigChanges();
 
   MoveEvents();
 
   auto& power_pc = m_system.GetPowerPC();
   auto& ppc_state = power_pc.GetPPCState();
+
+  if (State::WIIMIX_LOG) {
+      s64 next_event = m_event_queue.empty() ? -1 : m_event_queue.front().time;
+      printf("TIMELINE: Adv | GT: %ld | Slice: %d | Down: %d | Next: %ld | Events: %zu\n", 
+             m_globals.global_timer, 
+             m_globals.slice_length, 
+             ppc_state.downcount, 
+             next_event,
+             m_event_queue.size());
+      fflush(stdout);
+  }
+
   int cyclesExecuted = m_globals.slice_length - DowncountToCycles(ppc_state.downcount);
   // printf("CoreTiming Advance:\n");
   // printf("  Cycles Executed: %d\n", cyclesExecuted);
@@ -648,6 +758,23 @@ void GlobalAdvance()
 void GlobalIdle()
 {
   Core::System::GetInstance().GetCoreTiming().Idle();
+}
+
+void CoreTimingManager::PoisonState()
+{
+    // Trash the global timer. 
+    // If Load() relies on the "0" from Reset() instead of overwriting it,
+    // this 0xDEADBEEF will persist and cause immediate desyncs.
+    m_globals.global_timer = 0xDEADBEEFDEADBEEF;
+    m_globals.slice_length = -99999;
+    
+    // Trash idled cycles (the source of your 0x4782 mismatch earlier)
+    m_idled_cycles = 0xCCCCCCCC;
+
+    // Trash event queue
+    m_event_queue.clear();
+    // We can't push totally invalid events or it might crash the *Poisoning* step.
+    // Just clearing it is usually enough: if Load() expects events but finds none, it fails.
 }
 
 }  // namespace CoreTiming

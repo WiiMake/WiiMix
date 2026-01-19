@@ -18,6 +18,7 @@
 #include "Core/Config/MainSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
+#include "Core/State.h"
 #include "Core/DSP/DSPAccelerator.h"
 #include "Core/DSP/DSPCaptureLogger.h"
 #include "Core/DSP/DSPCore.h"
@@ -27,7 +28,7 @@
 #include "Core/DSP/Jit/DSPEmitterBase.h"
 #include "Core/HW/Memmap.h"
 #include "Core/Host.h"
-
+namespace WiiMixState = State;
 namespace DSP::LLE
 {
 DSPLLE::DSPLLE() = default;
@@ -50,6 +51,7 @@ void DSPLLE::DoState(PointerWrap& p)
     return;
   }
   m_dsp_core.DoState(p);
+  WiiMixState::LogOffset("after dsp core state", p);
   p.Do(m_cycle_count);
 }
 
@@ -82,6 +84,17 @@ void DSPLLE::DSPThread(DSPLLE* dsp_lle)
     dsp_lle->m_ppc_event.Set();
     dsp_lle->m_dsp_event.Wait();
   }
+}
+
+void DSPLLE::WiiMixStartThread()
+{
+    if (m_is_running.IsSet()) return;
+
+    if (m_is_dsp_on_thread) {
+      m_is_running.Set(true);
+      // Re-launch the thread using the correct thread procedure for DSPLLE
+      m_dsp_thread = std::thread(DSPThread, this);
+    }
 }
 
 static bool LoadDSPRom(u16* rom, const std::string& filename, u32 size_in_bytes)
@@ -136,6 +149,9 @@ static bool FillDSPInitOptions(DSPInitOptions* opts)
 
 bool DSPLLE::Initialize(bool wii, bool dsp_thread)
 {
+  if (m_is_running.IsSet()) // <-- ADD THIS CHECK
+    return true;
+
   m_request_disable_thread = false;
 
   DSPInitOptions opts;
@@ -167,7 +183,7 @@ bool DSPLLE::Initialize(bool wii, bool dsp_thread)
 
 void DSPLLE::DSP_StopSoundStream()
 {
-  if (!m_is_dsp_on_thread)
+  if (!m_is_dsp_on_thread || !m_is_running.IsSet()) // <-- MODIFY THIS LINE
     return;
 
   m_is_running.Clear();

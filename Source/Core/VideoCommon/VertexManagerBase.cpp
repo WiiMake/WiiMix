@@ -128,6 +128,19 @@ bool VertexManagerBase::Initialize()
   return true;
 }
 
+void VertexManagerBase::Invalidate()
+{
+  // Force the pipeline to look changed next frame
+  m_pipeline_config_changed = true;
+  
+  // Zero out the tracked config so comparisons against current state fail
+  m_current_pipeline_config = {}; 
+  m_current_uber_pipeline_config = {};
+  
+  // Drop the current pipeline object
+  m_current_pipeline_object = nullptr;
+}
+
 u32 VertexManagerBase::GetRemainingSize() const
 {
   return static_cast<u32>(m_end_buffer_pointer - m_cur_buffer_pointer);

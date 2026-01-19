@@ -600,4 +600,16 @@ void FifoManager::Prepare()
   m_event_sync_gpu = m_system.GetCoreTiming().RegisterEvent("SyncGPUCallback", SyncGPUCallback);
   m_syncing_suspended = true;
 }
+
+void FifoManager::PoisonState()
+{
+    // Trash the massive video buffer
+    if(m_video_buffer) {
+        memset(m_video_buffer, 0xCC, FIFO_SIZE);
+    }
+    
+    // Trash sync ticks (Affects dual core sync)
+    m_sync_ticks.store(0xBADDBAD0);
+}
+
 }  // namespace Fifo

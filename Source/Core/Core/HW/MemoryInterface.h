@@ -32,10 +32,13 @@ public:
   ~MemoryInterfaceManager();
 
   void Init();
+  void WiiMixReset();
   void Shutdown();
 
   void DoState(PointerWrap& p);
   void RegisterMMIO(MMIO::Mapping* mmio, u32 base);
+
+  void PoisonState();
 
 private:
   union MIRegion

@@ -1,6 +1,7 @@
 import os
 import subprocess
 import signal
+import time
 import sys
 import random
 from tqdm import tqdm  # Import the progress bar library
@@ -9,7 +10,7 @@ from tqdm import tqdm  # Import the progress bar library
 BIN_DIR = os.path.expanduser("~/Programming/OpenSource/gamecube-examples/bin")
 GAMES_DIR = os.path.expanduser("~/dolphingames")
 WIIMIX_EXE = "./build/Binaries/wiimix-nogui"
-TEST_TIMEOUT = 20  # seconds
+TEST_TIMEOUT = 10  # seconds
 SUCCESS_STRING = "Diff Test PASSED!"
 FAILURE_STRING = "Diff Test FAILED"
 # --- End Configuration ---
@@ -34,16 +35,16 @@ def find_test_files():
 
 def run_single_test(file_path, steps=1):
     """
-    Runs a single test, captures its output safely to prevent deadlocks,
-    and returns (status, reason, full_log).
+    Runs a single test, captures its output, and returns a result.
+    This version uses wait() THEN communicate() to prevent I/O deadlocks.
     """
     cmd = [WIIMIX_EXE, "--diff-test", "--frames", str(steps), "-e", file_path]
 
     proc = None
-    full_output = ""
+    stdout = ""
+    stderr = ""
 
     try:
-        # Start the process
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -53,56 +54,68 @@ def run_single_test(file_path, steps=1):
             errors="ignore",
         )
 
-        stdout = ""
-        stderr = ""
-
-        # Use communicate() to read from pipes while waiting.
-        # This prevents the C++ process from hanging if it fills the OS pipe buffer.
+        # 1. Wait for the process to terminate OR timeout.
         try:
-            stdout, stderr = proc.communicate(timeout=TEST_TIMEOUT)
+            proc.wait(timeout=TEST_TIMEOUT)
         except subprocess.TimeoutExpired:
-            # If it times out, kill it and grab whatever output is available
-            proc.kill()
-            outs, errs = proc.communicate()
-            stdout = (stdout or "") + (outs or "")
-            stderr = (stderr or "") + (errs or "")
-            full_output = stdout + stderr
-            return "FAIL", f"TIMEOUT (Process ran > {TEST_TIMEOUT}s)", full_output
+            if proc:
+                proc.kill()
+                stdout, stderr = proc.communicate()
+
+            if stdout:
+                tqdm.write("--- STDOUT (on timeout) ---")
+                tqdm.write(stdout)
+            if stderr:
+                tqdm.write("--- STDERR (on timeout) ---")
+                tqdm.write(stderr)
+            return "FAIL", f"TIMEOUT (Process ran > {TEST_TIMEOUT}s)"
+
+        # 2. The process is dead. Safely read all output.
+        stdout, stderr = proc.communicate()
+
+        # 3. Print the output we captured
+        if stdout:
+            tqdm.write("--- STDOUT ---")
+            tqdm.write(stdout)
+        if stderr:
+            tqdm.write("--- STDERR ---")
+            tqdm.write(stderr)
 
         full_output = stdout + stderr
 
-        # --- Check Test Results ---
+        # --- NEW PASS/FAIL LOGIC (Priority Changed) ---
 
-        # Priority 1: Did it print the success string?
+        # CHECK 1: Success String (Priority 1)
+        # If we see this, we declare success, even if the
+        # emulator crashed on shutdown (like acube.dol).
         if SUCCESS_STRING in full_output:
-            return "PASS", "", full_output
+            return "PASS", ""
 
-        # Priority 2: Did it exit with an error code?
+        # CHECK 2: Crash / Segfault (Priority 2)
+        # If no success string was found, then a non-zero
+        # exit code is a real failure (like mp3player.dol).
         if proc.returncode != 0:
             reason = "NON-ZERO EXIT CODE"
             if proc.returncode < 0:
                 try:
-                    # Negative return codes are signals (e.g. -11 = SIGSEGV)
                     sig_name = signal.Signals(-proc.returncode).name
                     reason = f"SEGFAULT or SIGNAL ({sig_name})"
                 except ValueError:
                     reason = "Process terminated by UNKNOWN SIGNAL"
-            return "FAIL", f"{reason} (Code: {proc.returncode})", full_output
+            return "FAIL", f"{reason} (Code: {proc.returncode})"
 
-        # Priority 3: Did it print the explicit failure string?
+        # CHECK 3: Failure String (Priority 3)
         if FAILURE_STRING in full_output:
-            return "FAIL", "FAILURE_STRING found", full_output
+            return "FAIL", "FAILURE_STRING found"
 
-        # Priority 4: Silent Pass (Exited 0 but no explicit success msg)
-        return "FAIL", "SILENT PASS (Exited 0, but no success string)", full_output
+        # CHECK 4: Silent Pass (Priority 4)
+        # Exited 0, but didn't print PASS or FAIL.
+        return "FAIL", "SILENT PASS (Exited 0, but no success string)"
 
     except Exception as e:
         if proc:
-            try:
-                proc.kill()
-            except:
-                pass
-        return "FAIL", f"Exception: {e}", full_output
+            proc.kill()
+        return "FAIL", f"Exception: {e}"
 
 
 def main():
@@ -122,14 +135,16 @@ def main():
     # Open the output file for writing all test output
     with open("test_output", "w", encoding="utf-8") as out_file:
 
-        # --- PHASE 1: Single-Step Tests ---
+        # First, test single step from startup (with sub-progress bar)
         for file_path in tqdm(
             files, unit="test", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"
         ):
+
+            # Use tqdm.write() for all printing inside the loop
             tqdm.write(f"\n--- RUNNING: {file_path} ---")
             out_file.write(f"\n--- RUNNING: {file_path} ---\n")
 
-            status, reason, full_log = run_single_test(file_path)
+            status, reason = run_single_test(file_path)
 
             if status == "PASS":
                 tqdm.write("--- RESULT: PASS ---")
@@ -139,18 +154,11 @@ def main():
                 tqdm.write(f"    Reason: {reason}")
                 out_file.write(f"--- RESULT: FAIL ---\n")
                 out_file.write(f"    Reason: {reason}\n")
-
-                # Write the captured log to the file for debugging
-                out_file.write("-" * 20 + " CAPTURED LOG " + "-" * 20 + "\n")
-                out_file.write(full_log)
-                out_file.write("\n" + "-" * 54 + "\n")
-
                 failures.append((file_path, reason))
 
-        # Phase 1 Summary
+        # Have a local summary for that test group
         summary = "\n" + "=" * 70 + "\nSINGLE-STEP TEST SUMMARY\n"
         group_total = len(files)
-        # Filter out multi-step failures (none yet)
         group_failures = [
             f for f in failures if not f[1].startswith("Multi-step failed:")
         ]
@@ -172,15 +180,16 @@ def main():
         print(summary)
         out_file.write(summary)
 
-        # --- PHASE 2: Multi-Step Tests ---
+        # Then, test multi-step from startup (with sub-progress bar)
         for file_path in tqdm(
             files, unit="test", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"
         ):
+
             tqdm.write(f"\n--- RUNNING MULTI-STEP: {file_path} ---")
             out_file.write(f"\n--- RUNNING MULTI-STEP: {file_path} ---\n")
 
             steps = random.randint(2, 120)  # Random steps between 2 and 120
-            status, reason, full_log = run_single_test(file_path, steps=steps)
+            status, reason = run_single_test(file_path, steps=steps)
 
             if status == "PASS":
                 tqdm.write(f"--- RESULT: PASS (Steps: {steps}) ---")
@@ -190,15 +199,9 @@ def main():
                 tqdm.write(f"    Reason: {reason}")
                 out_file.write(f"--- RESULT: FAIL (Steps: {steps}) ---\n")
                 out_file.write(f"    Reason: {reason}\n")
-
-                # Write the captured log to the file
-                out_file.write("-" * 20 + " CAPTURED LOG " + "-" * 20 + "\n")
-                out_file.write(full_log)
-                out_file.write("\n" + "-" * 54 + "\n")
-
                 failures.append((file_path, f"Multi-step failed: {reason}"))
 
-        # Phase 2 Summary
+        # Have a local summary for that test group
         summary = "\n" + "=" * 70 + "\nMULTI-STEP TEST SUMMARY\n"
         group_total = len(files)
         group_failures = [f for f in failures if f[1].startswith("Multi-step failed:")]

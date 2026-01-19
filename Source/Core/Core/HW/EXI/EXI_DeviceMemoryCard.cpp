@@ -555,4 +555,23 @@ void CEXIMemoryCard::DMAWrite(u32 addr, u32 size)
       size * (m_system.GetSystemTimers().GetTicksPerSecond() / MC_TRANSFER_RATE_WRITE),
       s_et_transfer_complete[m_card_slot], static_cast<u64>(m_card_slot));
 }
+
+void CEXIMemoryCard::PoisonState()
+{
+    // Trash Internal State
+    m_interrupt_switch = 0xCC;
+    m_interrupt_set = true;       // Force a fake interrupt
+    m_command = (Command)0xFF;    // Invalid command
+    m_status = 0xFF;              // Invalid status flags
+    m_position = 0xFFFF;          // Out of bounds buffer position
+    m_address = 0xDEADBEEF;       // Bad flash address
+
+    // Trash the programming buffer
+    m_programming_buffer.fill(0xCC);
+
+    // Note: We do NOT trash 'm_memory_card' (the backend pointer)
+    // or 'm_card_slot' (configuration), as these are Host State
+    // and must persist.
+}
+
 }  // namespace ExpansionInterface

@@ -98,6 +98,26 @@ void SystemTimersManager::AudioDMACallback(Core::System& system, u64 userdata, s
                                        system_timers.m_event_type_audio_dma);
 }
 
+void SystemTimersManager::ScheduleInitialEvents()
+{
+  auto& core_timing = m_system.GetCoreTiming();
+  auto& vi = m_system.GetVideoInterface();
+
+  core_timing.ScheduleEvent(0, m_event_type_perf_tracker);
+  core_timing.ScheduleEvent(0, m_event_type_gpu_sleeper);
+  core_timing.ScheduleEvent(vi.GetTicksPerHalfLine(), m_event_type_vi);
+  core_timing.ScheduleEvent(0, m_event_type_dsp);
+
+  const int audio_dma_callback_period = GetAudioDMACallbackPeriod(
+      m_cpu_core_clock, m_system.GetAudioInterface().GetAIDSampleRateDivisor());
+  core_timing.ScheduleEvent(audio_dma_callback_period, m_event_type_audio_dma);
+
+  core_timing.ScheduleEvent(vi.GetTicksPerField(), m_event_type_patch_engine);
+
+  if (m_system.IsWii())
+    core_timing.ScheduleEvent(m_ipc_hle_period, m_event_type_ipc_hle);
+}
+
 void SystemTimersManager::IPC_HLE_UpdateCallback(Core::System& system, u64 userdata,
                                                  s64 cycles_late)
 {
@@ -243,6 +263,21 @@ void SystemTimersManager::PreInit()
   ChangePPCClock(m_system.IsWii() ? Mode::Wii : Mode::GC);
 }
 
+void SystemTimersManager::WiiMixReset()
+{
+  auto& core_timing = m_system.GetCoreTiming();
+
+  m_event_type_decrementer = core_timing.RegisterEvent("DecCallback", DecrementerCallback);
+  m_event_type_vi = core_timing.RegisterEvent("VICallback", VICallback);
+  m_event_type_dsp = core_timing.RegisterEvent("DSPCallback", DSPCallback);
+  m_event_type_audio_dma = core_timing.RegisterEvent("AudioDMACallback", AudioDMACallback);
+  m_event_type_ipc_hle =
+      core_timing.RegisterEvent("IPC_HLE_UpdateCallback", IPC_HLE_UpdateCallback);
+  m_event_type_gpu_sleeper = core_timing.RegisterEvent("GPUSleeper", GPUSleepCallback);
+  m_event_type_perf_tracker = core_timing.RegisterEvent("PerfTracker", PerfTrackerCallback);
+  m_event_type_patch_engine = core_timing.RegisterEvent("PatchEngine", PatchEngineCallback);
+}
+
 void SystemTimersManager::ChangePPCClock(Mode mode)
 {
   const u32 previous_clock = m_cpu_core_clock;
@@ -265,9 +300,16 @@ void SystemTimersManager::Init()
   }
 
   Common::Timer::IncreaseResolution();
-  // store and convert localtime at boot to timebase ticks
-  if (Config::Get(Config::MAIN_CUSTOM_RTC_ENABLE))
+  if (WIIMIX_STATE) {
+    // Use a fixed, arbitrary timestamp. 
+    // This value is 2010-01-01 00:00:00 UTC
+    const u64 fixed_rtc_value = 1262304000;
+    m_localtime_rtc_offset = 
+        Common::Timer::GetLocalTimeSinceJan1970() - fixed_rtc_value;
+  }
+  else if (Config::Get(Config::MAIN_CUSTOM_RTC_ENABLE))
   {
+    // store and convert localtime at boot to timebase ticks
     m_localtime_rtc_offset =
         Common::Timer::GetLocalTimeSinceJan1970() - Config::Get(Config::MAIN_CUSTOM_RTC_VALUE);
   }
@@ -294,25 +336,38 @@ void SystemTimersManager::Init()
   m_event_type_perf_tracker = core_timing.RegisterEvent("PerfTracker", PerfTrackerCallback);
   m_event_type_patch_engine = core_timing.RegisterEvent("PatchEngine", PatchEngineCallback);
 
-  core_timing.ScheduleEvent(0, m_event_type_perf_tracker);
-  core_timing.ScheduleEvent(0, m_event_type_gpu_sleeper);
-  core_timing.ScheduleEvent(vi.GetTicksPerHalfLine(), m_event_type_vi);
-  core_timing.ScheduleEvent(0, m_event_type_dsp);
+  // core_timing.ScheduleEvent(0, m_event_type_perf_tracker);
+  // core_timing.ScheduleEvent(0, m_event_type_gpu_sleeper);
+  // core_timing.ScheduleEvent(vi.GetTicksPerHalfLine(), m_event_type_vi);
+  // core_timing.ScheduleEvent(0, m_event_type_dsp);
 
   const int audio_dma_callback_period = GetAudioDMACallbackPeriod(
       m_cpu_core_clock, m_system.GetAudioInterface().GetAIDSampleRateDivisor());
-  core_timing.ScheduleEvent(audio_dma_callback_period, m_event_type_audio_dma);
+  // core_timing.ScheduleEvent(audio_dma_callback_period, m_event_type_audio_dma);
 
-  core_timing.ScheduleEvent(vi.GetTicksPerField(), m_event_type_patch_engine);
+  // core_timing.ScheduleEvent(vi.GetTicksPerField(), m_event_type_patch_engine);
 
-  if (m_system.IsWii())
-    core_timing.ScheduleEvent(m_ipc_hle_period, m_event_type_ipc_hle);
+  // if (m_system.IsWii())
+  //   core_timing.ScheduleEvent(m_ipc_hle_period, m_event_type_ipc_hle);
 }
 
 void SystemTimersManager::Shutdown()
 {
   Common::Timer::RestoreResolution();
   m_localtime_rtc_offset = 0;
+}
+
+void SystemTimersManager::PoisonState()
+{
+    // Trash CPU Clock (Affects audio throttling and core timing)
+    m_cpu_core_clock = 0xDEADBEEF;
+
+    // Trash IPC HLE Period (Affects Wii IOS timing)
+    m_ipc_hle_period = -9999;
+
+    // Poison event types (Dangerous! Only do if you can restore or if Load re-registers)
+    // Actually, don't poison the event pointers themselves as that might cause crashes 
+    // before execution starts. Poisoning the data they rely on is enough.
 }
 
 }  // namespace SystemTimers

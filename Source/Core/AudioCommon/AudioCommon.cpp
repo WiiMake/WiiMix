@@ -92,6 +92,16 @@ void ShutdownSoundStream(Core::System& system)
   INFO_LOG_FMT(AUDIO, "Done shutting down sound stream");
 }
 
+void WiiMixShutdownSoundStream(Core::System& system)
+{
+  SoundStream* sound_stream = system.GetSoundStream();
+  if (sound_stream && system.IsSoundStreamRunning())
+  {
+    sound_stream->SetRunning(false);
+    system.SetSoundStreamRunning(false);
+  }
+}
+
 std::string GetDefaultSoundBackend()
 {
   std::string backend = BACKEND_NULLSOUND;

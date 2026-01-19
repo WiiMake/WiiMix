@@ -89,6 +89,8 @@ public:
                               s64 ticks_until_completion);
   void WaitUntilIdle();
 
+  void PoisonState();
+
 private:
   void StartDVDThread();
   void StopDVDThread();
@@ -133,6 +135,8 @@ private:
   u64 m_next_id = 0;
 
   std::thread m_dvd_thread;
+  bool m_is_running;
+
   Common::Event m_request_queue_expanded;                   // Is set by CPU thread
   Common::Event m_result_queue_expanded;                    // Is set by DVD thread
   Common::Flag m_dvd_thread_exiting = Common::Flag(false);  // Is set by CPU thread

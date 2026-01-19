@@ -132,6 +132,8 @@ public:
   ~DVDInterface();
 
   void Init();
+  void WiiMixReset();
+  void WiiMixRestart();
   void ResetDrive(bool spinup);
   void Shutdown();
   void DoState(PointerWrap& p);
@@ -175,6 +177,8 @@ public:
   // Used by IOS HLE
   void SetInterruptEnabled(DIInterruptType interrupt, bool enabled);
   void ClearInterrupt(DIInterruptType interrupt);
+  void SetLidOpen();
+  void PoisonState();
 
 private:
   void DTKStreamingCallback(DIInterruptType interrupt_type, const std::vector<u8>& audio_data,
@@ -183,7 +187,6 @@ private:
                            const std::vector<u8>& audio_data);
   u32 AdvanceDTK(u32 maximum_blocks, u32* blocks_to_process);
 
-  void SetLidOpen();
   void UpdateInterrupts();
   void GenerateDIInterrupt(DIInterruptType dvd_interrupt);
 

@@ -221,9 +221,14 @@ int main(int argc, char* argv[])
             "macos"
 #endif
       });
+  
+  // Force true for testing on headless (at least for the time being)
   parser->add_option("-dt", "--diff-test")
       .action("store_true")
       .help("Run in headless diff test mode (for automated testing)");
+
+  // parser->add_option("-fr", "--frames")
+  //     .help("Specify the number of frames to step when run in Diff Test mode (WiiMix feature)");
 
   parser->add_option("-i", "--interpreter")
       .action("store_true")
@@ -346,6 +351,7 @@ int main(int argc, char* argv[])
     // Set the corresponding interpreter
     if (options.is_set("interpreter"))
     {
+      printf("INTERPRETER IS SET\n");
       State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::Interpreter;
     }
     else
@@ -356,8 +362,11 @@ int main(int argc, char* argv[])
         State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::JIT64;
       #endif
     }
-    Config::SetCurrent(Config::MAIN_CPU_CORE, State::WIIMIX_DIFF_TEST_CPU_CORE);
+    // Config::SetCurrent(Config::MAIN_CPU_CORE, State::WIIMIX_DIFF_TEST_CPU_CORE);
+    Config::SetBaseOrCurrent(Config::MAIN_CPU_THREAD, false);
 
+    // ... existing determinism setup ...
+    Core::UpdateWantDeterminism(Core::System::GetInstance(), true); // force determinism
     // We (the MainThread) must wait for the EmuThread to finish booting
     // and enter its 'Running' state. This polling loop
     // solves the race condition.
@@ -378,7 +387,18 @@ int main(int argc, char* argv[])
     
     // Now the emulator is fully booted and running.
     // It is safe to call the test function from the MainThread.
-    int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance());
+    int frames = 1;
+    if (options.is_set("frames"))
+    {
+      const std::string frames_str = static_cast<const char*>(options.get("frames"));
+      frames = std::stoi(frames_str);
+      if (frames <= 0)
+      {
+        fprintf(stderr, "Invalid number of frames specified for Diff Test.\n");
+        return 1;
+      }
+    }
+    int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance(), frames);
 
     Core::Shutdown(Core::System::GetInstance());
     

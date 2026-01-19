@@ -5,6 +5,7 @@
 
 #include <array>
 #include <string>
+#include <cstdio>
 
 #include <fmt/format.h>
 
@@ -27,6 +28,7 @@
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/System.h"
 
+static FILE* g_pc_trace_file = nullptr;
 namespace
 {
 // Determines whether or not the given instruction is one where its execution
@@ -76,10 +78,20 @@ Interpreter::~Interpreter() = default;
 void Interpreter::Init()
 {
   m_end_block = false;
+  if (g_pc_trace_file)
+  {
+    fclose(g_pc_trace_file);
+    g_pc_trace_file = nullptr;
+  }
 }
 
 void Interpreter::Shutdown()
 {
+  if (g_pc_trace_file)
+  {
+    fclose(g_pc_trace_file);
+    g_pc_trace_file = nullptr;
+  }
 }
 
 void Interpreter::Trace(const UGeckoInstruction& inst)
@@ -128,6 +140,30 @@ int Interpreter::SingleStepInner()
     // (m_prev_inst has not yet been updated)
     return PPCTables::GetOpInfo(m_prev_inst, m_ppc_state.pc)->num_cycles;
   }
+
+  const u32 DIVERGENCE_PC = 0x801b7940;
+  
+  if (g_pc_trace_file && m_ppc_state.pc == DIVERGENCE_PC)
+  {
+    fprintf(g_pc_trace_file, "--- DIVERGENCE CHECK at %08x ---\n", m_ppc_state.pc);
+
+    // Log critical CPU state
+    fprintf(g_pc_trace_file, "CR: %08lx\n", m_ppc_state.cr.fields[0]);
+    fprintf(g_pc_trace_file, "LR: %08x\n", m_ppc_state.spr[8]); // Link Register
+    fprintf(g_pc_trace_file, "CTR: %08x\n", m_ppc_state.spr[9]); // Counter Register
+    fprintf(g_pc_trace_file, "XER: %08x\n", m_ppc_state.spr[1]); // Fixed-Point Exception Register
+
+    // Log all general-purpose registers
+    for (int i = 0; i < 32; ++i)
+    {
+      fprintf(g_pc_trace_file, "r%02d: %08x\n", i, m_ppc_state.gpr[i]);
+    }
+    fprintf(g_pc_trace_file, "-----------------------------------\n");
+  }
+
+  // if (g_pc_trace_file) {
+  //   fprintf(g_pc_trace_file, "PC: %08x\n", m_ppc_state.pc);
+  // }
 
   m_ppc_state.npc = m_ppc_state.pc + sizeof(UGeckoInstruction);
   m_prev_inst.hex = m_mmu.Read_Opcode(m_ppc_state.pc);
@@ -335,4 +371,41 @@ const char* Interpreter::GetName() const
 #else
   return "Interpreter32";
 #endif
+}
+
+void Interpreter::StartPCTrace(const char* filename)
+{
+  // Close any existing file
+  if (g_pc_trace_file)
+  {
+    fclose(g_pc_trace_file);
+  }
+  
+  // Open the new file
+  g_pc_trace_file = fopen(filename, "w");
+  if (g_pc_trace_file)
+  {
+    setvbuf(g_pc_trace_file, nullptr, _IOFBF, 4 * 1024 * 1024);
+    printf("WII-MIX-TRACE: Started PC trace to %s\n", filename);
+  }
+  else
+  {
+    printf("WII-MIX-TRACE: FAILED to open PC trace file %s\n", filename);
+  }
+}
+
+void Interpreter::StopPCTrace()
+{
+  if (g_pc_trace_file)
+  {
+    // Atomically get the file and set the global to null.
+    FILE* temp_file = g_pc_trace_file;
+    g_pc_trace_file = nullptr;
+
+    // Now, safely flush and close the local pointer.
+    // The Run() loop can no longer access it.
+    fflush(temp_file);
+    fclose(temp_file);
+    printf("WII-MIX-TRACE: Stopped PC trace.\n");
+  }
 }

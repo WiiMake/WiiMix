@@ -206,8 +206,19 @@ void AudioInterfaceManager::Init()
 
   m_last_cpu_time = 0;
 
-  if (!WIIMIX_STATE)
+  // if (!WIIMIX_STATE)
+  if (m_event_type_ai == nullptr)
     m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
+}
+
+void AudioInterfaceManager::WiiMixReset()
+{
+  m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
+}
+
+void AudioInterfaceManager::WiiMixRestart()
+{
+  AudioCommon::InitSoundStream(m_system);
 }
 
 void AudioInterfaceManager::Shutdown()
@@ -359,5 +370,16 @@ u32 AudioInterfaceManager::Get32KHzSampleRateDivisor() const
 u32 AudioInterfaceManager::Get48KHzSampleRateDivisor() const
 {
   return (m_system.IsWii() ? 1125 : 1124) * 2;
+}
+
+void AudioInterfaceManager::PoisonState()
+{
+    // Trash Sample Counters (Critical for audio timing)
+    m_sample_counter = 0xFFFFFFFF;
+    m_interrupt_timing = 0xFFFFFFFF;
+    m_last_cpu_time = 0xFFFFFFFFFFFFFFFF;
+    
+    // Trash Control
+    m_control.hex = 0xBADDBAD0;
 }
 }  // namespace AudioInterface

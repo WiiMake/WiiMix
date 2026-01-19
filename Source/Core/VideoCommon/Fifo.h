@@ -75,6 +75,8 @@ public:
   void EmulatorState(bool running);
   void ResetVideoBuffer();
 
+  void PoisonState();
+
 private:
   void RefreshConfig();
   void ReadDataFromFifo(u32 read_ptr);

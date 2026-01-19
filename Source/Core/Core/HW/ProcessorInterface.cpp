@@ -65,6 +65,18 @@ void ProcessorInterfaceManager::Init()
       core_timing.RegisterEvent("IOSNotifyPowerButton", IOSNotifyPowerButtonCallback);
 }
 
+void ProcessorInterfaceManager::WiiMixReset()
+{
+  auto& core_timing = m_system.GetCoreTiming();
+
+  m_event_type_toggle_reset_button =
+      core_timing.RegisterEvent("ToggleResetButton", ToggleResetButtonCallback);
+  m_event_type_ios_notify_reset_button =
+      core_timing.RegisterEvent("IOSNotifyResetButton", IOSNotifyResetButtonCallback);
+  m_event_type_ios_notify_power_button =
+      core_timing.RegisterEvent("IOSNotifyPowerButton", IOSNotifyPowerButtonCallback);
+}
+
 void ProcessorInterfaceManager::RegisterMMIO(MMIO::Mapping* mmio, u32 base)
 {
   mmio->Register(base | PI_INTERRUPT_CAUSE, MMIO::DirectRead<u32>(&m_interrupt_cause),
@@ -274,6 +286,21 @@ void ProcessorInterfaceManager::PowerButton_Tap()
   auto& core_timing = m_system.GetCoreTiming();
   core_timing.ScheduleEvent(0, m_event_type_ios_notify_power_button, 0,
                             CoreTiming::FromThread::ANY);
+}
+
+void ProcessorInterfaceManager::PoisonState()
+{
+    // Trash Interrupt Masks (Will cause random interrupts to fire or be missed)
+    m_interrupt_mask = 0xFFFFFFFF;
+    m_interrupt_cause = 0xFFFFFFFF;
+
+    // Trash FIFO pointers (Will cause GPU to read garbage memory)
+    m_fifo_cpu_base = 0xBADDBAD0;
+    m_fifo_cpu_end = 0xBADDBAD0;
+    m_fifo_cpu_write_pointer = 0xBADDBAD0;
+
+    // Trash Reset Code
+    m_reset_code = 0xDEADBEEF;
 }
 
 }  // namespace ProcessorInterface

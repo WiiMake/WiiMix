@@ -48,6 +48,7 @@ public:
 
   void Init();
   void Shutdown();
+  void WiiMixReset();
   void DoState(PointerWrap& p);
 
   void RegisterMMIO(MMIO::Mapping* mmio, u32 base);
@@ -66,6 +67,8 @@ public:
   SIDevices GetDeviceType(int channel) const;
 
   u32 GetPollXLines();
+
+  void PoisonState();
 
 private:
   // SI Interrupt Types

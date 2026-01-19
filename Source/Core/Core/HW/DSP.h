@@ -79,6 +79,8 @@ public:
   ~DSPManager();
 
   void Init(bool hle);
+  void WiiMixReset();
+  void WiiMixRestart(bool hle);
   void Reinit(bool hle);
   void Shutdown();
 
@@ -100,6 +102,8 @@ public:
 
   void UpdateAudioDMA();
   void UpdateDSPSlice(int cycles);
+
+  void PoisonState();
 
 private:
   void GenerateDSPInterrupt(u64 DSPIntType, s64 cyclesLate);

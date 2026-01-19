@@ -432,62 +432,6 @@ void VideoBackendBase::ShutdownShared()
   system.GetFifo().Shutdown();
 }
 
-// void VideoBackendBase::WiiMixReset()
-// {
-//   // 1. Clear Caches
-//   // We call the "flush" or "invalidate" functions, not the destructors.
-  
-//   if (g_texture_cache)
-//     g_texture_cache->Invalidate();
-
-//   if (g_framebuffer_manager)
-//   {
-//     g_framebuffer_manager->InvalidatePeekCache();
-//   }
-
-//   if (g_vertex_manager)
-//     g_vertex_manager->InvalidatePipelineObject();
-
-//   if (g_shader_cache)
-//   {
-//     g_shader_cache->ClearCaches();
-//   }
-
-//   // This clears all the static vertex data.
-//   VertexLoaderManager::Clear();
-
-//   // 2. Reset Component States
-//   // These components hold internal states that need to be reset to default.
-
-//   // if (g_perf_query)
-//   //   g_perf_query->ResetQuery();
-    
-//   // if (g_graphics_mod_manager)
-//   //   g_graphics_mod_manager->Reset();
-
-
-//   // g_frame_dumper.reset();
-//   // g_presenter.reset();
-
-
-//   // g_bounding_box.reset();
-//   // g_perf_query.reset();
-//   // g_graphics_mod_manager.reset();
-//   // g_texture_cache.reset();
-//   // g_framebuffer_manager.reset();
-//   // g_shader_cache.reset();
-//   // g_vertex_manager.reset();
-//   // g_renderer.reset();
-//   // g_widescreen.reset();
-//   // g_presenter.reset();
-//   // g_gfx.reset();
-
-//   // Leave initialized
-//   // m_initialized = false;
-
-//   Core::System::GetInstance().GetFifo().Shutdown();
-// }
-
 void VideoBackendBase::WiiMixReset()
 {
   // 1. Clear Caches
@@ -497,17 +441,17 @@ void VideoBackendBase::WiiMixReset()
     g_framebuffer_manager->InvalidatePeekCache();
   if (g_vertex_manager)
     g_vertex_manager->InvalidatePipelineObject();
-  if (g_shader_cache)
-    g_shader_cache->ClearCaches();
+  // if (g_shader_cache)
+  //   g_shader_cache->ClearCaches();
   VertexLoaderManager::Clear();
 
   // 2. Reset Pure Emulated GPU State
   // These are the raw memory buffers serialized by VideoCommon_DoState
-  memset(reinterpret_cast<u8*>(&g_main_cp_state), 0, sizeof(g_main_cp_state));
-  memset(reinterpret_cast<u8*>(&g_preprocess_cp_state), 0, sizeof(g_preprocess_cp_state));
-  s_tex_mem.fill(0);
-  memset(reinterpret_cast<u8*>(&xfmem), 0, sizeof(xfmem));
-  
+  // memset(reinterpret_cast<u8*>(&g_main_cp_state), 0, sizeof(g_main_cp_state));
+  // memset(reinterpret_cast<u8*>(&g_preprocess_cp_state), 0, sizeof(g_preprocess_cp_state));
+  // s_tex_mem.fill(0);
+  // memset(reinterpret_cast<u8*>(&xfmem), 0, sizeof(xfmem));
+
   // These are the other emulated GPU components. We must
   // re-initialize them to their default boot state.
   auto& system = Core::System::GetInstance();

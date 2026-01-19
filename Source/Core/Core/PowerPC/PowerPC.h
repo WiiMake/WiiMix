@@ -304,6 +304,7 @@ public:
   Core::BranchWatch& GetBranchWatch() { return m_branch_watch; }
   const Core::BranchWatch& GetBranchWatch() const { return m_branch_watch; }
   void ApplyMode();
+  void PoisonState();
   
 private:
   void InitializeCPUCore(CPUCore cpu_core);

@@ -20,6 +20,11 @@ void HSPManager::Init()
   AddDevice(Config::Get(Config::MAIN_HSP_DEVICE));
 }
 
+void HSPManager::WiiMixReset()
+{
+  Init();
+}
+
 void HSPManager::Shutdown()
 {
   RemoveDevice();
@@ -50,9 +55,9 @@ void HSPManager::DoState(PointerWrap& p)
     AddDevice(type);
 
   // Device state is host-specific; ignore for WiiMix savestates
-  if (!WIIMIX_STATE) {
+  // if (!WIIMIX_STATE) {
     m_device->DoState(p);
-  }
+  // }
 }
 
 void HSPManager::AddDevice(std::unique_ptr<IHSPDevice> device)
@@ -70,4 +75,13 @@ void HSPManager::RemoveDevice()
 {
   m_device.reset();
 }
+
+void HSPManager::PoisonState()
+{
+  // Noop for now - wasn't sure if there was anything to trash here 
+  // if(m_device) {
+  //     m_device->PoisonState(); // If you want to implement it on the device
+  // }
+}
+
 }  // namespace HSP

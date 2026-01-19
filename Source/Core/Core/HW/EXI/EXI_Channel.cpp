@@ -237,6 +237,20 @@ IEXIDevice* CEXIChannel::GetDevice(const u8 chip_select)
 void CEXIChannel::DoState(PointerWrap& p)
 {
   p.Do(m_status);
+
+  if (p.IsReadMode()) {
+      for (int i = 0; i < NUM_DEVICES; ++i) {
+          if (m_devices[i]) {
+              // Determine if this device index is selected in the loaded status
+              // Device 0 is bit 1 (1 << 0)
+              // Device 1 is bit 2 (1 << 1)
+              // Device 2 is bit 4 (1 << 2)
+              bool selected = (m_status.CHIP_SELECT & (1 << i)) != 0;
+              m_devices[i]->SetCS(selected);
+          }
+      }
+  }
+
   p.Do(m_dma_memory_address);
   p.Do(m_dma_length);
   p.Do(m_control);
@@ -248,22 +262,28 @@ void CEXIChannel::DoState(PointerWrap& p)
   for (int device_index = 0; device_index < NUM_DEVICES; ++device_index)
   {
     std::unique_ptr<IEXIDevice>& device = m_devices[device_index];
-    EXIDeviceType type = device->m_device_type;
+    EXIDeviceType current_type = device ? device->m_device_type : EXIDeviceType::None;
+    EXIDeviceType type = current_type;
     p.Do(type);
 
-    if (type == device->m_device_type)
+    if (type == current_type && device != nullptr)
     {
-      if (!WIIMIX_STATE) {
+      // if (!WIIMIX_STATE) {
+     if (device) 
+      {   
         device->DoState(p);
       }
+      // }
     }
     else
     {
       std::unique_ptr<IEXIDevice> save_device =
           EXIDevice_Create(m_system, type, m_channel_id, m_memcard_header_data);
-      if (!WIIMIX_STATE) {
+      // if (!WIIMIX_STATE) {
+      if (save_device) {
         save_device->DoState(p);
       }
+      // }
       AddDevice(std::move(save_device), device_index, false);
     }
 
@@ -291,8 +311,59 @@ void CEXIChannel::DoState(PointerWrap& p)
   }
 }
 
+void CEXIChannel::WiiMixReset()
+{
+  // Reset Status Register
+  m_status.Hex = 0;
+  if (m_channel_id == 0 || m_channel_id == 1)
+    m_status.EXTINT = 1;
+  if (m_channel_id == 1)
+    m_status.CHIP_SELECT = 1;
+
+  // Recalculate EXT status immediately to ensure it matches reality
+  if (m_channel_id == 2)
+  {
+    m_status.EXT = 0;
+  }
+  else
+  {
+    // Ensure we check the device that is actually there
+    m_status.EXT = GetDevice(1)->IsPresent() ? 1 : 0;
+  }
+
+  // Reset DMA / Control Registers
+  m_dma_memory_address = 0;
+  m_dma_length = 0;
+  m_control.Hex = 0;
+  m_imm_data = 0;
+
+  for (auto& device : m_devices) {
+    if (device) {
+      // Pass 0/false to indicate deselect
+      device->SetCS(0); 
+    }
+  }
+
+  // Remove existing devices - loading a savestate will re-add them
+  RemoveDevices();
+}
+
 void CEXIChannel::SetEXIINT(bool exiint)
 {
   m_status.EXIINT = !!exiint;
 }
+
+void CEXIChannel::PoisonState()
+{
+    m_status.Hex = 0xBADDBAD0;
+    m_dma_memory_address = 0xDEADBEEF;
+    m_dma_length = 0xFFFFFFFF;
+    m_imm_data = 0xBADDBAD0;
+    
+    // Poison Devices
+    for(auto& dev : m_devices) {
+        if(dev) dev->PoisonState(); 
+    }
+}
+
 }  // namespace ExpansionInterface

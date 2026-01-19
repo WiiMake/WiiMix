@@ -117,7 +117,54 @@ class VideoInterfaceManager;
 
 namespace Core
 {
-// Central class that encapsulates the running system.
+  // Central class that encapsulates the running system.
+  enum class PoisonModule : u32 {
+    None = 0,
+    
+    // Core timing & execution
+    CoreTiming          = 1 << 0,
+    SystemTimers        = 1 << 1,
+    ProcessorInterface  = 1 << 2, // Interrupts & FIFO Pointers
+    
+    // Main Hardware Interfaces
+    PowerPC             = 1 << 3,
+    Memory              = 1 << 4,
+    MemoryInterface     = 1 << 5,
+    Exi                 = 1 << 6, // Expansion Interface
+    Si                  = 1 << 7, // Serial Interface (Controllers)
+    Audio               = 1 << 8, // Audio Interface
+    Dsp                 = 1 << 9, // DSP (Audio/Co-processor)
+    
+    // DVD & Storage
+    DvdInterface        = 1 << 10, // MMIO Registers
+    DvdThread           = 1 << 11, // Queues & Disc state
+    
+    // Graphics / Video Pipeline
+    VideoInterface      = 1 << 12, // VI Registers (Screen timing)
+    GpFifo              = 1 << 13, // Gather Pipe (CPU->GPU Buffer)
+    Fifo                = 1 << 14, // GPU Command FIFO
+    CommandProcessor    = 1 << 15, // CP Registers
+    PixelEngine         = 1 << 16, // PE Registers
+    
+    // Misc
+    Hsp                 = 1 << 17, // Hardware Sync Port
+    Movie               = 1 << 18, // Input recording state
+    
+    // // Wii Specific
+    // WiiIpc              = 1 << 19, // IPC (PPC <-> IOS)
+    // Ios                 = 1 << 20, // /dev/di, USB, etc.
+
+    // Catch-all
+    All                 = 0xFFFFFFFF
+  };
+
+  inline PoisonModule operator|(PoisonModule a, PoisonModule b) {
+    return static_cast<PoisonModule>(static_cast<u32>(a) | static_cast<u32>(b));
+  }
+  inline bool operator&(PoisonModule a, PoisonModule b) {
+      return (static_cast<u32>(a) & static_cast<u32>(b)) != 0;
+  }
+
 class System
 {
 public:
@@ -195,6 +242,12 @@ public:
   XFStateManager& GetXFStateManager() const;
   VideoInterface::VideoInterfaceManager& GetVideoInterface() const;
   VideoCommon::CustomAssetLoader& GetCustomAssetLoader() const;
+
+  // "Poisons" a subsystem to help root out invalid loads
+  void PoisonState(PoisonModule mask);
+  
+  // Simulate a "Different Machine" environment
+  void JitterHostEnvironment();
 
 private:
   System();

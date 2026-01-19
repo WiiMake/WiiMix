@@ -45,9 +45,12 @@ public:
 
   bool IsCausingInterrupt();
   void DoState(PointerWrap& p);
+  void WiiMixReset();
 
   // This should only be used to transition interrupts from SP1 to Channel 2
   void SetEXIINT(bool exiint);
+
+  void PoisonState();
 
 private:
   enum

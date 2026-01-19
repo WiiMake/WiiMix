@@ -44,6 +44,19 @@ DVDThread::~DVDThread() = default;
 
 void DVDThread::Start()
 {
+  if (WIIMIX_STATE) {
+    // FIX: Robustness check.
+    // If the thread is already joinable (e.g. restarted by WaitUntilIdle during Load),
+    // we must not try to start it again, or the assertion in StartDVDThread will fire.
+    // Just verify the flag is set and return.
+    if (m_dvd_thread.joinable()) {
+      m_is_running = true;
+      return;
+    }
+    
+    // if (m_is_running)
+    //   return;
+  }
   m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
 
   m_request_queue_expanded.Reset();
@@ -53,8 +66,10 @@ void DVDThread::Start()
 
   // This is reset on every launch for determinism, but it doesn't matter
   // much, because this will never get exposed to the emulated game.
-  m_next_id = 0;
-
+  if (!WIIMIX_STATE) {
+    m_next_id = 0;
+  }
+  m_is_running = true;
   StartDVDThread();
 }
 
@@ -67,8 +82,21 @@ void DVDThread::StartDVDThread()
 
 void DVDThread::Stop()
 {
+  if (WIIMIX_STATE) {
+    // FIX: Robustness check.
+    // If the thread is joinable, we MUST join it, even if m_is_running is false.
+    // This cleans up "ghost" threads left by WaitUntilIdle.
+    if (!m_is_running && !m_dvd_thread.joinable())
+      return;
+  }
   StopDVDThread();
-  m_disc.reset();
+  
+  // FIX: Do not reset the disc in WiiMix mode. 
+  // Disc presence is host configuration and must persist across re-initialization.
+  if (!WIIMIX_STATE) {
+    m_disc.reset();
+  }
+  m_is_running = false;
 }
 
 void DVDThread::WiiMixReset() {
@@ -87,7 +115,14 @@ void DVDThread::WiiMixReset() {
 
 void DVDThread::StopDVDThread()
 {
-  ASSERT(m_dvd_thread.joinable());
+  if (WIIMIX_STATE) {
+    // FIX: Allow stopping if the thread object is joinable, regardless of flag.
+    if (!m_dvd_thread.joinable())
+      return;
+  }
+  else {
+    ASSERT(m_dvd_thread.joinable());
+  }
 
   // By setting dvd_thread_exiting, we ask the DVD thread to cleanly exit.
   // In case the request queue is empty, we need to set request_queue_expanded
@@ -100,7 +135,6 @@ void DVDThread::StopDVDThread()
 
 void DVDThread::DoState(PointerWrap& p)
 {
-
   // m_disc isn't savestated (because it points to files on the
   // local system). Instead, we check that the status of the disc
   // is the same as when the savestate was made. This won't catch
@@ -112,7 +146,12 @@ void DVDThread::DoState(PointerWrap& p)
   // By waiting for the DVD thread to be done working, we ensure
   // that request_queue will be empty and that the DVD thread
   // won't be touching anything while this function runs.
-  if (!WIIMIX_STATE) {
+  
+  // FIX: Removing (!WIIMIX_STATE) check.
+  // m_next_id and m_result_map are PURE EMULATED STATE.
+  // Failing to save m_next_id causes read IDs to reset to 0 on load, causing desyncs.
+  
+  // if (!WIIMIX_STATE) {
     WaitUntilIdle();
 
     // Don't savestate requests reliant on host
@@ -127,7 +166,7 @@ void DVDThread::DoState(PointerWrap& p)
     // Both queues are now empty, so we don't need to savestate them.
     p.Do(m_result_map);
     p.Do(m_next_id);
-  }
+  // }
 
   if (had_disc != HasDisc())
   {
@@ -136,16 +175,6 @@ void DVDThread::DoState(PointerWrap& p)
     else
       m_disc.reset();
   }
-
-  // TODO: Savestates can be smaller if the buffers of results aren't saved,
-  // but instead get re-read from the disc when loading the savestate.
-
-  // TODO: It would be possible to create a savestate faster by stopping
-  // the DVD thread regardless of whether there are pending requests.
-
-  // After loading a savestate, the debug log in FinishRead will report
-  // screwed up times for requests that were submitted before the savestate
-  // was made. Handling that properly may be more effort than it's worth.
 }
 
 void DVDThread::DoWiiMixState(PointerWrap& p)
@@ -153,7 +182,7 @@ void DVDThread::DoWiiMixState(PointerWrap& p)
   // By waiting for the DVD thread to be done working, we ensure
   // that request_queue will be empty and that the DVD thread
   // won't be touching anything while this function runs.
-  // WaitUntilIdle();
+  WaitUntilIdle();
 
   // Move all results from result_queue to result_map because
   // PointerWrap::Do supports std::map but not Common::SPSCQueue.
@@ -180,16 +209,6 @@ void DVDThread::DoWiiMixState(PointerWrap& p)
     else
       m_disc.reset();
   }
-
-  // TODO: Savestates can be smaller if the buffers of results aren't saved,
-  // but instead get re-read from the disc when loading the savestate.
-
-  // TODO: It would be possible to create a savestate faster by stopping
-  // the DVD thread regardless of whether there are pending requests.
-
-  // After loading a savestate, the debug log in FinishRead will report
-  // screwed up times for requests that were submitted before the savestate
-  // was made. Handling that properly may be more effort than it's worth.
 }
 
 void DVDThread::SetDisc(std::unique_ptr<DiscIO::Volume> disc)
@@ -324,16 +343,6 @@ void DVDThread::GlobalFinishRead(Core::System& system, u64 id, s64 cycles_late)
 
 void DVDThread::FinishRead(u64 id, s64 cycles_late)
 {
-  // We can't simply pop result_queue and always get the ReadResult
-  // we want, because the DVD thread may add ReadResults to the queue
-  // in a different order than we want to get them. What we do instead
-  // is to pop the queue until we find the ReadResult we want (the one
-  // whose ID matches userdata), which means we may end up popping
-  // ReadResults that we don't want. We can't add those unwanted results
-  // back to the queue, because the queue can only have one writer.
-  // Instead, we add them to a map that only is used by the CPU thread.
-  // When this function is called again later, it will check the map for
-  // the wanted ReadResult before it starts searching through the queue.
   ReadResult result;
   auto it = m_result_map.find(id);
   if (it != m_result_map.end())
@@ -354,7 +363,6 @@ void DVDThread::FinishRead(u64 id, s64 cycles_late)
         m_result_map.emplace(result.first.id, std::move(result));
     }
   }
-  // We have now obtained the right ReadResult.
 
   const ReadRequest& request = result.first;
   const std::vector<u8>& buffer = result.second;
@@ -389,7 +397,6 @@ void DVDThread::FinishRead(u64 id, s64 cycles_late)
     interrupt = DVD::DIInterruptType::TCINT;
   }
 
-  // Notify the emulated software that the command has been executed
   dvd_interface.FinishExecutingCommand(request.reply_type, interrupt, cycles_late, buffer);
 }
 
@@ -423,4 +430,17 @@ void DVDThread::DVDThreadMain()
     }
   }
 }
+
+void DVDThread::PoisonState()
+{
+    // Trash the Request/Result queues
+    // This is hard because they are thread-safe queues.
+    // Best we can do is trash the logic variables.
+    
+    m_next_id = 0xBADDBAD0;
+    
+    // Ideally clear the map and fill with garbage
+    m_result_map.clear();
+}
+
 }  // namespace DVD

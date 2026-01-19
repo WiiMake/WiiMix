@@ -159,6 +159,27 @@ void MemoryManager::Init()
   m_is_initialized = true;
 }
 
+void MemoryManager::WiiMixReset() {
+  // It's required to pass the memory size check in DoWiiMixState.
+  // This is a minimal copy of the size-setting logic from Memory::Init().
+  const auto get_mem1_size = [] {
+    if (Config::Get(Config::MAIN_RAM_OVERRIDE_ENABLE))
+      return Config::Get(Config::MAIN_MEM1_SIZE);
+    return Memory::MEM1_SIZE_RETAIL;
+  };
+  const auto get_mem2_size = [] {
+    if (Config::Get(Config::MAIN_RAM_OVERRIDE_ENABLE))
+      return Config::Get(Config::MAIN_MEM2_SIZE);
+    return Memory::MEM2_SIZE_RETAIL;
+  };
+  m_ram_size_real = get_mem1_size();
+  m_ram_size = MathUtil::NextPowerOf2(GetRamSizeReal());
+  m_ram_mask = GetRamSize() - 1;
+  m_exram_size_real = get_mem2_size();
+  m_exram_size = MathUtil::NextPowerOf2(GetExRamSizeReal());
+  m_exram_mask = GetExRamSize() - 1;
+}
+
 bool MemoryManager::IsAddressInFastmemArea(const u8* address) const
 {
   return address >= m_fastmem_arena && address < m_fastmem_arena + m_fastmem_arena_size;
@@ -571,6 +592,32 @@ void MemoryManager::Write_U32_Swap(u32 value, u32 address)
 void MemoryManager::Write_U64_Swap(u64 value, u32 address)
 {
   CopyToEmu(address, &value, sizeof(value));
+}
+
+void MemoryManager::PoisonState()
+{
+    // 1. Poison Main RAM (MEM1)
+    // If LoadState misses a page, the game will execute 0xCC (Invalid Opcode) 
+    // or read garbage data and crash immediately.
+    if (m_ram) {
+        std::memset(m_ram, 0xCC, GetRamSize());
+    }
+
+    // 2. Poison Fake L1 Cache
+    if (m_l1_cache) {
+        std::memset(m_l1_cache, 0xCC, GetL1CacheSize());
+    }
+
+    // 3. Poison Extended RAM (MEM2 - Wii Only)
+    // Even if running in GC mode, good to clear it to ensure no leakage.
+    if (m_exram) {
+        std::memset(m_exram, 0xCC, GetExRamSize());
+    }
+
+    // 4. Poison Fake VMEM (MMU emulation)
+    if (m_fake_vmem) {
+        std::memset(m_fake_vmem, 0xCC, GetFakeVMemSize());
+    }
 }
 
 }  // namespace Memory

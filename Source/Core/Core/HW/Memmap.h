@@ -94,6 +94,7 @@ public:
   // Init and Shutdown
   bool IsInitialized() const { return m_is_initialized; }
   void Init();
+  void WiiMixReset();
   void Shutdown();
   bool InitFastmemArena();
   void ShutdownFastmemArena();
@@ -154,6 +155,8 @@ public:
     for (size_t i = 0; i < size / sizeof(T); i++)
       dest[i] = Common::FromBigEndian(data[i]);
   }
+
+  void PoisonState();
 
 private:
   // Base is a pointer to the base of the memory map. Yes, some MMU tricks

@@ -70,6 +70,7 @@ public:
   ~ExpansionInterfaceManager();
 
   void Init(const Sram* override_sram);
+  void WiiMixReset();
   void Shutdown();
   void DoState(PointerWrap& p);
 
@@ -85,6 +86,8 @@ public:
 
   CEXIChannel* GetChannel(u32 index);
   IEXIDevice* GetDevice(Slot slot);
+
+  void PoisonState();
 
 private:
   void AddMemoryCard(Slot slot);

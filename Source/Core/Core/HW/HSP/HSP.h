@@ -25,6 +25,7 @@ public:
   ~HSPManager();
 
   void Init();
+  void WiiMixReset();
   void Shutdown();
 
   u64 Read(u32 address);
@@ -35,6 +36,8 @@ public:
   void RemoveDevice();
   void AddDevice(std::unique_ptr<IHSPDevice> device);
   void AddDevice(HSPDeviceType device);
+
+  void PoisonState();
 
 private:
   std::unique_ptr<IHSPDevice> m_device;

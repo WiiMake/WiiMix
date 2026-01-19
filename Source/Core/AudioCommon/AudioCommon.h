@@ -23,6 +23,7 @@ namespace AudioCommon
 void InitSoundStream(Core::System& system);
 void PostInitSoundStream(Core::System& system);
 void ShutdownSoundStream(Core::System& system);
+void WiiMixShutdownSoundStream(Core::System& system);
 std::string GetDefaultSoundBackend();
 std::vector<std::string> GetSoundBackends();
 DPL2Quality GetDefaultDPL2Quality();

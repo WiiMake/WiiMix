@@ -105,6 +105,7 @@ public:
   virtual ~VertexManagerBase();
 
   virtual bool Initialize();
+  void Invalidate();
 
   PrimitiveType GetCurrentPrimitiveType() const { return m_current_primitive_type; }
   void AddIndices(OpcodeDecoder::Primitive primitive, u32 num_vertices);

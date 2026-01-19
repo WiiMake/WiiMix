@@ -191,6 +191,8 @@ public:
   void SetFinish(int cycle_delay);
   AlphaReadMode GetAlphaReadMode() const { return m_alpha_read.read_mode; }
 
+  void PoisonState();
+
 private:
   void RaiseEvent(int cycles_into_future);
   void UpdateInterrupts();

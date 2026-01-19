@@ -293,6 +293,8 @@ public:
   static void RunTable63(Interpreter& interpreter, UGeckoInstruction inst);
 
   static u32 Helper_Carry(u32 value1, u32 value2);
+  void StartPCTrace(const char* filename);
+  void StopPCTrace();
 
 private:
   void CheckExceptions();

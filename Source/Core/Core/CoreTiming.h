@@ -124,6 +124,7 @@ public:
 
   // Clear all pending events. This should ONLY be done on exit or state load.
   void ClearPendingEvents();
+  s64 GetNextEventTime() const;
 
   void LogPendingEvents() const;
 
@@ -139,6 +140,7 @@ public:
   void SetFakeTBStartValue(u64 val);
   u64 GetFakeTBStartTicks() const;
   void SetFakeTBStartTicks(u64 val);
+  
 
   void ForceExceptionCheck(s64 cycles);
 
@@ -155,12 +157,17 @@ public:
 
   bool UseSyncOnSkipIdle() const;
   void LogTimingState(const char* event_name);
+  void LogEventQueues(const char* event_name);
   int CyclesToDowncount(int cycles) const;
+  void SetSkipNextAdvance(bool skip) { m_skip_next_advance = skip; }
+
+  void PoisonState();
 
 private:
   Globals m_globals;
 
   Core::System& m_system;
+  bool m_skip_next_advance = false;
 
   // unordered_map stores each element separately as a linked list node so pointers to elements
   // remain stable regardless of rehashes/resizing.

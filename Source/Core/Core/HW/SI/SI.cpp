@@ -206,10 +206,9 @@ void SerialInterfaceManager::DoState(PointerWrap& p)
       AddDevice(SIDevice_Create(m_system, type, i));
     }
     
-    // Device information is host-specific
-    if (!WIIMIX_STATE) {
+    // if (!WIIMIX_STATE) {
       device->DoState(p);
-    }
+    // }
   }
 
   p.Do(m_poll);
@@ -243,6 +242,11 @@ void SerialInterfaceManager::RegisterEvents()
     m_event_types_device[i] =
         core_timing.RegisterEvent(fmt::format("SIEventChannel{}", i), event_callbacks[i]);
   }
+}
+
+void SerialInterfaceManager::WiiMixReset()
+{
+  RegisterEvents();
 }
 
 void SerialInterfaceManager::ScheduleEvent(int device_number, s64 cycles_into_future, u64 userdata)
@@ -583,6 +587,23 @@ SIDevices SerialInterfaceManager::GetDeviceType(int channel) const
 u32 SerialInterfaceManager::GetPollXLines()
 {
   return m_poll.X;
+}
+
+void SerialInterfaceManager::PoisonState()
+{
+    // Trash buffers
+    std::fill(m_si_buffer.begin(), m_si_buffer.end(), 0xCC);
+    
+    // Trash Registers
+    m_poll.hex = 0xBADDBAD0;
+    m_com_csr.hex = 0xBADDBAD0;
+    m_status_reg.hex = 0xBADDBAD0;
+    
+    // Trash Channel State
+    for(auto& chan : m_channel) {
+        chan.out.hex = 0xBADDBAD0;
+        chan.in_hi.hex = 0xBADDBAD0;
+    }
 }
 
 }  // namespace SerialInterface

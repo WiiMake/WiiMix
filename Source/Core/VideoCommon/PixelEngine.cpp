@@ -251,4 +251,15 @@ void PixelEngineManager::SetFinish(int cycles_into_future)
   RaiseEvent(cycles_into_future);
 }
 
+void PixelEngineManager::PoisonState()
+{
+    // Trash Tokens (Critical for synchronization)
+    m_token = 0xFFFF;
+    m_token_pending = 0xFFFF;
+    
+    // Trash Interrupt State
+    m_token_interrupt_pending = true; 
+    m_finish_interrupt_pending = true;
+}
+
 }  // namespace PixelEngine

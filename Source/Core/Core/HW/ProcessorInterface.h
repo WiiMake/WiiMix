@@ -71,6 +71,7 @@ public:
   ~ProcessorInterfaceManager();
 
   void Init();
+  void WiiMixReset();
   void DoState(PointerWrap& p);
 
   void RegisterMMIO(MMIO::Mapping* mmio, u32 base);
@@ -83,6 +84,8 @@ public:
   // Thread-safe func which sets and clears reset button state automagically
   void ResetButton_Tap();
   void PowerButton_Tap();
+
+  void PoisonState();
 
   u32 m_interrupt_cause = 0;
   u32 m_interrupt_mask = 0;

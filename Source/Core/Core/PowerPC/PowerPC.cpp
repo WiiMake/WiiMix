@@ -86,9 +86,7 @@ void PowerPCManager::DoState(PointerWrap& p)
   p.Do(m_ppc_state.msr);
   p.Do(m_ppc_state.fpscr);
   p.Do(m_ppc_state.Exceptions);
-  if (!WIIMIX_STATE) {
-    p.Do(m_ppc_state.downcount);
-  }
+  p.Do(m_ppc_state.downcount);
   p.Do(m_ppc_state.xer_ca);
   p.Do(m_ppc_state.xer_so_ov);
   p.Do(m_ppc_state.xer_stringctrl);
@@ -122,16 +120,34 @@ void PowerPCManager::DoState(PointerWrap& p)
       auto& mmu = m_system.GetMMU();
       mmu.IBATUpdated();
       mmu.DBATUpdated();
+
+      if (WIIMIX_STATE) {
+        m_ppc_state.iCache.Reset(m_system.GetJitInterface());
+        m_ppc_state.dCache.Reset();
+      }
     }
+  }
+
+  if (p.IsReadMode() && WIIMIX_STATE) {
+    m_ppc_state.iCache.Reset(m_system.GetJitInterface());
+    m_ppc_state.dCache.Reset();
+    
+    // We still need to update these flags even if we didn't load cache
+    RoundingModeUpdated(m_ppc_state);
+    RecalculateAllFeatureFlags(m_ppc_state);
+    auto& mmu = m_system.GetMMU();
+    mmu.IBATUpdated();
+    mmu.DBATUpdated();
   }
 
   // SystemTimers::DecrementerSet();
   // SystemTimers::TimeBaseSet();
 
   // Ignore the entire JIT compiler; meaningless for different architectures/wiimix savestate compatibility
-  // if (!WIIMIX_STATE) {
-  if (Config::Get(Config::MAIN_CPU_CORE) != CPUCore::Interpreter) {
-    m_system.GetJitInterface().DoState(p);
+  if (!WIIMIX_STATE) {
+    if (Config::Get(Config::MAIN_CPU_CORE) != CPUCore::Interpreter) {
+      m_system.GetJitInterface().DoState(p);
+    }
   }
 }
 
@@ -692,9 +708,9 @@ void PowerPCState::UpdateFPRFSingle(float fvalue)
 void RoundingModeUpdated(PowerPCState& ppc_state)
 {
   // The rounding mode is separate for each thread, so this must run on the CPU thread
-  if (!WIIMIX_STATE) {
+  // if (!WIIMIX_STATE) {
     ASSERT(Core::IsCPUThread());
-  }
+  // }
 
   Common::FPU::SetSIMDMode(ppc_state.fpscr.RN, ppc_state.fpscr.NI);
 }
@@ -743,4 +759,22 @@ void CheckAndHandleBreakPointsFromJIT(PowerPCManager& power_pc)
 {
   power_pc.CheckAndHandleBreakPoints();
 }
+
+void PowerPCManager::PoisonState()
+{
+    // Trash Registers
+    memset(m_ppc_state.gpr, 0xCC, sizeof(m_ppc_state.gpr));
+    m_ppc_state.pc = 0xDEADBEEF;
+    m_ppc_state.npc = 0xDEADBEEF;
+    
+    // Trash MSR (Machine State Register) - Very critical for logic flow
+    m_ppc_state.msr.Hex = 0xFFFFFFFF;
+    
+    // Trash Time Base (Affects game logic timing)
+    // Note: TL/TU are macros accessing the struct
+    // We can't access them easily here, but we can trash the struct:
+    // This assumes the struct layout. Safer to use public methods if available.
+    // Since we are in the class, we have access.
+}
+
 }  // namespace PowerPC

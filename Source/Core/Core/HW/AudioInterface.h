@@ -43,6 +43,8 @@ public:
   void Shutdown();
   void DoState(PointerWrap& p);
   bool IsPlaying() const;
+  void WiiMixReset();
+  void WiiMixRestart();
 
   void RegisterMMIO(MMIO::Mapping* mmio, u32 base);
 
@@ -60,6 +62,8 @@ public:
   u32 Get48KHzSampleRateDivisor() const;
 
   void GenerateAISInterrupt();
+
+  void PoisonState();
 
 private:
   // AI Control Register

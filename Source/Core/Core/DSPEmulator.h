@@ -20,6 +20,7 @@ public:
 
   virtual bool Initialize(bool wii, bool dsp_thread) = 0;
   virtual void Shutdown() = 0;
+  virtual void WiiMixStartThread() = 0;
 
   virtual void DoState(PointerWrap& p) = 0;
   virtual void PauseAndLock(bool do_lock) = 0;

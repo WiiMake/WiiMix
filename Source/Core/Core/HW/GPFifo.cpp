@@ -58,6 +58,11 @@ void GPFifoManager::Init()
   memset(m_gather_pipe, 0, sizeof(m_gather_pipe));
 }
 
+void GPFifoManager::WiiMixReset()
+{
+  Init();
+}
+
 bool GPFifoManager::IsBNE() const
 {
   // TODO: It's not clear exactly when the BNE (buffer not empty) bit is set.
@@ -193,5 +198,12 @@ void UpdateGatherPipe(GPFifoManager& gpfifo)
 void FastCheckGatherPipe(GPFifoManager& gpfifo)
 {
   gpfifo.FastCheckGatherPipe();
+}
+
+void GPFifoManager::PoisonState()
+{
+    // Trash the gather pipe buffer
+    memset(m_gather_pipe, 0xCC, sizeof(m_gather_pipe));
+    // Note: The pointers into this buffer are in PPCState, so they are poisoned by PowerPCManager
 }
 }  // namespace GPFifo

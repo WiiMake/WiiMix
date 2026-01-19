@@ -63,6 +63,7 @@ public:
   bool IsWriteMode() const { return m_mode == Mode::Write; }
   bool IsMeasureMode() const { return m_mode == Mode::Measure; }
   bool IsVerifyMode() const { return m_mode == Mode::Verify; }
+  u8* GetCurrentPtr() const { return *m_ptr_current; }
 
   template <typename K, class V>
   void Do(std::map<K, V>& x)

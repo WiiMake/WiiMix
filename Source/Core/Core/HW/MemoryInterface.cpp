@@ -64,6 +64,11 @@ void MemoryInterfaceManager::Init()
   std::memset(static_cast<void*>(&m_mi_mem), 0, sizeof(MIMemStruct));
 }
 
+void MemoryInterfaceManager::WiiMixReset()
+{
+  Init();
+}
+
 void MemoryInterfaceManager::Shutdown()
 {
   Init();
@@ -122,6 +127,12 @@ void MemoryInterfaceManager::RegisterMMIO(MMIO::Mapping* mmio, u32 base)
     mmio->Register(base | i, MMIO::ReadToSmaller<u32>(mmio, base | i, base | (i + 2)),
                    MMIO::WriteToSmaller<u32>(mmio, base | i, base | (i + 2)));
   }
+}
+
+void MemoryInterfaceManager::PoisonState()
+{
+    // Trash memory regions (Will cause address translation errors)
+    memset(&m_mi_mem, 0xCC, sizeof(m_mi_mem));
 }
 
 }  // namespace MemoryInterface

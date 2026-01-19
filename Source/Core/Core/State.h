@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Common/CommonTypes.h"
+#include "Core/PowerPC/Interpreter/Interpreter.h"
 #include "Core/PowerPC/PowerPC.h"
 
 #define WIIMIX_STATE_EXTENSION ".wmss"
@@ -140,10 +141,14 @@ void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback);
 
 // Primary tool for debugging states
 void WiiMixStepNPauses(Core::System& system, int n);
-int WiiMixDiffTest(Core::System& system);
+int WiiMixDiffTest(Core::System& system, int frames);
+Interpreter* GetInterpreter(Core::System& system);
 
 bool WiiMixHostReinitialization(Core::System& system);
 extern PowerPC::CPUCore WIIMIX_DIFF_TEST_CPU_CORE;
+extern bool WIIMIX_LOG;
+
+void LogOffset(const char* name, PointerWrap& p); 
 
 }  // namespace State
 

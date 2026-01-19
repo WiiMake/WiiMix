@@ -126,6 +126,8 @@ std::unique_ptr<optparse::OptionParser> CreateParser(ParserOptions options)
       .help("Choose audio emulation from [%choices]");
   parser->add_option("-dt", "--diff-test")
       .help("Run in Diff Test mode (WiiMix feature)");
+  parser->add_option("-fr", "--frames")
+      .help("Specify the number of frames to step when run in Diff Test mode (WiiMix feature)");
 
   return parser;
 }

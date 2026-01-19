@@ -73,6 +73,8 @@ public:
   // such.
   EXIDeviceType m_device_type = EXIDeviceType::None;
 
+  virtual void PoisonState();
+
 protected:
   Core::System& m_system;
 

@@ -727,4 +727,15 @@ void CommandProcessorManager::HandleUnknownOpcode(u8 cmd_byte, const u8* buffer,
   }
 }
 
+void CommandProcessorManager::PoisonState()
+{
+    // Trash Registers
+    m_cp_status_reg.Hex = 0xBADDBAD0;
+    m_cp_ctrl_reg.Hex = 0xBADDBAD0;
+    
+    // Trash Internal FIFO State
+    // m_fifo is a struct instance, trash it
+    memset(&m_fifo, 0xCC, sizeof(m_fifo));
+}
+
 }  // namespace CommandProcessor

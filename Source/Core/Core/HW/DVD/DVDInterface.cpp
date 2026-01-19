@@ -113,15 +113,17 @@ void DVDInterface::DoState(PointerWrap& p)
 
   p.Do(m_drive_state);
   p.Do(m_error_code);
+  State::LogOffset("DVDInterface error code state", p);
 
   // This used to be not ignored
-  if (!WIIMIX_STATE)
-  {
+  // if (!WIIMIX_STATE)
+  // {
     p.Do(m_read_buffer_start_time);
     p.Do(m_read_buffer_end_time);
     p.Do(m_read_buffer_start_offset);
     p.Do(m_read_buffer_end_offset);
-  }
+  // }
+  State::LogOffset("DVDInterface buffer state", p);
 
   // File path is host-specific
   if (!WIIMIX_STATE) {
@@ -130,9 +132,10 @@ void DVDInterface::DoState(PointerWrap& p)
 
   // Skip DVD thread state when saving/loading WiiMix states
   // This used to be not ignored
-  if (!WIIMIX_STATE) {
+  // if (!WIIMIX_STATE) {
     m_system.GetDVDThread().DoState(p);
-  }
+  // }
+  State::LogOffset("DVDThread state", p);
 
   m_adpcm_decoder.DoState(p);
 }
@@ -283,16 +286,35 @@ void DVDInterface::Init()
 
   ResetDrive(false);
 
+  if (m_auto_change_disc == nullptr) {
+    auto& core_timing = m_system.GetCoreTiming();
+    m_auto_change_disc = core_timing.RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);
+    m_eject_disc = core_timing.RegisterEvent("EjectDisc", EjectDiscCallback);
+    m_insert_disc = core_timing.RegisterEvent("InsertDisc", InsertDiscCallback);
+
+    m_finish_executing_command =
+        core_timing.RegisterEvent("FinishExecutingCommand", FinishExecutingCommandCallback);
+
+    u64 userdata = PackFinishExecutingCommandUserdata(ReplyType::DTK, DIInterruptType::TCINT);
+    core_timing.ScheduleEvent(0, m_finish_executing_command, userdata);
+  }
+}
+
+void DVDInterface::WiiMixReset()
+{
   auto& core_timing = m_system.GetCoreTiming();
+
+  // Reregistering events happens in Init()
   m_auto_change_disc = core_timing.RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);
   m_eject_disc = core_timing.RegisterEvent("EjectDisc", EjectDiscCallback);
   m_insert_disc = core_timing.RegisterEvent("InsertDisc", InsertDiscCallback);
-
   m_finish_executing_command =
       core_timing.RegisterEvent("FinishExecutingCommand", FinishExecutingCommandCallback);
+}
 
-  u64 userdata = PackFinishExecutingCommandUserdata(ReplyType::DTK, DIInterruptType::TCINT);
-  core_timing.ScheduleEvent(0, m_finish_executing_command, userdata);
+void DVDInterface::WiiMixRestart()
+{
+  m_system.GetDVDThread().Start();
 }
 
 // Resets state on the MN102 chip in the drive itself, but not the DI registers exposed on the
@@ -1540,6 +1562,31 @@ void DVDInterface::ScheduleReads(u64 offset, u32 length, const DiscIO::Partition
                 "ticks={}, time={} us",
                 unbuffered_blocks, buffered_blocks, ticks_until_completion,
                 ticks_until_completion * 1000000 / m_system.GetSystemTimers().GetTicksPerSecond());
+}
+
+void DVDInterface::PoisonState() {
+  // Trash MMIO Registers
+  m_DISR.Hex = 0xBAD0BAD0;
+  m_DICVR.Hex = 0xBAD0BAD0;
+  m_DICMDBUF[0] = 0xDEADBEEF;
+  m_DICMDBUF[1] = 0xDEADBEEF;
+  m_DICMDBUF[2] = 0xDEADBEEF;
+  m_DIMAR = 0xDEADBEEF;
+  m_DILENGTH = 0xDEADBEEF;
+  m_DICR.Hex = 0xBAD0BAD0;
+  
+  // Trash Internal Logic
+  m_stream = true; // Force stream ON (defaults to off)
+  m_stop_at_track_end = true;
+  m_audio_position = 0xFFFFFFFF;
+  m_error_code = DriveError::ProtocolError;
+  
+  // Trash Buffer Logic (CRITICAL for determinism)
+  // These specific variables define the drive's timing model.
+  m_read_buffer_start_time = 0xCAFEBABECAFEBABE;
+  m_read_buffer_end_time = 0xCAFEBABECAFEBABE;
+  m_read_buffer_start_offset = 0xCAFEBABECAFEBABE;
+  m_read_buffer_end_offset = 0xCAFEBABECAFEBABE;
 }
 
 }  // namespace DVD

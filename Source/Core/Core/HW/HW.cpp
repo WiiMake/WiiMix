@@ -54,12 +54,55 @@ void Init(Core::System& system, const Sram* override_sram)
   system.GetCPU().Init(Config::Get(Config::MAIN_CPU_CORE));
   system.GetSystemTimers().Init();
 
+  system.GetSystemTimers().ScheduleInitialEvents();
+
   if (system.IsWii())
   {
     system.GetWiiIPC().Init();
     IOS::HLE::Init(system);  // Depends on Memory
   }
 }
+
+// void Init(Core::System& system, const Sram* override_sram)
+// {
+//   printf("Initializing WiiMix HW...\n");
+  
+//   // --- 1. "COLD" INIT ---
+//   system.GetCoreTiming().Init();
+//   system.GetSystemTimers().PreInit();
+//   State::Init(system);
+//   system.GetVideoInterface().Init();
+//   system.GetSerialInterface().Init();
+//   system.GetProcessorInterface().Init();
+//   system.GetExpansionInterface().Init(override_sram);
+//   system.GetHSP().Init();
+//   system.GetMemory().Init();
+//   AddressSpace::Init();
+//   system.GetMemoryInterface().Init();
+//   system.GetGPFifo().Init();
+//   g_video_backend->Init();
+//   system.GetCPU().Init(Config::Get(Config::MAIN_CPU_CORE)); // Init CPU before threads
+  
+//   // --- 2. "HOT" INIT (Deterministic Order) ---
+//   // We call the full Init functions *serially* to force
+//   // a deterministic registration and scheduling order.
+  
+//   system.GetAudioInterface().Init();
+//   AudioCommon::PostInitSoundStream(system); // Start stream
+
+//   system.GetDVDInterface().Init(); // Starts thread + schedules event
+
+//   system.GetDSP().Init(Config::Get<bool>(Config::MAIN_DSP_HLE)); // Starts thread
+
+//   system.GetSystemTimers().Init(); // Now "cold"
+//   system.GetSystemTimers().ScheduleInitialEvents(); // Manually schedule
+  
+//   if (system.IsWii())
+//   {
+//     system.GetWiiIPC().Init();
+//     IOS::HLE::Init(system);
+//   }
+// }
 
 void Shutdown(Core::System& system)
 {
@@ -133,28 +176,40 @@ void DoState(Core::System& system, PointerWrap& p)
 {
   // NOTE: all of these are emulated components, however the states being saved
   // MAY contain host-specific data
+
   system.GetMemory().DoState(p);
   p.DoMarker("Memory");
+  State::LogOffset("Memory", p);
   system.GetMemoryInterface().DoState(p);
   p.DoMarker("MemoryInterface");
+  State::LogOffset("MemoryInterface", p);
   system.GetVideoInterface().DoState(p);
   p.DoMarker("VideoInterface");
+  State::LogOffset("VideoInterface", p);
   system.GetSerialInterface().DoState(p);
   p.DoMarker("SerialInterface");
+  State::LogOffset("SerialInterface", p);
   system.GetProcessorInterface().DoState(p);
   p.DoMarker("ProcessorInterface");
+  State::LogOffset("ProcessorInterface", p);
   system.GetDSP().DoState(p);
   p.DoMarker("DSP");
+  State::LogOffset("DSP", p);
   system.GetDVDInterface().DoState(p);
   p.DoMarker("DVDInterface");
+  State::LogOffset("DVDInterface", p);
   system.GetGPFifo().DoState(p);
   p.DoMarker("GPFifo");
+  State::LogOffset("GPFifo", p);
   system.GetExpansionInterface().DoState(p);
   p.DoMarker("ExpansionInterface");
+  State::LogOffset("ExpansionInterface", p);
   system.GetAudioInterface().DoState(p);
   p.DoMarker("AudioInterface");
+  State::LogOffset("AudioInterface", p);
   system.GetHSP().DoState(p);
   p.DoMarker("HSP");
+  State::LogOffset("HSP", p);
 
   if (system.IsWii())
   {

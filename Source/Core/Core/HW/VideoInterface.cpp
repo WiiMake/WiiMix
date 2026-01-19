@@ -977,4 +977,18 @@ void VideoInterfaceManager::FakeVIUpdate(u32 xfb_address, u32 fb_width, u32 fb_s
   }
 }
 
+void VideoInterfaceManager::PoisonState()
+{
+    // Trash Timing
+    m_half_line_count = 0xFFFF;
+    m_ticks_last_line_start = 0xFFFFFFFFFFFFFFFF;
+    
+    // Trash Config
+    m_display_control_register.Hex = 0xFFFF;
+    m_vertical_timing_register.Hex = 0xFFFF;
+    
+    // Trash Target Refresh Rate (Breaks everything timing related)
+    m_target_refresh_rate = -1.0;
+}
+
 }  // namespace VideoInterface

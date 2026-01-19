@@ -28,6 +28,7 @@ public:
 
   // Init
   void Init();
+  void WiiMixReset();
   void DoState(PointerWrap& p);
 
   // ResetGatherPipe
@@ -51,6 +52,8 @@ public:
   void FastWrite16(u16 value);
   void FastWrite32(u32 value);
   void FastWrite64(u64 value);
+
+  void PoisonState();
 
 private:
   size_t GetGatherPipeCount();

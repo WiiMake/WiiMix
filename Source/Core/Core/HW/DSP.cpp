@@ -39,6 +39,9 @@
 #include "Core/HW/ProcessorInterface.h"
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/System.h"
+#include "Core/State.h"
+#include "Core/ConfigManager.h"
+#include "Core/Config/MainSettings.h"
 
 namespace DSP
 {
@@ -87,6 +90,7 @@ void DSPManager::DoState(PointerWrap& p)
   p.Do(m_aram_mode);
   p.Do(m_aram_refresh);
   p.Do(m_dsp_slice);
+  State::LogOffset("after main dsp state", p);
 
   m_dsp_emulator->DoState(p);
 }
@@ -111,7 +115,63 @@ void DSPManager::Init(bool hle)
 {
   printf("Initializing DSP...\n");
   Reinit(hle);
+  if (m_event_type_generate_dsp_interrupt == nullptr) {
+    auto& core_timing = m_system.GetCoreTiming();
+    m_event_type_generate_dsp_interrupt =
+        core_timing.RegisterEvent("DSPint", GlobalGenerateDSPInterrupt);
+    m_event_type_complete_aram = core_timing.RegisterEvent("ARAMint", GlobalCompleteARAM);
+  }
+}
+
+void DSPManager::WiiMixRestart(bool hle)
+{
+  // m_dsp_emulator object already exists and has had state loaded into it.
+  // We just need to restart its thread.
+  if (m_dsp_emulator)
+  {
+    m_dsp_emulator->WiiMixStartThread();
+  }
+  else
+  {
+    // This should not happen if Shutdown() is fixed, but as a fallback,
+    // we must create the object *and then* initialize its thread.
+    // This will, however, likely cause a desync since state wasn't loaded.
+    Reinit(hle);
+    m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
+  }
+}
+
+void DSPManager::WiiMixReset()
+{
+  // Reinit(Config::Get<bool>(Config::MAIN_DSP_HLE));
+
+  // --- Manually reset variables from Reinit() ---
+  // We DO NOT call CreateDSPEmulator here, because that starts the thread.
+  // The old emulator object was already destroyed by Shutdown().
+  // We will create a new one in Step 2.
+  // if (!m_aram.wii_mode)
+  // {
+  //   // If ARAM is not in Wii mode, it's a separate buffer.
+  //   // We must re-allocate it or clear it.
+  //   if (m_aram.ptr)
+  //     memset(m_aram.ptr, 0, m_aram.size);
+  //   // else
+  //     // m_aram.ptr = static_cast<u8*>(Common::AllocateMemoryPages(m_aram.size));
+  // }
+  // // If m_aram.wii_mode is true, ptr points to EXRAM, which is reset by Memory::Init
+
+  // // Reset all registers to boot-up state
+  m_audio_dma = {};
+  m_aram_dma = {};
+  m_dsp_control.Hex = 0;
+  m_dsp_control.DSPHalt = 1;
+  m_aram_info.Hex = 0;
+  m_aram_mode = 1;       // ARAM Controller has init'd
+  m_aram_refresh = 156;  // 156MHz
+  // // --- End of variable reset ---
+
   auto& core_timing = m_system.GetCoreTiming();
+
   m_event_type_generate_dsp_interrupt =
       core_timing.RegisterEvent("DSPint", GlobalGenerateDSPInterrupt);
   m_event_type_complete_aram = core_timing.RegisterEvent("ARAMint", GlobalCompleteARAM);
@@ -152,14 +212,25 @@ void DSPManager::Reinit(bool hle)
 
 void DSPManager::Shutdown()
 {
+  if (m_dsp_emulator)
+    m_dsp_emulator->Shutdown();
+
+  if (WIIMIX_STATE)
+  {
+    // This is a "soft shutdown" for WiiMix.
+    // We've stopped the thread, but we MUST NOT free memory or destroy the object.
+    // The state will be loaded into these existing objects.
+    return;
+  }
+
   if (!m_aram.wii_mode)
   {
     Common::FreeMemoryPages(m_aram.ptr, m_aram.size);
     m_aram.ptr = nullptr;
   }
 
-  m_dsp_emulator->Shutdown();
-  m_dsp_emulator.reset();
+  if (m_dsp_emulator)
+    m_dsp_emulator.reset();
 }
 
 void DSPManager::RegisterMMIO(MMIO::Mapping* mmio, u32 base)
@@ -602,6 +673,21 @@ void DSPManager::WriteARAM(u8 value, u32 address)
 u8* DSPManager::GetARAMPtr() const
 {
   return m_aram.ptr;
+}
+
+void DSPManager::PoisonState()
+{
+    // Trash Mailboxes (CPU <-> DSP communication)
+    m_dsp_control.Hex = 0xBADDBAD0;
+    
+    // Trash DMA state
+    m_audio_dma.SourceAddress = 0xDEADBEEF;
+    m_audio_dma.current_source_address = 0xDEADBEEF;
+    
+    // Poison the emulator core if possible
+    if(m_dsp_emulator) {
+        // m_dsp_emulator->PoisonState(); // If you want to go deeper
+    }
 }
 
 }  // end of namespace DSP

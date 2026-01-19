@@ -190,6 +190,8 @@ public:
   // It is only used by the Fifo and by the CommandProcessor.
   SCPFifoStruct& GetFifo() { return m_fifo; }
 
+  void PoisonState();
+
 private:
   SCPFifoStruct m_fifo;
 
