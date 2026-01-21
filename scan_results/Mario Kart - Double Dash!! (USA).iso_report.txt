@@ -22,7 +22,7 @@ Section:         HW
 Relative Offset: +0xC83
 
 Value B (Clean): 0x00000000 (Int: 0, Float: 0.000000)
-Value C (Dirty): 0x000071CE (Int: 29134, Float: 0.000000)
+Value C (Dirty): 0x00007681 (Int: 30337, Float: 0.000000)
 
 ================================================================================
 SOURCE FILES (CONTENT SUPPRESSED)
