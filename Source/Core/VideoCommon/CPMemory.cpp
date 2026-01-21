@@ -3,11 +3,6 @@
 
 #include "VideoCommon/CPMemory.h"
 
-#ifndef _WIN32
-#include <execinfo.h>
-#include <unistd.h> // Required for STDOUT_FILENO
-#endif
-
 #include <cstring>
 #include <type_traits>
 
@@ -16,7 +11,6 @@
 #include "Common/Logging/Log.h"
 #include "Core/DolphinAnalytics.h"
 #include "Core/System.h"
-#include "Core/Core.h"
 #include "VideoCommon/CommandProcessor.h"
 #include "VideoCommon/VertexLoaderManager.h"
 
@@ -119,19 +113,6 @@ void CPState::LoadCPReg(u8 sub_cmd, u32 value)
                    "CP MATINDEX_A: an exact value of {:02x} was expected "
                    "but instead a value of {:02x} was seen",
                    Common::ToUnderlying(MATINDEX_A), sub_cmd);
-    }
-    
-    // --- TRAP START ---
-    if (value == 0xFFFFFFFF) {
-        printf("!!! TRAP: MATINDEX_A written with 0xFFFFFFFF. Core State: %d\n", 
-               Core::IsRunning(Core::System::GetInstance()));
-        // If you are on Linux/Mac, this will print the C++ backtrace to stdout
-        #ifndef _WIN32
-        #include <execinfo.h>
-        void* array[10];
-        size_t size = backtrace(array, 10);
-        backtrace_symbols_fd(array, size, STDOUT_FILENO);
-        #endif
     }
 
     matrix_index_a.Hex = value;

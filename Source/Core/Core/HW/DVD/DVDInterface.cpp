@@ -89,11 +89,6 @@ DVDInterface::~DVDInterface() = default;
 
 static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type);
 
-static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type)
-{
-  return (static_cast<u64>(reply_type) << 32) + static_cast<u32>(interrupt_type);
-}
-
 void DVDInterface::DoState(PointerWrap& p)
 {
   p.Do(m_DISR);
@@ -120,30 +115,29 @@ void DVDInterface::DoState(PointerWrap& p)
   p.Do(m_error_code);
   State::LogOffset("DVDInterface error code state", p);
 
-  // Buffer state - Critical for timing
-  p.Do(m_read_buffer_start_time);
-  p.Do(m_read_buffer_end_time);
-  p.Do(m_read_buffer_start_offset);
-  p.Do(m_read_buffer_end_offset);
+  // This used to be not ignored
+  // if (!WIIMIX_STATE)
+  // {
+    p.Do(m_read_buffer_start_time);
+    p.Do(m_read_buffer_end_time);
+    p.Do(m_read_buffer_start_offset);
+    p.Do(m_read_buffer_end_offset);
+  // }
   State::LogOffset("DVDInterface buffer state", p);
 
-  // File path is host-specific - Skip for WiiMix
+  // File path is host-specific
   if (!WIIMIX_STATE) {
     p.Do(m_disc_path_to_insert);
   } 
 
-  // DVD Thread - Contains low-level read queues
-  // FIX: Use DoWiiMixState to sanitize host timestamps from read requests
-  if (WIIMIX_STATE) {
-    m_system.GetDVDThread().DoWiiMixState(p);
-  } else {
+  // Skip DVD thread state when saving/loading WiiMix states
+  // This used to be not ignored
+  // if (!WIIMIX_STATE) {
     m_system.GetDVDThread().DoState(p);
-  }
+  // }
   State::LogOffset("DVDThread state", p);
 
   m_adpcm_decoder.DoState(p);
-  
-  // Do not serialize m_finish_executing_command; it is restored by event registration in Init().
 }
 
 size_t DVDInterface::ProcessDTKSamples(s16* target_samples, size_t target_block_count,
@@ -309,36 +303,8 @@ void DVDInterface::Init()
 void DVDInterface::WiiMixReset()
 {
   auto& core_timing = m_system.GetCoreTiming();
-  
-  // 1. Sanitize Registers
-  m_DISR.Hex = 0;
-  m_DICVR.Hex = 1;
-  std::fill(std::begin(m_DICMDBUF), std::end(m_DICMDBUF), 0);
-  m_DIMAR = 0;
-  m_DILENGTH = 0;
-  m_DICR.Hex = 0;
-  m_DIIMMBUF = 0;
-  m_DICFG.Hex = 0;
-  m_DICFG.CONFIG = 1;
 
-  // 2. Reset Drive Logic
-  ResetDrive(false);
-
-  // [FIX] Explicitly Reset ADPCM Decoder
-  // ResetDrive does NOT clear this. If it holds stale history/filter state, 
-  // decoded audio samples will slightly differ, desyncing the DSP.
-  m_adpcm_decoder = StreamADPCM::ADPCMDecoder{};
-
-  // [FIX] Explicitly Zero Buffer Timing
-  m_read_buffer_start_offset = 0;
-  m_read_buffer_end_offset = 0;
-  m_read_buffer_start_time = 0;
-  m_read_buffer_end_time = 0;
-
-  // 3. Reset Thread
-  m_system.GetDVDThread().WiiMixReset();
-
-  // 4. Reregister Events
+  // Reregistering events happens in Init()
   m_auto_change_disc = core_timing.RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);
   m_eject_disc = core_timing.RegisterEvent("EjectDisc", EjectDiscCallback);
   m_insert_disc = core_timing.RegisterEvent("InsertDisc", InsertDiscCallback);
@@ -1298,6 +1264,11 @@ void DVDInterface::AudioBufferConfig(bool enable_dtk, u8 dtk_buffer_length)
     INFO_LOG_FMT(DVDINTERFACE, "DTK enabled: buffer size {}", m_dtk_buffer_length);
   else
     INFO_LOG_FMT(DVDINTERFACE, "DTK disabled");
+}
+
+static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type)
+{
+  return (static_cast<u64>(reply_type) << 32) + static_cast<u32>(interrupt_type);
 }
 
 void DVDInterface::FinishExecutingCommandCallback(Core::System& system, u64 userdata,

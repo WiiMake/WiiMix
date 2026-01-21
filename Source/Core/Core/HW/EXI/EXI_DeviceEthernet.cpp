@@ -253,7 +253,6 @@ void CEXIETHERNET::DoState(PointerWrap& p)
 {
   p.DoArray(tx_fifo.get(), BBA_TXFIFO_SIZE);
   p.DoArray(mBbaMem.get(), BBA_MEM_SIZE);
-  p.DoArray(mRecvBuffer.get(), BBA_RECV_SIZE); // added this
 }
 
 bool CEXIETHERNET::IsMXCommand(u32 const data)

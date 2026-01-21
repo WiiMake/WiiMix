@@ -227,19 +227,6 @@ int main(int argc, char* argv[])
       .action("store_true")
       .help("Run in headless diff test mode (for automated testing)");
 
-  // Add Identity Test Flag
-  parser->add_option("-it", "--identity-test")
-      .action("store_true")
-      .help("Run WiiMix Identity Test (Save A -> Load A -> Save B -> Compare)");
-
-  // Add Poison Mask Flag
-  parser->add_option("--poison")
-      .action("store")
-      .help("Bitmask (Int/Hex) for subsystem poisoning to detect missing state data");
-
-  // Add jitter flag
-  parser->add_option("--jitter").action("store").help("adapt memory and other host-architecture elements to simulate being on a different system");
-
   // parser->add_option("-fr", "--frames")
   //     .help("Specify the number of frames to step when run in Diff Test mode (WiiMix feature)");
 
@@ -254,27 +241,6 @@ int main(int argc, char* argv[])
   if (options.is_set("save_state"))
   {
     save_state_path = static_cast<const char*>(options.get("save_state"));
-  }
-
-  // --- Apply Poison Mask Settings ---
-  if (options.is_set("poison"))
-  {
-    const std::string val = static_cast<const char*>(options.get("poison"));
-    try {
-        int mask = std::stoi(val, nullptr, 0); 
-        
-        // FIX: Use State::SetWiiMixPoisonMask instead of Config::SetBaseOrCurrent
-        State::SetWiiMixPoisonMask(mask);
-        
-        printf("POISON: Mask set to 0x%08X via CLI\n", mask);
-    } catch (...) {
-        fprintf(stderr, "Invalid poison mask format\n");
-    }
-  }
-
-  // Apply jitter settings
-  if (options.is_set("jitter")) {
-    State::SetWiiMixJitterHostEnvironment(true);
   }
 
   std::unique_ptr<BootParameters> boot;
@@ -375,15 +341,13 @@ int main(int argc, char* argv[])
   Discord::UpdateDiscordPresence();
 #endif
 
-  // --- WiiMix Testing Logic ---
-  // Shared logic for both Diff Tests and Identity Tests
+  // --- Step 2: Run the correct application type ---
+  // if (options.is_set("diff_test"))
+  // {
+  // THIS SHOULD BE CALLED IN THE EMUTHREAD; OTHERWISE THERE WON'T BE PROPER INITIALIZATION
   bool diff_test = options.is_set("diff_test");
-  bool identity_test = options.is_set("identity_test");
-
-  if (diff_test || identity_test)
+  if (diff_test)
   {
-    // --- 1. Environment Setup ---
-    
     // Set the corresponding interpreter
     if (options.is_set("interpreter"))
     {
@@ -398,16 +362,14 @@ int main(int argc, char* argv[])
         State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::JIT64;
       #endif
     }
-    
-    // Force Single Core for Determinism
+    // Config::SetCurrent(Config::MAIN_CPU_CORE, State::WIIMIX_DIFF_TEST_CPU_CORE);
     Config::SetBaseOrCurrent(Config::MAIN_CPU_THREAD, false);
 
-    // Update Core determinism settings
-    Core::UpdateWantDeterminism(Core::System::GetInstance(), true); 
-    
-    // --- 2. Boot Wait Loop ---
+    // ... existing determinism setup ...
+    Core::UpdateWantDeterminism(Core::System::GetInstance(), true); // force determinism
     // We (the MainThread) must wait for the EmuThread to finish booting
-    // and enter its 'Running' state. This polling loop solves the race condition.
+    // and enter its 'Running' state. This polling loop
+    // solves the race condition.
     int retries = 0;
     while (!Core::IsRunning(Core::System::GetInstance()) && retries < 100) // 5-second timeout
     {
@@ -418,37 +380,26 @@ int main(int argc, char* argv[])
     // Check if the emulator successfully booted
     if (!Core::IsRunning(Core::System::GetInstance()))
     {
-       fprintf(stderr, "Test FAILED: Emulator failed to start running.\n");
+       fprintf(stderr, "Diff Test FAILED: Emulator failed to start running.\n");
        fflush(stderr);
-       return 1; 
+       return 1; // Return a fail code
     }
     
-    // --- 3. Execute Specific Test ---
-    int test_result = 0;
-    
-    if (identity_test)
+    // Now the emulator is fully booted and running.
+    // It is safe to call the test function from the MainThread.
+    int frames = 1;
+    if (options.is_set("frames"))
     {
-        // Run Identity Test (A -> Load -> A')
-        test_result = ::State::WiiMixIdentityTest(Core::System::GetInstance());
+      const std::string frames_str = static_cast<const char*>(options.get("frames"));
+      frames = std::stoi(frames_str);
+      if (frames <= 0)
+      {
+        fprintf(stderr, "Invalid number of frames specified for Diff Test.\n");
+        return 1;
+      }
     }
-    else if (diff_test)
-    {
-        // Run Diff Test (A -> Step -> B vs A -> Load -> Step -> C)
-        int frames = 1;
-        if (options.is_set("frames"))
-        {
-          const std::string frames_str = static_cast<const char*>(options.get("frames"));
-          frames = std::stoi(frames_str);
-          if (frames <= 0)
-          {
-            fprintf(stderr, "Invalid number of frames specified for Diff Test.\n");
-            return 1;
-          }
-        }
-        test_result = ::State::WiiMixDiffTest(Core::System::GetInstance(), frames);
-    }
+    int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance(), frames);
 
-    // --- 4. Cleanup & Exit ---
     Core::Shutdown(Core::System::GetInstance());
     
     printf("s_platform.reset() in main\n");
@@ -457,8 +408,21 @@ int main(int argc, char* argv[])
     fflush(stdout);
     fflush(stderr);
     
+    // The test is done. The EmuThread is now paused.
+    // We can just return the test result, and the OS will
+    // clean up all threads, avoiding all deadlocks.
     return test_result;
   }
+    // int test_result = State::WiiMixDiffTest(Core::System::GetInstance());
+    // printf("WiiMix Diff Test completed with code %d.\n", test_result);
+    // // Core::Stop(Core::System::GetInstance());
+    // // Core::Shutdown(Core::System::GetInstance());
+
+    // // s_platform.reset();
+    // fflush(stdout);
+    // fflush(stderr);
+    // std::exit(test_result);
+  // }
 
   s_platform->MainLoop();
   Core::Stop(Core::System::GetInstance());

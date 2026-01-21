@@ -20,7 +20,6 @@
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/System.h"
 #include "VideoCommon/Fifo.h"
-#include "VideoCommon/CPMemory.h"
 
 namespace CommandProcessor
 {
@@ -735,12 +734,8 @@ void CommandProcessorManager::PoisonState()
     m_cp_ctrl_reg.Hex = 0xBADDBAD0;
     
     // Trash Internal FIFO State
+    // m_fifo is a struct instance, trash it
     memset(&m_fifo, 0xCC, sizeof(m_fifo));
-
-    // FIX: Poison the Global CP State structs that DoWiiMixState saves!
-    // If you don't do this, they retain clean/default values, masking load errors.
-    memset(&g_main_cp_state, 0xCC, sizeof(g_main_cp_state));
-    memset(&g_preprocess_cp_state, 0xCC, sizeof(g_preprocess_cp_state));
 }
 
 }  // namespace CommandProcessor

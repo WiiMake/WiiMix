@@ -1,0 +1,234 @@
+INTERPRETER IS SET
+Initializing HW...
+Initializing DSP...
+Starting WiiMix Diff Test...
+Save A to buffer (at Frame 0)
+WII-MIX-TEST-LOG: Save A START (Current Frame: 0)
+WII-MIX-MAP: Offset after Movie: 0x36
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x48F1
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-MAP: Offset after Memory: 0x2044913
+WII-MIX-MAP: Offset after MemoryInterface: 0x204495F
+WII-MIX-MAP: Offset after VideoInterface: 0x2044A05
+WII-MIX-MAP: Offset after SerialInterface: 0x2044AF4
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B10
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B38
+WII-MIX-MAP: Offset after DSP: 0x3044BA3
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BF8
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044C18
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C25
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C39
+WII-MIX-MAP: Offset after GPFifo: 0x3044E41
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F89
+WII-MIX-MAP: Offset after AudioInterface: 0x3044FB5
+WII-MIX-MAP: Offset after HSP: 0x3044FBD
+WII-MIX-MAP: Offset after HW: 0x3044FC5
+WII-MIX-MAP: Offset after PowerPC: 0x30474F2
+WII-MIX-MAP: Offset after AchievementManager: 0x30474F6
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-TEST-LOG: Save A END (Current Frame: 0)
+Step Frame 1 (for State B)
+WII-MIX-TRACE: Started PC trace to trace_B.txt
+WII-MIX-TRACE: Stopped PC trace.
+Save B to buffer (at Frame 1)
+WII-MIX-TEST-LOG: Save B START (Current Frame: 2)
+WII-MIX-MAP: Offset after Movie: 0x36
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 13761147
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x4918
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 13761147
+WII-MIX-MAP: Offset after Memory: 0x204493A
+WII-MIX-MAP: Offset after MemoryInterface: 0x2044986
+WII-MIX-MAP: Offset after VideoInterface: 0x2044A2C
+WII-MIX-MAP: Offset after SerialInterface: 0x2044B1B
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B37
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B5F
+WII-MIX-MAP: Offset after DSP: 0x3044BCA
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044C1F
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044C3F
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C4C
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C60
+WII-MIX-MAP: Offset after GPFifo: 0x3044E68
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044FB0
+WII-MIX-MAP: Offset after AudioInterface: 0x3044FDC
+WII-MIX-MAP: Offset after HSP: 0x3044FE4
+WII-MIX-MAP: Offset after HW: 0x3044FEC
+WII-MIX-MAP: Offset after PowerPC: 0x3047519
+WII-MIX-MAP: Offset after AchievementManager: 0x304751D
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 13761147
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 13761147
+WII-MIX-TEST-LOG: Save B END (Current Frame: 2)
+Load from EmuThread (to Frame 0)
+WII-MIX-TEST-LOG: Load A START (Current Frame: 2)
+--- EVENT QUEUE LOG at: Start of Load Function ---
+  global_timer = 13761147
+  m_event_queue (8 events):
+    Event: VICallback, Time: 13768920, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Userdata: 0
+    Event: DecCallback, Time: 14185239, Userdata: 0
+    Event: PerfTracker, Time: 14580000, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Userdata: 12884901889
+    Event: PatchEngine, Time: 16216200, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+TIMING_LOG (Before Host Reinit): slice_length = 7773, global_timer = 13761147
+TIMING_LOG (After Host Reinit): slice_length = 20000, global_timer = 0
+--- EVENT QUEUE LOG at: After Host Reinit ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+--- EVENT QUEUE LOG at: After MoveEvents ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+--- EVENT QUEUE LOG at: After ClearPendingEvents ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+Current frame in EmuThread before DoWiiMixState: 2
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+--- EVENT QUEUE LOG at: After DoWiiMixState (Pure State Loaded) ---
+  global_timer = 0
+  m_event_queue (7 events):
+    Event: FinishExecutingCommand, Time: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Userdata: 0
+    Event: GPUSleeper, Time: 0, Userdata: 0
+    Event: DSPCallback, Time: 0, Userdata: 0
+    Event: VICallback, Time: 15444, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+Current frame at end of EmuThread: 0
+--- EVENT QUEUE LOG at: After Cache Refresh ---
+  global_timer = 0
+  m_event_queue (7 events):
+    Event: FiniDiff Test FAILED at /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/Core/State.cpp:2331: Diff Test FAILED: Mismatch at byte 0x4782 Your save/load logic is not deterministic.
+shExecutingCommand, Time: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Userdata: 0
+    Event: GPUSleeper, Time: 0, Userdata: 0
+    Event: DSPCallback, Time: 0, Userdata: 0
+    Event: VICallback, Time: 15444, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+TIMING_LOG (After WiiMixLoadFromBufferEmuThread for Diff Test): slice_length = 20000, global_timer = 0
+WII-MIX-TEST-LOG: Load A END (Current Frame: 0)
+Step Frame 1 (for State C)
+WII-MIX-TRACE: Started PC trace to trace_C.txt
+WII-MIX-TRACE: Stopped PC trace.
+Save C to Buffer (at Frame 1)
+WII-MIX-TEST-LOG: Save C START (Current Frame: 2)
+WII-MIX-MAP: Offset after Movie: 0x36
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x4918
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+WII-MIX-MAP: Offset after Memory: 0x204493A
+WII-MIX-MAP: Offset after MemoryInterface: 0x2044986
+WII-MIX-MAP: Offset after VideoInterface: 0x2044A2C
+WII-MIX-MAP: Offset after SerialInterface: 0x2044B1B
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B37
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B5F
+WII-MIX-MAP: Offset after DSP: 0x3044BCA
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044C1F
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044C3F
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C4C
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C60
+WII-MIX-MAP: Offset after GPFifo: 0x3044E68
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044FB0
+WII-MIX-MAP: Offset after AudioInterface: 0x3044FDC
+WII-MIX-MAP: Offset after HSP: 0x3044FE4
+WII-MIX-MAP: Offset after HW: 0x3044FEC
+WII-MIX-MAP: Offset after PowerPC: 0x3047519
+WII-MIX-MAP: Offset after AchievementManager: 0x304751D
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+WII-MIX-TEST-LOG: Save C END (Current Frame: 2)
+Dumping B and C to files
+Stopping System
+s_platform.reset() in main
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/Dolphin.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Dolphin.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCPadNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCPadNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GFX.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GFX.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/Logger.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Logger.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/DSUClient.ini.xxx -> /home/xanmankey/.config/dolphin-emu/DSUClient.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/FreeLook.ini.xxx -> /home/xanmankey/.config/dolphin-emu/FreeLook.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini.xxx -> /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini

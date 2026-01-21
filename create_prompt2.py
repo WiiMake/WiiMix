@@ -76,15 +76,22 @@ application.dol     directory.dol    lesson01.dol   lesson04.dol  lesson07.dol  
 arena1override.dol  gdbstub.dol      lesson02.dol   lesson05.dol  lesson08.dol  lesson11.dol  MemCardDemo.dol  pageflip.dol   texturetest.dol
 
 And runs WiiMixDiffTest on each one. The file looks like
-======================================debug_determinism.py============================
+======================================test_savestates.py============================
 {}
 ===============================================================================
 
-Here's what my current debug output looks like:
+Here's what my current test output looks like:
 
-============================scan_results===========================================
+============================testoutput===========================================
 {}
 ======================================================================
+
+Notice that I fail a fair amount of multi-frame (multiple step) tests. I'm not sure exactly why, so the best thing I can think of doing is addressing the failures one at a time.
+
+First up is acube.dol - here is the output
+=================================output===========================================
+{}
+=======================================================================
 
 I can provide more context and references as needed, but that's the primary output that I'm working with right now. 
 
@@ -887,8 +894,9 @@ if __name__ == "__main__":
         "Source/Core/Core/HW/HSP/HSP.cpp",
         "Source/Core/Core/HW/GPFifo.cpp",
         "Source/Core/Core/System.cpp",
-        # "debug_determinism.py",
-        "scan_results.txt",
+        "test_savestates.py",
+        "test_output",
+        "testoutput",
     ]
     file_contents = {}
     for fname in files:
@@ -929,10 +937,9 @@ if __name__ == "__main__":
         file_contents["Source/Core/Core/HW/HSP/HSP.cpp"],
         file_contents["Source/Core/Core/HW/GPFifo.cpp"],
         file_contents["Source/Core/Core/System.cpp"],
-        file_contents["debug_determinism.py"],
-        # file_contents["test_output"],
-        # file_contents["testoutput"],
-        file_contents["scan_results.txt"],
+        file_contents["test_savestates.py"],
+        file_contents["test_output"],
+        file_contents["testoutput"],
         # WIIMIXSTATEFUNCS,
     )
 

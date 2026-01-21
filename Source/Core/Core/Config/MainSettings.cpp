@@ -576,9 +576,6 @@ const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE{{System::Main, "WiiMix", "NumPlayersS
 const Info<std::string> WIIMIX_SHUFFLE_SEED{{System::Main, "WiiMix", "ShuffleSeed"}, DEFAULT_SHUFFLE_SEED};
 const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE{{System::Main, "WiiMix", "MultiplayerModeShuffle"}, DEFAULT_MULTIPLAYER_MODE_SHUFFLE};
 
-// WiiMix (testing)
-const Info<int> WIIMIX_POISON_MASK{{System::Main, "WiiMix", "PoisonMask"}, 0};
-
 static std::set<std::pair<u16, u16>> LoadUSBWhitelistFromString(const std::string& devices_string)
 {
   std::set<std::pair<u16, u16>> devices;

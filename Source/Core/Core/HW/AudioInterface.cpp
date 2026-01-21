@@ -96,11 +96,6 @@ void AudioInterfaceManager::DoState(PointerWrap& p)
     SoundStream* sound_stream = m_system.GetSoundStream();
     sound_stream->GetMixer()->DoState(p);
   }
-
-  // FIX: Removed manual event rescheduling for WiiMix.
-  // CoreTiming::DoState already restores the event queue with the exact correct timestamps.
-  // Re-scheduling here based on GetAIPeriod() calculates a relative time from NOW,
-  // effectively shifting the audio interrupt cycle and breaking determinism.
 }
 
 void AudioInterfaceManager::UpdateInterrupts()
@@ -191,7 +186,7 @@ void AudioInterfaceManager::SetAISSampleRate(SampleRate sample_rate)
   else
   {
     m_control.AISFR = AIS_48KHz;
-    m_aid_sample_rate_divisor = Get48KHzSampleRateDivisor();
+    m_ais_sample_rate_divisor = Get48KHzSampleRateDivisor();
   }
 
   m_cpu_cycles_per_sample = static_cast<u64>(m_system.GetSystemTimers().GetTicksPerSecond()) *
@@ -218,39 +213,12 @@ void AudioInterfaceManager::Init()
 
 void AudioInterfaceManager::WiiMixReset()
 {
-  // FIX: Fully clear state to remove Poison values
-  m_control.hex = 0;
-  m_volume.hex = 0;
-  m_sample_counter = 0;
-  m_interrupt_timing = 0;
-  m_last_cpu_time = 0;
-  
-  SetAISSampleRate(SampleRate::AI48KHz);
-  SetAIDSampleRate(SampleRate::AI32KHz);
-
   m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
 }
 
 void AudioInterfaceManager::WiiMixRestart()
 {
-  // 1. Re-initialize the backend (creates new Mixer)
   AudioCommon::InitSoundStream(m_system);
-
-  // 2. Synchronize the new Mixer with the loaded state
-  SoundStream* sound_stream = m_system.GetSoundStream();
-  if (sound_stream)
-  {
-    auto* mixer = sound_stream->GetMixer();
-    if (mixer)
-    {
-      // Apply loaded sample rates
-      mixer->SetStreamInputSampleRateDivisor(m_ais_sample_rate_divisor);
-      mixer->SetDMAInputSampleRateDivisor(m_aid_sample_rate_divisor);
-      
-      // Apply loaded volume
-      mixer->SetStreamingVolume(m_volume.left, m_volume.right);
-    }
-  }
 }
 
 void AudioInterfaceManager::Shutdown()

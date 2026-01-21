@@ -88,7 +88,6 @@ Here's is my current State.cpp file:
 #include "VideoCommon/PixelShaderManager.h"
 #include "VideoCommon/GeometryShaderManager.h"
 #include "VideoCommon/XFStateManager.h"
-#include "VideoCommon/CPMemory.h"
 
 #include <signal.h>
 #define TEST_FAIL(exit_code, ...) \
@@ -99,15 +98,6 @@ Here's is my current State.cpp file:
 
 namespace State
 {
-
-  static int s_poison_mask = 0; // Default to 0 (No Poison)
-
-  void SetWiiMixPoisonMask(int mask)
-  {
-      s_poison_mask = mask;
-  }
-
-  bool WIIMIX_JITTER = false;
   PowerPC::CPUCore WIIMIX_DIFF_TEST_CPU_CORE;
   bool WIIMIX_DIFF_TEST = false;
   bool WIIMIX_LOG = false;
@@ -281,30 +271,6 @@ void LogOffset(const char* name, PointerWrap& p)
   }
 }
 
-void LogMap(PointerWrap& p, const char* name) {
-    if (p.IsMeasureMode()) {
-        size_t offset = reinterpret_cast<size_t>(p.GetCurrentPtr());
-        // Format: [MAP],OffsetDec,OffsetHex,VariableName
-        printf("[MAP],%zu,%zX,%s\n", offset, offset, name);
-    }
-}
-
-// Macro to verify/save a variable and log its position
-#define DO_MAP(p, var) \
-    do { \
-        LogMap(p, #var); \
-        p.Do(var); \
-    } while(0)
-
-// Macro for array elements (Fixing the snprintf cast error you saw earlier)
-#define DO_MAP_ARRAY(p, arr, index) \
-    do { \
-        char name_buf[64]; \
-        snprintf(name_buf, sizeof(name_buf), #arr "[%d]", static_cast<int>(index)); \
-        LogMap(p, name_buf); \
-        p.Do(arr[index]); \
-    } while(0)
-
 // DoWiiMixState is a custom savestate function that removes host data from savestates
 // Making savestates more portable between different WiiMix configurations
 static void DoWiiMixState(Core::System& system, PointerWrap& p)
@@ -361,50 +327,17 @@ static void DoWiiMixState(Core::System& system, PointerWrap& p)
   // Contains ZMode, BlendMode, TevStages, etc.
   p.Do(bpmem); 
   p.DoMarker("bpMem");
-  LogOffset("bpMem", p);
 
   // 2. Transform Unit Memory
   // Contains Light Objects, Matrices, Viewport, etc.
   p.Do(xfmem);
   p.DoMarker("xfMem");
-  LogOffset("xfMem", p);
 
   // 3. Command Processor State
   // Contains Vertex Attributes (VAT), current pipeline state
-  if (p.IsMeasureMode()) printf("--- CP STATE BREAKDOWN ---\n");
-
-  DO_MAP(p, g_main_cp_state.matrix_index_a.Hex);
-  DO_MAP(p, g_main_cp_state.matrix_index_b.Hex);
-  DO_MAP(p, g_main_cp_state.vtx_desc.low.Hex);
-  DO_MAP(p, g_main_cp_state.vtx_desc.high.Hex);
-
-  for (int i = 0; i < 8; ++i) {
-      // Log the vtx_attr[i].g0.Hex field with its index
-      {
-        char name_buf[64];
-        snprintf(name_buf, sizeof(name_buf), "vtx_attr[%d].g0.Hex", i);
-        LogMap(p, name_buf);
-        p.Do(g_main_cp_state.vtx_attr[i].g0.Hex);
-      }
-      // Actually, cleaner to just do manual logging for nested structs:
-      // LogMap(p, fmt::format("vtx_attr[{}].g0", i).c_str()); p.Do(...);
-      // But for now, let's focus on the arrays causing the crash.
-  }
-
-  // The Arrays (The culprit)
-  for (int i = 0; i < 16; ++i) {
-      CPArray idx = static_cast<CPArray>(i);
-      DO_MAP_ARRAY(p, g_main_cp_state.array_bases, idx);
-  }
-
-  for (int i = 0; i < 16; ++i) {
-      CPArray idx = static_cast<CPArray>(i);
-      DO_MAP_ARRAY(p, g_main_cp_state.array_strides, idx);
-  }
-
+  p.Do(g_main_cp_state);
   p.Do(g_preprocess_cp_state);
   p.DoMarker("cpMem");
-  LogOffset("cpMem", p);
 
   // CoreTiming needs to be restored before restoring Hardware because
   // the controller code might need to schedule an event if the controller has changed.
@@ -508,148 +441,150 @@ bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
 
 bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer)
 {
-    if (NetPlay::IsNetPlayRunning())
-    {
-        OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
-        return false;
-    }
+  if (NetPlay::IsNetPlayRunning())
+  {
+    OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+    return false;
+  }
 
-    if (AchievementManager::GetInstance().IsHardcoreModeActive())
-    {
-        OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
-        return false;
-    }
+  if (AchievementManager::GetInstance().IsHardcoreModeActive())
+  {
+    OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+    return false;
+  }
 
-    // This should only be called from the CPU thread
+  // This should only be called from the CPU thread
 
-    bool success = false;
-    u8* ptr = buffer.data();
-    PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+  bool success = false;
+  u8* ptr = buffer.data();
+  PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
 
-    auto& power_pc = system.GetPowerPC();
+  auto& power_pc = system.GetPowerPC();
 
-    system.GetCoreTiming().LogEventQueues("Start of Load Function");
+  system.GetCoreTiming().LogEventQueues("Start of Load Function");
 
-    // -------------------------------------------------------------------------
-    // STEP 1: HOST RE-INITIALIZATION (RESET)
-    // We must reset the emulated hardware and host state BEFORE loading data.
-    // If we do this after, we wipe out the data we just loaded (causing the cpMem mismatches).
-    // -------------------------------------------------------------------------
-    if (p.IsReadMode()) {
-        // 1. Poison memory/state to ensure we aren't relying on stale data
-        system.PoisonState(static_cast<Core::PoisonModule>(State::s_poison_mask));
-        
-        // 2. Reset Host Environment (Hardware, Timers, Threads)
-        // This registers all Event Types but leaves queues empty/default.
-        success = WiiMixHostReinitialization(system);
-        if (!success)
-            return false;
+  // 1. Run Re-init. This registers event *types* (good)
+  //    but also pollutes the event *queue* with default events (bad).
+  if (p.IsReadMode()) {
+    success = WiiMixHostReinitialization(system);
+    if (!success)
+      return false;
 
-        system.GetCoreTiming().LogEventQueues("After Host Reinit");
+    system.GetCoreTiming().LogEventQueues("After Host Reinit");
+  }
 
-        // 3. Clear the Event Queue
-        // WiiMixReset might have added default startup events. We don't want those;
-        // we want exactly what is in the save file.
-        system.GetCoreTiming().MoveEvents();
-        system.GetCoreTiming().LogEventQueues("After MoveEvents");
-        system.GetCoreTiming().ClearPendingEvents();
-        system.GetCoreTiming().LogEventQueues("After ClearPendingEvents");
+  // 2. Clear the polluted event queue.
+  //    Now CoreTiming has all types registered, but an empty queue.
+  if (p.IsReadMode()) {
+    // Move any rogue events from host threads (e.g., Audio)
+    // into the main queue, so ClearPendingEvents can kill them.
+    system.GetCoreTiming().MoveEvents();
+    system.GetCoreTiming().LogEventQueues("After MoveEvents");
+    system.GetCoreTiming().ClearPendingEvents();
+    system.GetCoreTiming().LogEventQueues("After ClearPendingEvents");
+  }
+  
+  // Reset JIT cache before loading state
+  // Loading state will force JIT EmuThread JIT cache to reload
+  // NOTE: don't call shutdown() as it will result in a use after free error
+  // system.GetCoreTiming().LogTimingState("Before EmuThread::DoState CoreTiming");
+  // system.GetCoreTiming().DoState(p);
+  // p.DoMarker("CoreTiming");
+  // system.GetCoreTiming().LogTimingState("After EmuThread::DoState CoreTiming");
 
-        // 4. Clear Critical Hardware State Manually
-        // Even though HostReinit does this, we double-tap CP state to be safe.
-        std::memset(&g_main_cp_state, 0, sizeof(g_main_cp_state));
-        std::memset(&g_preprocess_cp_state, 0, sizeof(g_preprocess_cp_state));
-    }
+  // system.GetCoreTiming().LogTimingState("Before PowerPC init");
+  // const PowerPC::CPUCore active_core =
+  //     static_cast<PowerPC::CPUCore>(Config::Get(Config::MAIN_CPU_CORE));
+  // power_pc.Init(active_core);
+  printf("Current frame in EmuThread before DoWiiMixState: %ld\n", system.GetMovie().GetCurrentFrame());
+  // system.GetCoreTiming().LogTimingState("After PowerPC init, Before DoWiiMixState");
+  DoWiiMixState(system, p);
+  system.GetCoreTiming().LogEventQueues("After DoWiiMixState (Pure State Loaded)");
 
-    printf("Current frame in EmuThread before DoWiiMixState: %lu\n", system.GetMovie().GetCurrentFrame());
+  if (p.IsReadMode()) {
+    // 4. Start the host threads. This WILL schedule rogue events.
+    system.GetAudioInterface().WiiMixRestart(); 
 
-    // -------------------------------------------------------------------------
-    // STEP 2: LOAD STATE
-    // Now that the machine is "fresh" and all Event Types are registered,
-    // we assume the authoritative state from the buffer.
-    // -------------------------------------------------------------------------
-    DoWiiMixState(system, p);
+    AudioCommon::PostInitSoundStream(system);
 
-    // --- DIAGNOSTIC TRAP: IMMEDIATE READBACK ---
-    if (g_main_cp_state.matrix_index_a.Hex == 0xFFFFFFFF) {
-        printf("CRITICAL FAILURE: CP State corrupted IMMEDIATELY after DoWiiMixState (Load)!\n");
-    } else {
-        printf("CP State clean after DoWiiMixState: 0x%08X\n", g_main_cp_state.matrix_index_a.Hex);
-    }
-    // ---------------------------------------------
+    // DVD Interface
+    system.GetDVDInterface().WiiMixRestart();
 
-    system.GetCoreTiming().LogEventQueues("After DoWiiMixState (Pure State Loaded)");
+    // DSP
+    system.GetDSP().WiiMixRestart(Config::Get<bool>(Config::MAIN_DSP_HLE));
+  }
 
-    // -------------------------------------------------------------------------
-    // STEP 3: POST-LOAD THREAD RESTART
-    // Restart any threads that were stopped during Reset.
-    // -------------------------------------------------------------------------
-    if (p.IsReadMode()) {
-        // DVD Interface (Restarts the DVD Thread)
-        system.GetDVDInterface().WiiMixRestart();
+  // Refresh cpu base pointer to point to valid JIT
+  power_pc.ApplyMode();
 
-        // DSP (Restarts the DSP Thread)
-        system.GetDSP().WiiMixRestart(Config::Get<bool>(Config::MAIN_DSP_HLE));
-    }
+  auto& ppc_state = power_pc.GetPPCState();
+  auto& memory = system.GetMemory();
 
-    // Refresh cpu base pointer to point to valid JIT
-    power_pc.ApplyMode();
+  // CRITICAL: Force the JIT/Code Cache to clear. 
+  // Even in Interpreter mode, this resets internal block maps that might point to stale RAM.
+  // We need a guard to access the JIT interface safely.
+  {
+    Core::CPUThreadGuard guard(system);
+    system.GetJitInterface().ClearCache(guard);
+  }
 
-    auto& ppc_state = power_pc.GetPPCState();
-    auto& memory = system.GetMemory();
+  if (!ppc_state.m_enable_dcache)
+  {
+    INFO_LOG_FMT(POWERPC, "Flushing data cache");
+    ppc_state.dCache.FlushAll(memory);
+  }
 
-    // CRITICAL: Force the JIT/Code Cache to clear.
-    {
-        Core::CPUThreadGuard guard(system);
-        system.GetJitInterface().ClearCache(guard);
-    }
+  PowerPC::RoundingModeUpdated(ppc_state);
+  PowerPC::RecalculateAllFeatureFlags(ppc_state);
 
-    if (!ppc_state.m_enable_dcache)
-    {
-        INFO_LOG_FMT(POWERPC, "Flushing data cache");
-        ppc_state.dCache.FlushAll(memory);
-    }
+  auto& mmu = system.GetMMU();
+  mmu.IBATUpdated();
+  mmu.DBATUpdated();
 
-    PowerPC::RoundingModeUpdated(ppc_state);
-    PowerPC::RecalculateAllFeatureFlags(ppc_state);
+  // Prevent CoreTiming from running a full advance right after loading the state
+  // This ensures that the slices are processed before advancing
+  auto& core_timing = system.GetCoreTiming();
+  if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
+    core_timing.SetSkipNextAdvance(true);
+  } else {
+      core_timing.SetSkipNextAdvance(false);
+  }
 
-    auto& mmu = system.GetMMU();
-    mmu.IBATUpdated();
-    mmu.DBATUpdated();
+  if (p.IsReadMode()) {
+      // A. Invalidate Vertex Loader
+      // This forces the game to rebuild vertex decoders based on the loaded 'g_main_cp_state'
+      VertexLoaderManager::Init();
 
-    // Prevent CoreTiming from running a full advance right after loading the state
-    auto& core_timing = system.GetCoreTiming();
-    // if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
-    //     core_timing.SetSkipNextAdvance(true);
-    // } else {
-    core_timing.SetSkipNextAdvance(false);
-    // }
+      if (g_vertex_manager) {
+          g_vertex_manager->Invalidate();
+      }
 
-    if (p.IsReadMode()) {
-            // A. Invalidate Vertex Loader
-            VertexLoaderManager::Init();
+      // B. Dirty the Shader Managers
+      // This tells the backend: "The BP registers changed, check genMode/tevOrders again."
+      // This fixes your "vertex_shader == ShaderStage::Vertex" crash.
+      system.GetVertexShaderManager().dirty = true;
+      system.GetPixelShaderManager().Dirty();
+      system.GetGeometryShaderManager().Dirty();
 
-            // FIX: Ensure XF Memory is invalidated BEFORE Shader/Vertex Managers
-            auto& xf = system.GetXFStateManager();
-            xf.InvalidateXFRange(0, 0x1000); // 4KB XF memory forces backend to reload all XF data
-            xf.SetProjectionChanged();
-            xf.SetViewportChanged();
-            xf.SetLightingConfigChanged();
+      // C. Dirty the XF State (Matrices, Lighting, Viewport)
+      // We use InvalidateXFRange to tell the manager that the entire XF memory area 
+      // (which we just overwrote with p.Do(xfmem)) is new.
+      // XF Memory is 4KB (0x1000 bytes).
+      auto& xf = system.GetXFStateManager();
+      xf.InvalidateXFRange(0, 0x1000); // 4KB XF memory
+      xf.SetProjectionChanged();
+      xf.SetViewportChanged();
+      xf.SetLightingConfigChanged();
+      xf.SetTexMatrixChangedA(0xFFFFFFFF);
+      xf.SetTexMatrixChangedB(0xFFFFFFFF);
+      for(int i = 0; i < 2; ++i) xf.SetMaterialColorChanged(i);
+      for(int i = 0; i < 8; ++i) xf.SetTexMatrixInfoChanged(i);
+  }
 
-            if (g_vertex_manager) {
-                g_vertex_manager->Invalidate();
-            }
-
-            // B. Dirty the Shader Managers
-            system.GetVertexShaderManager().dirty = true;
-            system.GetPixelShaderManager().Dirty();
-            system.GetGeometryShaderManager().Dirty();
-    }
-
-    printf("Current frame at end of EmuThread: %lu\n", system.GetMovie().GetCurrentFrame());
-    system.GetCoreTiming().LogEventQueues("After Cache Refresh");
-    
-    return p.IsReadMode();
+  printf("Current frame at end of EmuThread: %ld\n", system.GetMovie().GetCurrentFrame());
+  system.GetCoreTiming().LogEventQueues("After Cache Refresh");
+  // system.GetCPU().Break();
+  return p.IsReadMode();
 }
 
 void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
@@ -673,20 +608,25 @@ void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
 
 void WiiMixSaveToBuffer(Core::System& system, std::vector<u8>& buffer)
 {
-    // Should be called from CPU thread already
-    u8* ptr = nullptr;
-    PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+  // Should be called from CPU thread already
+  u8* ptr = nullptr;
+  PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
 
-    // Measure
-    DoWiiMixState(system, p_measure);
-    const size_t buffer_size = reinterpret_cast<size_t>(ptr);
-    buffer.resize(buffer_size);
+  // system.GetCoreTiming().LogTimingState("Before DoWiiMixState Measure");
+  // system.GetCoreTiming().DoState(p_measure);
+  // p_measure.DoMarker("CoreTiming");
+  // system.GetCoreTiming().LogTimingState("After DoWiiMixState Measure");
+  DoWiiMixState(system, p_measure);
+  const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+  buffer.resize(buffer_size);
 
-    ptr = buffer.data();
-    PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
-    
-    // Write
-    DoWiiMixState(system, p);
+  ptr = buffer.data();
+  PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+  // system.GetCoreTiming().LogTimingState("Before DoWiiMixState write");
+  // system.GetCoreTiming().DoState(p);
+  // p.DoMarker("CoreTiming");
+  // system.GetCoreTiming().LogTimingState("After DoWiiMixState write");
+  DoWiiMixState(system, p);
 }
 
 namespace
@@ -1659,11 +1599,6 @@ static void LoadWiiMixFileStateData(const std::string& filename, std::vector<u8>
   ret_data.swap(buffer);
 }
 
-void SetWiiMixJitterHostEnvironment(bool state)
-{
-  WIIMIX_JITTER = state;
-}
-
 // TODOx
 // Reinitializes host components
 // Minimum Viable Save State
@@ -1672,32 +1607,19 @@ void SetWiiMixJitterHostEnvironment(bool state)
 // - Memory::DoState
 // - CoreTiming::DoState
 bool WiiMixHostReinitialization(Core::System& system) {
-  if (WIIMIX_JITTER)
-    system.JitterHostEnvironment();
-
-  // [FIX] MOVED DOWN: Do not reset CoreTiming here.
-  // If we clear queues now, threads stopping below can still push new events 
-  // (Ghost Events) into m_ts_queue before they fully exit.
-  
-  /* MOVED: system.GetCoreTiming().WiiMixReset(); */
-
-  // 1. Stop host threads (ENSURE THEY ARE DEAD FIRST)
-  system.GetDSP().Shutdown();
-  system.GetDVDInterface().Shutdown();
-  
-  // FIX: DO NOT SHUTDOWN SOUND STREAM. 
-  // AudioCommon::WiiMixShutdownSoundStream(system); 
-  
-  system.GetPowerPC().Shutdown(); 
-
-  // [FIX] NEW LOCATION: Reset CoreTiming NOW.
-  // Now that threads are stopped, no new events can be scheduled.
-  // This clears any events generated during the shutdown of the threads above.
   system.GetCoreTiming().LogTimingState("Before Host Reinit");
-  system.GetCoreTiming().WiiMixReset(); 
+  system.GetCoreTiming().WiiMixReset(); // Resets timer, clears event *types*
   system.GetCoreTiming().LogTimingState("After Host Reinit");
 
+  // 1. Stop all host threads
+  system.GetDSP().Shutdown();
+  system.GetDVDInterface().Shutdown();
+  AudioCommon::WiiMixShutdownSoundStream(system);
+  system.GetPowerPC().Shutdown(); 
+
   // 2. Register All Event Handlers AND Re-init Hardware
+  // This re-populates the event map *and* resets hardware to a clean state.
+  // This will schedule initial boot-time events (which we want to clear later).
   system.GetSystemTimers().WiiMixReset();
   system.GetProcessorInterface().WiiMixReset();
   system.GetMemoryInterface().WiiMixReset();
@@ -1711,12 +1633,11 @@ bool WiiMixHostReinitialization(Core::System& system) {
   system.GetExpansionInterface().WiiMixReset();
   system.GetMemory().WiiMixReset();
 
-  // 4. FULLY Re-initialize threaded components
+  // 4. FULLY Re-initialize threaded components to a clean boot state
+  // We are NOT calling the "WiiMixRestart" functions here. We are
+  // calling the *full* re-initialization logic.
   system.GetDSP().WiiMixReset();
-  
-  // FIX: DO NOT RESET AUDIO BACKEND HERE
   system.GetAudioInterface().WiiMixReset();
-  
   system.GetDVDInterface().WiiMixReset();
 
   // 5. Reset Host-Side Caches (CPU JIT)
@@ -2119,39 +2040,140 @@ void UndoWiiMixSaveState(Core::System& system)
 // 3. Loads state (A) back (which must trigger host re-init)
 // 4. Steps the emulator one frame, saves the result (C)
 // 5. Compares B and C. If they match, your functions are deterministic.
+//
+// int WiiMixDiffTest(Core::System& system)
+// {
+//   if (!Core::IsRunningOrStarting(system))
+//   {
+//     TEST_FAIL(1, "WiiMix Diff Test: Emulator is not running.");
+//     return 1;
+//   }
 
-// ORIGINAL
+//   printf("Starting WiiMix Diff Test...\n");
+//   OSD::AddMessage("Running WiiMix Diff Test...", 3000, OSD::Color::CYAN);
+
+//   int exit_code = 1;
+
+//   Core::RunOnCPUThread(
+//       system,
+//       [&] {
+//         std::vector<u8> buffer_A;
+//         std::vector<u8> buffer_B;
+//         std::vector<u8> buffer_C;
+
+//         // --- Step 1: Get State A (The Start) ---
+//         WiiMixSaveToBuffer(system, buffer_A);
+//         if (buffer_A.empty())
+//         {
+//           TEST_FAIL(2, "Diff Test FAILED: State A was empty.");
+//           Core::Stop(system);
+//           exit_code = 2;
+//           return;
+//         }
+
+//         // --- Step 2 & 3: Get State B (The \"Control\" Frame) ---
+//         Core::DoFrameStep(system);
+//         WiiMixSaveToBuffer(system, buffer_B);
+//         if (buffer_B.empty())
+//         {
+//           TEST_FAIL(3, "Diff Test FAILED: State B was empty.");
+//           Core::Stop(system);
+//           exit_code = 3;
+//           return;
+//         }
+
+//         // --- Step 4: Load State A (The \"Reset\") ---
+//         WiiMixLoadFromBuffer(system, buffer_A);
+
+//         // --- Step 5 & 6: Get State C (The \"Test\" Frame) ---
+//         Core::DoFrameStep(system);
+//         WiiMixSaveToBuffer(system, buffer_C);
+//         if (buffer_C.empty())
+//         {
+//           TEST_FAIL(4, "Diff Test FAILED: State C was empty.");
+//           Core::Stop(system);
+//           exit_code = 4;
+//           return;
+//         }
+
+//         // --- Step 7: Compare B and C ---
+//         if (buffer_B.size() != buffer_C.size())
+//         {
+//           TEST_FAIL(5, "Diff Test FAILED: Size mismatch! B=%zu, C=%zu.", buffer_B.size(), buffer_C.size());
+//           Core::Stop(system);
+//           exit_code = 5;
+//           return;
+//         }
+
+//         if (buffer_B == buffer_C)
+//         {
+//           printf("Diff Test PASSED! State is deterministic.\n");
+//           OSD::AddMessage("Diff Test PASSED! State is deterministic.", 10000, OSD::Color::GREEN);
+//           exit_code = 0;
+//         }
+//         else
+//         {
+//           // Find the first mismatch
+//           size_t mismatch_index = 0;
+//           for (size_t i = 0; i < buffer_B.size(); ++i)
+//           {
+//             if (buffer_B[i] != buffer_C[i])
+//             {
+//               mismatch_index = i;
+//               break;
+//             }
+//           }
+//           TEST_FAIL(6, "Diff Test FAILED: Mismatch at byte %zu. Your save/load logic is not deterministic.", mismatch_index);
+//           // QCoreApplication::exit(test_result);
+//           exit_code = 6;
+//         }
+//         Core::Stop(system);
+//         // Dump buffers to files (e.g., "diff_B.bin", "diff_C.bin") so you can analyze them with a hex editor.
+//         {
+//           File::IOFile file_b("B.bin", "wb");
+//           if (file_b)
+//             file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+//           File::IOFile file_c("C.bin", "wb");
+//           if (file_c)
+//             file_c.WriteBytes(buffer_C.data(), buffer_C.size());
+//         }
+//       },
+//       true); // true = wait for it to finish
+//     return exit_code;
+//   }
+
+// Helper function to synchronously step N frames
 // void WiiMixStepNPauses(Core::System& system, int n)
 // {
-//   for (int i = 0; i < n; ++i)
-//   {
-//     // 1. Trigger the internal frame step logic.
-//     // This sets s_frame_step = true and unpauses the system.
-//     Core::DoFrameStep(system);
+//   u64 start_frame = 0;
+//   Core::RunOnCPUThread(system, [&] {
+//     start_frame = system.GetMovie().GetCurrentFrame();
+//   }, true);
 
-//     // 2. FORCE the "Frame Presented" signal.
-//     // In Headless/NoGUI mode, the video backend often skips presentation or
-//     // doesn't trigger the callback. This manually sets s_stop_frame_step = true.
-//     // We do this immediately. The Emulator thread (Interpreter) is slow enough
-//     // that this flag will definitely be set before the CPU reaches the next 
-//     // VICallback (Field boundary), ensuring we stop at exactly the next Field.
-//     Core::Callback_FramePresented(1.0);
+//   u64 target_frame = start_frame + n;
+  
+//   // Un-pause the EmuThread
+//   Core::SetState(system, Core::State::Running, false);
 
-//     // 3. Wait for the EmuThread to pause itself at the VI boundary.
-//     // We use a small sleep to yield the Host thread while waiting.
-//     // We also add a timeout just in case.
-//     int timeout_ms = 5000;
-//     while (Core::GetState(system) != Core::State::Paused)
-//     {
-//       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//       timeout_ms--;
-//       if (timeout_ms <= 0) {
-//           printf("WII-MIX-ERROR: Timed out waiting for frame step to finish!\n");
-//           // Force break to unstick the thread, though the test will likely fail
-//           system.GetCPU().Break(); 
-//           break;
-//       }
-//     }
+//   // Poll from main thread until the frame count increments N times
+//   int timeout = 100 * n; // ~1.6s timeout per frame
+//   u64 current_frame = start_frame;
+//   while (current_frame < target_frame && timeout > 0) {
+//     std::this_thread::sleep_for(std::chrono::milliseconds(16));
+//     // We must ask the EmuThread for the frame count
+//     Core::RunOnCPUThread(system, [&] {
+//       current_frame = system.GetMovie().GetCurrentFrame();
+//     }, true);
+//     timeout--;
+//   }
+
+//   // Re-pause the EmuThread
+//   Core::SetState(system, Core::State::Paused, false);
+
+//   if (timeout == 0) {
+//     TEST_FAIL(99, "Diff Test FAILED: Frame step timed out.");
+//     // This is a fatal test error, so we'll just stop the core.
+//     Core::RunOnCPUThread(system, [&] { Core::Stop(system); }, true);
 //   }
 // }
 
@@ -2159,105 +2181,39 @@ void WiiMixStepNPauses(Core::System& system, int n)
 {
   for (int i = 0; i < n; ++i)
   {
+    // 1. Trigger the internal frame step logic.
+    // This sets s_frame_step = true and unpauses the system.
     Core::DoFrameStep(system);
+
+    // 2. FORCE the "Frame Presented" signal.
+    // In Headless/NoGUI mode, the video backend often skips presentation or
+    // doesn't trigger the callback. This manually sets s_stop_frame_step = true.
+    // We do this immediately. The Emulator thread (Interpreter) is slow enough
+    // that this flag will definitely be set before the CPU reaches the next 
+    // VICallback (Field boundary), ensuring we stop at exactly the next Field.
     Core::Callback_FramePresented(1.0);
 
-    // CHANGE: Increase timeout from 2000 to 10000ms for slow Interpreter
-    int timeout_ms = 10000; 
+    // 3. Wait for the EmuThread to pause itself at the VI boundary.
+    // We use a small sleep to yield the Host thread while waiting.
+    // We also add a timeout just in case.
+    int timeout_ms = 5000;
     while (Core::GetState(system) != Core::State::Paused)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       timeout_ms--;
       if (timeout_ms <= 0) {
-          printf("WII-MIX-ERROR: Timed out waiting for frame step to finish! Force breaking.\n");
+          printf("WII-MIX-ERROR: Timed out waiting for frame step to finish!\n");
+          // Force break to unstick the thread, though the test will likely fail
           system.GetCPU().Break(); 
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          return; // CRITICAL: Return immediately so we don't save a partial state
+          break;
       }
     }
   }
 }
 
-int WiiMixIdentityTest(Core::System& system)
+int WiiMixDiffTest(Core::System& system, int steps = 1)
 {
-  printf("Starting WiiMix Identity Test...\n");
-
-  // 1. Warm-up Phase
-  // Run 10 frames to ensure the emulator is in a steady state (past boot ROM, etc).
-  // Initial boot state often has unique flags that are cleared after first use.
-  Core::SetState(system, Core::State::Paused, false);
-  Core::RunOnCPUThread(system, [&]() {}, true); // Sync
-  
-  printf("Warming up (10 frames)...\n");
-  WiiMixStepNPauses(system, 10);
-
-  int exit_code = 0;
-  std::vector<u8> buffer_A;
-  std::vector<u8> buffer_B;
-
-  Core::RunOnCPUThread(system, [&] {
-    // 2. Save State A
-    printf("Saving State A...\n");
-    WiiMixSaveToBuffer(system, buffer_A);
-    if (buffer_A.empty()) {
-        printf("IDENTITY FAIL: Buffer A is empty.\n");
-        exit_code = 2;
-        return;
-    }
-
-    // 3. Load State A
-    // Note: WiiMixLoadFromBufferEmuThread handles Poisoning internally if configured via CLI
-    printf("Loading State A (Triggering Re-Init/Poison)...\n");
-    bool load_ok = WiiMixLoadFromBufferEmuThread(system, buffer_A);
-    if (!load_ok) {
-        printf("IDENTITY FAIL: Load returned false.\n");
-        exit_code = 3;
-        return;
-    }
-
-    // 4. Save State B (Immediately after load)
-    // Theoretically, State B should be bit-for-bit identical to State A
-    printf("Saving State B...\n");
-    WiiMixSaveToBuffer(system, buffer_B);
-
-    // 5. Compare
-    if (buffer_A.size() != buffer_B.size()) {
-        printf("IDENTITY FAIL: Size mismatch. A: %zu, B: %zu\n", buffer_A.size(), buffer_B.size());
-        exit_code = 10;
-    } 
-    else if (buffer_A != buffer_B) {
-        // Find the first mismatch offset for debugging
-        size_t mismatch_idx = 0;
-        for (; mismatch_idx < buffer_A.size(); ++mismatch_idx) {
-            if (buffer_A[mismatch_idx] != buffer_B[mismatch_idx]) break;
-        }
-        printf("IDENTITY FAIL: Content mismatch at offset 0x%zX\n", mismatch_idx);
-        exit_code = 10;
-    }
-    else {
-        printf("Identity Test PASSED! Load(Save(S)) == S\n");
-        exit_code = 0;
-    }
-
-    // Dump files if failed
-    if (exit_code != 0) {
-        File::IOFile file_a("Identity_A.bin", "wb");
-        if(file_a) file_a.WriteBytes(buffer_A.data(), buffer_A.size());
-        
-        File::IOFile file_b("Identity_B.bin", "wb");
-        if(file_b) file_b.WriteBytes(buffer_B.data(), buffer_B.size());
-        printf("Dumped Identity_A.bin and Identity_B.bin for analysis.\n");
-    }
-
-    Core::Stop(system);
-  }, true);
-
-  return exit_code;
-}
-
-int WiiMixDiffTest(Core::System& system, int steps)
-{
-  printf("Starting WiiMix Diff Test (%d frames)...\n", steps);
+  printf("Starting WiiMix Diff Test...\n");
   int exit_code = 1;
   std::vector<u8> buffer_A, buffer_B, buffer_C;
   bool emu_thread_ok = true;
@@ -2266,64 +2222,110 @@ int WiiMixDiffTest(Core::System& system, int steps)
   Core::SetState(system, Core::State::Paused, false);
   Core::RunOnCPUThread(system, [&]() {}, true);
 
-  // --- Save A (The "Anchor" State) ---
+  printf("Save A to buffer (at Frame 0)\n");
+
+  // --- Save A (Job 1) ---
   Core::RunOnCPUThread(system, [&] {
-    printf("WII-MIX-TEST-LOG: Save A START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+    printf("WII-MIX-TEST-LOG: Save A START (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
     WiiMixSaveToBuffer(system, buffer_A);
     if (buffer_A.empty()) { emu_thread_ok = false; return; }
-  }, true);
+    printf("WII-MIX-TEST-LOG: Save A END (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+  }, true); // Wait
 
   if (!emu_thread_ok) {
     TEST_FAIL(2, "Diff Test FAILED: State A was empty.");
     return 2;
   }
 
-  // --- Step N Frames (Path 1) ---
-  printf("Stepping %d frames (Continuous)...\n", steps);
-  
-  // NOTE: Tracing disabled for speed. Uncomment only for deep debugging single frames.
-  // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StartPCTrace("trace_B.txt"); }, true);
-  WiiMixStepNPauses(system, steps);
-  // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StopPCTrace(); }, true);
+  printf("Step Frame 1 (for State B)\n");
 
-  // --- Save B (Continuous Result) ---
+  // --- START TRACE B ---
   Core::RunOnCPUThread(system, [&] {
-    printf("WII-MIX-TEST-LOG: Save B START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+      GetInterpreter(system)->StartPCTrace("trace_B.txt");
+      // printf("--- START TIMELINE B ---\n");
+      // State::WIIMIX_LOG = true;
+  }, true);
+  
+  WiiMixStepNPauses(system, steps);
+
+  // --- STOP TRACE B ---
+  Core::RunOnCPUThread(system, [&] {
+      // State::WIIMIX_LOG = false;
+      // printf("--- END TIMELINE B ---\n");
+      GetInterpreter(system)->StopPCTrace();
+  }, true);
+
+  // EmuThread's loop will now execute one frame and pause.
+
+  printf("Save B to buffer (at Frame 1)\n");
+
+  Core::RunOnCPUThread(system, [&] {
+    printf("WII-MIX-TEST-LOG: Save B START (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
     WiiMixSaveToBuffer(system, buffer_B);
     if (buffer_B.empty()) { emu_thread_ok = false; return; }
-  }, true);
+    printf("WII-MIX-TEST-LOG: Save B END (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+  }, true); // Wait
 
   if (!emu_thread_ok) {
     TEST_FAIL(4, "Diff Test FAILED: State B was empty.");
     return 4;
   }
 
-  // --- Load A (Reset) ---
-  printf("Loading State A...\n");
+  // printf("Host reinit\n");
+
+  // // --- Host Reinit (Job 4) ---
+  // Core::RunOnCPUThread(system, [&] {
+  //   if (!WiiMixHostReinitialization(system)) {
+  //     emu_thread_ok = false;
+  //   }
+  // }, true); // Wait
+
+  // if (!emu_thread_ok) {
+  //   TEST_FAIL(5, "Diff Test FAILED: Host Re-initialization failed.");
+  //   return 5;
+  // }
+
+  printf("Load from EmuThread (to Frame 0)\n");
+
+  // --- Load A (Job 5) ---
   Core::RunOnCPUThread(system, [&] {
-    // Poisoning is handled inside WiiMixLoadFromBufferEmuThread based on Config::WIIMIX_POISON_MASK
+    printf("WII-MIX-TEST-LOG: Load A START (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
     if (!WiiMixLoadFromBufferEmuThread(system, buffer_A)) {
       emu_thread_ok = false;
     }
-  }, true);
+    system.GetCoreTiming().LogTimingState("After WiiMixLoadFromBufferEmuThread for Diff Test");
+    printf("WII-MIX-TEST-LOG: Load A END (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+  }, true); // Wait
 
   if (!emu_thread_ok) {
     TEST_FAIL(6, "Diff Test FAILED: Loading Emulated State failed.");
     return 6;
   }
-   
-  // --- Step N Frames (Path 2) ---
-  printf("Stepping %d frames (Loaded)...\n", steps);
-
-  // NOTE: Tracing disabled for speed.
-  // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StartPCTrace("trace_C.txt"); }, true);
-  WiiMixStepNPauses(system, steps);
-  // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StopPCTrace(); }, true);
-
-  // --- Save C (Loaded Result) ---
+  
+  printf("Step Frame 1 (for State C)\n");
+  
   Core::RunOnCPUThread(system, [&] {
-    printf("WII-MIX-TEST-LOG: Save C START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+      GetInterpreter(system)->StartPCTrace("trace_C.txt");
+      // printf("--- START TIMELINE C ---\n");
+      // State::WIIMIX_LOG = true;
+  }, true);
+
+  WiiMixStepNPauses(system, steps);
+
+  // --- STOP TRACE C ---
+  Core::RunOnCPUThread(system, [&] {
+    // State::WIIMIX_LOG = false;
+    // printf("--- END TIMELINE C ---\n");
+    GetInterpreter(system)->StopPCTrace();
+  }, true);
+
+  printf("Save C to Buffer (at Frame 1)\n");
+
+  // --- Save C and Compare (Job 7) ---
+  Core::RunOnCPUThread(system, [&] {
+    printf("WII-MIX-TEST-LOG: Save C START (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
     WiiMixSaveToBuffer(system, buffer_C);
+    printf("WII-MIX-TEST-LOG: Save C END (Current Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
     
     if (buffer_C.empty()) {
       TEST_FAIL(8, "Diff Test FAILED: State C was empty.");
@@ -2336,21 +2338,25 @@ int WiiMixDiffTest(Core::System& system, int steps)
       exit_code = 0;
     } else {
       auto mismatch = std::mismatch(buffer_B.begin(), buffer_B.end(), buffer_C.begin()).first;
-      size_t offset = static_cast<size_t>(mismatch - buffer_B.begin());
-      TEST_FAIL(10, "Diff Test FAILED: Mismatch at byte 0x%zX Your save/load logic is not deterministic.", offset);
+      TEST_FAIL(10, "Diff Test FAILED: Mismatch at byte 0x%zX Your save/load logic is not deterministic.",
+        static_cast<size_t>(mismatch - buffer_B.begin()));
       exit_code = 10;
     }
     
-    if (exit_code != 0) {
+    printf("Dumping B and C to files\n");
+    // Dump buffers to files (e.g., "B.bin", "C.bin") so you can analyze them with a hex editor.
+    {
       File::IOFile file_b("B.bin", "wb");
-      if (file_b) file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+      if (file_b)
+      file_b.WriteBytes(buffer_B.data(), buffer_B.size());
       File::IOFile file_c("C.bin", "wb");
-      if (file_c) file_c.WriteBytes(buffer_C.data(), buffer_C.size());
+      if (file_c)
+      file_c.WriteBytes(buffer_C.data(), buffer_C.size());
     }
-    
+    printf("Stopping System\n");
     Core::Stop(system);
-  }, true); 
-     
+  }, true); // Wait
+    
   return exit_code;
 }
 }  // namespace State
@@ -3138,24 +3144,6 @@ void CheckAndHandleBreakPointsFromJIT(PowerPCManager& power_pc)
 {
   power_pc.CheckAndHandleBreakPoints();
 }
-
-void PowerPCManager::PoisonState()
-{
-    // Trash Registers
-    memset(m_ppc_state.gpr, 0xCC, sizeof(m_ppc_state.gpr));
-    m_ppc_state.pc = 0xDEADBEEF;
-    m_ppc_state.npc = 0xDEADBEEF;
-    
-    // Trash MSR (Machine State Register) - Very critical for logic flow
-    m_ppc_state.msr.Hex = 0xFFFFFFFF;
-    
-    // Trash Time Base (Affects game logic timing)
-    // Note: TL/TU are macros accessing the struct
-    // We can't access them easily here, but we can trash the struct:
-    // This assumes the struct layout. Safer to use public methods if available.
-    // Since we are in the class, we have access.
-}
-
 }  // namespace PowerPC
 
 ================================VideoBackendBase.cpp=====================
@@ -3602,8 +3590,8 @@ void VideoBackendBase::WiiMixReset()
     g_framebuffer_manager->InvalidatePeekCache();
   if (g_vertex_manager)
     g_vertex_manager->InvalidatePipelineObject();
-  // if (g_shader_cache)
-  //   g_shader_cache->ClearCaches();
+  if (g_shader_cache)
+    g_shader_cache->ClearCaches();
   VertexLoaderManager::Clear();
 
   // 2. Reset Pure Emulated GPU State
@@ -3703,20 +3691,6 @@ EventType* CoreTimingManager::RegisterEvent(const std::string& name, TimedCallba
 {
   // check for existing type with same name.
   // we want event type names to remain unique so that we can use them for serialization.
-  // ASSERT_MSG(POWERPC, !m_event_types.contains(name),
-  //            "CoreTiming Event \"{}\" is already registered. Events should only be registered "
-  //            "during Init to avoid breaking save states.",
-  //            name);
-
-  // If the event already exists, return the existing pointer.
-  auto itr = m_event_types.find(name);
-  if (itr != m_event_types.end())
-  {
-      // Optional: Check if the callback function matches if you want to be extra safe
-      // ASSERT(itr->second.callback == callback); 
-      return &itr->second;
-  }
-
   ASSERT_MSG(POWERPC, !m_event_types.contains(name),
              "CoreTiming Event \"{}\" is already registered. Events should only be registered "
              "during Init to avoid breaking save states.",
@@ -3906,13 +3880,7 @@ void CoreTimingManager::DoState(PointerWrap& p)
   // It is not part of the pure emulated state.
   // if (!WIIMIX_STATE)
   // {
-  // p.Do(m_idled_cycles);
-  if (WIIMIX_STATE) {
-      u64 dummy_idle = 0;
-      p.Do(dummy_idle);
-  } else {
-      p.Do(m_idled_cycles);
-  }
+  p.Do(m_idled_cycles);
   // }
   p.Do(m_last_oc_factor); // 4
   p.Do(m_fake_dec_start_value); // 4
@@ -4141,21 +4109,15 @@ void CoreTimingManager::Advance()
   auto& ppc_state = power_pc.GetPPCState();
 
   if (State::WIIMIX_LOG) {
-    s64 next_time = m_event_queue.empty() ? -1 : m_event_queue.front().time;
-    const char* next_name = m_event_queue.empty() ? "None" : m_event_queue.front().type->name->c_str();
-    u64 next_user = m_event_queue.empty() ? 0 : m_event_queue.front().userdata;
-
-    // This format matches the Python regex
-    printf("CSV_TRACE,%ld,%d,%d,%ld,%s,%lu\n", 
-          m_globals.global_timer, 
-          ppc_state.downcount, 
-          m_globals.slice_length,
-          next_time, 
-          next_name,
-          next_user
-    );
-    fflush(stdout);
-}
+      s64 next_event = m_event_queue.empty() ? -1 : m_event_queue.front().time;
+      printf("TIMELINE: Adv | GT: %ld | Slice: %d | Down: %d | Next: %ld | Events: %zu\n", 
+             m_globals.global_timer, 
+             m_globals.slice_length, 
+             ppc_state.downcount, 
+             next_event,
+             m_event_queue.size());
+      fflush(stdout);
+  }
 
   int cyclesExecuted = m_globals.slice_length - DowncountToCycles(ppc_state.downcount);
   // printf("CoreTiming Advance:\n");
@@ -4403,23 +4365,6 @@ void GlobalIdle()
   Core::System::GetInstance().GetCoreTiming().Idle();
 }
 
-void CoreTimingManager::PoisonState()
-{
-    // Trash the global timer. 
-    // If Load() relies on the "0" from Reset() instead of overwriting it,
-    // this 0xDEADBEEF will persist and cause immediate desyncs.
-    m_globals.global_timer = 0xDEADBEEFDEADBEEF;
-    m_globals.slice_length = -99999;
-    
-    // Trash idled cycles (the source of your 0x4782 mismatch earlier)
-    m_idled_cycles = 0xCCCCCCCC;
-
-    // Trash event queue
-    m_event_queue.clear();
-    // We can't push totally invalid events or it might crash the *Poisoning* step.
-    // Just clearing it is usually enough: if Load() expects events but finds none, it fails.
-}
-
 }  // namespace CoreTiming
 
 =========================HW.cpp=======================================
@@ -4605,11 +4550,6 @@ void DoState(Core::System& system, PointerWrap& p)
   system.GetMemory().DoState(p);
   p.DoMarker("Memory");
   State::LogOffset("Memory", p);
-
-  system.GetSystemTimers().DoState(p);
-  p.DoMarker("SystemTimers");
-  State::LogOffset("SystemTimers", p);
-
   system.GetMemoryInterface().DoState(p);
   p.DoMarker("MemoryInterface");
   State::LogOffset("MemoryInterface", p);
@@ -4884,19 +4824,6 @@ int main(int argc, char* argv[])
       .action("store_true")
       .help("Run in headless diff test mode (for automated testing)");
 
-  // Add Identity Test Flag
-  parser->add_option("-it", "--identity-test")
-      .action("store_true")
-      .help("Run WiiMix Identity Test (Save A -> Load A -> Save B -> Compare)");
-
-  // Add Poison Mask Flag
-  parser->add_option("--poison")
-      .action("store")
-      .help("Bitmask (Int/Hex) for subsystem poisoning to detect missing state data");
-
-  // Add jitter flag
-  parser->add_option("--jitter").action("store").help("adapt memory and other host-architecture elements to simulate being on a different system");
-
   // parser->add_option("-fr", "--frames")
   //     .help("Specify the number of frames to step when run in Diff Test mode (WiiMix feature)");
 
@@ -4911,27 +4838,6 @@ int main(int argc, char* argv[])
   if (options.is_set("save_state"))
   {
     save_state_path = static_cast<const char*>(options.get("save_state"));
-  }
-
-  // --- Apply Poison Mask Settings ---
-  if (options.is_set("poison"))
-  {
-    const std::string val = static_cast<const char*>(options.get("poison"));
-    try {
-        int mask = std::stoi(val, nullptr, 0); 
-        
-        // FIX: Use State::SetWiiMixPoisonMask instead of Config::SetBaseOrCurrent
-        State::SetWiiMixPoisonMask(mask);
-        
-        printf("POISON: Mask set to 0x%08X via CLI\n", mask);
-    } catch (...) {
-        fprintf(stderr, "Invalid poison mask format\n");
-    }
-  }
-
-  // Apply jitter settings
-  if (options.is_set("jitter")) {
-    State::SetWiiMixJitterHostEnvironment(true);
   }
 
   std::unique_ptr<BootParameters> boot;
@@ -5032,15 +4938,13 @@ int main(int argc, char* argv[])
   Discord::UpdateDiscordPresence();
 #endif
 
-  // --- WiiMix Testing Logic ---
-  // Shared logic for both Diff Tests and Identity Tests
+  // --- Step 2: Run the correct application type ---
+  // if (options.is_set("diff_test"))
+  // {
+  // THIS SHOULD BE CALLED IN THE EMUTHREAD; OTHERWISE THERE WON'T BE PROPER INITIALIZATION
   bool diff_test = options.is_set("diff_test");
-  bool identity_test = options.is_set("identity_test");
-
-  if (diff_test || identity_test)
+  if (diff_test)
   {
-    // --- 1. Environment Setup ---
-    
     // Set the corresponding interpreter
     if (options.is_set("interpreter"))
     {
@@ -5055,16 +4959,11 @@ int main(int argc, char* argv[])
         State::WIIMIX_DIFF_TEST_CPU_CORE = PowerPC::CPUCore::JIT64;
       #endif
     }
-    
-    // Force Single Core for Determinism
-    Config::SetBaseOrCurrent(Config::MAIN_CPU_THREAD, false);
-
-    // Update Core determinism settings
-    Core::UpdateWantDeterminism(Core::System::GetInstance(), true); 
-    
-    // --- 2. Boot Wait Loop ---
+    Config::SetCurrent(Config::MAIN_CPU_CORE, State::WIIMIX_DIFF_TEST_CPU_CORE);
+    Core::UpdateWantDeterminism(Core::System::GetInstance(), true); // force determinism
     // We (the MainThread) must wait for the EmuThread to finish booting
-    // and enter its 'Running' state. This polling loop solves the race condition.
+    // and enter its 'Running' state. This polling loop
+    // solves the race condition.
     int retries = 0;
     while (!Core::IsRunning(Core::System::GetInstance()) && retries < 100) // 5-second timeout
     {
@@ -5075,37 +4974,26 @@ int main(int argc, char* argv[])
     // Check if the emulator successfully booted
     if (!Core::IsRunning(Core::System::GetInstance()))
     {
-       fprintf(stderr, "Test FAILED: Emulator failed to start running.\n");
+       fprintf(stderr, "Diff Test FAILED: Emulator failed to start running.\n");
        fflush(stderr);
-       return 1; 
+       return 1; // Return a fail code
     }
     
-    // --- 3. Execute Specific Test ---
-    int test_result = 0;
-    
-    if (identity_test)
+    // Now the emulator is fully booted and running.
+    // It is safe to call the test function from the MainThread.
+    int frames = 1;
+    if (options.is_set("frames"))
     {
-        // Run Identity Test (A -> Load -> A')
-        test_result = ::State::WiiMixIdentityTest(Core::System::GetInstance());
+      const std::string frames_str = static_cast<const char*>(options.get("frames"));
+      frames = std::stoi(frames_str);
+      if (frames <= 0)
+      {
+        fprintf(stderr, "Invalid number of frames specified for Diff Test.\n");
+        return 1;
+      }
     }
-    else if (diff_test)
-    {
-        // Run Diff Test (A -> Step -> B vs A -> Load -> Step -> C)
-        int frames = 1;
-        if (options.is_set("frames"))
-        {
-          const std::string frames_str = static_cast<const char*>(options.get("frames"));
-          frames = std::stoi(frames_str);
-          if (frames <= 0)
-          {
-            fprintf(stderr, "Invalid number of frames specified for Diff Test.\n");
-            return 1;
-          }
-        }
-        test_result = ::State::WiiMixDiffTest(Core::System::GetInstance(), frames);
-    }
+    int test_result = ::State::WiiMixDiffTest(Core::System::GetInstance(), frames);
 
-    // --- 4. Cleanup & Exit ---
     Core::Shutdown(Core::System::GetInstance());
     
     printf("s_platform.reset() in main\n");
@@ -5114,8 +5002,21 @@ int main(int argc, char* argv[])
     fflush(stdout);
     fflush(stderr);
     
+    // The test is done. The EmuThread is now paused.
+    // We can just return the test result, and the OS will
+    // clean up all threads, avoiding all deadlocks.
     return test_result;
   }
+    // int test_result = State::WiiMixDiffTest(Core::System::GetInstance());
+    // printf("WiiMix Diff Test completed with code %d.\n", test_result);
+    // // Core::Stop(Core::System::GetInstance());
+    // // Core::Shutdown(Core::System::GetInstance());
+
+    // // s_platform.reset();
+    // fflush(stdout);
+    // fflush(stderr);
+    // std::exit(test_result);
+  // }
 
   s_platform->MainLoop();
   Core::Stop(Core::System::GetInstance());
@@ -5140,6 +5041,7 @@ int wmain(int, wchar_t*[], wchar_t*[])
 
 #undef main
 #endif
+
 ==============================Core.cpp==========================================
 // Copyright 2008 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -6512,32 +6414,14 @@ void SystemTimersManager::PreInit()
 
 void SystemTimersManager::WiiMixReset()
 {
-  // Sanitize cpu_core_clock to the expected default for the current system
-  // to prevent poison values from crashing the adjustment logic.
-  m_cpu_core_clock = m_system.IsWii() ? 729000000u : 486000000u;
-
-  // 1. Restore Clock
-  ChangePPCClock(m_system.IsWii() ? Mode::Wii : Mode::GC);
-
-  // 2. FIX: Unconditionally sanitize m_ipc_hle_period
-  // PoisonState set this to -9999. It must be reset to a safe value.
-  if (m_system.IsWii())
-  {
-    const int freq = 1500;
-    m_ipc_hle_period = GetTicksPerSecond() / freq;
-  }
-  else
-  {
-    m_ipc_hle_period = 0; // Safe default for GC
-  }
-
-  // 3. Register Events (Keep your existing event registration code)
   auto& core_timing = m_system.GetCoreTiming();
+
   m_event_type_decrementer = core_timing.RegisterEvent("DecCallback", DecrementerCallback);
   m_event_type_vi = core_timing.RegisterEvent("VICallback", VICallback);
   m_event_type_dsp = core_timing.RegisterEvent("DSPCallback", DSPCallback);
   m_event_type_audio_dma = core_timing.RegisterEvent("AudioDMACallback", AudioDMACallback);
-  m_event_type_ipc_hle = core_timing.RegisterEvent("IPC_HLE_UpdateCallback", IPC_HLE_UpdateCallback);
+  m_event_type_ipc_hle =
+      core_timing.RegisterEvent("IPC_HLE_UpdateCallback", IPC_HLE_UpdateCallback);
   m_event_type_gpu_sleeper = core_timing.RegisterEvent("GPUSleeper", GPUSleepCallback);
   m_event_type_perf_tracker = core_timing.RegisterEvent("PerfTracker", PerfTrackerCallback);
   m_event_type_patch_engine = core_timing.RegisterEvent("PatchEngine", PatchEngineCallback);
@@ -6568,10 +6452,9 @@ void SystemTimersManager::Init()
   if (WIIMIX_STATE) {
     // Use a fixed, arbitrary timestamp. 
     // This value is 2010-01-01 00:00:00 UTC
-    // const u64 fixed_rtc_value = 1262304000;
-    // m_localtime_rtc_offset = 
-    //     Common::Timer::GetLocalTimeSinceJan1970() - fixed_rtc_value;
-    m_localtime_rtc_offset = 0;
+    const u64 fixed_rtc_value = 1262304000;
+    m_localtime_rtc_offset = 
+        Common::Timer::GetLocalTimeSinceJan1970() - fixed_rtc_value;
   }
   else if (Config::Get(Config::MAIN_CUSTOM_RTC_ENABLE))
   {
@@ -6621,28 +6504,6 @@ void SystemTimersManager::Shutdown()
 {
   Common::Timer::RestoreResolution();
   m_localtime_rtc_offset = 0;
-}
-
-void SystemTimersManager::PoisonState()
-{
-    // Trash CPU Clock (Affects audio throttling and core timing)
-    m_cpu_core_clock = 0xDEADBEEF;
-
-    // Trash IPC HLE Period (Affects Wii IOS timing)
-    m_ipc_hle_period = -9999;
-
-    // Poison event types (Dangerous! Only do if you can restore or if Load re-registers)
-    // Actually, don't poison the event pointers themselves as that might cause crashes 
-    // before execution starts. Poisoning the data they rely on is enough.
-}
-
-void SystemTimersManager::DoState(PointerWrap& p)
-{
-  p.Do(m_cpu_core_clock);
-  p.Do(m_ipc_hle_period);
-  p.Do(m_localtime_rtc_offset);
-  
-  // No need to save event types; they are re-registered on Init/Reset
 }
 
 }  // namespace SystemTimers
@@ -6746,11 +6607,6 @@ void AudioInterfaceManager::DoState(PointerWrap& p)
     SoundStream* sound_stream = m_system.GetSoundStream();
     sound_stream->GetMixer()->DoState(p);
   }
-
-  // FIX: Removed manual event rescheduling for WiiMix.
-  // CoreTiming::DoState already restores the event queue with the exact correct timestamps.
-  // Re-scheduling here based on GetAIPeriod() calculates a relative time from NOW,
-  // effectively shifting the audio interrupt cycle and breaking determinism.
 }
 
 void AudioInterfaceManager::UpdateInterrupts()
@@ -6841,7 +6697,7 @@ void AudioInterfaceManager::SetAISSampleRate(SampleRate sample_rate)
   else
   {
     m_control.AISFR = AIS_48KHz;
-    m_aid_sample_rate_divisor = Get48KHzSampleRateDivisor();
+    m_ais_sample_rate_divisor = Get48KHzSampleRateDivisor();
   }
 
   m_cpu_cycles_per_sample = static_cast<u64>(m_system.GetSystemTimers().GetTicksPerSecond()) *
@@ -6868,39 +6724,12 @@ void AudioInterfaceManager::Init()
 
 void AudioInterfaceManager::WiiMixReset()
 {
-  // FIX: Fully clear state to remove Poison values
-  m_control.hex = 0;
-  m_volume.hex = 0;
-  m_sample_counter = 0;
-  m_interrupt_timing = 0;
-  m_last_cpu_time = 0;
-  
-  SetAISSampleRate(SampleRate::AI48KHz);
-  SetAIDSampleRate(SampleRate::AI32KHz);
-
   m_event_type_ai = m_system.GetCoreTiming().RegisterEvent("AICallback", GlobalUpdate);
 }
 
 void AudioInterfaceManager::WiiMixRestart()
 {
-  // 1. Re-initialize the backend (creates new Mixer)
   AudioCommon::InitSoundStream(m_system);
-
-  // 2. Synchronize the new Mixer with the loaded state
-  SoundStream* sound_stream = m_system.GetSoundStream();
-  if (sound_stream)
-  {
-    auto* mixer = sound_stream->GetMixer();
-    if (mixer)
-    {
-      // Apply loaded sample rates
-      mixer->SetStreamInputSampleRateDivisor(m_ais_sample_rate_divisor);
-      mixer->SetDMAInputSampleRateDivisor(m_aid_sample_rate_divisor);
-      
-      // Apply loaded volume
-      mixer->SetStreamingVolume(m_volume.left, m_volume.right);
-    }
-  }
 }
 
 void AudioInterfaceManager::Shutdown()
@@ -7053,18 +6882,8 @@ u32 AudioInterfaceManager::Get48KHzSampleRateDivisor() const
 {
   return (m_system.IsWii() ? 1125 : 1124) * 2;
 }
-
-void AudioInterfaceManager::PoisonState()
-{
-    // Trash Sample Counters (Critical for audio timing)
-    m_sample_counter = 0xFFFFFFFF;
-    m_interrupt_timing = 0xFFFFFFFF;
-    m_last_cpu_time = 0xFFFFFFFFFFFFFFFF;
-    
-    // Trash Control
-    m_control.hex = 0xBADDBAD0;
-}
 }  // namespace AudioInterface
+
 ====================================ProcessorInterface.cpp=============================
 // Copyright 2008 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -7136,20 +6955,6 @@ void ProcessorInterfaceManager::Init()
 void ProcessorInterfaceManager::WiiMixReset()
 {
   auto& core_timing = m_system.GetCoreTiming();
-
-  // FIX: Reset registers to clean state (matching Init).
-  // Without this, Poisoned values (0xFFFFFFFF) persist until DoState overwrites them.
-  // If any other component checks interrupts (like PowerPC) before that overwrite,
-  // determinism is broken.
-  m_interrupt_mask = 0;
-  m_interrupt_cause = 0;
-
-  m_fifo_cpu_base = 0;
-  m_fifo_cpu_end = 0;
-  m_fifo_cpu_write_pointer = 0;
-
-  m_reset_code = 0;
-  m_interrupt_cause = INT_CAUSE_RST_BUTTON | INT_CAUSE_VI;
 
   m_event_type_toggle_reset_button =
       core_timing.RegisterEvent("ToggleResetButton", ToggleResetButtonCallback);
@@ -7368,21 +7173,6 @@ void ProcessorInterfaceManager::PowerButton_Tap()
   auto& core_timing = m_system.GetCoreTiming();
   core_timing.ScheduleEvent(0, m_event_type_ios_notify_power_button, 0,
                             CoreTiming::FromThread::ANY);
-}
-
-void ProcessorInterfaceManager::PoisonState()
-{
-    // Trash Interrupt Masks (Will cause random interrupts to fire or be missed)
-    m_interrupt_mask = 0xFFFFFFFF;
-    m_interrupt_cause = 0xFFFFFFFF;
-
-    // Trash FIFO pointers (Will cause GPU to read garbage memory)
-    m_fifo_cpu_base = 0xBADDBAD0;
-    m_fifo_cpu_end = 0xBADDBAD0;
-    m_fifo_cpu_write_pointer = 0xBADDBAD0;
-
-    // Trash Reset Code
-    m_reset_code = 0xDEADBEEF;
 }
 
 }  // namespace ProcessorInterface
@@ -7979,23 +7769,6 @@ u32 SerialInterfaceManager::GetPollXLines()
   return m_poll.X;
 }
 
-void SerialInterfaceManager::PoisonState()
-{
-    // Trash buffers
-    std::fill(m_si_buffer.begin(), m_si_buffer.end(), 0xCC);
-    
-    // Trash Registers
-    m_poll.hex = 0xBADDBAD0;
-    m_com_csr.hex = 0xBADDBAD0;
-    m_status_reg.hex = 0xBADDBAD0;
-    
-    // Trash Channel State
-    for(auto& chan : m_channel) {
-        chan.out.hex = 0xBADDBAD0;
-        chan.in_hi.hex = 0xBADDBAD0;
-    }
-}
-
 }  // namespace SerialInterface
 
 ====================================DSP.cpp=================================
@@ -8126,54 +7899,53 @@ void DSPManager::Init(bool hle)
 
 void DSPManager::WiiMixRestart(bool hle)
 {
-  // 1. Fallback: Ensure the emulator object exists
-  if (!m_dsp_emulator) {
-      Reinit(hle);
-      m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
+  // m_dsp_emulator object already exists and has had state loaded into it.
+  // We just need to restart its thread.
+  if (m_dsp_emulator)
+  {
+    m_dsp_emulator->WiiMixStartThread();
   }
-
-  // 2. DEADLOCK FIX: Wake up the thread!
-  if (m_dsp_emulator) {
-      // Only write the control register for LLE to wake up the thread.
-      // For HLE, DoState already restored the specific UCode (e.g., AX) and its state.
-      // Calling DSP_WriteControlRegister here treats the restored value as a NEW write 
-      // from the CPU, which triggers UCode initialization logic (resetting it to ROM/Init),
-      // destroying the state we just loaded.
-      if (m_dsp_emulator->IsLLE()) {
-          m_dsp_emulator->DSP_WriteControlRegister(m_dsp_control.Hex);
-      }
+  else
+  {
+    // This should not happen if Shutdown() is fixed, but as a fallback,
+    // we must create the object *and then* initialize its thread.
+    // This will, however, likely cause a desync since state wasn't loaded.
+    Reinit(hle);
+    m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
   }
 }
 
 void DSPManager::WiiMixReset()
 {
-  // 1. HARD RESET: Force destroy the old emulator object immediately.
-  // This ensures the destructor runs and clears any internal HLE state.
-  m_dsp_emulator.reset(); 
+  // Reinit(Config::Get<bool>(Config::MAIN_DSP_HLE));
 
-  // 2. Explicitly zero ALL state variables to remove any Poison (0xCC/0xDEAD)
-  m_audio_dma = {}; // Clears SourceAddress, current_source_address, etc.
+  // --- Manually reset variables from Reinit() ---
+  // We DO NOT call CreateDSPEmulator here, because that starts the thread.
+  // The old emulator object was already destroyed by Shutdown().
+  // We will create a new one in Step 2.
+  // if (!m_aram.wii_mode)
+  // {
+  //   // If ARAM is not in Wii mode, it's a separate buffer.
+  //   // We must re-allocate it or clear it.
+  //   if (m_aram.ptr)
+  //     memset(m_aram.ptr, 0, m_aram.size);
+  //   // else
+  //     // m_aram.ptr = static_cast<u8*>(Common::AllocateMemoryPages(m_aram.size));
+  // }
+  // // If m_aram.wii_mode is true, ptr points to EXRAM, which is reset by Memory::Init
+
+  // // Reset all registers to boot-up state
+  m_audio_dma = {};
   m_aram_dma = {};
   m_dsp_control.Hex = 0;
-  m_dsp_control.DSPHalt = 1; 
+  m_dsp_control.DSPHalt = 1;
   m_aram_info.Hex = 0;
-  m_aram_mode = 1;        
-  m_aram_refresh = 156; 
-  
-  // CRITICAL: Ensure this is 0 before Reinit reads it
-  m_dsp_slice = 0; 
+  m_aram_mode = 1;       // ARAM Controller has init'd
+  m_aram_refresh = 156;  // 156MHz
+  // // --- End of variable reset ---
 
-  // 3. Re-create the emulator from scratch
-  bool hle = Config::Get(Config::MAIN_DSP_HLE);
-  Reinit(hle); 
-
-  // 4. Initialize the new, clean emulator
-  if (m_dsp_emulator) {
-      m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
-  }
-
-  // 5. Register events
   auto& core_timing = m_system.GetCoreTiming();
+
   m_event_type_generate_dsp_interrupt =
       core_timing.RegisterEvent("DSPint", GlobalGenerateDSPInterrupt);
   m_event_type_complete_aram = core_timing.RegisterEvent("ARAMint", GlobalCompleteARAM);
@@ -8677,21 +8449,6 @@ u8* DSPManager::GetARAMPtr() const
   return m_aram.ptr;
 }
 
-void DSPManager::PoisonState()
-{
-    // Trash Mailboxes (CPU <-> DSP communication)
-    m_dsp_control.Hex = 0xBADDBAD0;
-    
-    // Trash DMA state
-    m_audio_dma.SourceAddress = 0xDEADBEEF;
-    m_audio_dma.current_source_address = 0xDEADBEEF;
-    
-    // Poison the emulator core if possible
-    if(m_dsp_emulator) {
-        // m_dsp_emulator->PoisonState(); // If you want to go deeper
-    }
-}
-
 }  // end of namespace DSP
 
 ====================================DVDInterface.cpp=================================
@@ -8786,11 +8543,6 @@ DVDInterface::~DVDInterface() = default;
 
 static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type);
 
-static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type)
-{
-  return (static_cast<u64>(reply_type) << 32) + static_cast<u32>(interrupt_type);
-}
-
 void DVDInterface::DoState(PointerWrap& p)
 {
   p.Do(m_DISR);
@@ -8817,30 +8569,29 @@ void DVDInterface::DoState(PointerWrap& p)
   p.Do(m_error_code);
   State::LogOffset("DVDInterface error code state", p);
 
-  // Buffer state - Critical for timing
-  p.Do(m_read_buffer_start_time);
-  p.Do(m_read_buffer_end_time);
-  p.Do(m_read_buffer_start_offset);
-  p.Do(m_read_buffer_end_offset);
+  // This used to be not ignored
+  // if (!WIIMIX_STATE)
+  // {
+    p.Do(m_read_buffer_start_time);
+    p.Do(m_read_buffer_end_time);
+    p.Do(m_read_buffer_start_offset);
+    p.Do(m_read_buffer_end_offset);
+  // }
   State::LogOffset("DVDInterface buffer state", p);
 
-  // File path is host-specific - Skip for WiiMix
+  // File path is host-specific
   if (!WIIMIX_STATE) {
     p.Do(m_disc_path_to_insert);
   } 
 
-  // DVD Thread - Contains low-level read queues
-  // FIX: Use DoWiiMixState to sanitize host timestamps from read requests
-  if (WIIMIX_STATE) {
-    m_system.GetDVDThread().DoWiiMixState(p);
-  } else {
+  // Skip DVD thread state when saving/loading WiiMix states
+  // This used to be not ignored
+  // if (!WIIMIX_STATE) {
     m_system.GetDVDThread().DoState(p);
-  }
+  // }
   State::LogOffset("DVDThread state", p);
 
   m_adpcm_decoder.DoState(p);
-  
-  // Do not serialize m_finish_executing_command; it is restored by event registration in Init().
 }
 
 size_t DVDInterface::ProcessDTKSamples(s16* target_samples, size_t target_block_count,
@@ -9006,36 +8757,8 @@ void DVDInterface::Init()
 void DVDInterface::WiiMixReset()
 {
   auto& core_timing = m_system.GetCoreTiming();
-  
-  // 1. Sanitize Registers
-  m_DISR.Hex = 0;
-  m_DICVR.Hex = 1;
-  std::fill(std::begin(m_DICMDBUF), std::end(m_DICMDBUF), 0);
-  m_DIMAR = 0;
-  m_DILENGTH = 0;
-  m_DICR.Hex = 0;
-  m_DIIMMBUF = 0;
-  m_DICFG.Hex = 0;
-  m_DICFG.CONFIG = 1;
 
-  // 2. Reset Drive Logic
-  ResetDrive(false);
-
-  // [FIX] Explicitly Reset ADPCM Decoder
-  // ResetDrive does NOT clear this. If it holds stale history/filter state, 
-  // decoded audio samples will slightly differ, desyncing the DSP.
-  m_adpcm_decoder = StreamADPCM::ADPCMDecoder{};
-
-  // [FIX] Explicitly Zero Buffer Timing
-  m_read_buffer_start_offset = 0;
-  m_read_buffer_end_offset = 0;
-  m_read_buffer_start_time = 0;
-  m_read_buffer_end_time = 0;
-
-  // 3. Reset Thread
-  m_system.GetDVDThread().WiiMixReset();
-
-  // 4. Reregister Events
+  // Reregistering events happens in Init()
   m_auto_change_disc = core_timing.RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);
   m_eject_disc = core_timing.RegisterEvent("EjectDisc", EjectDiscCallback);
   m_insert_disc = core_timing.RegisterEvent("InsertDisc", InsertDiscCallback);
@@ -9997,6 +9720,11 @@ void DVDInterface::AudioBufferConfig(bool enable_dtk, u8 dtk_buffer_length)
     INFO_LOG_FMT(DVDINTERFACE, "DTK disabled");
 }
 
+static u64 PackFinishExecutingCommandUserdata(ReplyType reply_type, DIInterruptType interrupt_type)
+{
+  return (static_cast<u64>(reply_type) << 32) + static_cast<u32>(interrupt_type);
+}
+
 void DVDInterface::FinishExecutingCommandCallback(Core::System& system, u64 userdata,
                                                   s64 cycles_late)
 {
@@ -10290,31 +10018,6 @@ void DVDInterface::ScheduleReads(u64 offset, u32 length, const DiscIO::Partition
                 ticks_until_completion * 1000000 / m_system.GetSystemTimers().GetTicksPerSecond());
 }
 
-void DVDInterface::PoisonState() {
-  // Trash MMIO Registers
-  m_DISR.Hex = 0xBAD0BAD0;
-  m_DICVR.Hex = 0xBAD0BAD0;
-  m_DICMDBUF[0] = 0xDEADBEEF;
-  m_DICMDBUF[1] = 0xDEADBEEF;
-  m_DICMDBUF[2] = 0xDEADBEEF;
-  m_DIMAR = 0xDEADBEEF;
-  m_DILENGTH = 0xDEADBEEF;
-  m_DICR.Hex = 0xBAD0BAD0;
-  
-  // Trash Internal Logic
-  m_stream = true; // Force stream ON (defaults to off)
-  m_stop_at_track_end = true;
-  m_audio_position = 0xFFFFFFFF;
-  m_error_code = DriveError::ProtocolError;
-  
-  // Trash Buffer Logic (CRITICAL for determinism)
-  // These specific variables define the drive's timing model.
-  m_read_buffer_start_time = 0xCAFEBABECAFEBABE;
-  m_read_buffer_end_time = 0xCAFEBABECAFEBABE;
-  m_read_buffer_start_offset = 0xCAFEBABECAFEBABE;
-  m_read_buffer_end_offset = 0xCAFEBABECAFEBABE;
-}
-
 }  // namespace DVD
 
 ====================================DVDThread.cpp=================================
@@ -10365,49 +10068,28 @@ DVDThread::~DVDThread() = default;
 void DVDThread::Start()
 {
   if (WIIMIX_STATE) {
+    // FIX: Robustness check.
+    // If the thread is already joinable (e.g. restarted by WaitUntilIdle during Load),
+    // we must not try to start it again, or the assertion in StartDVDThread will fire.
+    // Just verify the flag is set and return.
     if (m_dvd_thread.joinable()) {
       m_is_running = true;
       return;
     }
+    
+    // if (m_is_running)
+    //   return;
   }
-  
-  // FIX: Add check to avoid double-registration warnings (though Dolphin handles them safely)
-  if (!m_finish_read) {
-      m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
-  }
+  m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
 
   m_request_queue_expanded.Reset();
   m_result_queue_expanded.Reset();
   m_request_queue.Clear();
   m_result_queue.Clear();
 
+  // This is reset on every launch for determinism, but it doesn't matter
+  // much, because this will never get exposed to the emulated game.
   if (!WIIMIX_STATE) {
-    m_next_id = 0;
-  }
-  m_is_running = true;
-  StartDVDThread();
-}
-
-void DVDThread::Start(bool preserve_state)
-{
-  if (WIIMIX_STATE) {
-    if (m_dvd_thread.joinable()) {
-      m_is_running = true;
-      return;
-    }
-  }
-  
-  if (!m_finish_read) {
-      m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
-  }
-
-  m_request_queue_expanded.Reset();
-  m_result_queue_expanded.Reset();
-  m_request_queue.Clear();
-  m_result_queue.Clear();
-
-  // FIX: Do not reset m_next_id if we are preserving state (WiiMix Load)
-  if (!WIIMIX_STATE && !preserve_state) {
     m_next_id = 0;
   }
   m_is_running = true;
@@ -10441,24 +10123,17 @@ void DVDThread::Stop()
 }
 
 void DVDThread::WiiMixReset() {
-  // [FIX] Stop the worker thread BEFORE clearing queues.
-  // Attempting to drain m_request_queue (SPSC) from the main thread 
-  // while the worker thread is running causes a race condition and desyncs.
-  Stop();
-
-  // Re-register event type
-  m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
-
-  // Clear emulated state
+  // We're already on the CPU thread, and WaitUntilIdle
+  // has been called, so the DVD thread is stopped.
+  // It is now safe to clear all "dirty" state.
   m_result_map.clear();
-  m_next_id = 0; 
 
-  // Drain queues (Safe now that thread is stopped)
+  // Drain and clear the "dirty" result queue
   ReadResult result;
-  while (m_result_queue.Pop(result)) { }
-  
-  ReadRequest request;
-  while (m_request_queue.Pop(request)) { }
+  while (m_result_queue.Pop(result))
+  {
+    // do nothing, just drain it
+  }
 }
 
 void DVDThread::StopDVDThread()
@@ -10483,7 +10158,6 @@ void DVDThread::StopDVDThread()
 
 void DVDThread::DoState(PointerWrap& p)
 {
-  INFO_LOG_FMT(DVDINTERFACE, "ORIGINAL DO STATE CALLED, NOT DO WIIMIX STATE");
   // m_disc isn't savestated (because it points to files on the
   // local system). Instead, we check that the status of the disc
   // is the same as when the savestate was made. This won't catch
@@ -10526,99 +10200,31 @@ void DVDThread::DoState(PointerWrap& p)
   }
 }
 
-// In Core/HW/DVD/DVDThread.cpp
-
 void DVDThread::DoWiiMixState(PointerWrap& p)
 {
-  INFO_LOG_FMT(DVDINTERFACE, "DO WIIMIX STATE CALLED");
+  // By waiting for the DVD thread to be done working, we ensure
+  // that request_queue will be empty and that the DVD thread
+  // won't be touching anything while this function runs.
+  WaitUntilIdle();
 
-  bool had_disc = HasDisc();
-  p.Do(had_disc);
+  // Move all results from result_queue to result_map because
+  // PointerWrap::Do supports std::map but not Common::SPSCQueue.
+  // This won't affect the behavior of FinishRead.
+  ReadResult result;
+  while (m_result_queue.Pop(result))
+    m_result_map.emplace(result.first.id, std::move(result));
 
-  // FIX: Only wait for idle when saving.
-  // When loading, the thread has just been reset (stopped) by WiiMixReset,
-  // so it is already idle/empty. Calling WaitUntilIdle here forces a premature
-  // thread start before the full state is restored.
-  if (!p.IsReadMode())
-  {
-    // Ensure thread is idle so queues are stable
-    WaitUntilIdle();
-
-    // Transfer queue to map for serialization
-    ReadResult result;
-    while (m_result_queue.Pop(result))
-      m_result_map.emplace(result.first.id, std::move(result));
-  }
-
-  // --- CUSTOM SERIALIZATION FOR WIIMIX ---
-  // We cannot use p.Do(m_result_map) because ReadRequest contains
-  // realtime_started_us/realtime_done_us which are non-deterministic.
-  
-  u32 map_size = (u32)m_result_map.size();
-  p.Do(map_size);
-
-  if (p.IsReadMode())
-  {
-    m_result_map.clear();
-    for (u32 i = 0; i < map_size; ++i)
-    {
-      ReadRequest req = {};
-      std::vector<u8> buffer;
-
-      // Restore Request Key (ID)
-      u64 id;
-      p.Do(id);
-      
-      // Restore Request Data
-      p.Do(req.copy_to_ram);
-      p.Do(req.output_address);
-      p.Do(req.dvd_offset);
-      p.Do(req.length);
-      p.Do(req.partition);
-      p.Do(req.reply_type);
-      p.Do(req.id);
-      p.Do(req.time_started_ticks);
-      
-      // SKIP host timestamps (realtime_started_us, realtime_done_us)
-      // We set them to 0 or a dummy value to ensure internal consistency
-      req.realtime_started_us = 0;
-      req.realtime_done_us = 0;
-
-      // Restore Buffer
-      p.Do(buffer);
-
-      m_result_map.emplace(id, std::make_pair(std::move(req), std::move(buffer)));
-    }
-  }
-  else
-  {
-    for (auto& pair : m_result_map)
-    {
-      // Save Key
-      u64 id = pair.first;
-      p.Do(id);
-
-      // Save Request Data
-      ReadRequest& req = pair.second.first;
-      p.Do(req.copy_to_ram);
-      p.Do(req.output_address);
-      p.Do(req.dvd_offset);
-      p.Do(req.length);
-      p.Do(req.partition);
-      p.Do(req.reply_type);
-      p.Do(req.id);
-      p.Do(req.time_started_ticks);
-      
-      // DO NOT Save host timestamps
-      
-      // Save Buffer
-      std::vector<u8>& buffer = pair.second.second;
-      p.Do(buffer);
-    }
-  }
-
+  // Both queues are now empty, so we don't need to savestate them.
+  p.Do(m_result_map);
   p.Do(m_next_id);
 
+  // m_disc isn't savestated (because it points to files on the
+  // local system). Instead, we check that the status of the disc
+  // is the same as when the savestate was made. This won't catch
+  // cases of having the wrong disc inserted, though.
+  // TODO: Check the game ID, disc number, revision?
+  bool had_disc = HasDisc();
+  p.Do(had_disc);
   if (had_disc != HasDisc())
   {
     if (had_disc)
@@ -10698,34 +10304,13 @@ bool DVDThread::UpdateRunningGameMetadata(const DiscIO::Partition& partition,
   return true;
 }
 
-// void DVDThread::WaitUntilIdle()
-// {
-//   if (!WIIMIX_STATE)
-//     ASSERT(Core::IsCPUThread());
-
-//   while (!m_request_queue.Empty())
-//     m_result_queue_expanded.Wait();
-
-//   StopDVDThread();
-//   StartDVDThread();
-// }
-
 void DVDThread::WaitUntilIdle()
 {
   if (!WIIMIX_STATE)
     ASSERT(Core::IsCPUThread());
 
-  // CHANGE: Increase timeout from 1000 to 5000ms
-  int timeout = 5000; 
-  while (!m_request_queue.Empty() && timeout > 0)
-  {
-      m_result_queue_expanded.WaitFor(std::chrono::milliseconds(1));
-      timeout--;
-  }
-  
-  if (timeout <= 0) {
-      printf("WII-MIX-ERROR: DVDThread::WaitUntilIdle timed out! Queues may be desynced.\n");
-  }
+  while (!m_request_queue.Empty())
+    m_result_queue_expanded.Wait();
 
   StopDVDThread();
   StartDVDThread();
@@ -10868,19 +10453,6 @@ void DVDThread::DVDThreadMain()
     }
   }
 }
-
-void DVDThread::PoisonState()
-{
-    // Trash the Request/Result queues
-    // This is hard because they are thread-safe queues.
-    // Best we can do is trash the logic variables.
-    
-    m_next_id = 0xBADDBAD0;
-    
-    // Ideally clear the map and fill with garbage
-    m_result_map.clear();
-}
-
 }  // namespace DVD
 ====================================VideoInterface.cpp=================================
 // Copyright 2008 Dolphin Emulator Project
@@ -11862,20 +11434,6 @@ void VideoInterfaceManager::FakeVIUpdate(u32 xfb_address, u32 fb_width, u32 fb_s
   }
 }
 
-void VideoInterfaceManager::PoisonState()
-{
-    // Trash Timing
-    m_half_line_count = 0xFFFF;
-    m_ticks_last_line_start = 0xFFFFFFFFFFFFFFFF;
-    
-    // Trash Config
-    m_display_control_register.Hex = 0xFFFF;
-    m_vertical_timing_register.Hex = 0xFFFF;
-    
-    // Trash Target Refresh Rate (Breaks everything timing related)
-    m_target_refresh_rate = -1.0;
-}
-
 }  // namespace VideoInterface
 
 ====================================EXI.cpp=============================
@@ -12153,14 +11711,6 @@ void ExpansionInterfaceManager::ScheduleUpdateInterrupts(CoreTiming::FromThread 
                                                          int cycles_late)
 {
   m_system.GetCoreTiming().ScheduleEvent(cycles_late, m_event_type_update_interrupts, 0, from);
-}
-
-void ExpansionInterfaceManager::PoisonState()
-{
-    // Poison Channels
-    for (auto& channel : m_channels) {
-        if (channel) channel->PoisonState();
-    }
 }
 
 }  // namespace ExpansionInterface
@@ -12520,20 +12070,6 @@ void CEXIChannel::SetEXIINT(bool exiint)
 {
   m_status.EXIINT = !!exiint;
 }
-
-void CEXIChannel::PoisonState()
-{
-    m_status.Hex = 0xBADDBAD0;
-    m_dma_memory_address = 0xDEADBEEF;
-    m_dma_length = 0xFFFFFFFF;
-    m_imm_data = 0xBADDBAD0;
-    
-    // Poison Devices
-    for(auto& dev : m_devices) {
-        if(dev) dev->PoisonState(); 
-    }
-}
-
 }  // namespace ExpansionInterface
 
 ====================================Memmap.cpp=================================
@@ -12717,12 +12253,6 @@ void MemoryManager::WiiMixReset() {
   m_exram_size_real = get_mem2_size();
   m_exram_size = MathUtil::NextPowerOf2(GetExRamSizeReal());
   m_exram_mask = GetExRamSize() - 1;
-
-  // FIX: Clear the memory to remove any Poison (0xCC) patterns.
-  // LoadState only overwrites the "Real" size (e.g. 24MB), leaving the 
-  // padding (e.g. the 8MB up to 32MB) as garbage if we don't clear it here.
-  // If the game reads OOB, it must see 0 (Deterministic), not 0xCC (Poison).
-  Clear();
 }
 
 bool MemoryManager::IsAddressInFastmemArea(const u8* address) const
@@ -13139,32 +12669,6 @@ void MemoryManager::Write_U64_Swap(u64 value, u32 address)
   CopyToEmu(address, &value, sizeof(value));
 }
 
-void MemoryManager::PoisonState()
-{
-    // 1. Poison Main RAM (MEM1)
-    // If LoadState misses a page, the game will execute 0xCC (Invalid Opcode) 
-    // or read garbage data and crash immediately.
-    if (m_ram) {
-        std::memset(m_ram, 0xCC, GetRamSize());
-    }
-
-    // 2. Poison Fake L1 Cache
-    if (m_l1_cache) {
-        std::memset(m_l1_cache, 0xCC, GetL1CacheSize());
-    }
-
-    // 3. Poison Extended RAM (MEM2 - Wii Only)
-    // Even if running in GC mode, good to clear it to ensure no leakage.
-    if (m_exram) {
-        std::memset(m_exram, 0xCC, GetExRamSize());
-    }
-
-    // 4. Poison Fake VMEM (MMU emulation)
-    if (m_fake_vmem) {
-        std::memset(m_fake_vmem, 0xCC, GetFakeVMemSize());
-    }
-}
-
 }  // namespace Memory
 
 ====================================HSP.cpp=================================
@@ -13245,15 +12749,6 @@ void HSPManager::RemoveDevice()
 {
   m_device.reset();
 }
-
-void HSPManager::PoisonState()
-{
-  // Noop for now - wasn't sure if there was anything to trash here 
-  // if(m_device) {
-  //     m_device->PoisonState(); // If you want to implement it on the device
-  // }
-}
-
 }  // namespace HSP
 
 ====================================GPFifo.cpp=================================
@@ -13458,13 +12953,6 @@ void FastCheckGatherPipe(GPFifoManager& gpfifo)
 {
   gpfifo.FastCheckGatherPipe();
 }
-
-void GPFifoManager::PoisonState()
-{
-    // Trash the gather pipe buffer
-    memset(m_gather_pipe, 0xCC, sizeof(m_gather_pipe));
-    // Note: The pointers into this buffer are in PPCState, so they are poisoned by PowerPCManager
-}
 }  // namespace GPFifo
 
 ====================================System.cpp=================================
@@ -13474,10 +12962,6 @@ void GPFifoManager::PoisonState()
 #include "Core/System.h"
 
 #include <memory>
-#include <vector>
-#include <random>
-#include <chrono>
-#include <thread>
 
 #include "AudioCommon/SoundStream.h"
 #include "Core/Config/MainSettings.h"
@@ -13806,332 +13290,489 @@ VideoCommon::CustomAssetLoader& System::GetCustomAssetLoader() const
 {
   return m_impl->m_custom_asset_loader;
 }
-
-void System::PoisonState(PoisonModule mask)
-{
-    if (mask == PoisonModule::Disabled) return;
-
-    // --- Core & Timing ---
-    if ((u32)mask & (u32)PoisonModule::CoreTiming)         m_impl->m_core_timing.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::SystemTimers)       m_impl->m_system_timers.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::ProcessorInterface) m_impl->m_processor_interface.PoisonState();
-
-    // --- Main Hardware ---
-    if ((u32)mask & (u32)PoisonModule::PowerPC)            m_impl->m_power_pc.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::Memory)             m_impl->m_memory.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::MemoryInterface)    m_impl->m_memory_interface.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::Dsp)                m_impl->m_dsp.PoisonState();
-
-    // --- Peripherals ---
-    if ((u32)mask & (u32)PoisonModule::Exi)
-    {
-      // Poison the SRAM struct with garbage
-      std::memset(&m_impl->m_sram, 0xCC, sizeof(Sram));
-      m_impl->m_expansion_interface.PoisonState();
-    }
-    if ((u32)mask & (u32)PoisonModule::Si)                 m_impl->m_serial_interface.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::Audio)              m_impl->m_audio_interface.PoisonState();
-
-    // --- Storage ---
-    if ((u32)mask & (u32)PoisonModule::DvdInterface)       m_impl->m_dvd_interface.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::DvdThread)          m_impl->m_dvd_thread.PoisonState();
-
-    // --- Graphics ---
-    if ((u32)mask & (u32)PoisonModule::VideoInterface)     m_impl->m_video_interface.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::GpFifo)             m_impl->m_gp_fifo.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::Fifo)               m_impl->m_fifo.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::CommandProcessor)   m_impl->m_command_processor.PoisonState();
-    if ((u32)mask & (u32)PoisonModule::PixelEngine)        m_impl->m_pixel_engine.PoisonState();
-
-    // --- Misc ---
-    if ((u32)mask & (u32)PoisonModule::Hsp)                m_impl->m_hsp.PoisonState();
-    // Movie doesn't strictly have a PoisonState usually, but if it does:
-    // if ((u32)mask & (u32)PoisonModule::Movie)           m_impl->m_movie.PoisonState();
-}
-
-void System::JitterHostEnvironment()
-{
-    // 1. Memory Jitter (ASLR Simulation)
-    // We create a static vector to hold "leaked" memory. 
-    // By resizing it to a random large size, we force the heap allocator 
-    // to move the 'break' point, ensuring subsequent `new` calls (during ReInit)
-    // return addresses completely different from the Save phase.
-    
-    static std::vector<u8> memory_jitter_buffer;
-    
-    // Seed generator
-    static std::mt19937 gen(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()));
-    std::uniform_int_distribution<size_t> dist(1 * 1024 * 1024, 64 * 1024 * 1024); // 1MB to 64MB
-    
-    size_t new_size = dist(gen);
-    
-    // Force a reallocation if we are shrinking, or just grow
-    memory_jitter_buffer.clear();
-    memory_jitter_buffer.shrink_to_fit(); 
-    memory_jitter_buffer.resize(new_size);
-    
-    // Fill with garbage pattern (0xAA) to catch uninitialized reads in the jitter area
-    std::memset(memory_jitter_buffer.data(), 0xAA, new_size);
-    
-    printf("JITTER: Shifted Heap by %zu MB. Old pointers are now invalid.\n", new_size / 1024 / 1024);
-
-    // 2. Thread Jitter (Optional delay)
-    // Adding a random small sleep changes the timing of thread creation/scheduling
-    // relative to the "wall clock", potentially catching race conditions or 
-    // reliance on absolute timestamps.
-    std::uniform_int_distribution<int> sleep_dist(10, 100);
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_dist(gen)));
-}
-
 }  // namespace Core
 
 ===============================================================================
+There's one more important file and it's my python testing system; it essentially loops over a bunch of simple gamecube examples, i.e.
 
-Here's what my current debug output looks like:
+acube.dol           consoletest.dol  gxSprites.dol  lesson03.dol  lesson06.dol  lesson09.dol  lesson12.dol     modplay.dol    readsector.dol   triangle.dol
+application.dol     directory.dol    lesson01.dol   lesson04.dol  lesson07.dol  lesson10.dol  lesson19.dol     mp3player.dol  sockettest.dol
+arena1override.dol  gdbstub.dol      lesson02.dol   lesson05.dol  lesson08.dol  lesson11.dol  MemCardDemo.dol  pageflip.dol   texturetest.dol
 
-============================scan_results===========================================
-Processing /home/xanmankey/dolphingamestest/Mario Kart - Double Dash!! (USA).iso...
+And runs WiiMixDiffTest on each one. The file looks like
+======================================test_savestates.py============================
+import os
+import subprocess
+import signal
+import sys
+import random
+from tqdm import tqdm  # Import the progress bar library
 
-================================================================================
-BASELINE
-================================================================================
-BASELINE: Identity Check            | Poison: 0     | Jitter: False -> PASS
-BASELINE: 1 Step Check              | Poison: 0     | Jitter: False -> PASS
-BASELINE: 10 Step Check             | Poison: 0     | Jitter: False -> FAIL (FAIL)
+# --- Configuration ---
+BIN_DIR = os.path.expanduser("~/Programming/OpenSource/gamecube-examples/bin")
+GAMES_DIR = os.path.expanduser("~/dolphingames")
+WIIMIX_EXE = "./build/Binaries/wiimix-nogui"
+TEST_TIMEOUT = 10  # seconds
+SUCCESS_STRING = "Diff Test PASSED!"
+FAILURE_STRING = "Diff Test FAILED"
+# --- End Configuration ---
 
-================================================================================
-FORENSIC ANALYSIS REPORT
-================================================================================
-Primary Failure: BASELINE - 10 Step Check
-Configuration:   Poison=0, Jitter=False, Frames=10
-Exit Code:       10 (FAIL)
 
-================================================================================
-BINARY CONTENT ANALYSIS
-================================================================================
-Mismatch Offset: 0x3045C1C
-Section:         HW
-Relative Offset: +0xC83
+def find_test_files():
+    """Finds all .dol files in the target directory."""
+    try:
+        files = [
+            os.path.join(dir, f)
+            for dir in [BIN_DIR, GAMES_DIR]
+            for f in os.listdir(dir)
+            if os.path.isfile(os.path.join(dir, f))
+            and (f.endswith(".dol") or f.endswith(".ciso"))
+        ]
+        files.sort()
+        return files
+    except FileNotFoundError:
+        print(f"Error: Directory not found: {BIN_DIR}", file=sys.stderr)
+        return []
 
-Value B (Clean): 0x00000000 (Int: 0, Float: 0.000000)
-Value C (Dirty): 0x0000740B (Int: 29707, Float: 0.000000)
 
-================================================================================
-SOURCE FILES (CONTENT SUPPRESSED)
-================================================================================
-State Logic:   State.cpp
-Target Source: HW.cpp
+def run_single_test(file_path, steps=1):
+    """
+    Runs a single test, captures its output safely to prevent deadlocks,
+    and returns (status, reason, full_log).
+    """
+    cmd = [WIIMIX_EXE, "--diff-test", "--frames", str(steps), "-e", file_path]
 
-================================================================================
-FULL DEBUG LOG
-================================================================================
---- STDOUT ---
-POISON: Mask set to 0x00000000 via CLI
+    proc = None
+    full_output = ""
+
+    try:
+        # Start the process
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+        )
+
+        stdout = ""
+        stderr = ""
+
+        # Use communicate() to read from pipes while waiting.
+        # This prevents the C++ process from hanging if it fills the OS pipe buffer.
+        try:
+            stdout, stderr = proc.communicate(timeout=TEST_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            # If it times out, kill it and grab whatever output is available
+            proc.kill()
+            outs, errs = proc.communicate()
+            stdout = (stdout or "") + (outs or "")
+            stderr = (stderr or "") + (errs or "")
+            full_output = stdout + stderr
+            return "FAIL", f"TIMEOUT (Process ran > {TEST_TIMEOUT}s)", full_output
+
+        full_output = stdout + stderr
+
+        # --- Check Test Results ---
+
+        # Priority 1: Did it print the success string?
+        if SUCCESS_STRING in full_output:
+            return "PASS", "", full_output
+
+        # Priority 2: Did it exit with an error code?
+        if proc.returncode != 0:
+            reason = "NON-ZERO EXIT CODE"
+            if proc.returncode < 0:
+                try:
+                    # Negative return codes are signals (e.g. -11 = SIGSEGV)
+                    sig_name = signal.Signals(-proc.returncode).name
+                    reason = f"SEGFAULT or SIGNAL ({sig_name})"
+                except ValueError:
+                    reason = "Process terminated by UNKNOWN SIGNAL"
+            return "FAIL", f"{reason} (Code: {proc.returncode})", full_output
+
+        # Priority 3: Did it print the explicit failure string?
+        if FAILURE_STRING in full_output:
+            return "FAIL", "FAILURE_STRING found", full_output
+
+        # Priority 4: Silent Pass (Exited 0 but no explicit success msg)
+        return "FAIL", "SILENT PASS (Exited 0, but no success string)", full_output
+
+    except Exception as e:
+        if proc:
+            try:
+                proc.kill()
+            except:
+                pass
+        return "FAIL", f"Exception: {e}", full_output
+
+
+def main():
+    """Main test runner function."""
+    files = find_test_files()
+    if not files:
+        print(
+            f"No .dol or .ciso files found in {BIN_DIR} or {GAMES_DIR}", file=sys.stderr
+        )
+        return 1
+
+    print(f"Found {len(files)} tests to run...")
+    print(f"Emulator: {WIIMIX_EXE}\n")
+
+    failures = []
+
+    # Open the output file for writing all test output
+    with open("test_output", "w", encoding="utf-8") as out_file:
+
+        # --- PHASE 1: Single-Step Tests ---
+        for file_path in tqdm(
+            files, unit="test", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"
+        ):
+            tqdm.write(f"\n--- RUNNING: {file_path} ---")
+            out_file.write(f"\n--- RUNNING: {file_path} ---\n")
+
+            status, reason, full_log = run_single_test(file_path)
+
+            if status == "PASS":
+                tqdm.write("--- RESULT: PASS ---")
+                out_file.write("--- RESULT: PASS ---\n")
+            else:
+                tqdm.write(f"--- RESULT: FAIL ---")
+                tqdm.write(f"    Reason: {reason}")
+                out_file.write(f"--- RESULT: FAIL ---\n")
+                out_file.write(f"    Reason: {reason}\n")
+
+                # Write the captured log to the file for debugging
+                out_file.write("-" * 20 + " CAPTURED LOG " + "-" * 20 + "\n")
+                out_file.write(full_log)
+                out_file.write("\n" + "-" * 54 + "\n")
+
+                failures.append((file_path, reason))
+
+        # Phase 1 Summary
+        summary = "\n" + "=" * 70 + "\nSINGLE-STEP TEST SUMMARY\n"
+        group_total = len(files)
+        # Filter out multi-step failures (none yet)
+        group_failures = [
+            f for f in failures if not f[1].startswith("Multi-step failed:")
+        ]
+        group_fail_count = len(group_failures)
+        group_pass_count = group_total - group_fail_count
+
+        summary += (
+            f"Tests run: {group_total}\n"
+            f"Failures: {group_fail_count}\n"
+            f"Successes: {group_pass_count}\n"
+        )
+        if group_failures:
+            summary += "Failed tests:\n"
+            for filename, reason in group_failures:
+                summary += f"- {filename}: {reason}\n"
+        else:
+            summary += "No failures in this group.\n"
+        summary += "=" * 70 + "\n"
+        print(summary)
+        out_file.write(summary)
+
+        # --- PHASE 2: Multi-Step Tests ---
+        for file_path in tqdm(
+            files, unit="test", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"
+        ):
+            tqdm.write(f"\n--- RUNNING MULTI-STEP: {file_path} ---")
+            out_file.write(f"\n--- RUNNING MULTI-STEP: {file_path} ---\n")
+
+            steps = random.randint(2, 120)  # Random steps between 2 and 120
+            status, reason, full_log = run_single_test(file_path, steps=steps)
+
+            if status == "PASS":
+                tqdm.write(f"--- RESULT: PASS (Steps: {steps}) ---")
+                out_file.write(f"--- RESULT: PASS (Steps: {steps}) ---\n")
+            else:
+                tqdm.write(f"--- RESULT: FAIL (Steps: {steps}) ---")
+                tqdm.write(f"    Reason: {reason}")
+                out_file.write(f"--- RESULT: FAIL (Steps: {steps}) ---\n")
+                out_file.write(f"    Reason: {reason}\n")
+
+                # Write the captured log to the file
+                out_file.write("-" * 20 + " CAPTURED LOG " + "-" * 20 + "\n")
+                out_file.write(full_log)
+                out_file.write("\n" + "-" * 54 + "\n")
+
+                failures.append((file_path, f"Multi-step failed: {reason}"))
+
+        # Phase 2 Summary
+        summary = "\n" + "=" * 70 + "\nMULTI-STEP TEST SUMMARY\n"
+        group_total = len(files)
+        group_failures = [f for f in failures if f[1].startswith("Multi-step failed:")]
+        group_fail_count = len(group_failures)
+        group_pass_count = group_total - group_fail_count
+
+        summary += (
+            f"Tests run: {group_total}\n"
+            f"Failures: {group_fail_count}\n"
+            f"Successes: {group_pass_count}\n"
+        )
+        if group_failures:
+            summary += "Failed tests:\n"
+            for filename, reason in group_failures:
+                summary += f"- {filename}: {reason}\n"
+        else:
+            summary += "No failures in this group.\n"
+        summary += "=" * 70 + "\n"
+        print(summary)
+        out_file.write(summary)
+
+        # --- Final Summary ---
+        summary = "\n" + "=" * 70 + "\nFINAL TEST SUMMARY\n" + "=" * 70 + "\n"
+        total_tests = len(files) * 2
+        total_failures = len(failures)
+        total_passes = total_tests - total_failures
+
+        final_summary = (
+            f"Total tests run: {total_tests}\n"
+            f"Total failures: {total_failures}\n"
+            f"Total passes: {total_passes}\n"
+        )
+        print(final_summary)
+        out_file.write(final_summary)
+
+        if not failures:
+            msg = f"All {total_tests} tests passed! ✨\n"
+            print(msg)
+            out_file.write(msg)
+            return 0
+        else:
+            msg = f"{total_failures} / {total_tests} tests failed: ❌\n"
+            print(msg)
+            out_file.write(msg)
+            for filename, reason in failures:
+                fail_line = f"- {filename}: {reason}\n"
+                print(fail_line, end="")
+                out_file.write(fail_line)
+            return 1
+
+
+if __name__ == "__main__":
+    # Exit with a non-zero code if any tests failed (good for CI)
+    sys.exit(main())
+
+===============================================================================
+
+Here's what my current test output looks like:
+
+============================testoutput===========================================
+
+--- RUNNING: /home/xanmankey/Programming/OpenSource/gamecube-examples/bin/MemCardDemo.dol ---
+--- RESULT: FAIL ---
+    Reason: TIMEOUT (Process ran > 10s)
+-------------------- CAPTURED LOG --------------------
 Initializing HW...
 Initializing DSP...
-Starting WiiMix Diff Test (10 frames)...
-WII-MIX-TEST-LOG: Save A START (Frame: 1)
+Starting WiiMix Diff Test...
+Save A to buffer (at Frame 0)
+WII-MIX-TEST-LOG: Save A START (Current Frame: 0)
 WII-MIX-MAP: Offset after Movie: 0x36
-WII-MIX-MAP: Offset after bpMem: 0x43A
-WII-MIX-MAP: Offset after xfMem: 0x459E
---- CP STATE BREAKDOWN ---
-[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
-[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
-[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
-[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
-[MAP],17838,45AE,vtx_attr[0].g0.Hex
-[MAP],17842,45B2,vtx_attr[1].g0.Hex
-[MAP],17846,45B6,vtx_attr[2].g0.Hex
-[MAP],17850,45BA,vtx_attr[3].g0.Hex
-[MAP],17854,45BE,vtx_attr[4].g0.Hex
-[MAP],17858,45C2,vtx_attr[5].g0.Hex
-[MAP],17862,45C6,vtx_attr[6].g0.Hex
-[MAP],17866,45CA,vtx_attr[7].g0.Hex
-[MAP],17870,45CE,g_main_cp_state.array_bases[0]
-[MAP],17874,45D2,g_main_cp_state.array_bases[1]
-[MAP],17878,45D6,g_main_cp_state.array_bases[2]
-[MAP],17882,45DA,g_main_cp_state.array_bases[3]
-[MAP],17886,45DE,g_main_cp_state.array_bases[4]
-[MAP],17890,45E2,g_main_cp_state.array_bases[5]
-[MAP],17894,45E6,g_main_cp_state.array_bases[6]
-[MAP],17898,45EA,g_main_cp_state.array_bases[7]
-[MAP],17902,45EE,g_main_cp_state.array_bases[8]
-[MAP],17906,45F2,g_main_cp_state.array_bases[9]
-[MAP],17910,45F6,g_main_cp_state.array_bases[10]
-[MAP],17914,45FA,g_main_cp_state.array_bases[11]
-[MAP],17918,45FE,g_main_cp_state.array_bases[12]
-[MAP],17922,4602,g_main_cp_state.array_bases[13]
-[MAP],17926,4606,g_main_cp_state.array_bases[14]
-[MAP],17930,460A,g_main_cp_state.array_bases[15]
-[MAP],17934,460E,g_main_cp_state.array_strides[0]
-[MAP],17938,4612,g_main_cp_state.array_strides[1]
-[MAP],17942,4616,g_main_cp_state.array_strides[2]
-[MAP],17946,461A,g_main_cp_state.array_strides[3]
-[MAP],17950,461E,g_main_cp_state.array_strides[4]
-[MAP],17954,4622,g_main_cp_state.array_strides[5]
-[MAP],17958,4626,g_main_cp_state.array_strides[6]
-[MAP],17962,462A,g_main_cp_state.array_strides[7]
-[MAP],17966,462E,g_main_cp_state.array_strides[8]
-[MAP],17970,4632,g_main_cp_state.array_strides[9]
-[MAP],17974,4636,g_main_cp_state.array_strides[10]
-[MAP],17978,463A,g_main_cp_state.array_strides[11]
-[MAP],17982,463E,g_main_cp_state.array_strides[12]
-[MAP],17986,4642,g_main_cp_state.array_strides[13]
-[MAP],17990,4646,g_main_cp_state.array_strides[14]
-[MAP],17994,464A,g_main_cp_state.array_strides[15]
-WII-MIX-MAP: Offset after cpMem: 0x4742
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 1, global_timer = 2489182
+WII-MIX-MAP: Offset after video_backend: 0x306033
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
 TIMING_LOG (Event Queue): event_count = 7
-    Event: VICallback, Time: 2494206, Fifo Order: 363, Userdata: 0
-    Event: GPUSleeper, Time: 2916000, Fifo Order: 354, Userdata: 0
-    Event: AudioDMACallback, Time: 2549232, Fifo Order: 353, Userdata: 0
-    Event: PerfTracker, Time: 4860000, Fifo Order: 8, Userdata: 0
-    Event: PatchEngine, Time: 4054050, Fifo Order: 6, Userdata: 0
-    Event: FinishExecutingCommand, Time: 3402000, Fifo Order: 251, Userdata: 12884901889
-    Event: DSPCallback, Time: 2916000, Fifo Order: 355, Userdata: 0
-WII-MIX-MAP: Offset after CoreTiming: 0x48B1
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 1, global_timer = 2489182
-WII-MIX-MAP: Offset after Memory: 0x20448D3
-WII-MIX-MAP: Offset after SystemTimers: 0x20448E7
-WII-MIX-MAP: Offset after MemoryInterface: 0x2044933
-WII-MIX-MAP: Offset after VideoInterface: 0x20449D9
-WII-MIX-MAP: Offset after SerialInterface: 0x2044AC8
-WII-MIX-MAP: Offset after ProcessorInterface: 0x2044AE4
-WII-MIX-MAP: Offset after after main dsp state: 0x3044B0C
-WII-MIX-MAP: Offset after DSP: 0x3044B77
-WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BCC
-WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044BEC
-WII-MIX-MAP: Offset after DVDThread state: 0x3044BF9
-WII-MIX-MAP: Offset after DVDInterface: 0x3044C0D
-WII-MIX-MAP: Offset after GPFifo: 0x3044E15
-WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F5D
-WII-MIX-MAP: Offset after AudioInterface: 0x3044F89
-WII-MIX-MAP: Offset after HSP: 0x3044F91
-WII-MIX-MAP: Offset after HW: 0x3044F99
-WII-MIX-MAP: Offset after PowerPC: 0x30474C6
-WII-MIX-MAP: Offset after AchievementManager: 0x30474CA
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 1, global_timer = 2489182
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x30AB32
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-MAP: Offset after Memory: 0x234AB54
+WII-MIX-MAP: Offset after MemoryInterface: 0x234ABA0
+WII-MIX-MAP: Offset after VideoInterface: 0x234AC46
+WII-MIX-MAP: Offset after SerialInterface: 0x234AD35
+WII-MIX-MAP: Offset after ProcessorInterface: 0x234AD51
+WII-MIX-MAP: Offset after after main dsp state: 0x334AD79
+WII-MIX-MAP: Offset after DSP: 0x334ADE4
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x334AE39
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x334AE59
+WII-MIX-MAP: Offset after DVDThread state: 0x334AE66
+WII-MIX-MAP: Offset after DVDInterface: 0x334AE7A
+WII-MIX-MAP: Offset after GPFifo: 0x334B082
+WII-MIX-MAP: Offset after ExpansionInterface: 0x334B1CA
+WII-MIX-MAP: Offset after AudioInterface: 0x334B1F6
+WII-MIX-MAP: Offset after HSP: 0x334B1FE
+WII-MIX-MAP: Offset after HW: 0x334B206
+WII-MIX-MAP: Offset after PowerPC: 0x334D733
+WII-MIX-MAP: Offset after AchievementManager: 0x334D737
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
 TIMING_LOG (Event Queue): event_count = 7
-    Event: VICallback, Time: 2494206, Fifo Order: 363, Userdata: 0
-    Event: GPUSleeper, Time: 2916000, Fifo Order: 354, Userdata: 0
-    Event: AudioDMACallback, Time: 2549232, Fifo Order: 353, Userdata: 0
-    Event: PerfTracker, Time: 4860000, Fifo Order: 8, Userdata: 0
-    Event: PatchEngine, Time: 4054050, Fifo Order: 6, Userdata: 0
-    Event: FinishExecutingCommand, Time: 3402000, Fifo Order: 251, Userdata: 12884901889
-    Event: DSPCallback, Time: 2916000, Fifo Order: 355, Userdata: 0
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 1, global_timer = 2489182
-Stepping 10 frames (Continuous)...
-WII-MIX-TEST-LOG: Save B START (Frame: 11)
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-TEST-LOG: Save A END (Current Frame: 0)
+Step Frame 1 (for State B)
+WII-MIX-TRACE: Started PC trace to trace_B.txt
+WII-MIX-TRACE: Stopped PC trace.
+Save B to buffer (at Frame 1)
+WII-MIX-TEST-LOG: Save B START (Current Frame: 1)
 WII-MIX-MAP: Offset after Movie: 0x36
-WII-MIX-MAP: Offset after bpMem: 0x43A
-WII-MIX-MAP: Offset after xfMem: 0x459E
---- CP STATE BREAKDOWN ---
-[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
-[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
-[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
-[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
-[MAP],17838,45AE,vtx_attr[0].g0.Hex
-[MAP],17842,45B2,vtx_attr[1].g0.Hex
-[MAP],17846,45B6,vtx_attr[2].g0.Hex
-[MAP],17850,45BA,vtx_attr[3].g0.Hex
-[MAP],17854,45BE,vtx_attr[4].g0.Hex
-[MAP],17858,45C2,vtx_attr[5].g0.Hex
-[MAP],17862,45C6,vtx_attr[6].g0.Hex
-[MAP],17866,45CA,vtx_attr[7].g0.Hex
-[MAP],17870,45CE,g_main_cp_state.array_bases[0]
-[MAP],17874,45D2,g_main_cp_state.array_bases[1]
-[MAP],17878,45D6,g_main_cp_state.array_bases[2]
-[MAP],17882,45DA,g_main_cp_state.array_bases[3]
-[MAP],17886,45DE,g_main_cp_state.array_bases[4]
-[MAP],17890,45E2,g_main_cp_state.array_bases[5]
-[MAP],17894,45E6,g_main_cp_state.array_bases[6]
-[MAP],17898,45EA,g_main_cp_state.array_bases[7]
-[MAP],17902,45EE,g_main_cp_state.array_bases[8]
-[MAP],17906,45F2,g_main_cp_state.array_bases[9]
-[MAP],17910,45F6,g_main_cp_state.array_bases[10]
-[MAP],17914,45FA,g_main_cp_state.array_bases[11]
-[MAP],17918,45FE,g_main_cp_state.array_bases[12]
-[MAP],17922,4602,g_main_cp_state.array_bases[13]
-[MAP],17926,4606,g_main_cp_state.array_bases[14]
-[MAP],17930,460A,g_main_cp_state.array_bases[15]
-[MAP],17934,460E,g_main_cp_state.array_strides[0]
-[MAP],17938,4612,g_main_cp_state.array_strides[1]
-[MAP],17942,4616,g_main_cp_state.array_strides[2]
-[MAP],17946,461A,g_main_cp_state.array_strides[3]
-[MAP],17950,461E,g_main_cp_state.array_strides[4]
-[MAP],17954,4622,g_main_cp_state.array_strides[5]
-[MAP],17958,4626,g_main_cp_state.array_strides[6]
-[MAP],17962,462A,g_main_cp_state.array_strides[7]
-[MAP],17966,462E,g_main_cp_state.array_strides[8]
-[MAP],17970,4632,g_main_cp_state.array_strides[9]
-[MAP],17974,4636,g_main_cp_state.array_strides[10]
-[MAP],17978,463A,g_main_cp_state.array_strides[11]
-[MAP],17982,463E,g_main_cp_state.array_strides[12]
-[MAP],17986,4642,g_main_cp_state.array_strides[13]
-[MAP],17990,4646,g_main_cp_state.array_strides[14]
-[MAP],17994,464A,g_main_cp_state.array_strides[15]
-WII-MIX-MAP: Offset after cpMem: 0x4742
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-TIMING_LOG (Event Queue): event_count = 9
-    Event: VICallback, Time: 68942016, Fifo Order: 6189, Userdata: 0
-    Event: AudioDMACallback, Time: 68950656, Fifo Order: 6182, Userdata: 0
-    Event: FinishExecutingCommand, Time: 69741000, Fifo Order: 6120, Userdata: 12884901889
-    Event: GPUSleeper, Time: 69012000, Fifo Order: 6159, Userdata: 0
-    Event: PerfTracker, Time: 72900000, Fifo Order: 6119, Userdata: 0
-    Event: PatchEngine, Time: 72972900, Fifo Order: 5873, Userdata: 0
-    Event: FinishReadDVDThread, Time: 84075020, Fifo Order: 2649, Userdata: 0
-    Event: DecCallback, Time: 271413615, Fifo Order: 3029, Userdata: 0
-    Event: DSPCallback, Time: 69012000, Fifo Order: 6160, Userdata: 0
-WII-MIX-MAP: Offset after CoreTiming: 0x4907
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-WII-MIX-MAP: Offset after Memory: 0x2044929
-WII-MIX-MAP: Offset after SystemTimers: 0x204493D
-WII-MIX-MAP: Offset after MemoryInterface: 0x2044989
-WII-MIX-MAP: Offset after VideoInterface: 0x2044A2F
-WII-MIX-MAP: Offset after SerialInterface: 0x2044B1E
-WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B3A
-WII-MIX-MAP: Offset after after main dsp state: 0x3044B62
-WII-MIX-MAP: Offset after DSP: 0x3045C9B
-WII-MIX-MAP: Offset after DVDInterface error code state: 0x3045CF0
-WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3045D10
-WII-MIX-MAP: Offset after DVDThread state: 0x3045D76
-WII-MIX-MAP: Offset after DVDInterface: 0x3045D8A
-WII-MIX-MAP: Offset after GPFifo: 0x3045F92
-WII-MIX-MAP: Offset after ExpansionInterface: 0x30460DA
-WII-MIX-MAP: Offset after AudioInterface: 0x3046106
-WII-MIX-MAP: Offset after HSP: 0x304610E
-WII-MIX-MAP: Offset after HW: 0x3046116
-WII-MIX-MAP: Offset after PowerPC: 0x3048643
-WII-MIX-MAP: Offset after AchievementManager: 0x3048647
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-TIMING_LOG (Event Queue): event_count = 9
-    Event: VICallback, Time: 68942016, Fifo Order: 6189, Userdata: 0
-    Event: AudioDMACallback, Time: 68950656, Fifo Order: 6182, Userdata: 0
-    Event: FinishExecutingCommand, Time: 69741000, Fifo Order: 6120, Userdata: 12884901889
-    Event: GPUSleeper, Time: 69012000, Fifo Order: 6159, Userdata: 0
-    Event: PerfTracker, Time: 72900000, Fifo Order: 6119, Userdata: 0
-    Event: PatchEngine, Time: 72972900, Fifo Order: 5873, Userdata: 0
-    Event: FinishReadDVDThread, Time: 84075020, Fifo Order: 2649, Userdata: 0
-    Event: DecCallback, Time: 271413615, Fifo Order: 3029, Userdata: 0
-    Event: DSPCallback, Time: 69012000, Fifo Order: 6160, Userdata: 0
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-Loading State A...
+WII-MIX-MAP: Offset after video_backend: 0x306033
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 15443, global_timer = 15445
+TIMING_LOG (Event Queue): event_count = 7
+    Event: VICallback, Time: 30888, Fifo Order: 11, Userdata: 0
+    Event: GPUSleeper, Time: 486000, Fifo Order: 9, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PerfTracker, Time: 4860000, Fifo Order: 8, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+    Event: FinishExecutingCommand, Time: 1699488, Fifo Order: 7, Userdata: 12884901889
+    Event: DSPCallback, Time: 486000, Fifo Order: 10, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x30AB32
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 15443, global_timer = 15445
+WII-MIX-MAP: Offset after Memory: 0x234AB54
+WII-MIX-MAP: Offset after MemoryInterface: 0x234ABA0
+WII-MIX-MAP: Offset after VideoInterface: 0x234AC46
+WII-MIX-MAP: Offset after SerialInterface: 0x234AD35
+WII-MIX-MAP: Offset after ProcessorInterface: 0x234AD51
+WII-MIX-MAP: Offset after after main dsp state: 0x334AD79
+WII-MIX-MAP: Offset after DSP: 0x334ADE4
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x334AE39
+WII-MIX-MAP: Offset after DVDInterface buffer state: An error occurred.
+
+CoreTiming Event "SetTokenFinish" is already registered. Events should only be registered during Init to avoid breaking save states.
+
+  Condition: !m_event_types.contains(name)
+  File: /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/Core/CoreTiming.cpp
+  Line: 75
+  Function: RegisterEvent
+
+Ignore and continue?
+
+------------------------------------------------------
+
+--- RUNNING: /home/xanmankey/Programming/OpenSource/gamecube-examples/bin/acube.dol ---
+
+======================================================================
+
+Notice that I fail a fair amount of multi-frame (multiple step) tests. I'm not sure exactly why, so the best thing I can think of doing is addressing the failures one at a time.
+
+First up is acube.dol - here is the output
+=================================output===========================================
+INTERPRETER IS SET
+Initializing HW...
+Initializing DSP...
+Starting WiiMix Diff Test...
+Save A to buffer (at Frame 0)
+WII-MIX-TEST-LOG: Save A START (Current Frame: 0)
+WII-MIX-MAP: Offset after Movie: 0x36
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x48F1
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-MAP: Offset after Memory: 0x2044913
+WII-MIX-MAP: Offset after MemoryInterface: 0x204495F
+WII-MIX-MAP: Offset after VideoInterface: 0x2044A05
+WII-MIX-MAP: Offset after SerialInterface: 0x2044AF4
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B10
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B38
+WII-MIX-MAP: Offset after DSP: 0x3044BA3
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BF8
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044C18
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C25
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C39
+WII-MIX-MAP: Offset after GPFifo: 0x3044E41
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F89
+WII-MIX-MAP: Offset after AudioInterface: 0x3044FB5
+WII-MIX-MAP: Offset after HSP: 0x3044FBD
+WII-MIX-MAP: Offset after HW: 0x3044FC5
+WII-MIX-MAP: Offset after PowerPC: 0x30474F2
+WII-MIX-MAP: Offset after AchievementManager: 0x30474F6
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-TEST-LOG: Save A END (Current Frame: 0)
+Step Frame 1 (for State B)
+WII-MIX-TRACE: Started PC trace to trace_B.txt
+WII-MIX-TRACE: Stopped PC trace.
+Save B to buffer (at Frame 1)
+WII-MIX-TEST-LOG: Save B START (Current Frame: 2)
+WII-MIX-MAP: Offset after Movie: 0x36
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x4918
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+WII-MIX-MAP: Offset after Memory: 0x204493A
+WII-MIX-MAP: Offset after MemoryInterface: 0x2044986
+WII-MIX-MAP: Offset after VideoInterface: 0x2044A2C
+WII-MIX-MAP: Offset after SerialInterface: 0x2044B1B
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B37
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B5F
+WII-MIX-MAP: Offset after DSP: 0x3044BCA
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044C1F
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044C3F
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C4C
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C60
+WII-MIX-MAP: Offset after GPFifo: 0x3044E68
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044FB0
+WII-MIX-MAP: Offset after AudioInterface: 0x3044FDC
+WII-MIX-MAP: Offset after HSP: 0x3044FE4
+WII-MIX-MAP: Offset after HW: 0x3044FEC
+WII-MIX-MAP: Offset after PowerPC: 0x3047519
+WII-MIX-MAP: Offset after AchievementManager: 0x304751D
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 13768920, Fifo Order: 1475, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Fifo Order: 1468, Userdata: 0
+    Event: DecCallback, Time: 14185239, Fifo Order: 1465, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Fifo Order: 1451, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Fifo Order: 1447, Userdata: 12884901889
+    Event: PerfTracker, Time: 14580000, Fifo Order: 891, Userdata: 0
+    Event: PatchEngine, Time: 16216200, Fifo Order: 658, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Fifo Order: 1452, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7776, global_timer = 13761144
+WII-MIX-TEST-LOG: Save B END (Current Frame: 2)
+Load from EmuThread (to Frame 0)
+WII-MIX-TEST-LOG: Load A START (Current Frame: 2)
 --- EVENT QUEUE LOG at: Start of Load Function ---
-  global_timer = 68926575
-  m_event_queue (9 events):
-    Event: VICallback, Time: 68942016, Userdata: 0
-    Event: AudioDMACallback, Time: 68950656, Userdata: 0
-    Event: GPUSleeper, Time: 69012000, Userdata: 0
-    Event: DSPCallback, Time: 69012000, Userdata: 0
-    Event: FinishExecutingCommand, Time: 69741000, Userdata: 12884901889
-    Event: PerfTracker, Time: 72900000, Userdata: 0
-    Event: PatchEngine, Time: 72972900, Userdata: 0
-    Event: FinishReadDVDThread, Time: 84075020, Userdata: 0
-    Event: DecCallback, Time: 271413615, Userdata: 0
+  global_timer = 13761144
+  m_event_queue (8 events):
+    Event: VICallback, Time: 13768920, Userdata: 0
+    Event: AudioDMACallback, Time: 13838688, Userdata: 0
+    Event: GPUSleeper, Time: 14094000, Userdata: 0
+    Event: DSPCallback, Time: 14094000, Userdata: 0
+    Event: DecCallback, Time: 14185239, Userdata: 0
+    Event: PerfTracker, Time: 14580000, Userdata: 0
+    Event: FinishExecutingCommand, Time: 15295392, Userdata: 12884901889
+    Event: PatchEngine, Time: 16216200, Userdata: 0
   m_ts_queue (0 events):
     [EMPTY]
 ---------------------------------------
-TIMING_LOG (Before Host Reinit): slice_length = 15441, global_timer = 68926575
+TIMING_LOG (Before Host Reinit): slice_length = 7776, global_timer = 13761144
 TIMING_LOG (After Host Reinit): slice_length = 20000, global_timer = 0
 --- EVENT QUEUE LOG at: After Host Reinit ---
   global_timer = 0
@@ -14154,156 +13795,43 @@ TIMING_LOG (After Host Reinit): slice_length = 20000, global_timer = 0
   m_ts_queue (0 events):
     [EMPTY]
 ---------------------------------------
-Current frame in EmuThread before DoWiiMixState: 11
+Current frame in EmuThread before DoWiiMixState: 2
 TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
-    Event: VICallback, Time: 2494206, Fifo Order: 363, Userdata: 0
-    Event: AudioDMACallback, Time: 2549232, Fifo Order: 353, Userdata: 0
-    Event: GPUSleeper, Time: 2916000, Fifo Order: 354, Userdata: 0
-    Event: DSPCallback, Time: 2916000, Fifo Order: 355, Userdata: 0
-    Event: FinishExecutingCommand, Time: 3402000, Fifo Order: 251, Userdata: 12884901889
-    Event: PatchEngine, Time: 4054050, Fifo Order: 6, Userdata: 0
-    Event: PerfTracker, Time: 4860000, Fifo Order: 8, Userdata: 0
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 1, global_timer = 2489182
-CP State clean after DoWiiMixState: 0x00000000
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
 --- EVENT QUEUE LOG at: After DoWiiMixState (Pure State Loaded) ---
-  global_timer = 2489182
+  global_timer = 0
   m_event_queue (7 events):
-    Event: VICallback, Time: 2494206, Userdata: 0
-    Event: AudioDMACallback, Time: 2549232, Userdata: 0
-    Event: GPUSleeper, Time: 2916000, Userdata: 0
-    Event: DSPCallback, Time: 2916000, Userdata: 0
-    Event: FinishExecutingCommand, Time: 3402000, Userdata: 12884901889
-    Event: PatchEngine, Time: 4054050, Userdata: 0
-    Event: PerfTracker, Time: 4860000, Userdata: 0
+    Event: FinishExecutingCommand, Time: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Userdata: 0
+    Event: GPUSleeper, Time: 0, Userdata: 0
+    Event: DSPCallback, Time: 0, Userdata: 0
+    Event: VICallback, Time: 15444, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Userdata: 0
   m_ts_queue (0 events):
     [EMPTY]
 ---------------------------------------
-Current frame at end of EmuThread: 1
+Current frame at end of EmuThread: 0
 --- EVENT QUEUE LOG at: After Cache Refresh ---
-  global_timer = 2489182
+  global_timer = 0
   m_event_queue (7 events):
-    Event: VICallback, Time: 2494206, Userdata: 0
-    Event: AudioDMACallback, Time: 2549232, Userdata: 0
-    Event: GPUSleeper, Time: 2916000, Userdata: 0
-    Event: DSPCallback, Time: 2916000, Userdata: 0
-    Event: FinishExecutingCommand, Time: 3402000, Userdata: 12884901889
-    Event: PatchEngine, Time: 4054050, Userdata: 0
-    Event: PerfTracker, Time: 4860000, Userdata: 0
-  m_ts_queue (0 events):
-    [EMPTY]
----------------------------------------
-Stepping 10 frames (Loaded)...
-WII-MIX-TEST-LOG: Save C START (Frame: 11)
-WII-MIX-MAP: Offset after Movie: 0x36
-WII-MIX-MAP: Offset after bpMem: 0x43A
-WII-MIX-MAP: Offset after xfMem: 0x459E
---- CP STATE BREAKDOWN ---
-[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
-[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
-[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
-[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
-[MAP],17838,45AE,vtx_attr[0].g0.Hex
-[MAP],17842,45B2,vtx_attr[1].g0.Hex
-[MAP],17846,45B6,vtx_attr[2].g0.Hex
-[MAP],17850,45BA,vtx_attr[3].g0.Hex
-[MAP],17854,45BE,vtx_attr[4].g0.Hex
-[MAP],17858,45C2,vtx_attr[5].g0.Hex
-[MAP],17862,45C6,vtx_attr[6].g0.Hex
-[MAP],17866,45CA,vtx_attr[7].g0.Hex
-[MAP],17870,45CE,g_main_cp_state.array_bases[0]
-[MAP],17874,45D2,g_main_cp_state.array_bases[1]
-[MAP],17878,45D6,g_main_cp_state.array_bases[2]
-[MAP],17882,45DA,g_main_cp_state.array_bases[3]
-[MAP],17886,45DE,g_main_cp_state.array_bases[4]
-[MAP],17890,45E2,g_main_cp_state.array_bases[5]
-[MAP],17894,45E6,g_main_cp_state.array_bases[6]
-[MAP],17898,45EA,g_main_cp_state.array_bases[7]
-[MAP],17902,45EE,g_main_cp_state.array_bases[8]
-[MAP],17906,45F2,g_main_cp_state.array_bases[9]
-[MAP],17910,45F6,g_main_cp_state.array_bases[10]
-[MAP],17914,45FA,g_main_cp_state.array_bases[11]
-[MAP],17918,45FE,g_main_cp_state.array_bases[12]
-[MAP],17922,4602,g_main_cp_state.array_bases[13]
-[MAP],17926,4606,g_main_cp_state.array_bases[14]
-[MAP],17930,460A,g_main_cp_state.array_bases[15]
-[MAP],17934,460E,g_main_cp_state.array_strides[0]
-[MAP],17938,4612,g_main_cp_state.array_strides[1]
-[MAP],17942,4616,g_main_cp_state.array_strides[2]
-[MAP],17946,461A,g_main_cp_state.array_strides[3]
-[MAP],17950,461E,g_main_cp_state.array_strides[4]
-[MAP],17954,4622,g_main_cp_state.array_strides[5]
-[MAP],17958,4626,g_main_cp_state.array_strides[6]
-[MAP],17962,462A,g_main_cp_state.array_strides[7]
-[MAP],17966,462E,g_main_cp_state.array_strides[8]
-[MAP],17970,4632,g_main_cp_state.array_strides[9]
-[MAP],17974,4636,g_main_cp_state.array_strides[10]
-[MAP],17978,463A,g_main_cp_state.array_strides[11]
-[MAP],17982,463E,g_main_cp_state.array_strides[12]
-[MAP],17986,4642,g_main_cp_state.array_strides[13]
-[MAP],17990,4646,g_main_cp_state.array_strides[14]
-[MAP],17994,464A,g_main_cp_state.array_strides[15]
-WII-MIX-MAP: Offset after cpMem: 0x4742
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-TIMING_LOG (Event Queue): event_count = 9
-    Event: VICallback, Time: 68942016, Fifo Order: 6189, Userdata: 0
-    Event: AudioDMACallback, Time: 68950656, Fifo Order: 6182, Userdata: 0
-    Event: FinishExecutingCommand, Time: 69741000, Fifo Order: 6120, Userdata: 12884901889
-    Event: GPUSleeper, Time: 69012000, Fifo Order: 6159, Userdata: 0
-    Event: PerfTracker, Time: 72900000, Fifo Order: 6119, Userdata: 0
-    Event: PatchEngine, Time: 72972900, Fifo Order: 5873, Userdata: 0
-    Event: FinishReadDVDThread, Time: 84075020, Fifo Order: 2649, Userdata: 0
-    Event: DecCallback, Time: 271413615, Fifo Order: 3029, Userdata: 0
-    Event: DSPCallback, Time: 69012000, Fifo Order: 6160, Userdata: 0
-WII-MIX-MAP: Offset after CoreTiming: 0x4907
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-WII-MIX-MAP: Offset after Memory: 0x2044929
-WII-MIX-MAP: Offset after SystemTimers: 0x204493D
-WII-MIX-MAP: Offset after MemoryInterface: 0x2044989
-WII-MIX-MAP: Offset after VideoInterface: 0x2044A2F
-WII-MIX-MAP: Offset after SerialInterface: 0x2044B1E
-WII-MIX-MAP: Offset after ProcessorInterface: 0x2044B3A
-WII-MIX-MAP: Offset after after main dsp state: 0x3044B62
-WII-MIX-MAP: Offset after DSP: 0x3045C9B
-WII-MIX-MAP: Offset after DVDInterface error code state: 0x3045CF0
-WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3045D10
-WII-MIX-MAP: Offset after DVDThread state: 0x3045D76
-WII-MIX-MAP: Offset after DVDInterface: 0x3045D8A
-WII-MIX-MAP: Offset after GPFifo: 0x3045F92
-WII-MIX-MAP: Offset after ExpansionInterface: 0x30460DA
-WII-MIX-MAP: Offset after AudioInterface: 0x3046106
-WII-MIX-MAP: Offset after HSP: 0x304610E
-WII-MIX-MAP: Offset after HW: 0x3046116
-WII-MIX-MAP: Offset after PowerPC: 0x3048643
-WII-MIX-MAP: Offset after AchievementManager: 0x3048647
-TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-TIMING_LOG (Event Queue): event_count = 9
-    Event: VICallback, Time: 68942016, Fifo Order: 6189, Userdata: 0
-    Event: AudioDMACallback, Time: 68950656, Fifo Order: 6182, Userdata: 0
-    Event: FinishExecutingCommand, Time: 69741000, Fifo Order: 6120, Userdata: 12884901889
-    Event: GPUSleeper, Time: 69012000, Fifo Order: 6159, Userdata: 0
-    Event: PerfTracker, Time: 72900000, Fifo Order: 6119, Userdata: 0
-    Event: PatchEngine, Time: 72972900, Fifo Order: 5873, Userdata: 0
-    Event: FinishReadDVDThread, Time: 84075020, Fifo Order: 2649, Userdata: 0
-    Event: DecCallback, Time: 271413615, Fifo Order: 3029, Userdata: 0
-    Event: DSPCallback, Time: 69012000, Fifo Order: 6160, Userdata: 0
-TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 15441, global_timer = 68926575
-s_platform.reset() in main
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/Dolphin.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Dolphin.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCPadNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCPadNew.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/GFX.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GFX.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/Logger.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Logger.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/DSUClient.ini.xxx -> /home/xanmankey/.config/dolphin-emu/DSUClient.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/FreeLook.ini.xxx -> /home/xanmankey/.config/dolphin-emu/FreeLook.ini
-IniFile::Save: /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini.xxx -> /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini
+    Event: FiniAn error occurred.
 
+  Condition: vertex_shader && vertex_shader->GetStage() == ShaderStage::Vertex
+  File: /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/VideoBackends/OGL/ProgramShaderCache.cpp
+  Line: 614
+  Function: GetPipelineProgram
 
---- STDERR ---
-Diff Test FAILED at /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/Core/State.cpp:2334: Diff Test FAILED: Mismatch at byte 0x3045C1C Your save/load logic is not deterministic.
+Ignore and continue?
 
-
-======================================================================
+=======================================================================
 
 I can provide more context and references as needed, but that's the primary output that I'm working with right now. 
 

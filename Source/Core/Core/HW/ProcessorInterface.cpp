@@ -69,20 +69,6 @@ void ProcessorInterfaceManager::WiiMixReset()
 {
   auto& core_timing = m_system.GetCoreTiming();
 
-  // FIX: Reset registers to clean state (matching Init).
-  // Without this, Poisoned values (0xFFFFFFFF) persist until DoState overwrites them.
-  // If any other component checks interrupts (like PowerPC) before that overwrite,
-  // determinism is broken.
-  m_interrupt_mask = 0;
-  m_interrupt_cause = 0;
-
-  m_fifo_cpu_base = 0;
-  m_fifo_cpu_end = 0;
-  m_fifo_cpu_write_pointer = 0;
-
-  m_reset_code = 0;
-  m_interrupt_cause = INT_CAUSE_RST_BUTTON | INT_CAUSE_VI;
-
   m_event_type_toggle_reset_button =
       core_timing.RegisterEvent("ToggleResetButton", ToggleResetButtonCallback);
   m_event_type_ios_notify_reset_button =

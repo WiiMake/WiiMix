@@ -4,11 +4,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <vector>
-
-// Required for u32
-#include "Common/CommonTypes.h"
 
 class GeometryShaderManager;
 class Interpreter;
@@ -124,7 +119,7 @@ namespace Core
 {
   // Central class that encapsulates the running system.
   enum class PoisonModule : u32 {
-    Disabled = 0,
+    None = 0,
     
     // Core timing & execution
     CoreTiming          = 1 << 0,

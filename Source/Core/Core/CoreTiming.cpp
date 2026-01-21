@@ -275,13 +275,7 @@ void CoreTimingManager::DoState(PointerWrap& p)
   // It is not part of the pure emulated state.
   // if (!WIIMIX_STATE)
   // {
-  // p.Do(m_idled_cycles);
-  if (WIIMIX_STATE) {
-      u64 dummy_idle = 0;
-      p.Do(dummy_idle);
-  } else {
-      p.Do(m_idled_cycles);
-  }
+  p.Do(m_idled_cycles);
   // }
   p.Do(m_last_oc_factor); // 4
   p.Do(m_fake_dec_start_value); // 4
@@ -510,21 +504,15 @@ void CoreTimingManager::Advance()
   auto& ppc_state = power_pc.GetPPCState();
 
   if (State::WIIMIX_LOG) {
-    s64 next_time = m_event_queue.empty() ? -1 : m_event_queue.front().time;
-    const char* next_name = m_event_queue.empty() ? "None" : m_event_queue.front().type->name->c_str();
-    u64 next_user = m_event_queue.empty() ? 0 : m_event_queue.front().userdata;
-
-    // This format matches the Python regex
-    printf("CSV_TRACE,%ld,%d,%d,%ld,%s,%lu\n", 
-          m_globals.global_timer, 
-          ppc_state.downcount, 
-          m_globals.slice_length,
-          next_time, 
-          next_name,
-          next_user
-    );
-    fflush(stdout);
-}
+      s64 next_event = m_event_queue.empty() ? -1 : m_event_queue.front().time;
+      printf("TIMELINE: Adv | GT: %ld | Slice: %d | Down: %d | Next: %ld | Events: %zu\n", 
+             m_globals.global_timer, 
+             m_globals.slice_length, 
+             ppc_state.downcount, 
+             next_event,
+             m_event_queue.size());
+      fflush(stdout);
+  }
 
   int cyclesExecuted = m_globals.slice_length - DowncountToCycles(ppc_state.downcount);
   // printf("CoreTiming Advance:\n");
