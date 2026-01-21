@@ -5,27 +5,13 @@ BASELINE
 ================================================================================
 BASELINE: Identity Check            | Poison: 0     | Jitter: False -> PASS
 BASELINE: 1 Step Check              | Poison: 0     | Jitter: False -> PASS
-BASELINE: 10 Step Check             | Poison: 0     | Jitter: False -> PASS
-
-================================================================================
-JITTER
-================================================================================
-JITTER: Identity Check            | Poison: 0     | Jitter: True  -> PASS
-JITTER: 1 Step Check              | Poison: 0     | Jitter: True  -> PASS
-JITTER: 10 Step Check             | Poison: 0     | Jitter: True  -> PASS
-
-================================================================================
-POISON
-================================================================================
-POISON: Identity (DVD)            | Poison: 1024  | Jitter: False -> PASS
-POISON: 1 Step (DVD)              | Poison: 1024  | Jitter: False -> PASS
-POISON: 10 Step (DVD)             | Poison: 1024  | Jitter: False -> FAIL (FAIL)
+BASELINE: 10 Step Check             | Poison: 0     | Jitter: False -> FAIL (FAIL)
 
 ================================================================================
 FORENSIC ANALYSIS REPORT
 ================================================================================
-Primary Failure: POISON - 10 Step (DVD)
-Configuration:   Poison=1024, Jitter=False, Frames=10
+Primary Failure: BASELINE - 10 Step Check
+Configuration:   Poison=0, Jitter=False, Frames=10
 Exit Code:       10 (FAIL)
 
 ================================================================================
@@ -36,7 +22,7 @@ Section:         HW
 Relative Offset: +0xC83
 
 Value B (Clean): 0x00000000 (Int: 0, Float: 0.000000)
-Value C (Dirty): 0x00007668 (Int: 30312, Float: 0.000000)
+Value C (Dirty): 0x000071CE (Int: 29134, Float: 0.000000)
 
 ================================================================================
 SOURCE FILES (CONTENT SUPPRESSED)
@@ -48,7 +34,7 @@ Target Source: HW.cpp
 FULL DEBUG LOG
 ================================================================================
 --- STDOUT ---
-POISON: Mask set to 0x00000400 via CLI
+POISON: Mask set to 0x00000000 via CLI
 Initializing HW...
 Initializing DSP...
 Starting WiiMix Diff Test (10 frames)...

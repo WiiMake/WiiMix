@@ -157,4 +157,4 @@ extern bool WIIMIX_JITTER;
 
 }  // namespace State
 
-static bool safe_to_quit = true;
+// static bool safe_to_quit = true;

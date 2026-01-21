@@ -612,14 +612,14 @@ bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer
     mmu.DBATUpdated();
 
     // Prevent CoreTiming from running a full advance right after loading the state
-    auto& core_timing = system.GetCoreTiming();
-    if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
-    // We are mid-slice. We MUST skip the next Advance() so the CPU 
-    // can finish the remaining downcount cycles before the timer updates.
-      core_timing.SetSkipNextAdvance(true);
-    } else {
-      core_timing.SetSkipNextAdvance(false);
-    }
+    // auto& core_timing = system.GetCoreTiming();
+    // if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
+    // // We are mid-slice. We MUST skip the next Advance() so the CPU 
+    // // can finish the remaining downcount cycles before the timer updates.
+    //   core_timing.SetSkipNextAdvance(true);
+    // } else {
+    //   core_timing.SetSkipNextAdvance(false);
+    // }
 
     if (p.IsReadMode()) {
             // A. Invalidate Vertex Loader

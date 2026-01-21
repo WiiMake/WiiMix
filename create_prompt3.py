@@ -880,10 +880,10 @@ if __name__ == "__main__":
         # "debug_determinism.py",
         # "scan_results.txt",
         "scan_results/Mario Kart - Double Dash!! (USA).iso_report.txt",
-        # "scan_results/Mario Party 6 (USA).ciso_report.txt",
-        # "scan_results/Mario Party 7 (USA).iso_report.txt",
-        # "scan_results/Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso_report.txt",
-        # "scan_results/WarioWare, Inc. - Mega Party Game$! (USA).iso_report.txt",
+        "scan_results/Mario Party 6 (USA).ciso_report.txt",
+        "scan_results/Mario Party 7 (USA).iso_report.txt",
+        "scan_results/Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso_report.txt",
+        "scan_results/WarioWare, Inc. - Mega Party Game$! (USA).iso_report.txt",
     ]
     file_contents = {}
     for fname in files:
@@ -930,14 +930,14 @@ if __name__ == "__main__":
         # file_contents["scan_results.txt"],
         # WIIMIXSTATEFUNCS,
         file_contents["scan_results/Mario Kart - Double Dash!! (USA).iso_report.txt"],
-        # file_contents["scan_results/Mario Party 6 (USA).ciso_report.txt"],
-        # file_contents["scan_results/Mario Party 7 (USA).iso_report.txt"],
-        # file_contents[
-        #     "scan_results/Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso_report.txt"
-        # ],
-        # file_contents[
-        #     "scan_results/WarioWare, Inc. - Mega Party Game$! (USA).iso_report.txt"
-        # ],
+        file_contents["scan_results/Mario Party 6 (USA).ciso_report.txt"],
+        file_contents["scan_results/Mario Party 7 (USA).iso_report.txt"],
+        file_contents[
+            "scan_results/Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso_report.txt"
+        ],
+        file_contents[
+            "scan_results/WarioWare, Inc. - Mega Party Game$! (USA).iso_report.txt"
+        ],
     )
 
     # Write the prompt to a file prompt.txt
