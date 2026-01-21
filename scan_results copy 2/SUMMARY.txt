@@ -1,6 +1,0 @@
---- WIIMIX DETERMINISM BATCH SCAN SUMMARY ---
-Mario Kart - Double Dash!! (USA).iso     : [91mFAIL[0m (Jitter - FAIL)
-Mario Party 6 (USA).ciso                 : [92mPASS[0m
-Mario Party 7 (USA).iso                  : [92mPASS[0m
-Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso : [92mPASS[0m
-WarioWare, Inc. - Mega Party Game$! (USA).iso : [92mPASS[0m

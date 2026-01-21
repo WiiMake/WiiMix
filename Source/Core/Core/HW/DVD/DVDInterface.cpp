@@ -127,6 +127,8 @@ void DVDInterface::DoState(PointerWrap& p)
   p.Do(m_read_buffer_end_offset);
   State::LogOffset("DVDInterface buffer state", p);
 
+  p.Do(m_disc_end_offset);
+
   // File path is host-specific - Skip for WiiMix
   if (!WIIMIX_STATE) {
     p.Do(m_disc_path_to_insert);

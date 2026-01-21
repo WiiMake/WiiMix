@@ -282,11 +282,15 @@ def run_test_case(dol, category, name, poison, frames, jitter):
     clean_artifacts()
     jitter_flag = ["--jitter", "true"] if jitter else []
     t_flag = ["--identity-test"] if name.startswith("Identity") else ["--diff-test"]
+    headless_flag = ["--platform", "headless"]
+    video_null_flag = ["--video_backend", "Null"]
     cmd = (
         [WIIMIX_EXE]
         + t_flag
         + ["--frames", str(frames), "-e", dol, "--poison", str(poison)]
         + jitter_flag
+        + headless_flag
+        + video_null_flag
     )
 
     line = f"{category}: {name:<25} | Poison: {poison:<5} | Jitter: {str(jitter):<5}"

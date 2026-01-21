@@ -196,6 +196,10 @@ static std::unique_ptr<Platform> GetPlatform(const optparse::Values& options)
 
 int main(int argc, char* argv[])
 {
+  // Disable buffering for stdout and stderr (for mac os testing primarily)
+  setvbuf(stdout, nullptr, _IONBF, 0);
+  setvbuf(stderr, nullptr, _IONBF, 0);
+
   Core::DeclareAsHostThread();
 
   auto parser = CommandLineParse::CreateParser(CommandLineParse::ParserOptions::OmitGUIOptions);
@@ -409,7 +413,7 @@ int main(int argc, char* argv[])
     // We (the MainThread) must wait for the EmuThread to finish booting
     // and enter its 'Running' state. This polling loop solves the race condition.
     int retries = 0;
-    while (!Core::IsRunning(Core::System::GetInstance()) && retries < 100) // 5-second timeout
+    while (!Core::IsRunning(Core::System::GetInstance()) && retries < 200) // 10-second timeout
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
       retries++;
