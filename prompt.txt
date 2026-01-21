@@ -555,9 +555,21 @@ bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer
       // This forces the game to rebuild vertex decoders based on the loaded 'g_main_cp_state'
       VertexLoaderManager::Init();
 
+<<<<<<< HEAD
       if (g_vertex_manager) {
           g_vertex_manager->Invalidate();
       }
+=======
+    // Prevent CoreTiming from running a full advance right after loading the state
+    // auto& core_timing = system.GetCoreTiming();
+    // if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
+    // // We are mid-slice. We MUST skip the next Advance() so the CPU 
+    // // can finish the remaining downcount cycles before the timer updates.
+    //   core_timing.SetSkipNextAdvance(true);
+    // } else {
+    //   core_timing.SetSkipNextAdvance(false);
+    // }
+>>>>>>> 8f571f23aa
 
       // B. Dirty the Shader Managers
       // This tells the backend: "The BP registers changed, check genMode/tevOrders again."
@@ -872,7 +884,7 @@ static void CompressAndDumpState(Core::System& system, CompressAndDumpState_args
   }
 
   Host_UpdateMainFrame();
-  safe_to_quit = true;
+  Core::safe_to_quit = true;
 }
 
 static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpState_args& save_args)
@@ -959,7 +971,7 @@ static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpStat
   }
 
   Host_UpdateMainFrame();
-  safe_to_quit = true;
+  Core::safe_to_quit = true;
 }
 
 void SaveAs(Core::System& system, const std::string& filename, bool wait)
@@ -967,7 +979,7 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
   if (!lk)
     return;
-  safe_to_quit = false;
+  Core::safe_to_quit = false;
   Core::RunOnCPUThread(
       system,
       [&] {
@@ -1032,7 +1044,7 @@ void SaveAsWiiMix(Core::System& system, const std::string& filename, bool wait)
   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
   if (!lk)
     return;
-  safe_to_quit = false;
+  Core::safe_to_quit = false;
   Core::RunOnCPUThread(
       system,
       [&] {
@@ -13308,6 +13320,7 @@ import sys
 import random
 from tqdm import tqdm  # Import the progress bar library
 
+<<<<<<< HEAD
 # --- Configuration ---
 BIN_DIR = os.path.expanduser("~/Programming/OpenSource/gamecube-examples/bin")
 GAMES_DIR = os.path.expanduser("~/dolphingames")
@@ -13317,6 +13330,35 @@ SUCCESS_STRING = "Diff Test PASSED!"
 FAILURE_STRING = "Diff Test FAILED"
 # --- End Configuration ---
 
+=======
+================================================================================
+BASELINE
+================================================================================
+BASELINE: Identity Check            | Poison: 0     | Jitter: False -> PASS
+BASELINE: 1 Step Check              | Poison: 0     | Jitter: False -> PASS
+BASELINE: 10 Step Check             | Poison: 0     | Jitter: False -> PASS
+
+================================================================================
+JITTER
+================================================================================
+JITTER: Identity Check            | Poison: 0     | Jitter: True  -> PASS
+JITTER: 1 Step Check              | Poison: 0     | Jitter: True  -> PASS
+JITTER: 10 Step Check             | Poison: 0     | Jitter: True  -> PASS
+
+================================================================================
+POISON
+================================================================================
+POISON: Identity (DVD)            | Poison: 1024  | Jitter: False -> PASS
+POISON: 1 Step (DVD)              | Poison: 1024  | Jitter: False -> PASS
+POISON: 10 Step (DVD)             | Poison: 1024  | Jitter: False -> FAIL (FAIL)
+
+================================================================================
+FORENSIC ANALYSIS REPORT
+================================================================================
+Primary Failure: POISON - 10 Step (DVD)
+Configuration:   Poison=1024, Jitter=False, Frames=10
+Exit Code:       10 (FAIL)
+>>>>>>> 8f571f23aa
 
 def find_test_files():
     """Finds all .dol files in the target directory."""
@@ -13334,6 +13376,11 @@ def find_test_files():
         print(f"Error: Directory not found: {BIN_DIR}", file=sys.stderr)
         return []
 
+<<<<<<< HEAD
+=======
+Value B (Clean): 0x00000000 (Int: 0, Float: 0.000000)
+Value C (Dirty): 0x800AFD7C (Int: 2148203900, Float: -0.000000)
+>>>>>>> 8f571f23aa
 
 def run_single_test(file_path, steps=1):
     """
@@ -13342,6 +13389,7 @@ def run_single_test(file_path, steps=1):
     """
     cmd = [WIIMIX_EXE, "--diff-test", "--frames", str(steps), "-e", file_path]
 
+<<<<<<< HEAD
     proc = None
     full_output = ""
 
@@ -13567,6 +13615,13 @@ Here's what my current test output looks like:
 --- RESULT: FAIL ---
     Reason: TIMEOUT (Process ran > 10s)
 -------------------- CAPTURED LOG --------------------
+=======
+================================================================================
+FULL DEBUG LOG
+================================================================================
+--- STDOUT ---
+POISON: Mask set to 0x00000400 via CLI
+>>>>>>> 8f571f23aa
 Initializing HW...
 Initializing DSP...
 Starting WiiMix Diff Test...
@@ -13829,7 +13884,12 @@ Current frame at end of EmuThread: 0
   Line: 614
   Function: GetPipelineProgram
 
+<<<<<<< HEAD
 Ignore and continue?
+=======
+--- STDERR ---
+Diff Test FAILED at /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/Core/State.cpp:2336: Diff Test FAILED: Mismatch at byte 0x3045C1C Your save/load logic is not deterministic.
+>>>>>>> 8f571f23aa
 
 =======================================================================
 

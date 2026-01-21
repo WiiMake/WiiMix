@@ -862,7 +862,7 @@ static void CompressAndDumpState(Core::System& system, CompressAndDumpState_args
   }
 
   Host_UpdateMainFrame();
-  safe_to_quit = true;
+  Core::safe_to_quit = true;
 }
 
 static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpState_args& save_args)
@@ -949,7 +949,7 @@ static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpStat
   }
 
   Host_UpdateMainFrame();
-  safe_to_quit = true;
+  Core::safe_to_quit = true;
 }
 
 void SaveAs(Core::System& system, const std::string& filename, bool wait)
@@ -957,7 +957,7 @@ void SaveAs(Core::System& system, const std::string& filename, bool wait)
   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
   if (!lk)
     return;
-  safe_to_quit = false;
+  Core::safe_to_quit = false;
   Core::RunOnCPUThread(
       system,
       [&] {
@@ -1022,7 +1022,7 @@ void SaveAsWiiMix(Core::System& system, const std::string& filename, bool wait)
   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
   if (!lk)
     return;
-  safe_to_quit = false;
+  Core::safe_to_quit = false;
   Core::RunOnCPUThread(
       system,
       [&] {

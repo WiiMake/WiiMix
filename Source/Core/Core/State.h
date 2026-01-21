@@ -152,4 +152,4 @@ void LogOffset(const char* name, PointerWrap& p);
 
 }  // namespace State
 
-static bool safe_to_quit = true;
+// static bool safe_to_quit = true;

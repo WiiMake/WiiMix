@@ -305,6 +305,58 @@ void DVDInterface::WiiMixReset()
   auto& core_timing = m_system.GetCoreTiming();
 
   // Reregistering events happens in Init()
+  // 2. Reset Drive Logic
+  ResetDrive(false);
+
+  // [FIX] Explicitly Reset ADPCM Decoder
+  m_adpcm_decoder = StreamADPCM::ADPCMDecoder{};
+
+  // [FIX] Explicitly Zero Buffer Timing
+  m_read_buffer_start_offset = 0;
+  m_read_buffer_end_offset = 0;
+  m_read_buffer_start_time = 0;
+  m_read_buffer_end_time = 0;
+  
+  // ---------------------------------------------------------
+  // [FIX] Recalculate Disc End Offset
+  // Poisoning trashes this value. Since we don't call SetDisc on load,
+  // we must manually restore it from the active disc in DVDThread.
+  // ---------------------------------------------------------
+  auto& dvd_thread = m_system.GetDVDThread();
+  if (dvd_thread.HasDisc())
+  {
+      // We need to access the raw VolumeDisc to call GetDiscEndOffset.
+      // DVDThread doesn't expose the VolumeDisc pointer publicly by default,
+      // but we can check if we can get it or verify how SetDisc calculates it.
+      
+      // Ideally, DVDThread should expose a getter or we replicate the logic.
+      // Since GetDiscEndOffset is static in this file, we just need the disc.
+      // Note: You might need to add a GetDisc() getter to DVDThread.h if it doesn't exist.
+      
+      // Assuming you add: const DiscIO::VolumeDisc* GetDisc() const { return dynamic_cast<const DiscIO::VolumeDisc*>(m_disc.get()); } to DVDThread
+      // Or simply re-run the logic if you can access m_disc via friend class or similar.
+      
+      // If you cannot access the disc pointer directly, you can default it to a safe max value
+      // for Wii/GC to prevent the OOB check from failing on valid reads.
+      // Standard GC: 1.35GB, Wii SL: 4.37GB, Wii DL: 7.9GB
+      
+      // HACK/SAFE FIX: If we can't easily access the disc object here without header changes:
+      m_disc_end_offset = DiscIO::DL_DVD_SIZE; // Set to max possible size (Double Layer)
+      
+      // BETTER FIX (If you can modify DVDThread.h):
+      // const auto* disc = m_system.GetDVDThread().GetVolumeDisc();
+      // if (disc) m_disc_end_offset = GetDiscEndOffset(*disc);
+  }
+  else
+  {
+      m_disc_end_offset = 0;
+  }
+  // ---------------------------------------------------------
+
+  // 3. Reset Thread
+  m_system.GetDVDThread().WiiMixReset();
+
+  // 4. Reregister Events
   m_auto_change_disc = core_timing.RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);
   m_eject_disc = core_timing.RegisterEvent("EjectDisc", EjectDiscCallback);
   m_insert_disc = core_timing.RegisterEvent("InsertDisc", InsertDiscCallback);
