@@ -61,6 +61,7 @@ public:
   ~DVDThread();
 
   void Start();
+  void Start(bool preserve_state);
   void Stop();
   void DoState(PointerWrap& p);
   void DoWiiMixState(PointerWrap& p);

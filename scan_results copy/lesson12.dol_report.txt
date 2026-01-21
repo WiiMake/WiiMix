@@ -1,0 +1,2758 @@
+Processing /home/xanmankey/dolphingames/lesson12.dol...
+
+================================================================================
+BASELINE
+================================================================================
+BASELINE: Identity Check            | Poison: 0     | Jitter: False -> PASS
+BASELINE: 1 Step Check              | Poison: 0     | Jitter: False -> PASS
+BASELINE: 10 Step Check             | Poison: 0     | Jitter: False -> FAIL (FAIL)
+
+================================================================================
+FORENSIC ANALYSIS REPORT
+================================================================================
+Primary Failure: BASELINE - 10 Step Check
+Configuration:   Poison=0, Jitter=False, Frames=10
+Exit Code:       10 (FAIL)
+
+================================================================================
+BINARY CONTENT ANALYSIS
+================================================================================
+Mismatch Offset: 0x4742
+Section:         cpMem
+Relative Offset: +0x0
+
+Value B (Clean): 0x00000945 (Int: 2373, Float: 0.000000)
+Value C (Dirty): 0x00001E5D (Int: 7773, Float: 0.000000)
+
+================================================================================
+FULL SOURCE CODE: State.cpp
+================================================================================
+   1 | // Copyright 2008 Dolphin Emulator Project
+   2 | // SPDX-License-Identifier: GPL-2.0-or-later
+   3 | 
+   4 | #include "Core/State.h"
+   5 | 
+   6 | #include <algorithm>
+   7 | #include <atomic>
+   8 | #include <condition_variable>
+   9 | #include <filesystem>
+  10 | #include <locale>
+  11 | #include <map>
+  12 | #include <memory>
+  13 | #include <mutex>
+  14 | #include <string>
+  15 | #include <thread>
+  16 | #include <utility>
+  17 | #include <vector>
+  18 | 
+  19 | #include <fmt/chrono.h>
+  20 | #include <fmt/format.h>
+  21 | 
+  22 | #include <lz4.h>
+  23 | #include <lzo/lzo1x.h>
+  24 | 
+  25 | #include "AudioCommon/AudioCommon.h"
+  26 | 
+  27 | #include "Common/ChunkFile.h"
+  28 | #include "Common/CommonTypes.h"
+  29 | #include "Common/Event.h"
+  30 | #include "Common/FileUtil.h"
+  31 | #include "Common/IOFile.h"
+  32 | #include "Common/MsgHandler.h"
+  33 | #include "Common/Thread.h"
+  34 | #include "Common/TimeUtil.h"
+  35 | #include "Common/Timer.h"
+  36 | #include "Common/Version.h"
+  37 | #include "Common/WorkQueueThread.h"
+  38 | 
+  39 | #include "Core/AchievementManager.h"
+  40 | #include "Core/Config/AchievementSettings.h"
+  41 | #include "Core/Config/MainSettings.h"
+  42 | #include "Core/ConfigManager.h"
+  43 | #include "Core/Core.h"
+  44 | #include "UICommon/UICommon.h"
+  45 | #include "Core/CoreTiming.h"
+  46 | #include "Core/GeckoCode.h"
+  47 | #include "Core/HW/CPU.h"
+  48 | #include "Core/HW/HW.h"
+  49 | #include "Core/HW/DVD/DVDInterface.h"
+  50 | #include "Core/HW/DVD/DVDThread.h"
+  51 | #include "Core/HW/Memmap.h"
+  52 | #include "Core/HW/Wiimote.h"
+  53 | #include "Core/Host.h"
+  54 | #include "Core/Movie.h"
+  55 | #include "Core/NetPlayClient.h"
+  56 | #include "Core/PowerPC/PowerPC.h"
+  57 | #include "Core/PowerPC/JitInterface.h"
+  58 | #include "Core/System.h"
+  59 | #include "Core/HW/DSP.h"
+  60 | #include "Core/HW/AudioInterface.h"
+  61 | #include "Core/HW/MemoryInterface.h"
+  62 | #include "Core/HW/ProcessorInterface.h"
+  63 | #include "Core/HW/VideoInterface.h"
+  64 | #include "Core/HW/SI/SI.h"
+  65 | #include "Core/HW/GPFifo.h"
+  66 | #include "Core/HW/HSP/HSP.h"
+  67 | #include "AudioCommon/SoundStream.h"
+  68 | 
+  69 | #include "VideoCommon/Fifo.h"
+  70 | #include "VideoCommon/FrameDumpFFMpeg.h"
+  71 | #include "VideoCommon/OnScreenDisplay.h"
+  72 | #include "VideoCommon/VideoBackendBase.h"
+  73 | #include "VideoCommon/BPMemory.h" // For bpMem
+  74 | #include "VideoCommon/PixelEngine.h"
+  75 | #include "VideoCommon/VertexLoaderManager.h"
+  76 | #include "VideoCommon/VertexManagerBase.h"
+  77 | #include "VideoCommon/CPMemory.h"  // For g_main_cp_state, g_preprocess_cp_state
+  78 | #include "VideoCommon/XFMemory.h"  // For xfmem
+  79 | #include "VideoCommon/TMEM.h"      // For tmMem / s_tex_mem (depending on your version)
+  80 | #include "VideoCommon/TextureDecoder.h" // For s_tex_mem (depending on your version)
+  81 | #include "VideoCommon/VertexShaderManager.h"
+  82 | #include "VideoCommon/PixelShaderManager.h"
+  83 | #include "VideoCommon/GeometryShaderManager.h"
+  84 | #include "VideoCommon/XFStateManager.h"
+  85 | #include "VideoCommon/CPMemory.h"
+  86 | 
+  87 | #include <signal.h>
+  88 | #define TEST_FAIL(exit_code, ...) \
+  89 |   fprintf(stderr, "Diff Test FAILED at %s:%d: ", __FILE__, __LINE__); \
+  90 |   fprintf(stderr, __VA_ARGS__); \
+  91 |   fprintf(stderr, "\n"); \
+  92 |   fflush(stderr);
+  93 | 
+  94 | namespace State
+  95 | {
+  96 | 
+  97 |   static int s_poison_mask = 0; // Default to 0 (No Poison)
+  98 | 
+  99 |   void SetWiiMixPoisonMask(int mask)
+ 100 |   {
+ 101 |       s_poison_mask = mask;
+ 102 |   }
+ 103 | 
+ 104 |   bool WIIMIX_JITTER = false;
+ 105 |   PowerPC::CPUCore WIIMIX_DIFF_TEST_CPU_CORE;
+ 106 |   bool WIIMIX_DIFF_TEST = false;
+ 107 |   bool WIIMIX_LOG = false;
+ 108 | #if defined(__LZO_STRICT_16BIT)
+ 109 | static const u32 IN_LEN = 8 * 1024u;
+ 110 | #elif defined(LZO_ARCH_I086) && !defined(LZO_HAVE_MM_HUGE_ARRAY)
+ 111 | static const u32 IN_LEN = 60 * 1024u;
+ 112 | #else
+ 113 | static const u32 IN_LEN = 128 * 1024u;
+ 114 | #endif
+ 115 | 
+ 116 | bool diff_test = false;
+ 117 | 
+ 118 | static const u32 OUT_LEN = IN_LEN + (IN_LEN / 16) + 64 + 3;
+ 119 | 
+ 120 | static unsigned char __LZO_MMODEL out[OUT_LEN];
+ 121 | 
+ 122 | static AfterLoadCallbackFunc s_on_after_load_callback;
+ 123 | 
+ 124 | // Temporary undo state buffer
+ 125 | static std::vector<u8> s_undo_load_buffer;
+ 126 | static std::mutex s_undo_load_buffer_mutex;
+ 127 | 
+ 128 | static std::mutex s_load_or_save_in_progress_mutex;
+ 129 | 
+ 130 | struct CompressAndDumpState_args
+ 131 | {
+ 132 |   std::vector<u8> buffer_vector;
+ 133 |   std::string filename;
+ 134 |   std::shared_ptr<Common::Event> state_write_done_event;
+ 135 | };
+ 136 | 
+ 137 | // Protects against simultaneous reads and writes to the final savestate location from multiple
+ 138 | // threads.
+ 139 | static std::mutex s_save_thread_mutex;
+ 140 | // static std::mutex s_wiimix_save_thread_mutex;
+ 141 | 
+ 142 | // Queue for compressing and writing savestates to disk.
+ 143 | static Common::WorkQueueThread<CompressAndDumpState_args> s_save_thread;
+ 144 | static Common::WorkQueueThread<CompressAndDumpState_args> s_wiimix_save_thread;
+ 145 | 
+ 146 | // Keeps track of savestate writes that are currently happening, so we don't load a state while
+ 147 | // another one is still saving. This is particularly important so if you save to a slot and then
+ 148 | // immediately load from the same one, you don't accidentally load the state that's still at that
+ 149 | // file path before the write is done.
+ 150 | static std::mutex s_state_writes_in_queue_mutex;
+ 151 | static size_t s_state_writes_in_queue;
+ 152 | static std::condition_variable s_state_write_queue_is_empty;
+ 153 | 
+ 154 | // Don't forget to increase this after doing changes on the savestate system
+ 155 | constexpr u32 STATE_VERSION = 168;  // Last changed in PR 12639
+ 156 | 
+ 157 | // Increase this if the StateExtendedHeader definition changes
+ 158 | constexpr u32 EXTENDED_HEADER_VERSION = 1;  // Last changed in PR 12217
+ 159 | 
+ 160 | // Change this if we ever need to store more data in the extended header
+ 161 | constexpr u32 COMPRESSED_DATA_OFFSET = 0;
+ 162 | 
+ 163 | constexpr u32 COOKIE_BASE = 0xBAADBABE;
+ 164 | 
+ 165 | // Maps savestate versions to Dolphin versions.
+ 166 | // Versions after 42 don't need to be added to this list,
+ 167 | // because they save the exact Dolphin version to savestates.
+ 168 | static const std::map<u32, std::pair<std::string, std::string>> s_old_versions = {
+ 169 |     // The 16 -> 17 change modified the size of StateHeader,
+ 170 |     // so versions older than that can't even be decompressed anymore
+ 171 |     {17, {"3.5-1311", "3.5-1364"}}, {18, {"3.5-1366", "3.5-1371"}}, {19, {"3.5-1372", "3.5-1408"}},
+ 172 |     {20, {"3.5-1409", "4.0-704"}},  {21, {"4.0-705", "4.0-889"}},   {22, {"4.0-905", "4.0-1871"}},
+ 173 |     {23, {"4.0-1873", "4.0-1900"}}, {24, {"4.0-1902", "4.0-1919"}}, {25, {"4.0-1921", "4.0-1936"}},
+ 174 |     {26, {"4.0-1939", "4.0-1959"}}, {27, {"4.0-1961", "4.0-2018"}}, {28, {"4.0-2020", "4.0-2291"}},
+ 175 |     {29, {"4.0-2293", "4.0-2360"}}, {30, {"4.0-2362", "4.0-2628"}}, {31, {"4.0-2632", "4.0-3331"}},
+ 176 |     {32, {"4.0-3334", "4.0-3340"}}, {33, {"4.0-3342", "4.0-3373"}}, {34, {"4.0-3376", "4.0-3402"}},
+ 177 |     {35, {"4.0-3409", "4.0-3603"}}, {36, {"4.0-3610", "4.0-4480"}}, {37, {"4.0-4484", "4.0-4943"}},
+ 178 |     {38, {"4.0-4963", "4.0-5267"}}, {39, {"4.0-5279", "4.0-5525"}}, {40, {"4.0-5531", "4.0-5809"}},
+ 179 |     {41, {"4.0-5811", "4.0-5923"}}, {42, {"4.0-5925", "4.0-5946"}}};
+ 180 | 
+ 181 | enum
+ 182 | {
+ 183 |   STATE_NONE = 0,
+ 184 |   STATE_SAVE = 1,
+ 185 |   STATE_LOAD = 2,
+ 186 | };
+ 187 | 
+ 188 | static bool s_use_compression = true;
+ 189 | 
+ 190 | Interpreter* GetInterpreter(Core::System& system)
+ 191 | {
+ 192 |   // 1. Get the JitInterface& manager from the system
+ 193 |   JitInterface& jit_manager = system.GetJitInterface();
+ 194 | 
+ 195 |   // 2. Get the generic CPUCoreBase* pointer from the manager
+ 196 |   CPUCoreBase* cpu_core = jit_manager.GetCore();
+ 197 | 
+ 198 |   // 3. Now, we can safely dynamic_cast the CPUCoreBase* to an Interpreter*
+ 199 |   return dynamic_cast<Interpreter*>(cpu_core);
+ 200 | }
+ 201 | 
+ 202 | void EnableCompression(bool compression)
+ 203 | {
+ 204 |   s_use_compression = compression;
+ 205 | }
+ 206 | 
+ 207 | static void DoState(Core::System& system, PointerWrap& p)
+ 208 | {
+ 209 |   bool is_wii = system.IsWii() || system.IsMIOS();
+ 210 |   const bool is_wii_currently = is_wii;
+ 211 |   p.Do(is_wii);
+ 212 |   if (is_wii != is_wii_currently)
+ 213 |   {
+ 214 |     OSD::AddMessage(fmt::format("Cannot load a savestate created under {} mode in {} mode",
+ 215 |                                 is_wii ? "Wii" : "GC", is_wii_currently ? "Wii" : "GC"),
+ 216 |                     OSD::Duration::NORMAL, OSD::Color::RED);
+ 217 |     p.SetMeasureMode();
+ 218 |     return;
+ 219 |   }
+ 220 | 
+ 221 |   // Check to make sure the emulated memory sizes are the same as the savestate
+ 222 |   auto& memory = system.GetMemory();
+ 223 |   u32 state_mem1_size = memory.GetRamSizeReal();
+ 224 |   u32 state_mem2_size = memory.GetExRamSizeReal();
+ 225 |   p.Do(state_mem1_size);
+ 226 |   p.Do(state_mem2_size);
+ 227 |   if (state_mem1_size != memory.GetRamSizeReal() || state_mem2_size != memory.GetExRamSizeReal())
+ 228 |   {
+ 229 |     OSD::AddMessage(fmt::format("Memory size mismatch!\n"
+ 230 |                                 "Current | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)\n"
+ 231 |                                 "State   | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)",
+ 232 |                                 memory.GetRamSizeReal(), memory.GetRamSizeReal() / 0x100000U,
+ 233 |                                 memory.GetExRamSizeReal(), memory.GetExRamSizeReal() / 0x100000U,
+ 234 |                                 state_mem1_size, state_mem1_size / 0x100000U, state_mem2_size,
+ 235 |                                 state_mem2_size / 0x100000U));
+ 236 |     p.SetMeasureMode();
+ 237 |     return;
+ 238 |   }
+ 239 | 
+ 240 |   // Movie must be done before the video backend, because the window is redrawn in the video backend
+ 241 |   // state load, and the frame number must be up-to-date.
+ 242 |   system.GetMovie().DoState(p);
+ 243 |   p.DoMarker("Movie");
+ 244 |   // CoreTiming needs to be restored before restoring Hardware because
+ 245 |   // the controller code might need to schedule an event if the controller has changed.
+ 246 |   system.GetCoreTiming().DoState(p);
+ 247 |   p.DoMarker("CoreTiming");
+ 248 | 
+ 249 |   // HW needs to be restored before PowerPC because the data cache might need to be flushed.
+ 250 |   HW::DoState(system, p);
+ 251 |   p.DoMarker("HW");
+ 252 | 
+ 253 |   g_video_backend->DoState(p);
+ 254 |   p.DoMarker("video_backend");
+ 255 | 
+ 256 |   system.GetPowerPC().DoState(p);
+ 257 |   p.DoMarker("PowerPC");
+ 258 | 
+ 259 |   if (system.IsWii())
+ 260 |     Wiimote::DoState(p);
+ 261 |   p.DoMarker("Wiimote");
+ 262 |   Gecko::DoState(p);
+ 263 |   p.DoMarker("Gecko");
+ 264 | 
+ 265 |   #ifdef USE_RETRO_ACHIEVEMENTS
+ 266 |     AchievementManager::GetInstance().DoState(p);
+ 267 |   #endif  // USE_RETRO_ACHIEVEMENTS
+ 268 | }
+ 269 | 
+ 270 | void LogOffset(const char* name, PointerWrap& p)
+ 271 | {
+ 272 |   if (p.IsMeasureMode()) {
+ 273 |       // In Measure mode, ptr *is* the offset
+ 274 |       printf("WII-MIX-MAP: Offset after %s: 0x%zX\n", name, reinterpret_cast<size_t>(p.GetCurrentPtr()));
+ 275 |   }
+ 276 | }
+ 277 | 
+ 278 | void LogMap(PointerWrap& p, const char* name) {
+ 279 |     if (p.IsMeasureMode()) {
+ 280 |         size_t offset = reinterpret_cast<size_t>(p.GetCurrentPtr());
+ 281 |         // Format: [MAP],OffsetDec,OffsetHex,VariableName
+ 282 |         printf("[MAP],%zu,%zX,%s\n", offset, offset, name);
+ 283 |     }
+ 284 | }
+ 285 | 
+ 286 | // Macro to verify/save a variable and log its position
+ 287 | #define DO_MAP(p, var) \
+ 288 |     do { \
+ 289 |         LogMap(p, #var); \
+ 290 |         p.Do(var); \
+ 291 |     } while(0)
+ 292 | 
+ 293 | // Macro for array elements (Fixing the snprintf cast error you saw earlier)
+ 294 | #define DO_MAP_ARRAY(p, arr, index) \
+ 295 |     do { \
+ 296 |         char name_buf[64]; \
+ 297 |         snprintf(name_buf, sizeof(name_buf), #arr "[%d]", static_cast<int>(index)); \
+ 298 |         LogMap(p, name_buf); \
+ 299 |         p.Do(arr[index]); \
+ 300 |     } while(0)
+ 301 | 
+ 302 | // DoWiiMixState is a custom savestate function that removes host data from savestates
+ 303 | // Making savestates more portable between different WiiMix configurations
+ 304 | static void DoWiiMixState(Core::System& system, PointerWrap& p)
+ 305 | {
+ 306 |   bool is_wii = system.IsWii() || system.IsMIOS();
+ 307 |   const bool is_wii_currently = is_wii;
+ 308 |   p.Do(is_wii);
+ 309 |   if (is_wii != is_wii_currently)
+ 310 |   {
+ 311 |     OSD::AddMessage(fmt::format("Cannot load a savestate created under {} mode in {} mode",
+ 312 |                                 is_wii ? "Wii" : "GC", is_wii_currently ? "Wii" : "GC"),
+ 313 |                     OSD::Duration::NORMAL, OSD::Color::RED);
+ 314 |     p.SetMeasureMode();
+ 315 |     return;
+ 316 |   }
+ 317 | 
+ 318 |   // Check to make sure the emulated memory sizes are the same as the savestate
+ 319 |   auto& memory = system.GetMemory();
+ 320 |   u32 state_mem1_size = memory.GetRamSizeReal();
+ 321 |   u32 state_mem2_size = memory.GetExRamSizeReal();
+ 322 |   p.Do(state_mem1_size);
+ 323 |   p.Do(state_mem2_size);
+ 324 |   if (state_mem1_size != memory.GetRamSizeReal() || state_mem2_size != memory.GetExRamSizeReal())
+ 325 |   {
+ 326 |     OSD::AddMessage(fmt::format("Memory size mismatch!\n"
+ 327 |                                 "Current | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)\n"
+ 328 |                                 "State   | MEM1 {:08X} ({:3}MB)    MEM2 {:08X} ({:3}MB)",
+ 329 |                                 memory.GetRamSizeReal(), memory.GetRamSizeReal() / 0x100000U,
+ 330 |                                 memory.GetExRamSizeReal(), memory.GetExRamSizeReal() / 0x100000U,
+ 331 |                                 state_mem1_size, state_mem1_size / 0x100000U, state_mem2_size,
+ 332 |                                 state_mem2_size / 0x100000U));
+ 333 |     p.SetMeasureMode();
+ 334 |     return;
+ 335 |   }
+ 336 | 
+ 337 |   // Movie must be done before the video backend, because the window is redrawn in the video backend
+ 338 |   // state load, and the frame number must be up-to-date.
+ 339 | 
+ 340 |   // 100% pure emulated data; can be saved, may be useful in other places other than just Movie
+ 341 |   system.GetMovie().DoState(p);
+ 342 |   p.DoMarker("Movie");
+ 343 |   LogOffset("Movie", p);
+ 344 | 
+ 345 |   // Begin with video backend, so that it gets a chance to clear its caches and writeback modified
+ 346 |   // things to RAM
+ 347 | 
+ 348 |   // video backend is a MIX of emulated and host-specific data, so we need to modify it to only save emulated data
+ 349 |   // NOTE: video backend is difficult to separate, so for now I'm commenting it
+ 350 |   // g_video_backend->DoState(p);
+ 351 |   // p.DoMarker("video_backend");
+ 352 |   // LogOffset("video_backend", p);
+ 353 | 
+ 354 |   // 1. Backend Processor Registers
+ 355 |   // Contains ZMode, BlendMode, TevStages, etc.
+ 356 |   p.Do(bpmem);
+ 357 |   p.DoMarker("bpMem");
+ 358 |   LogOffset("bpMem", p);
+ 359 | 
+ 360 |   // 2. Transform Unit Memory
+ 361 |   // Contains Light Objects, Matrices, Viewport, etc.
+ 362 |   p.Do(xfmem);
+ 363 |   p.DoMarker("xfMem");
+ 364 |   LogOffset("xfMem", p);
+ 365 | 
+ 366 |   // 3. Command Processor State
+ 367 |   // Contains Vertex Attributes (VAT), current pipeline state
+ 368 |   if (p.IsMeasureMode()) printf("--- CP STATE BREAKDOWN ---\n");
+ 369 | 
+ 370 |   DO_MAP(p, g_main_cp_state.matrix_index_a.Hex);
+ 371 |   DO_MAP(p, g_main_cp_state.matrix_index_b.Hex);
+ 372 |   DO_MAP(p, g_main_cp_state.vtx_desc.low.Hex);
+ 373 |   DO_MAP(p, g_main_cp_state.vtx_desc.high.Hex);
+ 374 | 
+ 375 |   for (int i = 0; i < 8; ++i) {
+ 376 |       // Log the vtx_attr[i].g0.Hex field with its index
+ 377 |       {
+ 378 |         char name_buf[64];
+ 379 |         snprintf(name_buf, sizeof(name_buf), "vtx_attr[%d].g0.Hex", i);
+ 380 |         LogMap(p, name_buf);
+ 381 |         p.Do(g_main_cp_state.vtx_attr[i].g0.Hex);
+ 382 |       }
+ 383 |       // Actually, cleaner to just do manual logging for nested structs:
+ 384 |       // LogMap(p, fmt::format("vtx_attr[{}].g0", i).c_str()); p.Do(...);
+ 385 |       // But for now, let's focus on the arrays causing the crash.
+ 386 |   }
+ 387 | 
+ 388 |   // The Arrays (The culprit)
+ 389 |   for (int i = 0; i < 16; ++i) {
+ 390 |       CPArray idx = static_cast<CPArray>(i);
+ 391 |       DO_MAP_ARRAY(p, g_main_cp_state.array_bases, idx);
+ 392 |   }
+ 393 | 
+ 394 |   for (int i = 0; i < 16; ++i) {
+ 395 |       CPArray idx = static_cast<CPArray>(i);
+ 396 |       DO_MAP_ARRAY(p, g_main_cp_state.array_strides, idx);
+ 397 |   }
+ 398 | 
+ 399 |   p.Do(g_preprocess_cp_state);
+ 400 |   p.DoMarker("cpMem");
+ 401 |   LogOffset("cpMem", p);
+ 402 | 
+ 403 |   // CoreTiming needs to be restored before restoring Hardware because
+ 404 |   // the controller code might need to schedule an event if the controller has changed.
+ 405 |   // CoreTiming has 2 distinct parts:
+ 406 |   // - Emulated data (timing, scheduled events)
+ 407 |   // - Host data (m_event_types (maps events to function pointers; host-specific))
+ 408 |   system.GetCoreTiming().LogTimingState("Before DoWiiMixState CoreTiming");
+ 409 |   system.GetCoreTiming().DoState(p);
+ 410 |   p.DoMarker("CoreTiming");
+ 411 |   LogOffset("CoreTiming", p);
+ 412 |   system.GetCoreTiming().LogTimingState("After DoWiiMixState CoreTiming");
+ 413 | 
+ 414 |   // HW needs to be restored before PowerPC because the data cache might need to be flushed.
+ 415 |   // TODOx: HW::DoState may include host-specific data, so we may need to modify it for WiiMix
+ 416 | 
+ 417 |   // NOTE: HW currently only saves mem
+ 418 |   HW::DoState(system, p);
+ 419 |   p.DoMarker("HW");
+ 420 |   LogOffset("HW", p);
+ 421 | 
+ 422 |   // TODOx: PowerPC::DoState serializes JIT, so we should include a flag to skip that for WiiMix savestates
+ 423 |   // TODOx: bring this back once I can figure it out
+ 424 |   system.GetPowerPC().DoState(p);
+ 425 |   p.DoMarker("PowerPC");
+ 426 |   LogOffset("PowerPC", p);
+ 427 | 
+ 428 |   // TODOx: Likely has bluetooth host-specific data
+ 429 |   if (system.IsWii()) {
+ 430 |     Wiimote::DoState(p);
+ 431 |     p.DoMarker("Wiimote");
+ 432 |     LogOffset("Wiimote", p);
+ 433 |   }
+ 434 |   // Gecko codes are currently not supported for WiiMix
+ 435 |   if (!WIIMIX_STATE) {
+ 436 |     Gecko::DoState(p);
+ 437 |     p.DoMarker("Gecko");
+ 438 |     LogOffset("Gecko", p);
+ 439 |   }
+ 440 | 
+ 441 |   // Retroachievements DoState is actually required
+ 442 |   // It only saves emulated data (achievement progress)
+ 443 |   // if (!WIIMIX_STATE) {
+ 444 |   #ifdef USE_RETRO_ACHIEVEMENTS
+ 445 |     AchievementManager::GetInstance().DoState(p);
+ 446 |     p.DoMarker("AchievementManager");
+ 447 |     LogOffset("AchievementManager", p);
+ 448 |   #endif  // USE_RETRO_ACHIEVEMENTS
+ 449 |   // }
+ 450 | }
+ 451 | 
+ 452 | void LoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
+ 453 | {
+ 454 |   if (NetPlay::IsNetPlayRunning())
+ 455 |   {
+ 456 |     OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+ 457 |     return;
+ 458 |   }
+ 459 | 
+ 460 |   if (AchievementManager::GetInstance().IsHardcoreModeActive())
+ 461 |   {
+ 462 |     OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+ 463 |     return;
+ 464 |   }
+ 465 | 
+ 466 |   Core::RunOnCPUThread(
+ 467 |       system,
+ 468 |       [&] {
+ 469 |         u8* ptr = buffer.data();
+ 470 |         PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+ 471 |         DoState(system, p);
+ 472 |       },
+ 473 |       true);
+ 474 | }
+ 475 | 
+ 476 | bool WiiMixLoadFromBuffer(Core::System& system, std::vector<u8>& buffer)
+ 477 | {
+ 478 |   if (NetPlay::IsNetPlayRunning())
+ 479 |   {
+ 480 |     OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+ 481 |     return false;
+ 482 |   }
+ 483 | 
+ 484 |   if (AchievementManager::GetInstance().IsHardcoreModeActive())
+ 485 |   {
+ 486 |     OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+ 487 |     return false;
+ 488 |   }
+ 489 | 
+ 490 |   // This should only be called from the CPU thread
+ 491 |   bool success = false;
+ 492 |   u8* ptr = buffer.data();
+ 493 |   PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+ 494 |   DoWiiMixState(system, p);
+ 495 | 
+ 496 |   if (p.IsReadMode())
+ 497 |   {
+ 498 |     success = WiiMixHostReinitialization(system);
+ 499 |   }
+ 500 |   return success;
+ 501 | }
+ 502 | 
+ 503 | bool WiiMixLoadFromBufferEmuThread(Core::System& system, std::vector<u8>& buffer)
+ 504 | {
+ 505 |   if (NetPlay::IsNetPlayRunning())
+ 506 |   {
+ 507 |     OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+ 508 |     return false;
+ 509 |   }
+ 510 | 
+ 511 |   if (AchievementManager::GetInstance().IsHardcoreModeActive())
+ 512 |   {
+ 513 |     OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+ 514 |     return false;
+ 515 |   }
+ 516 | 
+ 517 |   // This should only be called from the CPU thread
+ 518 | 
+ 519 |   bool success = false;
+ 520 |   u8* ptr = buffer.data();
+ 521 |   PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+ 522 | 
+ 523 |   auto& power_pc = system.GetPowerPC();
+ 524 | 
+ 525 |   system.GetCoreTiming().LogEventQueues("Start of Load Function");
+ 526 | 
+ 527 |   // 1. Run Re-init. This registers event *types* (good)
+ 528 |   //    but also pollutes the event *queue* with default events (bad).
+ 529 |   if (p.IsReadMode()) {
+ 530 |     system.PoisonState(static_cast<Core::PoisonModule>(State::s_poison_mask));
+ 531 |     success = WiiMixHostReinitialization(system);
+ 532 |     if (!success)
+ 533 |       return false;
+ 534 | 
+ 535 |     system.GetCoreTiming().LogEventQueues("After Host Reinit");
+ 536 |   }
+ 537 | 
+ 538 |   // 2. Clear the polluted event queue and CP state.
+ 539 |   //    Now CoreTiming has all types registered, but an empty queue.
+ 540 |   if (p.IsReadMode()) {
+ 541 |     // Move any rogue events from host threads (e.g., Audio)
+ 542 |     // into the main queue, so ClearPendingEvents can kill them.
+ 543 | 
+ 544 |     // CRITICAL: Clear CP State globals to 0 before loading.
+ 545 |     // This prevents poison or stale data from persisting if the save file contains 0s.
+ 546 |     std::memset(&g_main_cp_state, 0, sizeof(g_main_cp_state));
+ 547 |     std::memset(&g_preprocess_cp_state, 0, sizeof(g_preprocess_cp_state));
+ 548 | 
+ 549 |     system.GetCoreTiming().MoveEvents();
+ 550 |     system.GetCoreTiming().LogEventQueues("After MoveEvents");
+ 551 |     system.GetCoreTiming().ClearPendingEvents();
+ 552 |     system.GetCoreTiming().LogEventQueues("After ClearPendingEvents");
+ 553 |   }
+ 554 | 
+ 555 |   printf("Current frame in EmuThread before DoWiiMixState: %lu\n", system.GetMovie().GetCurrentFrame());
+ 556 | 
+ 557 |   // 3. LOAD STATE
+ 558 |   DoWiiMixState(system, p);
+ 559 | 
+ 560 |   // --- DIAGNOSTIC TRAP 1: IMMEDIATE READBACK ---
+ 561 |   // Check if the value is corrupted immediately after reading from the buffer.
+ 562 |   if (g_main_cp_state.matrix_index_a.Hex == 0xFFFFFFFF) {
+ 563 |       printf("CRITICAL FAILURE: CP State corrupted IMMEDIATELY after DoWiiMixState (Load)!\n");
+ 564 |   } else {
+ 565 |       printf("CP State clean after DoWiiMixState: 0x%08X\n", g_main_cp_state.matrix_index_a.Hex);
+ 566 |   }
+ 567 |   // ---------------------------------------------
+ 568 | 
+ 569 |   system.GetCoreTiming().LogEventQueues("After DoWiiMixState (Pure State Loaded)");
+ 570 | 
+ 571 |   if (p.IsReadMode()) {
+ 572 |     // 4. Start the host threads.
+ 573 | 
+ 574 |     // FIX: DO NOT RESTART AUDIO BACKEND. It is already running.
+ 575 |     // system.GetAudioInterface().WiiMixRestart();
+ 576 |     // AudioCommon::PostInitSoundStream(system);
+ 577 | 
+ 578 |     // DVD Interface
+ 579 |     system.GetDVDInterface().WiiMixRestart();
+ 580 | 
+ 581 |     // DSP
+ 582 |     system.GetDSP().WiiMixRestart(Config::Get<bool>(Config::MAIN_DSP_HLE));
+ 583 |   }
+ 584 | 
+ 585 |   // Refresh cpu base pointer to point to valid JIT
+ 586 |   power_pc.ApplyMode();
+ 587 | 
+ 588 |   auto& ppc_state = power_pc.GetPPCState();
+ 589 |   auto& memory = system.GetMemory();
+ 590 | 
+ 591 |   // CRITICAL: Force the JIT/Code Cache to clear.
+ 592 |   // Even in Interpreter mode, this resets internal block maps that might point to stale RAM.
+ 593 |   // We need a guard to access the JIT interface safely.
+ 594 |   {
+ 595 |     Core::CPUThreadGuard guard(system);
+ 596 |     system.GetJitInterface().ClearCache(guard);
+ 597 |   }
+ 598 | 
+ 599 |   if (!ppc_state.m_enable_dcache)
+ 600 |   {
+ 601 |     INFO_LOG_FMT(POWERPC, "Flushing data cache");
+ 602 |     ppc_state.dCache.FlushAll(memory);
+ 603 |   }
+ 604 | 
+ 605 |   PowerPC::RoundingModeUpdated(ppc_state);
+ 606 |   PowerPC::RecalculateAllFeatureFlags(ppc_state);
+ 607 | 
+ 608 |   auto& mmu = system.GetMMU();
+ 609 |   mmu.IBATUpdated();
+ 610 |   mmu.DBATUpdated();
+ 611 | 
+ 612 |   // Prevent CoreTiming from running a full advance right after loading the state
+ 613 |   // This ensures that the slices are processed before advancing
+ 614 |   auto& core_timing = system.GetCoreTiming();
+ 615 |   if (ppc_state.downcount > 0 && ppc_state.downcount < 20000) {
+ 616 |     core_timing.SetSkipNextAdvance(true);
+ 617 |   } else {
+ 618 |       core_timing.SetSkipNextAdvance(false);
+ 619 |   }
+ 620 | 
+ 621 |   if (p.IsReadMode()) {
+ 622 |         // A. Invalidate Vertex Loader
+ 623 |         VertexLoaderManager::Init();
+ 624 | 
+ 625 |         // FIX: Ensure XF Memory is invalidated BEFORE Shader/Vertex Managers
+ 626 |         auto& xf = system.GetXFStateManager();
+ 627 |         xf.InvalidateXFRange(0, 0x1000); // 4KB XF memory forces backend to reload all XF data
+ 628 |         xf.SetProjectionChanged();
+ 629 |         xf.SetViewportChanged();
+ 630 |         xf.SetLightingConfigChanged();
+ 631 | 
+ 632 |         if (g_vertex_manager) {
+ 633 |             g_vertex_manager->Invalidate();
+ 634 |         }
+ 635 | 
+ 636 |         // B. Dirty the Shader Managers
+ 637 |         system.GetVertexShaderManager().dirty = true;
+ 638 |         system.GetPixelShaderManager().Dirty();
+ 639 |         system.GetGeometryShaderManager().Dirty();
+ 640 |   }
+ 641 | 
+ 642 |   printf("Current frame at end of EmuThread: %lu\n", system.GetMovie().GetCurrentFrame());
+ 643 |   system.GetCoreTiming().LogEventQueues("After Cache Refresh");
+ 644 |   // system.GetCPU().Break();
+ 645 |   return p.IsReadMode();
+ 646 | }
+ 647 | 
+ 648 | void SaveToBuffer(Core::System& system, std::vector<u8>& buffer)
+ 649 | {
+ 650 |   Core::RunOnCPUThread(
+ 651 |       system,
+ 652 |       [&] {
+ 653 |         u8* ptr = nullptr;
+ 654 |         PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+ 655 | 
+ 656 |         DoState(system, p_measure);
+ 657 |         const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+ 658 |         buffer.resize(buffer_size);
+ 659 | 
+ 660 |         ptr = buffer.data();
+ 661 |         PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+ 662 |         DoState(system, p);
+ 663 |       },
+ 664 |       true);
+ 665 | }
+ 666 | 
+ 667 | void WiiMixSaveToBuffer(Core::System& system, std::vector<u8>& buffer)
+ 668 | {
+ 669 |   // Should be called from CPU thread already
+ 670 |   u8* ptr = nullptr;
+ 671 |   PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+ 672 | 
+ 673 |   // system.GetCoreTiming().LogTimingState("Before DoWiiMixState Measure");
+ 674 |   // system.GetCoreTiming().DoState(p_measure);
+ 675 |   // p_measure.DoMarker("CoreTiming");
+ 676 |   // system.GetCoreTiming().LogTimingState("After DoWiiMixState Measure");
+ 677 |   DoWiiMixState(system, p_measure);
+ 678 |   const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+ 679 |   buffer.resize(buffer_size);
+ 680 | 
+ 681 |   ptr = buffer.data();
+ 682 |   PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+ 683 |   // system.GetCoreTiming().LogTimingState("Before DoWiiMixState write");
+ 684 |   // system.GetCoreTiming().DoState(p);
+ 685 |   // p.DoMarker("CoreTiming");
+ 686 |   // system.GetCoreTiming().LogTimingState("After DoWiiMixState write");
+ 687 |   DoWiiMixState(system, p);
+ 688 | }
+ 689 | 
+ 690 | namespace
+ 691 | {
+ 692 | struct SlotWithTimestamp
+ 693 | {
+ 694 |   int slot;
+ 695 |   double timestamp;
+ 696 | };
+ 697 | }  // namespace
+ 698 | 
+ 699 | // returns first slot number not in the vector, or -1 if all are in the vector
+ 700 | static int GetEmptySlot(const std::vector<SlotWithTimestamp>& used_slots)
+ 701 | {
+ 702 |   for (int i = 1; i <= (int)NUM_STATES; i++)
+ 703 |   {
+ 704 |     const auto it = std::find_if(used_slots.begin(), used_slots.end(),
+ 705 |                                  [i](const SlotWithTimestamp& slot) { return slot.slot == i; });
+ 706 |     if (it == used_slots.end())
+ 707 |       return i;
+ 708 |   }
+ 709 |   return -1;
+ 710 | }
+ 711 | 
+ 712 | // Arbitrarily chosen value (38 years) that is subtracted in GetSystemTimeAsDouble()
+ 713 | // to increase sub-second precision of the resulting double timestamp
+ 714 | static constexpr int DOUBLE_TIME_OFFSET = (38 * 365 * 24 * 60 * 60);
+ 715 | 
+ 716 | static double GetSystemTimeAsDouble()
+ 717 | {
+ 718 |   const auto since_epoch = std::chrono::system_clock::now().time_since_epoch();
+ 719 | 
+ 720 |   const auto since_double_time_epoch = since_epoch - std::chrono::seconds(DOUBLE_TIME_OFFSET);
+ 721 |   return std::chrono::duration_cast<std::chrono::duration<double>>(since_double_time_epoch).count();
+ 722 | }
+ 723 | 
+ 724 | static std::string SystemTimeAsDoubleToString(double time)
+ 725 | {
+ 726 |   // revert adjustments from GetSystemTimeAsDouble() to get a normal Unix timestamp again
+ 727 |   const time_t seconds = static_cast<time_t>(time) + DOUBLE_TIME_OFFSET;
+ 728 |   const auto local_time = Common::Localtime(seconds);
+ 729 |   if (!local_time)
+ 730 |     return "";
+ 731 | 
+ 732 |   // fmt is locale agnostic by default, so explicitly use current locale.
+ 733 |   return fmt::format(std::locale{""}, "{:%x %X}", *local_time);
+ 734 | }
+ 735 | 
+ 736 | static std::string MakeStateFilename(int number);
+ 737 | 
+ 738 | static std::vector<SlotWithTimestamp> GetUsedSlotsWithTimestamp()
+ 739 | {
+ 740 |   std::vector<SlotWithTimestamp> result;
+ 741 |   StateHeader header;
+ 742 |   for (int i = 1; i <= (int)NUM_STATES; i++)
+ 743 |   {
+ 744 |     std::string filename = MakeStateFilename(i);
+ 745 |     if (File::Exists(filename))
+ 746 |     {
+ 747 |       if (ReadHeader(filename, header))
+ 748 |       {
+ 749 |         result.emplace_back(SlotWithTimestamp{.slot = i, .timestamp = header.legacy_header.time});
+ 750 |       }
+ 751 |     }
+ 752 |   }
+ 753 |   return result;
+ 754 | }
+ 755 | 
+ 756 | static bool CompareTimestamp(const SlotWithTimestamp& lhs, const SlotWithTimestamp& rhs)
+ 757 | {
+ 758 |   return lhs.timestamp < rhs.timestamp;
+ 759 | }
+ 760 | 
+ 761 | static void CompressBufferToFile(const u8* raw_buffer, u64 size, File::IOFile& f)
+ 762 | {
+ 763 |   u64 total_bytes_compressed = 0;
+ 764 | 
+ 765 |   while (true)
+ 766 |   {
+ 767 |     u64 bytes_left_to_compress = size - total_bytes_compressed;
+ 768 | 
+ 769 |     int bytes_to_compress =
+ 770 |         static_cast<int>(std::min(static_cast<u64>(LZ4_MAX_INPUT_SIZE), bytes_left_to_compress));
+ 771 |     int compressed_buffer_size = LZ4_compressBound(bytes_to_compress);
+ 772 |     auto compressed_buffer = std::make_unique<char[]>(compressed_buffer_size);
+ 773 |     s32 compressed_len =
+ 774 |         LZ4_compress_default(reinterpret_cast<const char*>(raw_buffer) + total_bytes_compressed,
+ 775 |                              compressed_buffer.get(), bytes_to_compress, compressed_buffer_size);
+ 776 | 
+ 777 |     if (compressed_len == 0)
+ 778 |     {
+ 779 |       PanicAlertFmtT("Internal LZ4 Error - compression failed");
+ 780 |       break;
+ 781 |     }
+ 782 | 
+ 783 |     // The size of the data to write is 'compressed_len'
+ 784 |     f.WriteArray(&compressed_len, 1);
+ 785 |     f.WriteBytes(compressed_buffer.get(), compressed_len);
+ 786 | 
+ 787 |     total_bytes_compressed += bytes_to_compress;
+ 788 |     if (total_bytes_compressed == size)
+ 789 |       break;
+ 790 |   }
+ 791 | }
+ 792 | 
+ 793 | static void CreateExtendedHeader(StateExtendedHeader& extended_header, size_t uncompressed_size)
+ 794 | {
+ 795 |   StateExtendedBaseHeader& base_header = extended_header.base_header;
+ 796 |   base_header.header_version = EXTENDED_HEADER_VERSION;
+ 797 |   base_header.compression_type =
+ 798 |       s_use_compression ? CompressionType::LZ4 : CompressionType::Uncompressed;
+ 799 |   base_header.payload_offset = COMPRESSED_DATA_OFFSET;
+ 800 |   base_header.uncompressed_size = uncompressed_size;
+ 801 | 
+ 802 |   // If more fields are added to StateExtendedHeader, set them here.
+ 803 | }
+ 804 | 
+ 805 | static void WriteHeadersToFile(size_t uncompressed_size, File::IOFile& f)
+ 806 | {
+ 807 |   StateHeader header{};
+ 808 |   SConfig::GetInstance().GetGameID().copy(header.legacy_header.game_id,
+ 809 |                                           std::size(header.legacy_header.game_id));
+ 810 |   header.legacy_header.time = GetSystemTimeAsDouble();
+ 811 | 
+ 812 |   header.version_header.version_cookie = WIIMIX_COOKIE_BASE + WIIMIX_STATE_VERSION;
+ 813 |   header.version_string = Common::GetScmRevStr();
+ 814 |   header.version_header.version_string_length = static_cast<u32>(header.version_string.length());
+ 815 | 
+ 816 |   StateExtendedHeader extended_header{};
+ 817 |   CreateExtendedHeader(extended_header, uncompressed_size);
+ 818 | 
+ 819 |   f.WriteArray(&header.legacy_header, 1);
+ 820 |   f.WriteArray(&header.version_header, 1);
+ 821 |   f.WriteString(header.version_string);
+ 822 | 
+ 823 |   f.WriteArray(&extended_header.base_header, 1);
+ 824 |   // If StateExtendedHeader is amended to include more than the base, add WriteBytes() calls here.
+ 825 | }
+ 826 | 
+ 827 | static void WriteWiiMixHeadersToFile(size_t uncompressed_size, File::IOFile& f)
+ 828 | {
+ 829 |   StateHeader header{};
+ 830 |   SConfig::GetInstance().GetGameID().copy(header.legacy_header.game_id,
+ 831 |                                           std::size(header.legacy_header.game_id));
+ 832 |   header.legacy_header.time = GetSystemTimeAsDouble();
+ 833 | 
+ 834 |   header.version_header.version_cookie = WIIMIX_COOKIE_BASE + WIIMIX_STATE_VERSION;
+ 835 |   header.version_string = Common::GetScmRevStr();
+ 836 |   header.version_header.version_string_length = static_cast<u32>(header.version_string.length());
+ 837 | 
+ 838 |   StateExtendedHeader extended_header{};
+ 839 |   CreateExtendedHeader(extended_header, uncompressed_size);
+ 840 | 
+ 841 |   f.WriteArray(&header.legacy_header, 1);
+ 842 |   f.WriteArray(&header.version_header, 1);
+ 843 |   f.WriteString(header.version_string);
+ 844 | 
+ 845 |   f.WriteArray(&extended_header.base_header, 1);
+ 846 |   // If StateExtendedHeader is amended to include more than the base, add WriteBytes() calls here.
+ 847 | }
+ 848 | 
+ 849 | static void CompressAndDumpState(Core::System& system, CompressAndDumpState_args& save_args)
+ 850 | {
+ 851 |   const u8* const buffer_data = save_args.buffer_vector.data();
+ 852 |   const size_t buffer_size = save_args.buffer_vector.size();
+ 853 |   const std::string& filename = save_args.filename;
+ 854 | 
+ 855 |   // Find free temporary filename.
+ 856 |   // TODO: The file exists check and the actual opening of the file should be atomic, we don't have
+ 857 |   // functions for that.
+ 858 |   std::string temp_filename;
+ 859 |   size_t temp_counter = static_cast<size_t>(Common::CurrentThreadId());
+ 860 |   do
+ 861 |   {
+ 862 |     temp_filename = fmt::format("{}{}.tmp", filename, temp_counter);
+ 863 |     ++temp_counter;
+ 864 |   } while (File::Exists(temp_filename));
+ 865 | 
+ 866 |   File::IOFile f(temp_filename, "wb");
+ 867 |   if (!f)
+ 868 |   {
+ 869 |     Core::DisplayMessage("Failed to create state file", 2000);
+ 870 |     return;
+ 871 |   }
+ 872 | 
+ 873 |   WriteHeadersToFile(buffer_size, f);
+ 874 | 
+ 875 |   if (s_use_compression)
+ 876 |     CompressBufferToFile(buffer_data, buffer_size, f);
+ 877 |   else
+ 878 |     f.WriteBytes(buffer_data, buffer_size);
+ 879 | 
+ 880 |   if (!f.IsGood())
+ 881 |     Core::DisplayMessage("Failed to write state file", 2000);
+ 882 | 
+ 883 |   const std::string last_state_filename = File::GetUserPath(D_STATESAVES_IDX) + "lastState.sav";
+ 884 |   const std::string last_state_dtmname = last_state_filename + ".dtm";
+ 885 |   const std::string dtmname = filename + ".dtm";
+ 886 | 
+ 887 |   {
+ 888 |     std::lock_guard lk(s_save_thread_mutex);
+ 889 | 
+ 890 |     // Backup existing state (overwriting an existing backup, if any).
+ 891 |     if (File::Exists(filename))
+ 892 |     {
+ 893 |       if (File::Exists(last_state_filename))
+ 894 |         File::Delete((last_state_filename));
+ 895 |       if (File::Exists(last_state_dtmname))
+ 896 |         File::Delete((last_state_dtmname));
+ 897 | 
+ 898 |       if (!File::Rename(filename, last_state_filename))
+ 899 |       {
+ 900 |         Core::DisplayMessage("Failed to move previous state to state undo backup", 1000);
+ 901 |       }
+ 902 |       else if (File::Exists(dtmname))
+ 903 |       {
+ 904 |         if (!File::Rename(dtmname, last_state_dtmname))
+ 905 |           Core::DisplayMessage("Failed to move previous state's dtm to state undo backup", 1000);
+ 906 |       }
+ 907 |     }
+ 908 | 
+ 909 |     auto& movie = system.GetMovie();
+ 910 |     if ((movie.IsMovieActive()) && !movie.IsJustStartingRecordingInputFromSaveState())
+ 911 |       movie.SaveRecording(dtmname);
+ 912 |     else if (!movie.IsMovieActive())
+ 913 |       File::Delete(dtmname);
+ 914 | 
+ 915 |     // Move written state to final location.
+ 916 |     // TODO: This should also be atomic. This is possible on all systems, but needs a special
+ 917 |     // implementation of IOFile on Windows.
+ 918 |     if (!f.Close())
+ 919 |       Core::DisplayMessage("Failed to close state file", 2000);
+ 920 | 
+ 921 |     if (!File::Rename(temp_filename, filename))
+ 922 |     {
+ 923 |       Core::DisplayMessage("Failed to rename state file", 2000);
+ 924 |     }
+ 925 |     else
+ 926 |     {
+ 927 |       const std::filesystem::path temp_path(filename);
+ 928 |       Core::DisplayMessage(fmt::format("Saved State to {}", temp_path.filename().string()), 2000);
+ 929 |     }
+ 930 |   }
+ 931 | 
+ 932 |   Host_UpdateMainFrame();
+ 933 |   safe_to_quit = true;
+ 934 | }
+ 935 | 
+ 936 | static void CompressAndDumpWiiMixState(Core::System& system, CompressAndDumpState_args& save_args)
+ 937 | {
+ 938 |   const u8* const buffer_data = save_args.buffer_vector.data();
+ 939 |   const size_t buffer_size = save_args.buffer_vector.size();
+ 940 |   const std::string& filename = save_args.filename;
+ 941 | 
+ 942 |   // Find free temporary filename.
+ 943 |   // TODO: The file exists check and the actual opening of the file should be atomic, we don't have
+ 944 |   // functions for that.
+ 945 |   std::string temp_filename;
+ 946 |   size_t temp_counter = static_cast<size_t>(Common::CurrentThreadId());
+ 947 |   do
+ 948 |   {
+ 949 |     temp_filename = fmt::format("{}{}.tmp", filename, temp_counter);
+ 950 |     ++temp_counter;
+ 951 |   } while (File::Exists(temp_filename));
+ 952 | 
+ 953 |   File::IOFile f(temp_filename, "wb");
+ 954 |   if (!f)
+ 955 |   {
+ 956 |     Core::DisplayMessage("Failed to create state file", 2000);
+ 957 |     return;
+ 958 |   }
+ 959 | 
+ 960 |   WriteWiiMixHeadersToFile(buffer_size, f);
+ 961 | 
+ 962 |   if (s_use_compression)
+ 963 |     CompressBufferToFile(buffer_data, buffer_size, f);
+ 964 |   else
+ 965 |     f.WriteBytes(buffer_data, buffer_size);
+ 966 | 
+ 967 |   if (!f.IsGood())
+ 968 |     Core::DisplayMessage("Failed to write state file", 2000);
+ 969 | 
+ 970 |   const std::string last_state_filename = File::GetUserPath(D_STATESAVES_IDX) + "lastState." + WIIMIX_STATE_EXTENSION;
+ 971 |   const std::string last_state_dtmname = last_state_filename + ".dtm";
+ 972 |   const std::string dtmname = filename + ".dtm";
+ 973 | 
+ 974 |   {
+ 975 |     std::lock_guard lk(s_save_thread_mutex);
+ 976 | 
+ 977 |     // Backup existing state (overwriting an existing backup, if any).
+ 978 |     if (File::Exists(filename))
+ 979 |     {
+ 980 |       if (File::Exists(last_state_filename))
+ 981 |         File::Delete((last_state_filename));
+ 982 |       if (File::Exists(last_state_dtmname))
+ 983 |         File::Delete((last_state_dtmname));
+ 984 | 
+ 985 |       if (!File::Rename(filename, last_state_filename))
+ 986 |       {
+ 987 |         Core::DisplayMessage("Failed to move previous state to state undo backup", 1000);
+ 988 |       }
+ 989 |       else if (File::Exists(dtmname))
+ 990 |       {
+ 991 |         if (!File::Rename(dtmname, last_state_dtmname))
+ 992 |           Core::DisplayMessage("Failed to move previous state's dtm to state undo backup", 1000);
+ 993 |       }
+ 994 |     }
+ 995 | 
+ 996 |     auto& movie = system.GetMovie();
+ 997 |     if ((movie.IsMovieActive()) && !movie.IsJustStartingRecordingInputFromSaveState())
+ 998 |       movie.SaveRecording(dtmname);
+ 999 |     else if (!movie.IsMovieActive())
+1000 |       File::Delete(dtmname);
+1001 | 
+1002 |     // Move written state to final location.
+1003 |     // TODO: This should also be atomic. This is possible on all systems, but needs a special
+1004 |     // implementation of IOFile on Windows.
+1005 |     if (!f.Close())
+1006 |       Core::DisplayMessage("Failed to close state file", 2000);
+1007 | 
+1008 |     if (!File::Rename(temp_filename, filename))
+1009 |     {
+1010 |       Core::DisplayMessage("Failed to rename state file", 2000);
+1011 |     }
+1012 |     else
+1013 |     {
+1014 |       const std::filesystem::path temp_path(filename);
+1015 |       Core::DisplayMessage(fmt::format("Saved State to {}", temp_path.filename().string()), 2000);
+1016 |     }
+1017 |   }
+1018 | 
+1019 |   Host_UpdateMainFrame();
+1020 |   safe_to_quit = true;
+1021 | }
+1022 | 
+1023 | void SaveAs(Core::System& system, const std::string& filename, bool wait)
+1024 | {
+1025 |   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+1026 |   if (!lk)
+1027 |     return;
+1028 |   safe_to_quit = false;
+1029 |   Core::RunOnCPUThread(
+1030 |       system,
+1031 |       [&] {
+1032 |         Core::safe_to_quit = false;
+1033 |         {
+1034 |           std::lock_guard lk_(s_state_writes_in_queue_mutex);
+1035 |           ++s_state_writes_in_queue;
+1036 |         }
+1037 | 
+1038 |         // Measure the size of the buffer.
+1039 |         u8* ptr = nullptr;
+1040 |         PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+1041 |         DoState(system, p_measure);
+1042 |         const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+1043 | 
+1044 |         // Then actually do the write.
+1045 |         std::vector<u8> current_buffer;
+1046 |         current_buffer.resize(buffer_size);
+1047 |         ptr = current_buffer.data();
+1048 |         PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+1049 |         DoState(system, p);
+1050 | 
+1051 |         if (p.IsWriteMode())
+1052 |         {
+1053 |           Core::DisplayMessage("Saving State...", 1000);
+1054 | 
+1055 |           std::shared_ptr<Common::Event> sync_event;
+1056 | 
+1057 |           CompressAndDumpState_args save_args;
+1058 |           save_args.buffer_vector = std::move(current_buffer);
+1059 |           save_args.filename = filename;
+1060 |           if (wait)
+1061 |           {
+1062 |             sync_event = std::make_shared<Common::Event>();
+1063 |             save_args.state_write_done_event = sync_event;
+1064 |           }
+1065 | 
+1066 |           s_save_thread.EmplaceItem(std::move(save_args));
+1067 | 
+1068 |           if (sync_event)
+1069 |             sync_event->Wait();
+1070 |         }
+1071 |         else
+1072 |         {
+1073 |           // someone aborted the save by changing the mode?
+1074 |           {
+1075 |             // Note: The worker thread takes care of this in the other branch.
+1076 |             std::lock_guard lk_(s_state_writes_in_queue_mutex);
+1077 |             if (--s_state_writes_in_queue == 0)
+1078 |               s_state_write_queue_is_empty.notify_all();
+1079 |           }
+1080 |           Core::DisplayMessage("Unable to save: Internal DoState Error", 4000);
+1081 |         }
+1082 |         Core::safe_to_quit = true;
+1083 |       },
+1084 |       true);
+1085 |   // safe_to_quit = true;
+1086 | }
+1087 | 
+1088 | void SaveAsWiiMix(Core::System& system, const std::string& filename, bool wait)
+1089 | {
+1090 |   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+1091 |   if (!lk)
+1092 |     return;
+1093 |   safe_to_quit = false;
+1094 |   Core::RunOnCPUThread(
+1095 |       system,
+1096 |       [&] {
+1097 |         Core::safe_to_quit = false;
+1098 |         {
+1099 |           std::lock_guard lk_(s_state_writes_in_queue_mutex);
+1100 |           ++s_state_writes_in_queue;
+1101 |         }
+1102 | 
+1103 |         // Measure the size of the buffer.
+1104 |         u8* ptr = nullptr;
+1105 |         PointerWrap p_measure(&ptr, 0, PointerWrap::Mode::Measure);
+1106 |         DoWiiMixState(system, p_measure);
+1107 |         const size_t buffer_size = reinterpret_cast<size_t>(ptr);
+1108 | 
+1109 |         // Then actually do the write.
+1110 |         std::vector<u8> current_buffer;
+1111 |         current_buffer.resize(buffer_size);
+1112 |         ptr = current_buffer.data();
+1113 |         PointerWrap p(&ptr, buffer_size, PointerWrap::Mode::Write);
+1114 |         DoWiiMixState(system, p);
+1115 | 
+1116 |         if (p.IsWriteMode())
+1117 |         {
+1118 |           Core::DisplayMessage("Saving State...", 1000);
+1119 | 
+1120 |           std::shared_ptr<Common::Event> sync_event;
+1121 | 
+1122 |           CompressAndDumpState_args save_args;
+1123 |           save_args.buffer_vector = std::move(current_buffer);
+1124 |           save_args.filename = filename;
+1125 |           if (wait)
+1126 |           {
+1127 |             sync_event = std::make_shared<Common::Event>();
+1128 |             save_args.state_write_done_event = sync_event;
+1129 |           }
+1130 | 
+1131 |           s_wiimix_save_thread.EmplaceItem(std::move(save_args));
+1132 | 
+1133 |           if (sync_event)
+1134 |             sync_event->Wait();
+1135 |         }
+1136 |         else
+1137 |         {
+1138 |           // someone aborted the save by changing the mode?
+1139 |           {
+1140 |             // Note: The worker thread takes care of this in the other branch.
+1141 |             std::lock_guard lk_(s_state_writes_in_queue_mutex);
+1142 |             if (--s_state_writes_in_queue == 0)
+1143 |               s_state_write_queue_is_empty.notify_all();
+1144 |           }
+1145 |           Core::DisplayMessage("Unable to save: Internal DoState Error", 4000);
+1146 |         }
+1147 |         Core::safe_to_quit = true;
+1148 |       },
+1149 |       true);
+1150 |   // safe_to_quit = true;
+1151 | }
+1152 | 
+1153 | static bool GetVersionFromLZO(StateHeader& header, File::IOFile& f)
+1154 | {
+1155 |   // Just read the first block, since it will contain the full revision string
+1156 |   lzo_uint32 cur_len = 0;  // size of compressed bytes
+1157 |   lzo_uint new_len = 0;    // size of uncompressed bytes
+1158 |   std::vector<u8> buffer;
+1159 |   buffer.resize(header.legacy_header.lzo_size);
+1160 | 
+1161 |   if (!f.ReadArray(&cur_len, 1) || !f.ReadBytes(out, cur_len))
+1162 |     return false;
+1163 | 
+1164 |   const int res = lzo1x_decompress(out, cur_len, buffer.data(), &new_len, nullptr);
+1165 |   if (res != LZO_E_OK)
+1166 |   {
+1167 |     // This doesn't seem to happen anymore.
+1168 |     PanicAlertFmtT("Internal LZO Error - decompression failed ({0}) ({1}) \n"
+1169 |                    "Unable to retrieve outdated savestate version info.",
+1170 |                    res, new_len);
+1171 |     return false;
+1172 |   }
+1173 | 
+1174 |   // Read in cookie and string length
+1175 |   if (buffer.size() >= sizeof(StateHeaderVersion))
+1176 |   {
+1177 |     memcpy(&header.version_header, buffer.data(), sizeof(StateHeaderVersion));
+1178 |   }
+1179 |   else
+1180 |   {
+1181 |     PanicAlertFmtT("Internal LZO Error - failed to parse decompressed version cookie and version "
+1182 |                    "string length ({0})",
+1183 |                    buffer.size());
+1184 |     return false;
+1185 |   }
+1186 | 
+1187 |   // Read in the string
+1188 |   if (buffer.size() >= sizeof(StateHeaderVersion) + header.version_header.version_string_length)
+1189 |   {
+1190 |     auto version_buffer = std::make_unique<char[]>(header.version_header.version_string_length);
+1191 |     memcpy(version_buffer.get(), buffer.data() + sizeof(StateHeaderVersion),
+1192 |            header.version_header.version_string_length);
+1193 |     header.version_string =
+1194 |         std::string(version_buffer.get(), header.version_header.version_string_length);
+1195 |   }
+1196 |   else
+1197 |   {
+1198 |     PanicAlertFmtT("Internal LZO Error - failed to parse decompressed version string ({0} / {1})",
+1199 |                    header.version_header.version_string_length, buffer.size());
+1200 |     return false;
+1201 |   }
+1202 | 
+1203 |   return true;
+1204 | }
+1205 | 
+1206 | static bool ReadStateHeaderFromFile(StateHeader& header, File::IOFile& f,
+1207 |                                     bool get_version_header = true)
+1208 | {
+1209 |   if (!f.IsOpen())
+1210 |   {
+1211 |     Core::DisplayMessage("State not found", 2000);
+1212 |     return false;
+1213 |   }
+1214 | 
+1215 |   if (!f.ReadArray(&header.legacy_header, 1))
+1216 |   {
+1217 |     Core::DisplayMessage("Failed to read state legacy header", 2000);
+1218 |     return false;
+1219 |   }
+1220 | 
+1221 |   // Bail out if we only care for retrieving the legacy header.
+1222 |   // This is the case with ReadHeader() calls.
+1223 |   if (!get_version_header)
+1224 |     return true;
+1225 | 
+1226 |   if (header.legacy_header.lzo_size != 0)
+1227 |   {
+1228 |     // Parse out version from legacy LZO compressed states
+1229 |     if (!GetVersionFromLZO(header, f))
+1230 |       return false;
+1231 |   }
+1232 |   else
+1233 |   {
+1234 |     if (!f.ReadArray(&header.version_header, 1))
+1235 |     {
+1236 |       Core::DisplayMessage("Failed to read state version header", 2000);
+1237 |       return false;
+1238 |     }
+1239 | 
+1240 |     auto version_buffer = std::make_unique<char[]>(header.version_header.version_string_length);
+1241 |     if (!f.ReadBytes(version_buffer.get(), header.version_header.version_string_length))
+1242 |     {
+1243 |       Core::DisplayMessage("Failed to read state version string", 2000);
+1244 |       return false;
+1245 |     }
+1246 | 
+1247 |     header.version_string =
+1248 |         std::string(version_buffer.get(), header.version_header.version_string_length);
+1249 |   }
+1250 | 
+1251 |   return true;
+1252 | }
+1253 | 
+1254 | static bool ReadWiiMixStateHeaderFromFile(StateHeader& header, File::IOFile& f,
+1255 |                                     bool get_version_header = true)
+1256 | {
+1257 |   if (!f.IsOpen())
+1258 |   {
+1259 |     Core::DisplayMessage("State not found", 2000);
+1260 |     return false;
+1261 |   }
+1262 | 
+1263 |   if (!f.ReadArray(&header.legacy_header, 1))
+1264 |   {
+1265 |     Core::DisplayMessage("Failed to read state legacy header", 2000);
+1266 |     return false;
+1267 |   }
+1268 | 
+1269 |   // Bail out if we only care for retrieving the legacy header.
+1270 |   // This is the case with ReadHeader() calls.
+1271 |   if (!get_version_header)
+1272 |     return true;
+1273 | 
+1274 |   if (header.legacy_header.lzo_size != 0)
+1275 |   {
+1276 |     // Parse out version from legacy LZO compressed states
+1277 |     if (!GetVersionFromLZO(header, f))
+1278 |       return false;
+1279 |   }
+1280 |   else
+1281 |   {
+1282 |     if (!f.ReadArray(&header.version_header, 1))
+1283 |     {
+1284 |       Core::DisplayMessage("Failed to read state version header", 2000);
+1285 |       return false;
+1286 |     }
+1287 | 
+1288 |     auto version_buffer = std::make_unique<char[]>(header.version_header.version_string_length);
+1289 |     if (!f.ReadBytes(version_buffer.get(), header.version_header.version_string_length))
+1290 |     {
+1291 |       Core::DisplayMessage("Failed to read state version string", 2000);
+1292 |       return false;
+1293 |     }
+1294 | 
+1295 |     header.version_string =
+1296 |         std::string(version_buffer.get(), header.version_header.version_string_length);
+1297 |   }
+1298 | 
+1299 |   return true;
+1300 | }
+1301 | 
+1302 | bool ReadHeader(const std::string& filename, StateHeader& header)
+1303 | {
+1304 |   // ensure that the savestate write thread isn't moving around states while we do this
+1305 |   std::lock_guard lk(s_save_thread_mutex);
+1306 | 
+1307 |   File::IOFile f(filename, "rb");
+1308 |   bool get_version_header = false;
+1309 |   return ReadStateHeaderFromFile(header, f, get_version_header);
+1310 | }
+1311 | 
+1312 | bool ReadWiiMixHeader(const std::string& filename, StateHeader& header)
+1313 | {
+1314 |   // ensure that the savestate write thread isn't moving around states while we do this
+1315 |   std::lock_guard lk(s_save_thread_mutex);
+1316 | 
+1317 |   File::IOFile f(filename, "rb");
+1318 |   bool get_version_header = false;
+1319 |   return ReadWiiMixStateHeaderFromFile(header, f, get_version_header);
+1320 | }
+1321 | 
+1322 | std::string GetInfoStringOfSlot(int slot, bool translate)
+1323 | {
+1324 |   std::string filename = MakeStateFilename(slot);
+1325 |   if (!File::Exists(filename))
+1326 |     return translate ? Common::GetStringT("Empty") : "Empty";
+1327 | 
+1328 |   State::StateHeader header;
+1329 |   if (!ReadHeader(filename, header))
+1330 |     return translate ? Common::GetStringT("Unknown") : "Unknown";
+1331 | 
+1332 |   return SystemTimeAsDoubleToString(header.legacy_header.time);
+1333 | }
+1334 | 
+1335 | u64 GetUnixTimeOfSlot(int slot)
+1336 | {
+1337 |   State::StateHeader header;
+1338 |   if (!ReadHeader(MakeStateFilename(slot), header))
+1339 |     return 0;
+1340 | 
+1341 |   constexpr u64 MS_PER_SEC = 1000;
+1342 |   return static_cast<u64>(header.legacy_header.time * MS_PER_SEC) +
+1343 |          (DOUBLE_TIME_OFFSET * MS_PER_SEC);
+1344 | }
+1345 | 
+1346 | static bool DecompressLZ4(std::vector<u8>& raw_buffer, u64 size, File::IOFile& f)
+1347 | {
+1348 |   raw_buffer.resize(size);
+1349 | 
+1350 |   u64 total_bytes_read = 0;
+1351 |   while (true)
+1352 |   {
+1353 |     s32 compressed_data_len;
+1354 |     if (!f.ReadArray(&compressed_data_len, 1))
+1355 |     {
+1356 |       PanicAlertFmt("Could not read state data length");
+1357 |       return false;
+1358 |     }
+1359 | 
+1360 |     if (compressed_data_len <= 0)
+1361 |     {
+1362 |       PanicAlertFmtT("Internal LZ4 Error - Tried decompressing {0} bytes", compressed_data_len);
+1363 |       return false;
+1364 |     }
+1365 | 
+1366 |     auto compressed_data = std::make_unique<char[]>(compressed_data_len);
+1367 |     if (!f.ReadBytes(compressed_data.get(), compressed_data_len))
+1368 |     {
+1369 |       PanicAlertFmt("Could not read state data");
+1370 |       return false;
+1371 |     }
+1372 | 
+1373 |     u32 max_decompress_size =
+1374 |         static_cast<u32>(std::min((u64)LZ4_MAX_INPUT_SIZE, size - total_bytes_read));
+1375 | 
+1376 |     int bytes_read = LZ4_decompress_safe(
+1377 |         compressed_data.get(), reinterpret_cast<char*>(raw_buffer.data()) + total_bytes_read,
+1378 |         compressed_data_len, max_decompress_size);
+1379 | 
+1380 |     if (bytes_read < 0)
+1381 |     {
+1382 |       PanicAlertFmtT("Internal LZ4 Error - decompression failed ({0}, {1}, {2})", bytes_read,
+1383 |                      compressed_data_len, max_decompress_size);
+1384 |       return false;
+1385 |     }
+1386 | 
+1387 |     total_bytes_read += static_cast<u64>(bytes_read);
+1388 | 
+1389 |     if (total_bytes_read == size)
+1390 |     {
+1391 |       return true;
+1392 |     }
+1393 |     else if (total_bytes_read > size)
+1394 |     {
+1395 |       PanicAlertFmtT("Internal LZ4 Error - payload size mismatch ({0} / {1}))", total_bytes_read,
+1396 |                      size);
+1397 |       return false;
+1398 |     }
+1399 |   }
+1400 | }
+1401 | 
+1402 | static bool ValidateHeaders(const StateHeader& header)
+1403 | {
+1404 |   bool success = true;
+1405 | 
+1406 |   // Game ID
+1407 |   if (strncmp(SConfig::GetInstance().GetGameID().c_str(), header.legacy_header.game_id, 6))
+1408 |   {
+1409 |     Core::DisplayMessage(fmt::format("State belongs to a different game (ID {})",
+1410 |                                      std::string_view{header.legacy_header.game_id,
+1411 |                                                       std::size(header.legacy_header.game_id)}),
+1412 |                          2000);
+1413 |     return false;
+1414 |   }
+1415 | 
+1416 |   // Check both the state version and the revision string
+1417 |   std::string current_str = Common::GetScmRevStr();
+1418 |   std::string loaded_str = header.version_string;
+1419 |   const u32 loaded_version = header.version_header.version_cookie - COOKIE_BASE;
+1420 | 
+1421 |   if (s_old_versions.contains(loaded_version))
+1422 |   {
+1423 |     // This is a REALLY old version, before we started writing the version string to file
+1424 |     success = false;
+1425 | 
+1426 |     std::pair<std::string, std::string> version_range = s_old_versions.find(loaded_version)->second;
+1427 |     std::string oldest_version = version_range.first;
+1428 |     std::string newest_version = version_range.second;
+1429 | 
+1430 |     loaded_str = "Dolphin " + oldest_version + " - " + newest_version;
+1431 |   }
+1432 |   else if (loaded_version != STATE_VERSION)
+1433 |   {
+1434 |     success = false;
+1435 |   }
+1436 | 
+1437 |   if (!success)
+1438 |   {
+1439 |     const std::string message =
+1440 |         loaded_str.empty() ?
+1441 |             "This savestate was created using an incompatible version of Dolphin" :
+1442 |             "This savestate was created using the incompatible version " + loaded_str;
+1443 |     Core::DisplayMessage(message, OSD::Duration::NORMAL);
+1444 |   }
+1445 | 
+1446 |   return success;
+1447 | }
+1448 | 
+1449 | static bool ValidateWiiMixHeaders(const StateHeader& header)
+1450 | {
+1451 |   bool success = true;
+1452 | 
+1453 |   // Game ID
+1454 |   if (strncmp(SConfig::GetInstance().GetGameID().c_str(), header.legacy_header.game_id, 6))
+1455 |   {
+1456 |     Core::DisplayMessage(fmt::format("State belongs to a different game (ID {})",
+1457 |                                      std::string_view{header.legacy_header.game_id,
+1458 |                                                       std::size(header.legacy_header.game_id)}),
+1459 |                          2000);
+1460 |     return false;
+1461 |   }
+1462 | 
+1463 |   // Check both the state version and the revision string
+1464 |   std::string current_str = Common::GetScmRevStr();
+1465 |   std::string loaded_str = header.version_string;
+1466 |   const u32 loaded_version = header.version_header.version_cookie - WIIMIX_COOKIE_BASE;
+1467 | 
+1468 |   if (s_old_versions.contains(loaded_version))
+1469 |   {
+1470 |     // This is a REALLY old version, before we started writing the version string to file
+1471 |     success = false;
+1472 | 
+1473 |     std::pair<std::string, std::string> version_range = s_old_versions.find(loaded_version)->second;
+1474 |     std::string oldest_version = version_range.first;
+1475 |     std::string newest_version = version_range.second;
+1476 | 
+1477 |     loaded_str = "Dolphin " + oldest_version + " - " + newest_version;
+1478 |   }
+1479 |   else if (loaded_version != STATE_VERSION)
+1480 |   {
+1481 |     success = false;
+1482 |   }
+1483 | 
+1484 |   if (!success)
+1485 |   {
+1486 |     const std::string message =
+1487 |         loaded_str.empty() ?
+1488 |             "This savestate was created using an incompatible version of Dolphin" :
+1489 |             "This savestate was created using the incompatible version " + loaded_str;
+1490 |     Core::DisplayMessage(message, OSD::Duration::NORMAL);
+1491 |   }
+1492 | 
+1493 |   return success;
+1494 | }
+1495 | 
+1496 | static void LoadFileStateData(const std::string& filename, std::vector<u8>& ret_data)
+1497 | {
+1498 |   File::IOFile f;
+1499 | 
+1500 |   {
+1501 |     // If a state is currently saving, wait for that to end or time out.
+1502 |     std::unique_lock lk(s_state_writes_in_queue_mutex);
+1503 |     if (s_state_writes_in_queue != 0)
+1504 |     {
+1505 |       if (!s_state_write_queue_is_empty.wait_for(lk, std::chrono::seconds(3),
+1506 |                                                  []() { return s_state_writes_in_queue == 0; }))
+1507 |       {
+1508 |         Core::DisplayMessage(
+1509 |             "A previous state saving operation is still in progress, cancelling load.", 2000);
+1510 |         return;
+1511 |       }
+1512 |     }
+1513 |     f.Open(filename, "rb");
+1514 |   }
+1515 | 
+1516 |   StateHeader header;
+1517 |   if (!ReadStateHeaderFromFile(header, f) || !ValidateHeaders(header))
+1518 |     return;
+1519 | 
+1520 |   StateExtendedHeader extended_header;
+1521 |   if (!f.ReadArray(&extended_header.base_header, 1))
+1522 |   {
+1523 |     PanicAlertFmt("Unable to read state header");
+1524 |     return;
+1525 |   }
+1526 |   // If StateExtendedHeader is amended to include more than the base, add ReadBytes() calls here.
+1527 | 
+1528 |   if (extended_header.base_header.header_version != EXTENDED_HEADER_VERSION)
+1529 |   {
+1530 |     PanicAlertFmt("State header corrupted");
+1531 |     return;
+1532 |   }
+1533 | 
+1534 |   std::vector<u8> buffer;
+1535 | 
+1536 |   switch (extended_header.base_header.compression_type)
+1537 |   {
+1538 |   case CompressionType::LZ4:
+1539 |   {
+1540 |     Core::DisplayMessage("Decompressing State...", 500);
+1541 |     if (!DecompressLZ4(buffer, extended_header.base_header.uncompressed_size, f))
+1542 |       return;
+1543 | 
+1544 |     break;
+1545 |   }
+1546 |   case CompressionType::Uncompressed:
+1547 |   {
+1548 |     u64 header_len = sizeof(StateHeaderLegacy) + sizeof(StateHeaderVersion) +
+1549 |                      header.version_header.version_string_length + sizeof(StateExtendedBaseHeader) +
+1550 |                      extended_header.base_header.payload_offset;
+1551 | 
+1552 |     u64 file_size = f.GetSize();
+1553 |     if (file_size < header_len)
+1554 |     {
+1555 |       PanicAlertFmt("State header length corrupted");
+1556 |       return;
+1557 |     }
+1558 | 
+1559 |     const auto size = static_cast<size_t>(file_size - header_len);
+1560 |     buffer.resize(size);
+1561 | 
+1562 |     if (!f.ReadBytes(buffer.data(), size))
+1563 |     {
+1564 |       PanicAlertFmt("Error reading bytes: {0}", size);
+1565 |       return;
+1566 |     }
+1567 |     break;
+1568 |   }
+1569 |   default:
+1570 |     PanicAlertFmt("Unknown compression type {0}", extended_header.base_header.compression_type);
+1571 |     return;
+1572 |   }
+1573 | 
+1574 |   // all good
+1575 |   ret_data.swap(buffer);
+1576 | }
+1577 | 
+1578 | static void LoadWiiMixFileStateData(const std::string& filename, std::vector<u8>& ret_data)
+1579 | {
+1580 |   File::IOFile f;
+1581 | 
+1582 |   {
+1583 |     // If a state is currently saving, wait for that to end or time out.
+1584 |     std::unique_lock lk(s_state_writes_in_queue_mutex);
+1585 |     if (s_state_writes_in_queue != 0)
+1586 |     {
+1587 |       if (!s_state_write_queue_is_empty.wait_for(lk, std::chrono::seconds(3),
+1588 |                                                  []() { return s_state_writes_in_queue == 0; }))
+1589 |       {
+1590 |         Core::DisplayMessage(
+1591 |             "A previous state saving operation is still in progress, cancelling load.", 2000);
+1592 |         return;
+1593 |       }
+1594 |     }
+1595 |     f.Open(filename, "rb");
+1596 |   }
+1597 | 
+1598 |   StateHeader header;
+1599 |   if (!ReadWiiMixStateHeaderFromFile(header, f) || !ValidateWiiMixHeaders(header))
+1600 |     return;
+1601 | 
+1602 |   StateExtendedHeader extended_header;
+1603 |   if (!f.ReadArray(&extended_header.base_header, 1))
+1604 |   {
+1605 |     PanicAlertFmt("Unable to read state header");
+1606 |     return;
+1607 |   }
+1608 |   // If StateExtendedHeader is amended to include more than the base, add ReadBytes() calls here.
+1609 | 
+1610 |   if (extended_header.base_header.header_version != EXTENDED_HEADER_VERSION)
+1611 |   {
+1612 |     PanicAlertFmt("State header corrupted");
+1613 |     return;
+1614 |   }
+1615 | 
+1616 |   std::vector<u8> buffer;
+1617 | 
+1618 |   switch (extended_header.base_header.compression_type)
+1619 |   {
+1620 |   case CompressionType::LZ4:
+1621 |   {
+1622 |     Core::DisplayMessage("Decompressing State...", 500);
+1623 |     if (!DecompressLZ4(buffer, extended_header.base_header.uncompressed_size, f))
+1624 |       return;
+1625 | 
+1626 |     break;
+1627 |   }
+1628 |   case CompressionType::Uncompressed:
+1629 |   {
+1630 |     u64 header_len = sizeof(StateHeaderLegacy) + sizeof(StateHeaderVersion) +
+1631 |                      header.version_header.version_string_length + sizeof(StateExtendedBaseHeader) +
+1632 |                      extended_header.base_header.payload_offset;
+1633 | 
+1634 |     u64 file_size = f.GetSize();
+1635 |     if (file_size < header_len)
+1636 |     {
+1637 |       PanicAlertFmt("State header length corrupted");
+1638 |       return;
+1639 |     }
+1640 | 
+1641 |     const auto size = static_cast<size_t>(file_size - header_len);
+1642 |     buffer.resize(size);
+1643 | 
+1644 |     if (!f.ReadBytes(buffer.data(), size))
+1645 |     {
+1646 |       PanicAlertFmt("Error reading bytes: {0}", size);
+1647 |       return;
+1648 |     }
+1649 |     break;
+1650 |   }
+1651 |   default:
+1652 |     PanicAlertFmt("Unknown compression type {0}", extended_header.base_header.compression_type);
+1653 |     return;
+1654 |   }
+1655 | 
+1656 |   // all good
+1657 |   ret_data.swap(buffer);
+1658 | }
+1659 | 
+1660 | void SetWiiMixJitterHostEnvironment(bool state)
+1661 | {
+1662 |   WIIMIX_JITTER = state;
+1663 | }
+1664 | 
+1665 | // TODOx
+1666 | // Reinitializes host components
+1667 | // Minimum Viable Save State
+1668 | // - Header
+1669 | // - PowerPC::DoState
+1670 | // - Memory::DoState
+1671 | // - CoreTiming::DoState
+1672 | bool WiiMixHostReinitialization(Core::System& system) {
+1673 |   if (WIIMIX_JITTER)
+1674 |     system.JitterHostEnvironment();
+1675 | 
+1676 |   system.GetCoreTiming().LogTimingState("Before Host Reinit");
+1677 |   system.GetCoreTiming().WiiMixReset();
+1678 |   system.GetCoreTiming().LogTimingState("After Host Reinit");
+1679 | 
+1680 |   // 1. Stop host threads
+1681 |   system.GetDSP().Shutdown();
+1682 |   system.GetDVDInterface().Shutdown();
+1683 | 
+1684 |   // FIX: DO NOT SHUTDOWN SOUND STREAM.
+1685 |   // Killing the host audio backend causes deadlocks on Linux/PulseAudio during rapid testing.
+1686 |   // AudioCommon::WiiMixShutdownSoundStream(system);
+1687 | 
+1688 |   system.GetPowerPC().Shutdown();
+1689 | 
+1690 |   // 2. Register All Event Handlers AND Re-init Hardware
+1691 |   system.GetSystemTimers().WiiMixReset();
+1692 |   system.GetProcessorInterface().WiiMixReset();
+1693 |   system.GetMemoryInterface().WiiMixReset();
+1694 |   system.GetSerialInterface().WiiMixReset();
+1695 |   system.GetGPFifo().WiiMixReset();
+1696 |   system.GetHSP().WiiMixReset();
+1697 |   system.GetVideoInterface().Init();
+1698 |   g_video_backend->WiiMixReset();
+1699 | 
+1700 |   // 3. Reset Host-Side Configuration
+1701 |   system.GetExpansionInterface().WiiMixReset();
+1702 |   system.GetMemory().WiiMixReset();
+1703 | 
+1704 |   // 4. FULLY Re-initialize threaded components
+1705 |   system.GetDSP().WiiMixReset();
+1706 | 
+1707 |   // FIX: DO NOT RESET AUDIO BACKEND HERE
+1708 |   system.GetAudioInterface().WiiMixReset();
+1709 | 
+1710 |   system.GetDVDInterface().WiiMixReset();
+1711 | 
+1712 |   // 5. Reset Host-Side Caches (CPU JIT)
+1713 |   auto& power_pc = system.GetPowerPC();
+1714 |   power_pc.Init(State::WIIMIX_DIFF_TEST_CPU_CORE);
+1715 | 
+1716 |   if (system.IsWii()) {
+1717 |     Wiimote::ResetAllWiimotes();
+1718 |   }
+1719 | 
+1720 |   return true;
+1721 | }
+1722 | 
+1723 | void LoadAs(Core::System& system, const std::string& filename)
+1724 | {
+1725 |   if (!Core::IsRunningOrStarting(system))
+1726 |     return;
+1727 | 
+1728 |   if (NetPlay::IsNetPlayRunning())
+1729 |   {
+1730 |     OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+1731 |     return;
+1732 |   }
+1733 | 
+1734 |   if (AchievementManager::GetInstance().IsHardcoreModeActive())
+1735 |   {
+1736 |     OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+1737 |     return;
+1738 |   }
+1739 | 
+1740 |   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+1741 |   if (!lk)
+1742 |     return;
+1743 | 
+1744 |   Core::RunOnCPUThread(
+1745 |       system,
+1746 |       [&] {
+1747 |         // Save temp buffer for undo load state
+1748 |         auto& movie = system.GetMovie();
+1749 |         if (!movie.IsJustStartingRecordingInputFromSaveState())
+1750 |         {
+1751 |           std::lock_guard lk2(s_undo_load_buffer_mutex);
+1752 |           SaveToBuffer(system, s_undo_load_buffer);
+1753 |           const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+1754 |           if (movie.IsMovieActive())
+1755 |             movie.SaveRecording(dtmpath);
+1756 |           else if (File::Exists(dtmpath))
+1757 |             File::Delete(dtmpath);
+1758 |         }
+1759 | 
+1760 |         bool loaded = false;
+1761 |         bool loadedSuccessfully = false;
+1762 | 
+1763 |         // brackets here are so buffer gets freed ASAP
+1764 |         {
+1765 |           std::vector<u8> buffer;
+1766 |           LoadFileStateData(filename, buffer);
+1767 | 
+1768 |           if (!buffer.empty())
+1769 |           {
+1770 |             u8* ptr = buffer.data();
+1771 |             PointerWrap p(&ptr, buffer.size(), PointerWrap::Mode::Read);
+1772 |             DoState(system, p);
+1773 |             loaded = true;
+1774 |             loadedSuccessfully = p.IsReadMode();
+1775 |           }
+1776 |         }
+1777 | 
+1778 |         if (loaded)
+1779 |         {
+1780 |           if (loadedSuccessfully)
+1781 |           {
+1782 |             std::filesystem::path tempfilename(filename);
+1783 |             Core::DisplayMessage(
+1784 |                 fmt::format("Loaded State from {}", tempfilename.filename().string()), 2000);
+1785 |             if (File::Exists(filename + ".dtm"))
+1786 |               movie.LoadInput(filename + ".dtm");
+1787 |             else if (!movie.IsJustStartingRecordingInputFromSaveState() &&
+1788 |                      !movie.IsJustStartingPlayingInputFromSaveState())
+1789 |               movie.EndPlayInput(false);
+1790 |           }
+1791 |           else
+1792 |           {
+1793 |             Core::DisplayMessage("The savestate could not be loaded", OSD::Duration::NORMAL);
+1794 | 
+1795 |             // since we could be in an inconsistent state now (and might crash or whatever), undo.
+1796 |             UndoLoadState(system);
+1797 |           }
+1798 |         }
+1799 | 
+1800 |         if (s_on_after_load_callback)
+1801 |           s_on_after_load_callback();
+1802 |       },
+1803 |       true);
+1804 | }
+1805 | 
+1806 | void LoadAsWiiMix(Core::System& system, const std::string& filename)
+1807 | {
+1808 |   if (!Core::IsRunningOrStarting(system))
+1809 |     return;
+1810 | 
+1811 |   if (NetPlay::IsNetPlayRunning())
+1812 |   {
+1813 |     OSD::AddMessage("Loading savestates is disabled in Netplay to prevent desyncs");
+1814 |     return;
+1815 |   }
+1816 | 
+1817 |   if (AchievementManager::GetInstance().IsHardcoreModeActive())
+1818 |   {
+1819 |     OSD::AddMessage("Loading savestates is disabled in RetroAchievements hardcore mode");
+1820 |     return;
+1821 |   }
+1822 | 
+1823 |   std::unique_lock lk(s_load_or_save_in_progress_mutex, std::try_to_lock);
+1824 |   if (!lk)
+1825 |     return;
+1826 | 
+1827 |   Core::RunOnCPUThread(
+1828 |       system,
+1829 |       [&] {
+1830 |         // Save temp buffer for undo load state
+1831 |         auto& movie = system.GetMovie();
+1832 |         if (!movie.IsJustStartingRecordingInputFromSaveState())
+1833 |         {
+1834 |           std::lock_guard lk2(s_undo_load_buffer_mutex);
+1835 |           WiiMixSaveToBuffer(system, s_undo_load_buffer);
+1836 |           const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+1837 |           if (movie.IsMovieActive())
+1838 |             movie.SaveRecording(dtmpath);
+1839 |           else if (File::Exists(dtmpath))
+1840 |             File::Delete(dtmpath);
+1841 |         }
+1842 | 
+1843 |         bool loaded = false;
+1844 |         bool loadedSuccessfully = false;
+1845 | 
+1846 |         // brackets here are so buffer gets freed ASAP
+1847 |         {
+1848 |           std::vector<u8> buffer;
+1849 |           LoadWiiMixFileStateData(filename, buffer);
+1850 | 
+1851 |           if (!buffer.empty())
+1852 |           {
+1853 |             loadedSuccessfully = WiiMixLoadFromBuffer(system, buffer);
+1854 |             loaded = true;
+1855 |           }
+1856 |         }
+1857 | 
+1858 |         if (loaded)
+1859 |         {
+1860 |           if (loadedSuccessfully)
+1861 |           {
+1862 |             std::filesystem::path tempfilename(filename);
+1863 |             Core::DisplayMessage(
+1864 |                 fmt::format("Loaded State from {}", tempfilename.filename().string()), 2000);
+1865 |             if (File::Exists(filename + ".dtm"))
+1866 |               movie.LoadInput(filename + ".dtm");
+1867 |             else if (!movie.IsJustStartingRecordingInputFromSaveState() &&
+1868 |                      !movie.IsJustStartingPlayingInputFromSaveState())
+1869 |               movie.EndPlayInput(false);
+1870 |           }
+1871 |           else
+1872 |           {
+1873 |             Core::DisplayMessage("The savestate could not be loaded", OSD::Duration::NORMAL);
+1874 | 
+1875 |             // since we could be in an inconsistent state now (and might crash or whatever), undo.
+1876 |             UndoWiiMixLoadState(system);
+1877 |           }
+1878 |         }
+1879 | 
+1880 |         if (s_on_after_load_callback)
+1881 |           s_on_after_load_callback();
+1882 |       },
+1883 |       true);
+1884 | }
+1885 | 
+1886 | void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback)
+1887 | {
+1888 |   s_on_after_load_callback = std::move(callback);
+1889 | }
+1890 | 
+1891 | void Init(Core::System& system)
+1892 | {
+1893 |   s_save_thread.Reset("Savestate Worker", [&system](CompressAndDumpState_args args) {
+1894 |     CompressAndDumpState(system, args);
+1895 | 
+1896 |     {
+1897 |       std::lock_guard lk(s_state_writes_in_queue_mutex);
+1898 |       if (--s_state_writes_in_queue == 0)
+1899 |         s_state_write_queue_is_empty.notify_all();
+1900 |     }
+1901 | 
+1902 |     if (args.state_write_done_event)
+1903 |       args.state_write_done_event->Set();
+1904 |   });
+1905 | 
+1906 |   s_wiimix_save_thread.Reset("WiiMix Savestate Worker", [&system](CompressAndDumpState_args args) {
+1907 |     // Tell it to call your new dump function
+1908 |     CompressAndDumpWiiMixState(system, args);
+1909 | 
+1910 |     {
+1911 |       std::lock_guard lk(s_state_writes_in_queue_mutex);
+1912 |       if (--s_state_writes_in_queue == 0)
+1913 |         s_state_write_queue_is_empty.notify_all();
+1914 |     }
+1915 | 
+1916 |     if (args.state_write_done_event)
+1917 |       args.state_write_done_event->Set();
+1918 |   });
+1919 | }
+1920 | 
+1921 | void Shutdown()
+1922 | {
+1923 |   s_save_thread.Shutdown();
+1924 |   s_wiimix_save_thread.Shutdown();
+1925 | 
+1926 |   // swapping with an empty vector, rather than clear()ing
+1927 |   // this gives a better guarantee to free the allocated memory right NOW (as opposed to, actually,
+1928 |   // never)
+1929 |   {
+1930 |     std::lock_guard lk(s_undo_load_buffer_mutex);
+1931 |     std::vector<u8>().swap(s_undo_load_buffer);
+1932 |   }
+1933 | }
+1934 | 
+1935 | static std::string MakeStateFilename(int number)
+1936 | {
+1937 |   return fmt::format("{}{}.s{:02d}", File::GetUserPath(D_STATESAVES_IDX),
+1938 |                      SConfig::GetInstance().GetGameID(), number);
+1939 | }
+1940 | 
+1941 | void Save(Core::System& system, int slot, bool wait)
+1942 | {
+1943 |   SaveAs(system, MakeStateFilename(slot), wait);
+1944 | }
+1945 | 
+1946 | void SaveWiiMix(Core::System& system, int slot, bool wait)
+1947 | {
+1948 |   SaveAsWiiMix(system, MakeStateFilename(slot), wait);
+1949 | }
+1950 | 
+1951 | void Load(Core::System& system, int slot)
+1952 | {
+1953 |   LoadAs(system, MakeStateFilename(slot));
+1954 | }
+1955 | 
+1956 | void LoadWiiMix(Core::System& system, int slot)
+1957 | {
+1958 |   LoadAsWiiMix(system, MakeStateFilename(slot));
+1959 | }
+1960 | 
+1961 | void LoadLastSaved(Core::System& system, int i)
+1962 | {
+1963 |   if (i <= 0)
+1964 |   {
+1965 |     Core::DisplayMessage("State doesn't exist", 2000);
+1966 |     return;
+1967 |   }
+1968 | 
+1969 |   std::vector<SlotWithTimestamp> used_slots = GetUsedSlotsWithTimestamp();
+1970 |   if (static_cast<size_t>(i) > used_slots.size())
+1971 |   {
+1972 |     Core::DisplayMessage("State doesn't exist", 2000);
+1973 |     return;
+1974 |   }
+1975 | 
+1976 |   std::stable_sort(used_slots.begin(), used_slots.end(), CompareTimestamp);
+1977 |   Load(system, (used_slots.end() - i)->slot);
+1978 | }
+1979 | 
+1980 | void LoadLastSavedWiiMix(Core::System& system, int i)
+1981 | {
+1982 |   if (i <= 0)
+1983 |   {
+1984 |     Core::DisplayMessage("State doesn't exist", 2000);
+1985 |     return;
+1986 |   }
+1987 | 
+1988 |   std::vector<SlotWithTimestamp> used_slots = GetUsedSlotsWithTimestamp();
+1989 |   if (static_cast<size_t>(i) > used_slots.size())
+1990 |   {
+1991 |     Core::DisplayMessage("State doesn't exist", 2000);
+1992 |     return;
+1993 |   }
+1994 | 
+1995 |   std::stable_sort(used_slots.begin(), used_slots.end(), CompareTimestamp);
+1996 |   LoadWiiMix(system, (used_slots.end() - i)->slot);
+1997 | }
+1998 | 
+1999 | // must wait for state to be written because it must know if all slots are taken
+2000 | void SaveFirstSaved(Core::System& system)
+2001 | {
+2002 |   std::vector<SlotWithTimestamp> used_slots = GetUsedSlotsWithTimestamp();
+2003 |   if (used_slots.size() < NUM_STATES)
+2004 |   {
+2005 |     // save to an empty slot
+2006 |     Save(system, GetEmptySlot(used_slots), true);
+2007 |     return;
+2008 |   }
+2009 | 
+2010 |   // overwrite the oldest state
+2011 |   std::stable_sort(used_slots.begin(), used_slots.end(), CompareTimestamp);
+2012 |   Save(system, used_slots.front().slot, true);
+2013 | }
+2014 | 
+2015 | void SaveFirstSavedWiiMix(Core::System& system)
+2016 | {
+2017 |   std::vector<SlotWithTimestamp> used_slots = GetUsedSlotsWithTimestamp();
+2018 |   if (used_slots.size() < NUM_STATES)
+2019 |   {
+2020 |     // save to an empty slot
+2021 |     SaveWiiMix(system, GetEmptySlot(used_slots), true);
+2022 |     return;
+2023 |   }
+2024 | 
+2025 |   // overwrite the oldest state
+2026 |   std::stable_sort(used_slots.begin(), used_slots.end(), CompareTimestamp);
+2027 |   SaveWiiMix(system, used_slots.front().slot, true);
+2028 | }
+2029 | 
+2030 | // Load the last state before loading the state
+2031 | void UndoLoadState(Core::System& system)
+2032 | {
+2033 |   std::lock_guard lk(s_undo_load_buffer_mutex);
+2034 |   if (!s_undo_load_buffer.empty())
+2035 |   {
+2036 |     auto& movie = system.GetMovie();
+2037 |     if (movie.IsMovieActive())
+2038 |     {
+2039 |       const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+2040 |       if (File::Exists(dtmpath))
+2041 |       {
+2042 |         LoadFromBuffer(system, s_undo_load_buffer);
+2043 |         movie.LoadInput(dtmpath);
+2044 |       }
+2045 |       else
+2046 |       {
+2047 |         PanicAlertFmtT("No undo.dtm found, aborting undo load state to prevent movie desyncs");
+2048 |       }
+2049 |     }
+2050 |     else
+2051 |     {
+2052 |       LoadFromBuffer(system, s_undo_load_buffer);
+2053 |     }
+2054 |   }
+2055 |   else
+2056 |   {
+2057 |     PanicAlertFmtT("There is nothing to undo!");
+2058 |   }
+2059 | }
+2060 | 
+2061 | void UndoWiiMixLoadState(Core::System& system)
+2062 | {
+2063 |   std::lock_guard lk(s_undo_load_buffer_mutex);
+2064 |   if (!s_undo_load_buffer.empty())
+2065 |   {
+2066 |     auto& movie = system.GetMovie();
+2067 |     if (movie.IsMovieActive())
+2068 |     {
+2069 |       const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
+2070 |       if (File::Exists(dtmpath))
+2071 |       {
+2072 |         WiiMixLoadFromBuffer(system, s_undo_load_buffer);
+2073 |         movie.LoadInput(dtmpath);
+2074 |       }
+2075 |       else
+2076 |       {
+2077 |         PanicAlertFmtT("No undo.dtm found, aborting undo load state to prevent movie desyncs");
+2078 |       }
+2079 |     }
+2080 |     else
+2081 |     {
+2082 |       WiiMixLoadFromBuffer(system, s_undo_load_buffer);
+2083 |     }
+2084 |   }
+2085 |   else
+2086 |   {
+2087 |     PanicAlertFmtT("There is nothing to undo!");
+2088 |   }
+2089 | }
+2090 | 
+2091 | // Load the state that the last save state overwritten on
+2092 | void UndoSaveState(Core::System& system)
+2093 | {
+2094 |   LoadAs(system, File::GetUserPath(D_STATESAVES_IDX) + "lastState.sav");
+2095 | }
+2096 | 
+2097 | void UndoWiiMixSaveState(Core::System& system)
+2098 | {
+2099 |   LoadAsWiiMix(system, File::GetUserPath(D_STATESAVES_IDX) + "lastState." + WIIMIX_STATE_EXTENSION);
+2100 | }
+2101 | 
+2102 | // -----------------------------------------------------------------
+2103 | // WiiMix Determinism Diff Test
+2104 | // -----------------------------------------------------------------
+2105 | // This is your primary debugging tool.
+2106 | // It proves that your save/load functions are working correctly.
+2107 | // 1. Saves a "portable" state to buffer (A)
+2108 | // 2. Steps the emulator one frame, saves the result (B)
+2109 | // 3. Loads state (A) back (which must trigger host re-init)
+2110 | // 4. Steps the emulator one frame, saves the result (C)
+2111 | // 5. Compares B and C. If they match, your functions are deterministic.
+2112 | 
+2113 | // ORIGINAL
+2114 | // void WiiMixStepNPauses(Core::System& system, int n)
+2115 | // {
+2116 | //   for (int i = 0; i < n; ++i)
+2117 | //   {
+2118 | //     // 1. Trigger the internal frame step logic.
+2119 | //     // This sets s_frame_step = true and unpauses the system.
+2120 | //     Core::DoFrameStep(system);
+2121 | 
+2122 | //     // 2. FORCE the "Frame Presented" signal.
+2123 | //     // In Headless/NoGUI mode, the video backend often skips presentation or
+2124 | //     // doesn't trigger the callback. This manually sets s_stop_frame_step = true.
+2125 | //     // We do this immediately. The Emulator thread (Interpreter) is slow enough
+2126 | //     // that this flag will definitely be set before the CPU reaches the next
+2127 | //     // VICallback (Field boundary), ensuring we stop at exactly the next Field.
+2128 | //     Core::Callback_FramePresented(1.0);
+2129 | 
+2130 | //     // 3. Wait for the EmuThread to pause itself at the VI boundary.
+2131 | //     // We use a small sleep to yield the Host thread while waiting.
+2132 | //     // We also add a timeout just in case.
+2133 | //     int timeout_ms = 5000;
+2134 | //     while (Core::GetState(system) != Core::State::Paused)
+2135 | //     {
+2136 | //       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+2137 | //       timeout_ms--;
+2138 | //       if (timeout_ms <= 0) {
+2139 | //           printf("WII-MIX-ERROR: Timed out waiting for frame step to finish!\n");
+2140 | //           // Force break to unstick the thread, though the test will likely fail
+2141 | //           system.GetCPU().Break();
+2142 | //           break;
+2143 | //       }
+2144 | //     }
+2145 | //   }
+2146 | // }
+2147 | 
+2148 | void WiiMixStepNPauses(Core::System& system, int n)
+2149 | {
+2150 |   for (int i = 0; i < n; ++i)
+2151 |   {
+2152 |     // 1. Trigger the internal frame step logic.
+2153 |     Core::DoFrameStep(system);
+2154 | 
+2155 |     // 2. FORCE the "Frame Presented" signal immediately.
+2156 |     // In headless mode, we cannot rely on the GPU thread to swap buffers correctly
+2157 |     // after a poison event. We emulate the signal so the CPU thread stops at the VI.
+2158 |     Core::Callback_FramePresented(1.0);
+2159 | 
+2160 |     // 3. Wait for the EmuThread to pause itself.
+2161 |     // Use a timeout to prevent deadlocks.
+2162 |     int timeout_ms = 2000;
+2163 |     while (Core::GetState(system) != Core::State::Paused)
+2164 |     {
+2165 |       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+2166 |       timeout_ms--;
+2167 |       if (timeout_ms <= 0) {
+2168 |           printf("WII-MIX-ERROR: Timed out waiting for frame step to finish! Forcing Break.\n");
+2169 |           system.GetCPU().Break(); // Force CPU loop to exit
+2170 | 
+2171 |           // Wait a bit for the thread to actually stop
+2172 |           std::this_thread::sleep_for(std::chrono::milliseconds(100));
+2173 |           return;
+2174 |       }
+2175 |     }
+2176 |   }
+2177 | }
+2178 | 
+2179 | int WiiMixIdentityTest(Core::System& system)
+2180 | {
+2181 |   printf("Starting WiiMix Identity Test...\n");
+2182 | 
+2183 |   // 1. Warm-up Phase
+2184 |   // Run 10 frames to ensure the emulator is in a steady state (past boot ROM, etc).
+2185 |   // Initial boot state often has unique flags that are cleared after first use.
+2186 |   Core::SetState(system, Core::State::Paused, false);
+2187 |   Core::RunOnCPUThread(system, [&]() {}, true); // Sync
+2188 | 
+2189 |   printf("Warming up (10 frames)...\n");
+2190 |   WiiMixStepNPauses(system, 10);
+2191 | 
+2192 |   int exit_code = 0;
+2193 |   std::vector<u8> buffer_A;
+2194 |   std::vector<u8> buffer_B;
+2195 | 
+2196 |   Core::RunOnCPUThread(system, [&] {
+2197 |     // 2. Save State A
+2198 |     printf("Saving State A...\n");
+2199 |     WiiMixSaveToBuffer(system, buffer_A);
+2200 |     if (buffer_A.empty()) {
+2201 |         printf("IDENTITY FAIL: Buffer A is empty.\n");
+2202 |         exit_code = 2;
+2203 |         return;
+2204 |     }
+2205 | 
+2206 |     // 3. Load State A
+2207 |     // Note: WiiMixLoadFromBufferEmuThread handles Poisoning internally if configured via CLI
+2208 |     printf("Loading State A (Triggering Re-Init/Poison)...\n");
+2209 |     bool load_ok = WiiMixLoadFromBufferEmuThread(system, buffer_A);
+2210 |     if (!load_ok) {
+2211 |         printf("IDENTITY FAIL: Load returned false.\n");
+2212 |         exit_code = 3;
+2213 |         return;
+2214 |     }
+2215 | 
+2216 |     // 4. Save State B (Immediately after load)
+2217 |     // Theoretically, State B should be bit-for-bit identical to State A
+2218 |     printf("Saving State B...\n");
+2219 |     WiiMixSaveToBuffer(system, buffer_B);
+2220 | 
+2221 |     // 5. Compare
+2222 |     if (buffer_A.size() != buffer_B.size()) {
+2223 |         printf("IDENTITY FAIL: Size mismatch. A: %zu, B: %zu\n", buffer_A.size(), buffer_B.size());
+2224 |         exit_code = 10;
+2225 |     }
+2226 |     else if (buffer_A != buffer_B) {
+2227 |         // Find the first mismatch offset for debugging
+2228 |         size_t mismatch_idx = 0;
+2229 |         for (; mismatch_idx < buffer_A.size(); ++mismatch_idx) {
+2230 |             if (buffer_A[mismatch_idx] != buffer_B[mismatch_idx]) break;
+2231 |         }
+2232 |         printf("IDENTITY FAIL: Content mismatch at offset 0x%zX\n", mismatch_idx);
+2233 |         exit_code = 10;
+2234 |     }
+2235 |     else {
+2236 |         printf("Identity Test PASSED! Load(Save(S)) == S\n");
+2237 |         exit_code = 0;
+2238 |     }
+2239 | 
+2240 |     // Dump files if failed
+2241 |     if (exit_code != 0) {
+2242 |         File::IOFile file_a("Identity_A.bin", "wb");
+2243 |         if(file_a) file_a.WriteBytes(buffer_A.data(), buffer_A.size());
+2244 | 
+2245 |         File::IOFile file_b("Identity_B.bin", "wb");
+2246 |         if(file_b) file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+2247 |         printf("Dumped Identity_A.bin and Identity_B.bin for analysis.\n");
+2248 |     }
+2249 | 
+2250 |     Core::Stop(system);
+2251 |   }, true);
+2252 | 
+2253 |   return exit_code;
+2254 | }
+2255 | 
+2256 | int WiiMixDiffTest(Core::System& system, int steps)
+2257 | {
+2258 |   printf("Starting WiiMix Diff Test (%d frames)...\n", steps);
+2259 |   int exit_code = 1;
+2260 |   std::vector<u8> buffer_A, buffer_B, buffer_C;
+2261 |   bool emu_thread_ok = true;
+2262 | 
+2263 |   // Pause the EmuThread
+2264 |   Core::SetState(system, Core::State::Paused, false);
+2265 |   Core::RunOnCPUThread(system, [&]() {}, true);
+2266 | 
+2267 |   // --- Save A (The "Anchor" State) ---
+2268 |   Core::RunOnCPUThread(system, [&] {
+2269 |     printf("WII-MIX-TEST-LOG: Save A START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+2270 |     WiiMixSaveToBuffer(system, buffer_A);
+2271 |     if (buffer_A.empty()) { emu_thread_ok = false; return; }
+2272 |   }, true);
+2273 | 
+2274 |   if (!emu_thread_ok) {
+2275 |     TEST_FAIL(2, "Diff Test FAILED: State A was empty.");
+2276 |     return 2;
+2277 |   }
+2278 | 
+2279 |   // --- Step N Frames (Path 1) ---
+2280 |   printf("Stepping %d frames (Continuous)...\n", steps);
+2281 | 
+2282 |   // NOTE: Tracing disabled for speed. Uncomment only for deep debugging single frames.
+2283 |   // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StartPCTrace("trace_B.txt"); }, true);
+2284 |   WiiMixStepNPauses(system, steps);
+2285 |   // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StopPCTrace(); }, true);
+2286 | 
+2287 |   // --- Save B (Continuous Result) ---
+2288 |   Core::RunOnCPUThread(system, [&] {
+2289 |     printf("WII-MIX-TEST-LOG: Save B START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+2290 |     WiiMixSaveToBuffer(system, buffer_B);
+2291 |     if (buffer_B.empty()) { emu_thread_ok = false; return; }
+2292 |   }, true);
+2293 | 
+2294 |   if (!emu_thread_ok) {
+2295 |     TEST_FAIL(4, "Diff Test FAILED: State B was empty.");
+2296 |     return 4;
+2297 |   }
+2298 | 
+2299 |   // --- Load A (Reset) ---
+2300 |   printf("Loading State A...\n");
+2301 |   Core::RunOnCPUThread(system, [&] {
+2302 |     // Poisoning is handled inside WiiMixLoadFromBufferEmuThread based on Config::WIIMIX_POISON_MASK
+2303 |     if (!WiiMixLoadFromBufferEmuThread(system, buffer_A)) {
+2304 |       emu_thread_ok = false;
+2305 |     }
+2306 |   }, true);
+2307 | 
+2308 |   if (!emu_thread_ok) {
+2309 |     TEST_FAIL(6, "Diff Test FAILED: Loading Emulated State failed.");
+2310 |     return 6;
+2311 |   }
+2312 | 
+2313 |   // --- Step N Frames (Path 2) ---
+2314 |   printf("Stepping %d frames (Loaded)...\n", steps);
+2315 | 
+2316 |   // NOTE: Tracing disabled for speed.
+2317 |   // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StartPCTrace("trace_C.txt"); }, true);
+2318 |   WiiMixStepNPauses(system, steps);
+2319 |   // Core::RunOnCPUThread(system, [&] { GetInterpreter(system)->StopPCTrace(); }, true);
+2320 | 
+2321 |   // --- Save C (Loaded Result) ---
+2322 |   Core::RunOnCPUThread(system, [&] {
+2323 |     printf("WII-MIX-TEST-LOG: Save C START (Frame: %ld)\n", system.GetMovie().GetCurrentFrame());
+2324 |     WiiMixSaveToBuffer(system, buffer_C);
+2325 | 
+2326 |     if (buffer_C.empty()) {
+2327 |       TEST_FAIL(8, "Diff Test FAILED: State C was empty.");
+2328 |       exit_code = 8;
+2329 |     } else if (buffer_B.size() != buffer_C.size()) {
+2330 |       TEST_FAIL(9, "Diff Test FAILED: Size mismatch! B=%zu, C=%zu.", buffer_B.size(), buffer_C.size());
+2331 |       exit_code = 9;
+2332 |     } else if (buffer_B == buffer_C) {
+2333 |       printf("Diff Test PASSED! State is deterministic.\n");
+2334 |       exit_code = 0;
+2335 |     } else {
+2336 |       auto mismatch = std::mismatch(buffer_B.begin(), buffer_B.end(), buffer_C.begin()).first;
+2337 |       size_t offset = static_cast<size_t>(mismatch - buffer_B.begin());
+2338 |       TEST_FAIL(10, "Diff Test FAILED: Mismatch at byte 0x%zX Your save/load logic is not deterministic.", offset);
+2339 |       exit_code = 10;
+2340 |     }
+2341 | 
+2342 |     if (exit_code != 0) {
+2343 |       File::IOFile file_b("B.bin", "wb");
+2344 |       if (file_b) file_b.WriteBytes(buffer_B.data(), buffer_B.size());
+2345 |       File::IOFile file_c("C.bin", "wb");
+2346 |       if (file_c) file_c.WriteBytes(buffer_C.data(), buffer_C.size());
+2347 |     }
+2348 | 
+2349 |     Core::Stop(system);
+2350 |   }, true);
+2351 | 
+2352 |   return exit_code;
+2353 | }
+2354 | }  // namespace State
+
+================================================================================
+FULL DEBUG LOG
+================================================================================
+--- STDOUT ---
+POISON: Mask set to 0x00000000 via CLI
+Initializing HW...
+Initializing DSP...
+Starting WiiMix Diff Test (10 frames)...
+WII-MIX-TEST-LOG: Save A START (Frame: 0)
+WII-MIX-MAP: Offset after Movie: 0x36
+WII-MIX-MAP: Offset after bpMem: 0x43A
+WII-MIX-MAP: Offset after xfMem: 0x459E
+--- CP STATE BREAKDOWN ---
+[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
+[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
+[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
+[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
+[MAP],17838,45AE,vtx_attr[0].g0.Hex
+[MAP],17842,45B2,vtx_attr[1].g0.Hex
+[MAP],17846,45B6,vtx_attr[2].g0.Hex
+[MAP],17850,45BA,vtx_attr[3].g0.Hex
+[MAP],17854,45BE,vtx_attr[4].g0.Hex
+[MAP],17858,45C2,vtx_attr[5].g0.Hex
+[MAP],17862,45C6,vtx_attr[6].g0.Hex
+[MAP],17866,45CA,vtx_attr[7].g0.Hex
+[MAP],17870,45CE,g_main_cp_state.array_bases[0]
+[MAP],17874,45D2,g_main_cp_state.array_bases[1]
+[MAP],17878,45D6,g_main_cp_state.array_bases[2]
+[MAP],17882,45DA,g_main_cp_state.array_bases[3]
+[MAP],17886,45DE,g_main_cp_state.array_bases[4]
+[MAP],17890,45E2,g_main_cp_state.array_bases[5]
+[MAP],17894,45E6,g_main_cp_state.array_bases[6]
+[MAP],17898,45EA,g_main_cp_state.array_bases[7]
+[MAP],17902,45EE,g_main_cp_state.array_bases[8]
+[MAP],17906,45F2,g_main_cp_state.array_bases[9]
+[MAP],17910,45F6,g_main_cp_state.array_bases[10]
+[MAP],17914,45FA,g_main_cp_state.array_bases[11]
+[MAP],17918,45FE,g_main_cp_state.array_bases[12]
+[MAP],17922,4602,g_main_cp_state.array_bases[13]
+[MAP],17926,4606,g_main_cp_state.array_bases[14]
+[MAP],17930,460A,g_main_cp_state.array_bases[15]
+[MAP],17934,460E,g_main_cp_state.array_strides[0]
+[MAP],17938,4612,g_main_cp_state.array_strides[1]
+[MAP],17942,4616,g_main_cp_state.array_strides[2]
+[MAP],17946,461A,g_main_cp_state.array_strides[3]
+[MAP],17950,461E,g_main_cp_state.array_strides[4]
+[MAP],17954,4622,g_main_cp_state.array_strides[5]
+[MAP],17958,4626,g_main_cp_state.array_strides[6]
+[MAP],17962,462A,g_main_cp_state.array_strides[7]
+[MAP],17966,462E,g_main_cp_state.array_strides[8]
+[MAP],17970,4632,g_main_cp_state.array_strides[9]
+[MAP],17974,4636,g_main_cp_state.array_strides[10]
+[MAP],17978,463A,g_main_cp_state.array_strides[11]
+[MAP],17982,463E,g_main_cp_state.array_strides[12]
+[MAP],17986,4642,g_main_cp_state.array_strides[13]
+[MAP],17990,4646,g_main_cp_state.array_strides[14]
+[MAP],17994,464A,g_main_cp_state.array_strides[15]
+WII-MIX-MAP: Offset after cpMem: 0x4742
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x48B1
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+WII-MIX-MAP: Offset after Memory: 0x20448D3
+WII-MIX-MAP: Offset after MemoryInterface: 0x204491F
+WII-MIX-MAP: Offset after VideoInterface: 0x20449C5
+WII-MIX-MAP: Offset after SerialInterface: 0x2044AB4
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044AD0
+WII-MIX-MAP: Offset after after main dsp state: 0x3044AF8
+WII-MIX-MAP: Offset after DSP: 0x3044B63
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BB8
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044BD8
+WII-MIX-MAP: Offset after DVDThread state: 0x3044BE5
+WII-MIX-MAP: Offset after DVDInterface: 0x3044BF9
+WII-MIX-MAP: Offset after GPFifo: 0x3044E01
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F49
+WII-MIX-MAP: Offset after AudioInterface: 0x3044F75
+WII-MIX-MAP: Offset after HSP: 0x3044F7D
+WII-MIX-MAP: Offset after HW: 0x3044F85
+WII-MIX-MAP: Offset after PowerPC: 0x30474B2
+WII-MIX-MAP: Offset after AchievementManager: 0x30474B6
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+TIMING_LOG (Event Queue): event_count = 7
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+Stepping 10 frames (Continuous)...
+WII-MIX-ERROR: Timed out waiting for frame step to finish! Forcing Break.
+WII-MIX-TEST-LOG: Save B START (Frame: 1)
+WII-MIX-MAP: Offset after Movie: 0x36
+WII-MIX-MAP: Offset after bpMem: 0x43A
+WII-MIX-MAP: Offset after xfMem: 0x459E
+--- CP STATE BREAKDOWN ---
+[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
+[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
+[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
+[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
+[MAP],17838,45AE,vtx_attr[0].g0.Hex
+[MAP],17842,45B2,vtx_attr[1].g0.Hex
+[MAP],17846,45B6,vtx_attr[2].g0.Hex
+[MAP],17850,45BA,vtx_attr[3].g0.Hex
+[MAP],17854,45BE,vtx_attr[4].g0.Hex
+[MAP],17858,45C2,vtx_attr[5].g0.Hex
+[MAP],17862,45C6,vtx_attr[6].g0.Hex
+[MAP],17866,45CA,vtx_attr[7].g0.Hex
+[MAP],17870,45CE,g_main_cp_state.array_bases[0]
+[MAP],17874,45D2,g_main_cp_state.array_bases[1]
+[MAP],17878,45D6,g_main_cp_state.array_bases[2]
+[MAP],17882,45DA,g_main_cp_state.array_bases[3]
+[MAP],17886,45DE,g_main_cp_state.array_bases[4]
+[MAP],17890,45E2,g_main_cp_state.array_bases[5]
+[MAP],17894,45E6,g_main_cp_state.array_bases[6]
+[MAP],17898,45EA,g_main_cp_state.array_bases[7]
+[MAP],17902,45EE,g_main_cp_state.array_bases[8]
+[MAP],17906,45F2,g_main_cp_state.array_bases[9]
+[MAP],17910,45F6,g_main_cp_state.array_bases[10]
+[MAP],17914,45FA,g_main_cp_state.array_bases[11]
+[MAP],17918,45FE,g_main_cp_state.array_bases[12]
+[MAP],17922,4602,g_main_cp_state.array_bases[13]
+[MAP],17926,4606,g_main_cp_state.array_bases[14]
+[MAP],17930,460A,g_main_cp_state.array_bases[15]
+[MAP],17934,460E,g_main_cp_state.array_strides[0]
+[MAP],17938,4612,g_main_cp_state.array_strides[1]
+[MAP],17942,4616,g_main_cp_state.array_strides[2]
+[MAP],17946,461A,g_main_cp_state.array_strides[3]
+[MAP],17950,461E,g_main_cp_state.array_strides[4]
+[MAP],17954,4622,g_main_cp_state.array_strides[5]
+[MAP],17958,4626,g_main_cp_state.array_strides[6]
+[MAP],17962,462A,g_main_cp_state.array_strides[7]
+[MAP],17966,462E,g_main_cp_state.array_strides[8]
+[MAP],17970,4632,g_main_cp_state.array_strides[9]
+[MAP],17974,4636,g_main_cp_state.array_strides[10]
+[MAP],17978,463A,g_main_cp_state.array_strides[11]
+[MAP],17982,463E,g_main_cp_state.array_strides[12]
+[MAP],17986,4642,g_main_cp_state.array_strides[13]
+[MAP],17990,4646,g_main_cp_state.array_strides[14]
+[MAP],17994,464A,g_main_cp_state.array_strides[15]
+WII-MIX-MAP: Offset after cpMem: 0x4742
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 2373, global_timer = 760101627
+TIMING_LOG (Event Queue): event_count = 8
+    Event: GPUSleeper, Time: 760104000, Fifo Order: 109154, Userdata: 0
+    Event: VICallback, Time: 760109400, Fifo Order: 109224, Userdata: 0
+    Event: DSPCallback, Time: 760104000, Fifo Order: 109155, Userdata: 0
+    Event: AudioDMACallback, Time: 760156704, Fifo Order: 109215, Userdata: 0
+    Event: PatchEngine, Time: 761343624, Fifo Order: 109149, Userdata: 0
+    Event: PerfTracker, Time: 763020000, Fifo Order: 108944, Userdata: 0
+    Event: FinishExecutingCommand, Time: 761370624, Fifo Order: 109163, Userdata: 12884901889
+    Event: DecCallback, Time: 760487635, Fifo Order: 109210, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x48D8
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 2373, global_timer = 760101627
+WII-MIX-MAP: Offset after Memory: 0x20448FA
+WII-MIX-MAP: Offset after MemoryInterface: 0x2044946
+WII-MIX-MAP: Offset after VideoInterface: 0x20449EC
+WII-MIX-MAP: Offset after SerialInterface: 0x2044ADB
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044AF7
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B1F
+WII-MIX-MAP: Offset after DSP: 0x3044B8A
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BDF
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044BFF
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C0C
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C20
+WII-MIX-MAP: Offset after GPFifo: 0x3044E28
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F70
+WII-MIX-MAP: Offset after AudioInterface: 0x3044F9C
+WII-MIX-MAP: Offset after HSP: 0x3044FA4
+WII-MIX-MAP: Offset after HW: 0x3044FAC
+WII-MIX-MAP: Offset after PowerPC: 0x30474D9
+WII-MIX-MAP: Offset after AchievementManager: 0x30474DD
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 2373, global_timer = 760101627
+TIMING_LOG (Event Queue): event_count = 8
+    Event: GPUSleeper, Time: 760104000, Fifo Order: 109154, Userdata: 0
+    Event: VICallback, Time: 760109400, Fifo Order: 109224, Userdata: 0
+    Event: DSPCallback, Time: 760104000, Fifo Order: 109155, Userdata: 0
+    Event: AudioDMACallback, Time: 760156704, Fifo Order: 109215, Userdata: 0
+    Event: PatchEngine, Time: 761343624, Fifo Order: 109149, Userdata: 0
+    Event: PerfTracker, Time: 763020000, Fifo Order: 108944, Userdata: 0
+    Event: FinishExecutingCommand, Time: 761370624, Fifo Order: 109163, Userdata: 12884901889
+    Event: DecCallback, Time: 760487635, Fifo Order: 109210, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 2373, global_timer = 760101627
+Loading State A...
+--- EVENT QUEUE LOG at: Start of Load Function ---
+  global_timer = 760101627
+  m_event_queue (8 events):
+    Event: GPUSleeper, Time: 760104000, Userdata: 0
+    Event: DSPCallback, Time: 760104000, Userdata: 0
+    Event: VICallback, Time: 760109400, Userdata: 0
+    Event: AudioDMACallback, Time: 760156704, Userdata: 0
+    Event: DecCallback, Time: 760487635, Userdata: 0
+    Event: PatchEngine, Time: 761343624, Userdata: 0
+    Event: FinishExecutingCommand, Time: 761370624, Userdata: 12884901889
+    Event: PerfTracker, Time: 763020000, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+TIMING_LOG (Before Host Reinit): slice_length = 2373, global_timer = 760101627
+TIMING_LOG (After Host Reinit): slice_length = 20000, global_timer = 0
+--- EVENT QUEUE LOG at: After Host Reinit ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+--- EVENT QUEUE LOG at: After MoveEvents ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+--- EVENT QUEUE LOG at: After ClearPendingEvents ---
+  global_timer = 0
+  m_event_queue (0 events):
+    [EMPTY]
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+Current frame in EmuThread before DoWiiMixState: 1
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+    Event: FinishExecutingCommand, Time: 0, Fifo Order: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Fifo Order: 1, Userdata: 0
+    Event: GPUSleeper, Time: 0, Fifo Order: 2, Userdata: 0
+    Event: DSPCallback, Time: 0, Fifo Order: 4, Userdata: 0
+    Event: VICallback, Time: 15444, Fifo Order: 3, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Fifo Order: 5, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Fifo Order: 6, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 20000, global_timer = 0
+CP State clean after DoWiiMixState: 0x00000000
+--- EVENT QUEUE LOG at: After DoWiiMixState (Pure State Loaded) ---
+  global_timer = 0
+  m_event_queue (7 events):
+    Event: FinishExecutingCommand, Time: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Userdata: 0
+    Event: GPUSleeper, Time: 0, Userdata: 0
+    Event: DSPCallback, Time: 0, Userdata: 0
+    Event: VICallback, Time: 15444, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+Current frame at end of EmuThread: 0
+--- EVENT QUEUE LOG at: After Cache Refresh ---
+  global_timer = 0
+  m_event_queue (7 events):
+    Event: FinishExecutingCommand, Time: 0, Userdata: 12884901889
+    Event: PerfTracker, Time: 0, Userdata: 0
+    Event: GPUSleeper, Time: 0, Userdata: 0
+    Event: DSPCallback, Time: 0, Userdata: 0
+    Event: VICallback, Time: 15444, Userdata: 0
+    Event: AudioDMACallback, Time: 121392, Userdata: 0
+    Event: PatchEngine, Time: 8108100, Userdata: 0
+  m_ts_queue (0 events):
+    [EMPTY]
+---------------------------------------
+Stepping 10 frames (Loaded)...
+WII-MIX-ERROR: Timed out waiting for frame step to finish! Forcing Break.
+WII-MIX-TEST-LOG: Save C START (Frame: 1)
+WII-MIX-MAP: Offset after Movie: 0x36
+WII-MIX-MAP: Offset after bpMem: 0x43A
+WII-MIX-MAP: Offset after xfMem: 0x459E
+--- CP STATE BREAKDOWN ---
+[MAP],17822,459E,g_main_cp_state.matrix_index_a.Hex
+[MAP],17826,45A2,g_main_cp_state.matrix_index_b.Hex
+[MAP],17830,45A6,g_main_cp_state.vtx_desc.low.Hex
+[MAP],17834,45AA,g_main_cp_state.vtx_desc.high.Hex
+[MAP],17838,45AE,vtx_attr[0].g0.Hex
+[MAP],17842,45B2,vtx_attr[1].g0.Hex
+[MAP],17846,45B6,vtx_attr[2].g0.Hex
+[MAP],17850,45BA,vtx_attr[3].g0.Hex
+[MAP],17854,45BE,vtx_attr[4].g0.Hex
+[MAP],17858,45C2,vtx_attr[5].g0.Hex
+[MAP],17862,45C6,vtx_attr[6].g0.Hex
+[MAP],17866,45CA,vtx_attr[7].g0.Hex
+[MAP],17870,45CE,g_main_cp_state.array_bases[0]
+[MAP],17874,45D2,g_main_cp_state.array_bases[1]
+[MAP],17878,45D6,g_main_cp_state.array_bases[2]
+[MAP],17882,45DA,g_main_cp_state.array_bases[3]
+[MAP],17886,45DE,g_main_cp_state.array_bases[4]
+[MAP],17890,45E2,g_main_cp_state.array_bases[5]
+[MAP],17894,45E6,g_main_cp_state.array_bases[6]
+[MAP],17898,45EA,g_main_cp_state.array_bases[7]
+[MAP],17902,45EE,g_main_cp_state.array_bases[8]
+[MAP],17906,45F2,g_main_cp_state.array_bases[9]
+[MAP],17910,45F6,g_main_cp_state.array_bases[10]
+[MAP],17914,45FA,g_main_cp_state.array_bases[11]
+[MAP],17918,45FE,g_main_cp_state.array_bases[12]
+[MAP],17922,4602,g_main_cp_state.array_bases[13]
+[MAP],17926,4606,g_main_cp_state.array_bases[14]
+[MAP],17930,460A,g_main_cp_state.array_bases[15]
+[MAP],17934,460E,g_main_cp_state.array_strides[0]
+[MAP],17938,4612,g_main_cp_state.array_strides[1]
+[MAP],17942,4616,g_main_cp_state.array_strides[2]
+[MAP],17946,461A,g_main_cp_state.array_strides[3]
+[MAP],17950,461E,g_main_cp_state.array_strides[4]
+[MAP],17954,4622,g_main_cp_state.array_strides[5]
+[MAP],17958,4626,g_main_cp_state.array_strides[6]
+[MAP],17962,462A,g_main_cp_state.array_strides[7]
+[MAP],17966,462E,g_main_cp_state.array_strides[8]
+[MAP],17970,4632,g_main_cp_state.array_strides[9]
+[MAP],17974,4636,g_main_cp_state.array_strides[10]
+[MAP],17978,463A,g_main_cp_state.array_strides[11]
+[MAP],17982,463E,g_main_cp_state.array_strides[12]
+[MAP],17986,4642,g_main_cp_state.array_strides[13]
+[MAP],17990,4646,g_main_cp_state.array_strides[14]
+[MAP],17994,464A,g_main_cp_state.array_strides[15]
+WII-MIX-MAP: Offset after cpMem: 0x4742
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 772869819
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 772877592, Fifo Order: 111068, Userdata: 0
+    Event: AudioDMACallback, Time: 772902864, Fifo Order: 111056, Userdata: 0
+    Event: DSPCallback, Time: 773226000, Fifo Order: 111050, Userdata: 0
+    Event: DecCallback, Time: 773130627, Fifo Order: 111034, Userdata: 0
+    Event: PerfTracker, Time: 777600000, Fifo Order: 111048, Userdata: 0
+    Event: FinishExecutingCommand, Time: 773267040, Fifo Order: 110878, Userdata: 12884901889
+    Event: PatchEngine, Time: 773645256, Fifo Order: 110926, Userdata: 0
+    Event: GPUSleeper, Time: 773226000, Fifo Order: 111049, Userdata: 0
+WII-MIX-MAP: Offset after CoreTiming: 0x48D8
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 772869819
+WII-MIX-MAP: Offset after Memory: 0x20448FA
+WII-MIX-MAP: Offset after MemoryInterface: 0x2044946
+WII-MIX-MAP: Offset after VideoInterface: 0x20449EC
+WII-MIX-MAP: Offset after SerialInterface: 0x2044ADB
+WII-MIX-MAP: Offset after ProcessorInterface: 0x2044AF7
+WII-MIX-MAP: Offset after after main dsp state: 0x3044B1F
+WII-MIX-MAP: Offset after DSP: 0x3044B8A
+WII-MIX-MAP: Offset after DVDInterface error code state: 0x3044BDF
+WII-MIX-MAP: Offset after DVDInterface buffer state: 0x3044BFF
+WII-MIX-MAP: Offset after DVDThread state: 0x3044C0C
+WII-MIX-MAP: Offset after DVDInterface: 0x3044C20
+WII-MIX-MAP: Offset after GPFifo: 0x3044E28
+WII-MIX-MAP: Offset after ExpansionInterface: 0x3044F70
+WII-MIX-MAP: Offset after AudioInterface: 0x3044F9C
+WII-MIX-MAP: Offset after HSP: 0x3044FA4
+WII-MIX-MAP: Offset after HW: 0x3044FAC
+WII-MIX-MAP: Offset after PowerPC: 0x30474D9
+WII-MIX-MAP: Offset after AchievementManager: 0x30474DD
+TIMING_LOG (Before DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 772869819
+TIMING_LOG (Event Queue): event_count = 8
+    Event: VICallback, Time: 772877592, Fifo Order: 111068, Userdata: 0
+    Event: AudioDMACallback, Time: 772902864, Fifo Order: 111056, Userdata: 0
+    Event: DSPCallback, Time: 773226000, Fifo Order: 111050, Userdata: 0
+    Event: DecCallback, Time: 773130627, Fifo Order: 111034, Userdata: 0
+    Event: PerfTracker, Time: 777600000, Fifo Order: 111048, Userdata: 0
+    Event: FinishExecutingCommand, Time: 773267040, Fifo Order: 110878, Userdata: 12884901889
+    Event: PatchEngine, Time: 773645256, Fifo Order: 110926, Userdata: 0
+    Event: GPUSleeper, Time: 773226000, Fifo Order: 111049, Userdata: 0
+TIMING_LOG (After DoWiiMixState CoreTiming): slice_length = 7773, global_timer = 772869819
+s_platform.reset() in main
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/Dolphin.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Dolphin.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCPadNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCPadNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/WiimoteNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GCKeyNew.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/GFX.ini.xxx -> /home/xanmankey/.config/dolphin-emu/GFX.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/Logger.ini.xxx -> /home/xanmankey/.config/dolphin-emu/Logger.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/DSUClient.ini.xxx -> /home/xanmankey/.config/dolphin-emu/DSUClient.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/FreeLook.ini.xxx -> /home/xanmankey/.config/dolphin-emu/FreeLook.ini
+IniFile::Save: /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini.xxx -> /home/xanmankey/.config/dolphin-emu/RetroAchievements.ini
+
+
+--- STDERR ---
+Diff Test FAILED at /home/xanmankey/Programming/OpenSource/WiiMix/Source/Core/Core/State.cpp:2338: Diff Test FAILED: Mismatch at byte 0x4742 Your save/load logic is not deterministic.
+

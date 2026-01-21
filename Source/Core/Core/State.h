@@ -141,6 +141,7 @@ void SetOnAfterLoadCallback(AfterLoadCallbackFunc callback);
 
 // Primary tool for debugging states
 void WiiMixStepNPauses(Core::System& system, int n);
+int WiiMixIdentityTest(Core::System& system);
 int WiiMixDiffTest(Core::System& system, int frames);
 Interpreter* GetInterpreter(Core::System& system);
 
@@ -148,7 +149,11 @@ bool WiiMixHostReinitialization(Core::System& system);
 extern PowerPC::CPUCore WIIMIX_DIFF_TEST_CPU_CORE;
 extern bool WIIMIX_LOG;
 
-void LogOffset(const char* name, PointerWrap& p); 
+void LogOffset(const char* name, PointerWrap& p);
+void LogMap(PointerWrap& p, const char* name);
+void SetWiiMixPoisonMask(int mask);
+void SetWiiMixJitterHostEnvironment(bool state);
+extern bool WIIMIX_JITTER;
 
 }  // namespace State
 

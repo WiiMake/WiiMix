@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Common/CommonTypes.h"
+#include "Common/ChunkFile.h"
 
 namespace Core
 {
@@ -91,6 +92,7 @@ public:
   double GetEstimatedEmulationPerformance() const;
   void ScheduleInitialEvents();
   void PoisonState();
+  void DoState(PointerWrap& p);
 
 private:
   static void DSPCallback(Core::System& system, u64 userdata, s64 cycles_late);

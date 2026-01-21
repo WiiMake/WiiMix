@@ -45,28 +45,49 @@ DVDThread::~DVDThread() = default;
 void DVDThread::Start()
 {
   if (WIIMIX_STATE) {
-    // FIX: Robustness check.
-    // If the thread is already joinable (e.g. restarted by WaitUntilIdle during Load),
-    // we must not try to start it again, or the assertion in StartDVDThread will fire.
-    // Just verify the flag is set and return.
     if (m_dvd_thread.joinable()) {
       m_is_running = true;
       return;
     }
-    
-    // if (m_is_running)
-    //   return;
   }
-  m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
+  
+  // FIX: Add check to avoid double-registration warnings (though Dolphin handles them safely)
+  if (!m_finish_read) {
+      m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
+  }
 
   m_request_queue_expanded.Reset();
   m_result_queue_expanded.Reset();
   m_request_queue.Clear();
   m_result_queue.Clear();
 
-  // This is reset on every launch for determinism, but it doesn't matter
-  // much, because this will never get exposed to the emulated game.
   if (!WIIMIX_STATE) {
+    m_next_id = 0;
+  }
+  m_is_running = true;
+  StartDVDThread();
+}
+
+void DVDThread::Start(bool preserve_state)
+{
+  if (WIIMIX_STATE) {
+    if (m_dvd_thread.joinable()) {
+      m_is_running = true;
+      return;
+    }
+  }
+  
+  if (!m_finish_read) {
+      m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
+  }
+
+  m_request_queue_expanded.Reset();
+  m_result_queue_expanded.Reset();
+  m_request_queue.Clear();
+  m_result_queue.Clear();
+
+  // FIX: Do not reset m_next_id if we are preserving state (WiiMix Load)
+  if (!WIIMIX_STATE && !preserve_state) {
     m_next_id = 0;
   }
   m_is_running = true;
@@ -100,17 +121,24 @@ void DVDThread::Stop()
 }
 
 void DVDThread::WiiMixReset() {
-  // We're already on the CPU thread, and WaitUntilIdle
-  // has been called, so the DVD thread is stopped.
-  // It is now safe to clear all "dirty" state.
-  m_result_map.clear();
+  // [FIX] Stop the worker thread BEFORE clearing queues.
+  // Attempting to drain m_request_queue (SPSC) from the main thread 
+  // while the worker thread is running causes a race condition and desyncs.
+  Stop();
 
-  // Drain and clear the "dirty" result queue
+  // Re-register event type
+  m_finish_read = m_system.GetCoreTiming().RegisterEvent("FinishReadDVDThread", GlobalFinishRead);
+
+  // Clear emulated state
+  m_result_map.clear();
+  m_next_id = 0; 
+
+  // Drain queues (Safe now that thread is stopped)
   ReadResult result;
-  while (m_result_queue.Pop(result))
-  {
-    // do nothing, just drain it
-  }
+  while (m_result_queue.Pop(result)) { }
+  
+  ReadRequest request;
+  while (m_request_queue.Pop(request)) { }
 }
 
 void DVDThread::StopDVDThread()
@@ -135,6 +163,7 @@ void DVDThread::StopDVDThread()
 
 void DVDThread::DoState(PointerWrap& p)
 {
+  INFO_LOG_FMT(DVDINTERFACE, "ORIGINAL DO STATE CALLED, NOT DO WIIMIX STATE");
   // m_disc isn't savestated (because it points to files on the
   // local system). Instead, we check that the status of the disc
   // is the same as when the savestate was made. This won't catch
@@ -177,31 +206,99 @@ void DVDThread::DoState(PointerWrap& p)
   }
 }
 
+// In Core/HW/DVD/DVDThread.cpp
+
 void DVDThread::DoWiiMixState(PointerWrap& p)
 {
-  // By waiting for the DVD thread to be done working, we ensure
-  // that request_queue will be empty and that the DVD thread
-  // won't be touching anything while this function runs.
-  WaitUntilIdle();
+  INFO_LOG_FMT(DVDINTERFACE, "DO WIIMIX STATE CALLED");
 
-  // Move all results from result_queue to result_map because
-  // PointerWrap::Do supports std::map but not Common::SPSCQueue.
-  // This won't affect the behavior of FinishRead.
-  ReadResult result;
-  while (m_result_queue.Pop(result))
-    m_result_map.emplace(result.first.id, std::move(result));
-
-  // Both queues are now empty, so we don't need to savestate them.
-  p.Do(m_result_map);
-  p.Do(m_next_id);
-
-  // m_disc isn't savestated (because it points to files on the
-  // local system). Instead, we check that the status of the disc
-  // is the same as when the savestate was made. This won't catch
-  // cases of having the wrong disc inserted, though.
-  // TODO: Check the game ID, disc number, revision?
   bool had_disc = HasDisc();
   p.Do(had_disc);
+
+  // FIX: Only wait for idle when saving.
+  // When loading, the thread has just been reset (stopped) by WiiMixReset,
+  // so it is already idle/empty. Calling WaitUntilIdle here forces a premature
+  // thread start before the full state is restored.
+  if (!p.IsReadMode())
+  {
+    // Ensure thread is idle so queues are stable
+    WaitUntilIdle();
+
+    // Transfer queue to map for serialization
+    ReadResult result;
+    while (m_result_queue.Pop(result))
+      m_result_map.emplace(result.first.id, std::move(result));
+  }
+
+  // --- CUSTOM SERIALIZATION FOR WIIMIX ---
+  // We cannot use p.Do(m_result_map) because ReadRequest contains
+  // realtime_started_us/realtime_done_us which are non-deterministic.
+  
+  u32 map_size = (u32)m_result_map.size();
+  p.Do(map_size);
+
+  if (p.IsReadMode())
+  {
+    m_result_map.clear();
+    for (u32 i = 0; i < map_size; ++i)
+    {
+      ReadRequest req = {};
+      std::vector<u8> buffer;
+
+      // Restore Request Key (ID)
+      u64 id;
+      p.Do(id);
+      
+      // Restore Request Data
+      p.Do(req.copy_to_ram);
+      p.Do(req.output_address);
+      p.Do(req.dvd_offset);
+      p.Do(req.length);
+      p.Do(req.partition);
+      p.Do(req.reply_type);
+      p.Do(req.id);
+      p.Do(req.time_started_ticks);
+      
+      // SKIP host timestamps (realtime_started_us, realtime_done_us)
+      // We set them to 0 or a dummy value to ensure internal consistency
+      req.realtime_started_us = 0;
+      req.realtime_done_us = 0;
+
+      // Restore Buffer
+      p.Do(buffer);
+
+      m_result_map.emplace(id, std::make_pair(std::move(req), std::move(buffer)));
+    }
+  }
+  else
+  {
+    for (auto& pair : m_result_map)
+    {
+      // Save Key
+      u64 id = pair.first;
+      p.Do(id);
+
+      // Save Request Data
+      ReadRequest& req = pair.second.first;
+      p.Do(req.copy_to_ram);
+      p.Do(req.output_address);
+      p.Do(req.dvd_offset);
+      p.Do(req.length);
+      p.Do(req.partition);
+      p.Do(req.reply_type);
+      p.Do(req.id);
+      p.Do(req.time_started_ticks);
+      
+      // DO NOT Save host timestamps
+      
+      // Save Buffer
+      std::vector<u8>& buffer = pair.second.second;
+      p.Do(buffer);
+    }
+  }
+
+  p.Do(m_next_id);
+
   if (had_disc != HasDisc())
   {
     if (had_disc)
@@ -281,13 +378,34 @@ bool DVDThread::UpdateRunningGameMetadata(const DiscIO::Partition& partition,
   return true;
 }
 
+// void DVDThread::WaitUntilIdle()
+// {
+//   if (!WIIMIX_STATE)
+//     ASSERT(Core::IsCPUThread());
+
+//   while (!m_request_queue.Empty())
+//     m_result_queue_expanded.Wait();
+
+//   StopDVDThread();
+//   StartDVDThread();
+// }
+
 void DVDThread::WaitUntilIdle()
 {
   if (!WIIMIX_STATE)
     ASSERT(Core::IsCPUThread());
 
-  while (!m_request_queue.Empty())
-    m_result_queue_expanded.Wait();
+  // CHANGE: Increase timeout from 1000 to 5000ms
+  int timeout = 5000; 
+  while (!m_request_queue.Empty() && timeout > 0)
+  {
+      m_result_queue_expanded.WaitFor(std::chrono::milliseconds(1));
+      timeout--;
+  }
+  
+  if (timeout <= 0) {
+      printf("WII-MIX-ERROR: DVDThread::WaitUntilIdle timed out! Queues may be desynced.\n");
+  }
 
   StopDVDThread();
   StartDVDThread();

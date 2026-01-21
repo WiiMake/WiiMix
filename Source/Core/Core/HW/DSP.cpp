@@ -125,53 +125,54 @@ void DSPManager::Init(bool hle)
 
 void DSPManager::WiiMixRestart(bool hle)
 {
-  // m_dsp_emulator object already exists and has had state loaded into it.
-  // We just need to restart its thread.
-  if (m_dsp_emulator)
-  {
-    m_dsp_emulator->WiiMixStartThread();
+  // 1. Fallback: Ensure the emulator object exists
+  if (!m_dsp_emulator) {
+      Reinit(hle);
+      m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
   }
-  else
-  {
-    // This should not happen if Shutdown() is fixed, but as a fallback,
-    // we must create the object *and then* initialize its thread.
-    // This will, however, likely cause a desync since state wasn't loaded.
-    Reinit(hle);
-    m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
+
+  // 2. DEADLOCK FIX: Wake up the thread!
+  if (m_dsp_emulator) {
+      // Only write the control register for LLE to wake up the thread.
+      // For HLE, DoState already restored the specific UCode (e.g., AX) and its state.
+      // Calling DSP_WriteControlRegister here treats the restored value as a NEW write 
+      // from the CPU, which triggers UCode initialization logic (resetting it to ROM/Init),
+      // destroying the state we just loaded.
+      if (m_dsp_emulator->IsLLE()) {
+          m_dsp_emulator->DSP_WriteControlRegister(m_dsp_control.Hex);
+      }
   }
 }
 
 void DSPManager::WiiMixReset()
 {
-  // Reinit(Config::Get<bool>(Config::MAIN_DSP_HLE));
+  // 1. HARD RESET: Force destroy the old emulator object immediately.
+  // This ensures the destructor runs and clears any internal HLE state.
+  m_dsp_emulator.reset(); 
 
-  // --- Manually reset variables from Reinit() ---
-  // We DO NOT call CreateDSPEmulator here, because that starts the thread.
-  // The old emulator object was already destroyed by Shutdown().
-  // We will create a new one in Step 2.
-  // if (!m_aram.wii_mode)
-  // {
-  //   // If ARAM is not in Wii mode, it's a separate buffer.
-  //   // We must re-allocate it or clear it.
-  //   if (m_aram.ptr)
-  //     memset(m_aram.ptr, 0, m_aram.size);
-  //   // else
-  //     // m_aram.ptr = static_cast<u8*>(Common::AllocateMemoryPages(m_aram.size));
-  // }
-  // // If m_aram.wii_mode is true, ptr points to EXRAM, which is reset by Memory::Init
-
-  // // Reset all registers to boot-up state
-  m_audio_dma = {};
+  // 2. Explicitly zero ALL state variables to remove any Poison (0xCC/0xDEAD)
+  m_audio_dma = {}; // Clears SourceAddress, current_source_address, etc.
   m_aram_dma = {};
   m_dsp_control.Hex = 0;
-  m_dsp_control.DSPHalt = 1;
+  m_dsp_control.DSPHalt = 1; 
   m_aram_info.Hex = 0;
-  m_aram_mode = 1;       // ARAM Controller has init'd
-  m_aram_refresh = 156;  // 156MHz
-  // // --- End of variable reset ---
+  m_aram_mode = 1;        
+  m_aram_refresh = 156; 
+  
+  // CRITICAL: Ensure this is 0 before Reinit reads it
+  m_dsp_slice = 0; 
 
+  // 3. Re-create the emulator from scratch
+  bool hle = Config::Get(Config::MAIN_DSP_HLE);
+  Reinit(hle); 
+
+  // 4. Initialize the new, clean emulator
+  if (m_dsp_emulator) {
+      m_dsp_emulator->Initialize(m_system.IsWii(), Config::Get(Config::MAIN_DSP_THREAD));
+  }
+
+  // 5. Register events
   auto& core_timing = m_system.GetCoreTiming();
-
   m_event_type_generate_dsp_interrupt =
       core_timing.RegisterEvent("DSPint", GlobalGenerateDSPInterrupt);
   m_event_type_complete_aram = core_timing.RegisterEvent("ARAMint", GlobalCompleteARAM);

@@ -402,6 +402,9 @@ extern const Info<int> WIIMIX_NUM_PLAYERS_SHUFFLE;
 extern const Info<std::string> WIIMIX_SHUFFLE_SEED;
 extern const Info<WiiMixEnums::MultiplayerMode> WIIMIX_MULTIPLAYER_MODE_SHUFFLE;
 
+extern const Info<int> WIIMIX_POISON_MASK;
+
+
 // GameCube path utility functions
 
 // Replaces NTSC-K with some other region, and doesn't replace non-NTSC-K regions

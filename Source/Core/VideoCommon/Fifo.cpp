@@ -63,7 +63,16 @@ void FifoManager::DoState(PointerWrap& p)
     m_video_buffer_seen_ptr = m_video_buffer_pp_read_ptr = m_video_buffer_read_ptr;
   }
 
-  p.Do(m_sync_ticks);
+  if (WIIMIX_STATE) {
+    std::atomic<int> dummy_ticks{0};
+    p.Do(dummy_ticks);
+    if (p.IsReadMode()) {
+        m_sync_ticks.store(0);
+    }
+  } else {
+    p.Do(m_sync_ticks);
+  }
+
   p.Do(m_syncing_suspended);
 }
 

@@ -16,6 +16,9 @@ namespace DSP::HLE
 {
 DSPHLE::DSPHLE(Core::System& system) : m_mail_handler(system.GetDSP()), m_system(system)
 {
+m_control_reg_init_code_clear_time = 0;
+  m_dsp_control.Hex = 0;
+  m_wii = false;
 }
 
 DSPHLE::~DSPHLE() = default;
@@ -27,7 +30,7 @@ bool DSPHLE::Initialize(bool wii, bool dsp_thread)
   m_last_ucode = nullptr;
 
   SetUCode(UCODE_ROM);
-
+  m_control_reg_init_code_clear_time = 0;
   m_dsp_control.Hex = 0;
   m_dsp_control.DSPHalt = 1;
   m_dsp_control.DSPInit = 1;
@@ -128,6 +131,16 @@ void DSPHLE::DoState(PointerWrap& p)
   auto last_ucode =
       same_last_ucode ? std::move(m_last_ucode) : UCodeFactory(last_ucode_crc, this, m_wii);
 
+  if (!ucode && p.IsReadMode()) {
+      ucode = UCodeFactory(0, this, m_wii); // 0 usually maps to ROM/Default
+      if (!ucode) {
+          // If 0 fails, manually force UCODE_ROM logic or panic
+          // This ensures 'ucode->DoState(p)' is called below.
+          SetUCode(UCODE_ROM); 
+          ucode = std::move(m_ucode);
+      }
+  }
+
   if (ucode)
     ucode->DoState(p);
   if (last_ucode)
@@ -137,6 +150,7 @@ void DSPHLE::DoState(PointerWrap& p)
   m_last_ucode = std::move(last_ucode);
 
   m_mail_handler.DoState(p);
+  m_mail_handler.SetHalted(m_dsp_control.DSPHalt);
 }
 
 void DSPHLE::WiiMixStartThread()

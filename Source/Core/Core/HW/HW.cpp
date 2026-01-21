@@ -180,6 +180,11 @@ void DoState(Core::System& system, PointerWrap& p)
   system.GetMemory().DoState(p);
   p.DoMarker("Memory");
   State::LogOffset("Memory", p);
+
+  system.GetSystemTimers().DoState(p);
+  p.DoMarker("SystemTimers");
+  State::LogOffset("SystemTimers", p);
+
   system.GetMemoryInterface().DoState(p);
   p.DoMarker("MemoryInterface");
   State::LogOffset("MemoryInterface", p);

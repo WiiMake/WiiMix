@@ -1,0 +1,43 @@
+--- WIIMIX DETERMINISM BATCH SCAN SUMMARY ---
+Crazy Taxi (USA).ciso                    : [92mPASS[0m
+F-Zero GX (USA).ciso                     : [92mPASS[0m
+Luigi's Mansion (Europe) (En,Fr,De,Es,It) (Rev 1).ciso : [92mPASS[0m
+Mario Kart - Double Dash!! (USA).iso     : [91mFAIL[0m (Baseline - FAIL)
+Mario Party 6 (USA).ciso                 : [91mFAIL[0m (Baseline - FAIL)
+Mario Party 7 (USA).iso                  : [91mFAIL[0m (Baseline - FAIL)
+MemCardDemo.dol                          : [92mPASS[0m
+Nickelodeon SpongeBob SquarePants - Battle for Bikini Bottom (USA).ciso : [91mFAIL[0m (Baseline - FAIL)
+Pokemon Colosseum (USA).iso              : [92mPASS[0m
+Super Mario Strikers (USA).iso           : [92mPASS[0m
+Super Mario Sunshine (USA).iso           : [92mPASS[0m
+Super Monkey Ball (USA).ciso             : [92mPASS[0m
+Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso : [92mPASS[0m
+Tony Hawk's Pro Skater 4 (USA).ciso      : [92mPASS[0m
+WarioWare, Inc. - Mega Party Game$! (USA).iso : [91mFAIL[0m (Baseline - FAIL)
+acube.dol                                : [92mPASS[0m
+application.dol                          : [92mPASS[0m
+arena1override.dol                       : [92mPASS[0m
+consoletest.dol                          : [92mPASS[0m
+directory.dol                            : [92mPASS[0m
+gdbstub.dol                              : [92mPASS[0m
+gxSprites.dol                            : [92mPASS[0m
+lesson01.dol                             : [92mPASS[0m
+lesson02.dol                             : [92mPASS[0m
+lesson03.dol                             : [92mPASS[0m
+lesson04.dol                             : [92mPASS[0m
+lesson05.dol                             : [92mPASS[0m
+lesson06.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson07.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson08.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson09.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson10.dol                             : [92mPASS[0m
+lesson11.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson12.dol                             : [91mFAIL[0m (Baseline - FAIL)
+lesson19.dol                             : [92mPASS[0m
+modplay.dol                              : [92mPASS[0m
+mp3player.dol                            : [92mPASS[0m
+pageflip.dol                             : [92mPASS[0m
+readsector.dol                           : [92mPASS[0m
+sockettest.dol                           : [92mPASS[0m
+texturetest.dol                          : [92mPASS[0m
+triangle.dol                             : [92mPASS[0m

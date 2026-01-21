@@ -178,6 +178,12 @@ void MemoryManager::WiiMixReset() {
   m_exram_size_real = get_mem2_size();
   m_exram_size = MathUtil::NextPowerOf2(GetExRamSizeReal());
   m_exram_mask = GetExRamSize() - 1;
+
+  // FIX: Clear the memory to remove any Poison (0xCC) patterns.
+  // LoadState only overwrites the "Real" size (e.g. 24MB), leaving the 
+  // padding (e.g. the 8MB up to 32MB) as garbage if we don't clear it here.
+  // If the game reads OOB, it must see 0 (Deterministic), not 0xCC (Poison).
+  Clear();
 }
 
 bool MemoryManager::IsAddressInFastmemArea(const u8* address) const

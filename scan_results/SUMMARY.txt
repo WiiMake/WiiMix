@@ -1,0 +1,2 @@
+--- WIIMIX DETERMINISM BATCH SCAN SUMMARY ---
+Mario Kart - Double Dash!! (USA).iso     : [91mFAIL[0m (Poison - FAIL)

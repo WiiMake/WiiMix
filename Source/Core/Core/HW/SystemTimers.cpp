@@ -265,14 +265,32 @@ void SystemTimersManager::PreInit()
 
 void SystemTimersManager::WiiMixReset()
 {
-  auto& core_timing = m_system.GetCoreTiming();
+  // Sanitize cpu_core_clock to the expected default for the current system
+  // to prevent poison values from crashing the adjustment logic.
+  m_cpu_core_clock = m_system.IsWii() ? 729000000u : 486000000u;
 
+  // 1. Restore Clock
+  ChangePPCClock(m_system.IsWii() ? Mode::Wii : Mode::GC);
+
+  // 2. FIX: Unconditionally sanitize m_ipc_hle_period
+  // PoisonState set this to -9999. It must be reset to a safe value.
+  if (m_system.IsWii())
+  {
+    const int freq = 1500;
+    m_ipc_hle_period = GetTicksPerSecond() / freq;
+  }
+  else
+  {
+    m_ipc_hle_period = 0; // Safe default for GC
+  }
+
+  // 3. Register Events (Keep your existing event registration code)
+  auto& core_timing = m_system.GetCoreTiming();
   m_event_type_decrementer = core_timing.RegisterEvent("DecCallback", DecrementerCallback);
   m_event_type_vi = core_timing.RegisterEvent("VICallback", VICallback);
   m_event_type_dsp = core_timing.RegisterEvent("DSPCallback", DSPCallback);
   m_event_type_audio_dma = core_timing.RegisterEvent("AudioDMACallback", AudioDMACallback);
-  m_event_type_ipc_hle =
-      core_timing.RegisterEvent("IPC_HLE_UpdateCallback", IPC_HLE_UpdateCallback);
+  m_event_type_ipc_hle = core_timing.RegisterEvent("IPC_HLE_UpdateCallback", IPC_HLE_UpdateCallback);
   m_event_type_gpu_sleeper = core_timing.RegisterEvent("GPUSleeper", GPUSleepCallback);
   m_event_type_perf_tracker = core_timing.RegisterEvent("PerfTracker", PerfTrackerCallback);
   m_event_type_patch_engine = core_timing.RegisterEvent("PatchEngine", PatchEngineCallback);
@@ -303,9 +321,10 @@ void SystemTimersManager::Init()
   if (WIIMIX_STATE) {
     // Use a fixed, arbitrary timestamp. 
     // This value is 2010-01-01 00:00:00 UTC
-    const u64 fixed_rtc_value = 1262304000;
-    m_localtime_rtc_offset = 
-        Common::Timer::GetLocalTimeSinceJan1970() - fixed_rtc_value;
+    // const u64 fixed_rtc_value = 1262304000;
+    // m_localtime_rtc_offset = 
+    //     Common::Timer::GetLocalTimeSinceJan1970() - fixed_rtc_value;
+    m_localtime_rtc_offset = 0;
   }
   else if (Config::Get(Config::MAIN_CUSTOM_RTC_ENABLE))
   {
@@ -368,6 +387,15 @@ void SystemTimersManager::PoisonState()
     // Poison event types (Dangerous! Only do if you can restore or if Load re-registers)
     // Actually, don't poison the event pointers themselves as that might cause crashes 
     // before execution starts. Poisoning the data they rely on is enough.
+}
+
+void SystemTimersManager::DoState(PointerWrap& p)
+{
+  p.Do(m_cpu_core_clock);
+  p.Do(m_ipc_hle_period);
+  p.Do(m_localtime_rtc_offset);
+  
+  // No need to save event types; they are re-registered on Init/Reset
 }
 
 }  // namespace SystemTimers

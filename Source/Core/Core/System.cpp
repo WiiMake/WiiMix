@@ -339,7 +339,7 @@ VideoCommon::CustomAssetLoader& System::GetCustomAssetLoader() const
 
 void System::PoisonState(PoisonModule mask)
 {
-    if (mask == PoisonModule::None) return;
+    if (mask == PoisonModule::Disabled) return;
 
     // --- Core & Timing ---
     if ((u32)mask & (u32)PoisonModule::CoreTiming)         m_impl->m_core_timing.PoisonState();
